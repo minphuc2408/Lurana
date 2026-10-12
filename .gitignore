@@ -5,6 +5,7 @@
 
 # Allow traversal only through the current project directories.
 !/guidelines/
+!/scripts/
 !/src/
 !/src/app/
 !/src/app/components/
@@ -18,12 +19,17 @@
 !/.gitignore
 !/.npmrc
 !/ATTRIBUTIONS.md
+!/AGENTS.md
+!/PROJECT_GUIDE.md
 !/README.md
+!/codegraph.json
 !/guidelines/Guidelines.md
 !/index.html
 !/package-lock.json
 !/package.json
 !/postcss.config.mjs
+!/scripts/codegraph.mjs
+!/scripts/setup-assistant.mjs
 !/src/app/App.tsx
 !/src/app/components/AdminLayout.tsx
 !/src/app/components/AdminRoute.tsx
@@ -95,6 +101,7 @@
 !/src/app/routes.ts
 !/src/main.tsx
 !/src/styles/fonts.css
+!/src/styles/brand.css
 !/src/styles/index.css
 !/src/styles/tailwind.css
 !/src/styles/theme.css
@@ -122,8 +129,17 @@
 /dist/
 /.npm-cache/
 /.security-review/
+/.codegraph/
 /SECURITY_REVIEW.md
 **/.aws/
 **/.ssh/
 **/.agents/
 **/.codex/
+
+# Reviewed repo skill only; all other agent configuration remains excluded.
+!/.agents/
+!/.agents/skills/
+!/.agents/skills/lunara-flower-shop/
+!/.agents/skills/lunara-flower-shop/agents/
+!/.agents/skills/lunara-flower-shop/SKILL.md
+!/.agents/skills/lunara-flower-shop/agents/openai.yaml

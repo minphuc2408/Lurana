@@ -1,0 +1,40 @@
+/* Lunara brand tokens. Existing inline styles remain the visual baseline. */
+:root {
+  --lunara-rose: #C17B8A;
+  --lunara-rose-strong: #9D586B;
+  --lunara-rose-light: #D4A0AC;
+  --lunara-cream: #FDF6F0;
+  --lunara-surface: #FDFBF9;
+  --lunara-blush: #F9EDE9;
+  --lunara-border: #F0DDD5;
+  --lunara-ink: #3D2228;
+  --lunara-body: #6B4C55;
+  --lunara-muted: #9A7080;
+  --lunara-sidebar: #1A0D12;
+  --lunara-admin-background: #F8F4F2;
+  --lunara-success: #7A9E7E;
+  --lunara-warning: #D4A020;
+  --lunara-info: #5B8DD9;
+  --lunara-danger: #E8453C;
+}
+
+@theme inline {
+  --font-display: 'Cormorant Garamond', serif;
+  --font-body: 'Jost', sans-serif;
+  --color-lunara-rose: var(--lunara-rose);
+  --color-lunara-rose-strong: var(--lunara-rose-strong);
+  --color-lunara-rose-light: var(--lunara-rose-light);
+  --color-lunara-cream: var(--lunara-cream);
+  --color-lunara-surface: var(--lunara-surface);
+  --color-lunara-blush: var(--lunara-blush);
+  --color-lunara-border: var(--lunara-border);
+  --color-lunara-ink: var(--lunara-ink);
+  --color-lunara-body: var(--lunara-body);
+  --color-lunara-muted: var(--lunara-muted);
+  --color-lunara-sidebar: var(--lunara-sidebar);
+  --color-lunara-admin-background: var(--lunara-admin-background);
+  --color-lunara-success: var(--lunara-success);
+  --color-lunara-warning: var(--lunara-warning);
+  --color-lunara-info: var(--lunara-info);
+  --color-lunara-danger: var(--lunara-danger);
+}

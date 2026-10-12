@@ -1,18 +1,38 @@
+# Lunara Flower Shop
 
-  # Flower Shop Website Design (Copy) (Community)
+React + TypeScript storefront and admin UI from the Flower Shop Figma design. UI branding is **Lunara**; the GitHub repository is named **Lurana**.
 
-  This is a code bundle for Flower Shop Website Design (Copy) (Community). The original project is available at https://www.figma.com/design/0YRitOqUypqP0K0esw8sXL/Flower-Shop-Website-Design--Copy---Community-.
+Read [PROJECT_GUIDE.md](PROJECT_GUIDE.md) for the Vietnamese handbook: routes, existing components, design tokens, demo limitations, working standards, and feature ideas. Codex uses [AGENTS.md](AGENTS.md) and the repo skill [lunara-flower-shop](.agents/skills/lunara-flower-shop/SKILL.md).
 
-  ## Running the code
+## Run and build
 
-  Run `npm i` to install the dependencies.
+```bash
+npm ci
+npm run dev
+npm run build
+npm run preview
+```
 
-  Run `npm run dev` to start the development server.
+Dev: http://127.0.0.1:5173. Preview: http://127.0.0.1:4173. Production output: `dist/`. Busy ports may cause Vite to select the next port.
 
-  Run `npm run build` to generate the production files in `dist/`.
+Vite 6.4.4, React Router 7.18.4, React/React DOM 18.3.1, Tailwind CSS 4.1.12. Verified environment: Node.js 24.11.1 and npm 11.6.2. Dependency installation uses the official HTTPS npm registry with lifecycle scripts disabled by `.npmrc`.
 
-  Run `npm run preview` to preview the production build at `http://127.0.0.1:4173`.
+This is a frontend demo. Auth, registration, checkout, inventory, orders, and custom requests are not backed by production services.
 
-  Development and preview servers bind to `127.0.0.1`. Dependency installation uses the official npm registry with install scripts disabled by the project `.npmrc`.
+## Configure Codex and CodeGraph
 
-  The project uses Vite 6.4.4, React Router 7.18.4, and React/React DOM 18.3.1. Node.js 24.11.1 and npm 11.6.2 were used for the verified build. Commit `package-lock.json` and use `npm ci` for repeatable installs.
+```bash
+npm run assistant:setup
+npm run graph:status -- --json
+npm run graph:explore -- "Shop toggleAdd Cart"
+```
+
+Setup uses the pinned local CodeGraph 1.5.0 dependency, creates/syncs the root `.codegraph/` index, and generates ignored `.codex/config.toml` for CodeGraph and OpenAI Docs MCP. Open a new Codex session in this trusted project to load the configuration. Project commands disable CodeGraph telemetry and fallback downloads without changing global settings.
+
+The Git allowlist shares only reviewed source, documentation, and skill files. Build output, dependencies, secrets, the index database, audit evidence, and local Codex configuration remain ignored. Review new shared files and add their exact paths to `.gitignore`.
+
+## Attribution
+
+Original Figma project: [Flower Shop Website Design](https://www.figma.com/design/0YRitOqUypqP0K0esw8sXL/Flower-Shop-Website-Design--Copy---Community-).
+
+See [ATTRIBUTIONS.md](ATTRIBUTIONS.md) for shadcn/ui and Unsplash attribution.

@@ -1,0 +1,15 @@
+{
+  "exclude": [
+    "node_modules/",
+    "dist/",
+    ".git/",
+    ".codegraph/",
+    ".security-review/",
+    ".npm-cache/",
+    ".agents/",
+    ".codex/",
+    "**/.env*",
+    "**/*.pem",
+    "**/*.key"
+  ]
+}
