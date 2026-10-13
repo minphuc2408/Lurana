@@ -1,8 +1,10 @@
+import { useLocale } from "@/shared/i18n";
 import { cn } from "@/shared/lib/utils";
 import { colorClass } from "@/shared/lib/color-classes";
 import { Package } from "lucide-react";
 import type { ProfileModel } from "../hooks/useProfile";
 export function ProfileOrders(model: ProfileModel) {
+  const { t } = useLocale("profile");
   const {
     statusColor,
     recentOrders
@@ -23,7 +25,7 @@ export function ProfileOrders(model: ProfileModel) {
                   <div className="flex items-center gap-4">
                     <span className="font-display [font-size:1rem] text-lunara-rose-strong [font-weight:600]">{order.total}</span>
                     <span className={cn("px-3 py-1 rounded-full [font-size:0.75rem] [font-weight:500]", colorClass(`${statusColor(order.status)}20`, "backgroundColor"), colorClass(statusColor(order.status), "color"))}>
-                      {order.status}
+                      {t(order.status)}
                     </span>
                   </div>
                 </div>)}

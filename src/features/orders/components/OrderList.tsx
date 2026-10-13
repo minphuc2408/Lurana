@@ -1,3 +1,4 @@
+import { useLocale, getLocalizedName } from "@/shared/i18n";
 import { cn } from "@/shared/lib/utils";
 import { colorClass } from "@/shared/lib/color-classes";
 import { Package, Truck, CheckCircle, Clock, ChevronDown, ChevronUp, MapPin, Star } from "lucide-react";
@@ -30,6 +31,7 @@ const statusConfig: Record<OrderStatus, {
   }
 };
 export function OrderList(model: MyOrdersModel) {
+  const { t, language } = useLocale("orders");
   const {
     expanded,
     setExpanded,
@@ -39,7 +41,7 @@ export function OrderList(model: MyOrdersModel) {
   return <div className="flex flex-col gap-4">
           {filtered.length === 0 && <div className="text-center py-16">
               <Package size={40} className="text-lunara-rose-light [margin:0_auto_12px]" />
-              <p className="text-lunara-body">No orders found.</p>
+              <p className="text-lunara-body">{t("No orders found.")}</p>
             </div>}
 
           {filtered.map(order => {
@@ -56,11 +58,11 @@ export function OrderList(model: MyOrdersModel) {
                       <div className="flex items-center gap-2">
                         <span className="font-display [font-size:1rem] text-lunara-ink [font-weight:500]">{order.id}</span>
                         <span className={cn("flex items-center gap-1 px-2 py-0.5 rounded-full [font-size:0.7rem] [font-weight:500]", colorClass(cfg.bg, "backgroundColor"), colorClass(cfg.color, "color"))}>
-                          {cfg.icon} {order.status}
+                          {cfg.icon} {t(order.status)}
                         </span>
                       </div>
                       <div className="[font-size:0.78rem] text-lunara-body [margin-top:2px]">
-                        {order.date} · {order.items.length} item{order.items.length > 1 ? "s" : ""}
+                        {order.date} · {t("itemCount", { count: order.items.length })}
                       </div>
                     </div>
                   </div>
@@ -77,10 +79,10 @@ export function OrderList(model: MyOrdersModel) {
                     {/* Items */}
                     <div className="flex flex-col gap-3 mb-5">
                       {order.items.map((item, i) => <div key={i} className="flex items-center gap-3">
-                          <img src={item.image} alt={item.name} className="rounded-lg [width:52px] [height:60px] [object-fit:cover]" />
+                          <img src={item.image} alt={getLocalizedName(item, language)} className="rounded-lg [width:52px] [height:60px] [object-fit:cover]" />
                           <div className="flex-1">
-                            <div className="font-display [font-size:0.95rem] text-lunara-ink">{item.name}</div>
-                            <div className="[font-size:0.78rem] text-lunara-body">Qty: {item.qty}</div>
+                            <div className="font-display [font-size:0.95rem] text-lunara-ink">{getLocalizedName(item, language)}</div>
+                            <div className="[font-size:0.78rem] text-lunara-body">{t("Qty:")}{" "}{item.qty}</div>
                           </div>
                           <span className="[font-size:0.9rem] text-lunara-rose-strong">₱{(item.price * item.qty).toLocaleString()}</span>
                         </div>)}
@@ -102,7 +104,7 @@ export function OrderList(model: MyOrdersModel) {
                               <div className={cn("", `w-full h-1 ${i === order.tracking.length - 1 ? "hidden" : ""}`, i + 1 < order.trackStep ? "bg-lunara-rose-strong" : "bg-lunara-border")} />
                             </div>
                             <span className={cn("[font-size:0.62rem] [margin-top:4px] [text-align:center]", i < order.trackStep ? "text-lunara-rose-strong" : "text-lunara-body")}>
-                              {step}
+                              {t(step)}
                             </span>
                           </div>)}
                       </div>
@@ -111,20 +113,17 @@ export function OrderList(model: MyOrdersModel) {
                     {/* Actions */}
                     <div className="flex flex-wrap gap-3 pt-4 [border-top:1px_solid_#F0DDD5]">
                       {order.status === "Delivered" && !order.rating && <button className="flex items-center gap-1 px-4 py-2 rounded-full bg-lunara-blush [border:none] text-lunara-rose-strong [cursor:pointer] [font-size:0.8rem]">
-                          <Star size={13} /> Write a Review
-                        </button>}
+                          <Star size={13} /> {t("Write a Review")}</button>}
                       {order.rating && <div className="flex items-center gap-1 px-4 py-2 rounded-full bg-[#EDF7EF]">
                           {Array.from({
                 length: order.rating
               }).map((_, i) => <Star key={i} size={12} fill="#7A9E7E" color="#7A9E7E" />)}
-                          <span className="[font-size:0.75rem] text-[#426647] [margin-left:4px]">Reviewed</span>
+                          <span className="[font-size:0.75rem] text-[#426647] [margin-left:4px]">{t("Reviewed")}</span>
                         </div>}
                       <button className="flex items-center gap-1 px-4 py-2 rounded-full [border:1px_solid_#F0DDD5] bg-transparent text-lunara-body [cursor:pointer] [font-size:0.8rem]">
-                        Reorder
-                      </button>
+                        {t("Reorder")}</button>
                       <button className="flex items-center gap-1 px-4 py-2 rounded-full [border:1px_solid_#F0DDD5] bg-transparent text-lunara-body [cursor:pointer] [font-size:0.8rem]">
-                        Get Receipt
-                      </button>
+                        {t("Get Receipt")}</button>
                     </div>
                   </div>}
               </div>;

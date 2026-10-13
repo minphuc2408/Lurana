@@ -2,6 +2,7 @@ import { lazy } from "react";
 import { createBrowserRouter } from "react-router";
 import { MainLayout } from "./layouts/MainLayout";
 import { AdminLayout } from "./layouts/AdminLayout";
+import { AuthLayout } from "./layouts/AuthLayout";
 import { RouteError } from "@/shared/components/RouteError";
 import HomePage from "@/pages/HomePage";
 import ShopPage from "@/pages/ShopPage";
@@ -67,11 +68,7 @@ export const router = createBrowserRouter([{
     Component: AdminSettingsPage
   }]
 }, {
-  path: "/login",
-  Component: LoginPage,
-  errorElement: <RouteError />
-}, {
-  path: "/signup",
-  Component: SignupPage,
-  errorElement: <RouteError />
+  Component: AuthLayout,
+  errorElement: <RouteError />,
+  children: [{ path: "/login", Component: LoginPage }, { path: "/signup", Component: SignupPage }]
 }]);

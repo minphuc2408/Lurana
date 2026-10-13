@@ -1,7 +1,9 @@
+import { useLocale } from "@/shared/i18n";
 import { CheckCircle } from "lucide-react";
 import type { CustomOrderModel } from "../hooks/useCustomOrder";
 import type { FormData } from "../custom-order.types";
 export function CustomOrderSuccess(model: CustomOrderModel) {
+  const { t } = useLocale("custom-order");
   const {
     setStep,
     setSubmitted,
@@ -15,17 +17,15 @@ export function CustomOrderSuccess(model: CustomOrderModel) {
             <CheckCircle size={36} className="text-lunara-rose-strong" />
           </div>
           <h2 className="font-display [font-size:2.2rem] [font-weight:600] text-lunara-ink [margin-bottom:12px]">
-            Demo Request Ready
-          </h2>
+            {t("Demo Request Ready")}</h2>
           <p className="text-lunara-body [font-size:0.92rem] [line-height:1.7] [margin-bottom:8px]">
-            Thank you, <strong>{formData.name}</strong>! Your flower request preview is ready for <strong>{formData.occasion || "a special occasion"}</strong>.
+            {t("Thank you,")}{" "}<strong>{formData.name}</strong>{t("! Your flower request preview is ready for")}{" "}<strong>{t(formData.occasion || "a special occasion")}</strong>.
           </p>
           <p className="text-lunara-body [font-size:0.82rem] [margin-bottom:32px]">
-            This preview was not submitted. No email will be sent to <strong>{formData.email}</strong>.
+            {t("This preview was not submitted. No email will be sent to")}{" "}<strong>{formData.email}</strong>.
           </p>
           <button onClick={resetRequest} className="px-8 py-3 rounded-full bg-lunara-rose-strong text-white [border:none] [cursor:pointer] [font-size:0.85rem]">
-            Submit Another Request
-          </button>
+            {t("Submit Another Request")}</button>
         </div>
       </div>;
 }

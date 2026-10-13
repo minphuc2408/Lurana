@@ -1,9 +1,11 @@
+import { useLocale } from "@/shared/i18n";
 import { SignupForm } from "./SignupForm";
 import { SignupSuccess } from "./SignupSuccess";
 import { Link } from "react-router";
 import { Flower, Check, ArrowLeft } from "lucide-react";
 import type { SignupModel } from "../hooks/useSignup";
 export function SignupView(model: SignupModel) {
+  const { t } = useLocale("auth");
   const {
     submitted,
     bgImage
@@ -21,14 +23,13 @@ export function SignupView(model: SignupModel) {
             <span className="font-display [font-size:1.6rem] [font-weight:600] text-white [letter-spacing:0.1em]">lunara</span>
           </div>
           <p className="font-display [font-size:1.7rem] text-white [font-style:italic] [line-height:1.4] [max-width:340px]">
-            "Join our community of flower lovers and bring nature's beauty into every moment."
-          </p>
+            {t("\"Join our community of flower lovers and bring nature's beauty into every moment.\"")}</p>
           <div className="flex flex-col gap-2 mt-8">
             {["Free account creation", "Exclusive member discounts", "Early access to seasonal collections", "Custom order tracking"].map(b => <div key={b} className="flex items-center gap-2">
                 <div className="w-5 h-5 rounded-full flex items-center justify-center bg-lunara-rose-strong">
                   <Check size={11} color="white" />
                 </div>
-                <span className="[font-size:0.82rem] text-lunara-rose-light">{b}</span>
+                <span className="[font-size:0.82rem] text-lunara-rose-light">{t(b)}</span>
               </div>)}
           </div>
         </div>
@@ -39,8 +40,7 @@ export function SignupView(model: SignupModel) {
         {/* Back to Home */}
         <div className="w-full mb-4 [max-width:460px]">
           <Link to="/" className="inline-flex items-center gap-1.5 [text-decoration:none] [font-size:0.8rem] text-lunara-body [letter-spacing:0.05em]">
-            <ArrowLeft size={14} /> Back to Home
-          </Link>
+            <ArrowLeft size={14} /> {t("Back to Home")}</Link>
         </div>
 
         <div className="mb-8 text-center">

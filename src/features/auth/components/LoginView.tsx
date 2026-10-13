@@ -1,8 +1,10 @@
+import { useLocale } from "@/shared/i18n";
 import { LoginForm } from "./LoginForm";
 import { Link } from "react-router";
 import { Flower, ArrowLeft } from "lucide-react";
 import type { LoginModel } from "../hooks/useLogin";
 export function LoginView(model: LoginModel) {
+  const { t } = useLocale("auth");
   const {
     bgImage
   } = model;
@@ -12,8 +14,7 @@ export function LoginView(model: LoginModel) {
         {/* Back to Home */}
         <div className="w-full mb-6 [max-width:420px]">
           <Link to="/" className="inline-flex items-center gap-1.5 [text-decoration:none] [font-size:0.8rem] text-lunara-body [letter-spacing:0.05em]">
-            <ArrowLeft size={14} /> Back to Home
-          </Link>
+            <ArrowLeft size={14} /> {t("Back to Home")}</Link>
         </div>
 
         {/* Logo */}
@@ -25,8 +26,7 @@ export function LoginView(model: LoginModel) {
             </span>
           </Link>
           <p className="text-lunara-body [font-size:0.85rem] [margin-top:6px]">
-            Where every bloom tells a story
-          </p>
+            {t("Where every bloom tells a story")}</p>
         </div>
 
         <LoginForm {...model} />
@@ -37,9 +37,8 @@ export function LoginView(model: LoginModel) {
         <div className="[position:absolute] [inset:0] [background:linear-gradient(to_bottom,_transparent_30%,_rgba(61,34,40,0.8))]" />
         <div className="relative z-10 p-12">
           <p className="font-display [font-size:1.8rem] text-white [font-style:italic] [line-height:1.4] [max-width:340px]">
-            "Flowers are the music of the ground, from earth's lips spoken without sound."
-          </p>
-          <p className="text-lunara-rose-light [font-size:0.82rem] [margin-top:12px]">— Edwin Curran</p>
+            {t("\"Flowers are the music of the ground, from earth's lips spoken without sound.\"")}</p>
+          <p className="text-lunara-rose-light [font-size:0.82rem] [margin-top:12px]">{t("— Edwin Curran")}</p>
         </div>
       </div>
     </div>;

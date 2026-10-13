@@ -1,3 +1,4 @@
+import { useLocale } from "@/shared/i18n";
 import { ProfileSettings } from "./ProfileSettings";
 import { ProfileWishlist } from "./ProfileWishlist";
 import { ProfileOrders } from "./ProfileOrders";
@@ -7,6 +8,7 @@ import { Camera, Package } from "lucide-react";
 import { Link, Navigate } from "react-router";
 import type { ProfileModel } from "../hooks/useProfile";
 export function ProfileView(model: ProfileModel) {
+  const { t } = useLocale("profile");
   const {
     user,
     activeTab,
@@ -32,7 +34,7 @@ export function ProfileView(model: ProfileModel) {
             <div className="w-28 h-28 rounded-full border-4 flex items-center justify-center shadow-lg bg-lunara-blush border-white [font-size:2.5rem]">
               🌸
             </div>
-            <button className="absolute bottom-0 right-0 w-8 h-8 rounded-full flex items-center justify-center shadow-md bg-lunara-rose-strong [border:2px_solid_white]" aria-label="Change photo">
+            <button className="absolute bottom-0 right-0 w-8 h-8 rounded-full flex items-center justify-center shadow-md bg-lunara-rose-strong [border:2px_solid_white]" aria-label={t("Change photo")}>
               <Camera size={14} color="white" />
             </button>
           </div>
@@ -44,15 +46,14 @@ export function ProfileView(model: ProfileModel) {
           </div>
           <div className="pb-2 flex gap-3">
             <Link to="/orders" className="flex items-center gap-2 px-4 py-2 rounded-full bg-lunara-blush text-lunara-rose-strong [text-decoration:none] [font-size:0.82rem] [border:1px_solid_#F0DDD5]">
-              <Package size={14} /> My Orders
-            </Link>
+              <Package size={14} /> {t("My Orders")}</Link>
           </div>
         </div>
 
         {/* Tabs */}
         <div className="flex gap-1 mb-8 border-b border-lunara-border">
           {tabs.map(tab => <button key={tab} onClick={() => setActiveTab(tab)} className={cn("px-5 py-3 bg-transparent [border:none] [cursor:pointer] [font-size:0.85rem] [transition:all_0.2s] [letter-spacing:0.05em]", activeTab === tab ? "text-lunara-rose-strong" : "text-lunara-body", activeTab === tab ? "[border-bottom:2px_solid_#C17B8A]" : "[border-bottom:2px_solid_transparent]")}>
-              {tab}
+              {t(tab)}
             </button>)}
         </div>
 

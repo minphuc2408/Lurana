@@ -1,7 +1,9 @@
+import { useLocale } from "@/shared/i18n";
 import { cn } from "@/shared/lib/utils";
 import { Edit2, Save, MapPin, Phone, Mail } from "lucide-react";
 import type { ProfileModel } from "../hooks/useProfile";
 export function ProfileDetails(model: ProfileModel) {
+  const { t } = useLocale("profile");
   const {
     editing,
     setEditing,
@@ -16,9 +18,9 @@ export function ProfileDetails(model: ProfileModel) {
             <div className="md:col-span-2">
               <div className="rounded-2xl p-6 bg-white [border:1px_solid_#F0DDD5]">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="font-display [font-size:1.3rem] text-lunara-ink">Personal Information</h2>
+                  <h2 className="font-display [font-size:1.3rem] text-lunara-ink">{t("Personal Information")}</h2>
                   <button onClick={toggleEdit} className={cn("flex items-center gap-2 px-4 py-2 rounded-full [border:none] [cursor:pointer] [font-size:0.82rem]", editing ? "bg-lunara-rose-strong" : "bg-lunara-blush", editing ? "text-white" : "text-lunara-rose-strong")}>
-                    {editing ? <><Save size={14} /> Save</> : <><Edit2 size={14} /> Edit</>}
+                    {editing ? <><Save size={14} /> {t("Save")}</> : <><Edit2 size={14} /> {t("Edit")}</>}
                   </button>
                 </div>
 
@@ -37,7 +39,7 @@ export function ProfileDetails(model: ProfileModel) {
             label: "Phone Number"
           }].map(field => <div key={field.key}>
                       <label className="[display:block] [font-size:0.72rem] text-lunara-body [letter-spacing:0.1em] [text-transform:uppercase] [margin-bottom:4px]" htmlFor={`profiledetails-1-${field.key}`}>
-                        {field.label}
+                        {t(field.label)}
                       </label>
                       {editing ? <input type="text" value={editData[field.key as keyof typeof editData]} onChange={e => setEditData({
               ...editData,
@@ -45,14 +47,14 @@ export function ProfileDetails(model: ProfileModel) {
             })} className="w-full rounded-xl px-4 py-2 [border:1px_solid_#F0DDD5] [font-size:0.88rem] text-lunara-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lunara-ink bg-lunara-surface" id={`profiledetails-1-${field.key}`} /> : <p className="[font-size:0.9rem] text-lunara-ink">{profile[field.key as keyof typeof profile]}</p>}
                     </div>)}
                   <div className="col-span-2">
-                    <label className="[display:block] [font-size:0.72rem] text-lunara-body [letter-spacing:0.1em] [text-transform:uppercase] [margin-bottom:4px]" htmlFor={"profiledetails-2"}>Address</label>
+                    <label className="[display:block] [font-size:0.72rem] text-lunara-body [letter-spacing:0.1em] [text-transform:uppercase] [margin-bottom:4px]" htmlFor={"profiledetails-2"}>{t("Address")}</label>
                     {editing ? <input type="text" value={editData.address} onChange={e => setEditData({
               ...editData,
               address: e.target.value
             })} className="w-full rounded-xl px-4 py-2 [border:1px_solid_#F0DDD5] [font-size:0.88rem] text-lunara-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lunara-ink bg-lunara-surface" id={"profiledetails-2"} /> : <p className="[font-size:0.9rem] text-lunara-ink">{profile.address}</p>}
                   </div>
                   <div className="col-span-2">
-                    <label className="[display:block] [font-size:0.72rem] text-lunara-body [letter-spacing:0.1em] [text-transform:uppercase] [margin-bottom:4px]" htmlFor={"profiledetails-3"}>Bio</label>
+                    <label className="[display:block] [font-size:0.72rem] text-lunara-body [letter-spacing:0.1em] [text-transform:uppercase] [margin-bottom:4px]" htmlFor={"profiledetails-3"}>{t("Bio")}</label>
                     {editing ? <textarea value={editData.bio} onChange={e => setEditData({
               ...editData,
               bio: e.target.value
@@ -65,7 +67,7 @@ export function ProfileDetails(model: ProfileModel) {
             {/* Sidebar */}
             <div className="flex flex-col gap-4">
               <div className="rounded-2xl p-5 bg-white [border:1px_solid_#F0DDD5]">
-                <h3 className="font-display [font-size:1.1rem] text-lunara-ink [margin-bottom:16px]">Quick Info</h3>
+                <h3 className="font-display [font-size:1.1rem] text-lunara-ink [margin-bottom:16px]">{t("Quick Info")}</h3>
                 <div className="flex flex-col gap-3">
                   {[{
             icon: <Mail size={14} />,
@@ -84,7 +86,7 @@ export function ProfileDetails(model: ProfileModel) {
               </div>
 
               <div className="rounded-2xl p-5 bg-lunara-blush [border:1px_solid_#F0DDD5]">
-                <h3 className="font-display [font-size:1.1rem] text-lunara-ink [margin-bottom:12px]">My Stats</h3>
+                <h3 className="font-display [font-size:1.1rem] text-lunara-ink [margin-bottom:12px]">{t("My Stats")}</h3>
                 {[{
           label: "Orders Placed",
           value: "12"
@@ -95,7 +97,7 @@ export function ProfileDetails(model: ProfileModel) {
           label: "Member Since",
           value: "Jan 2025"
         }].map(s => <div key={s.label} className="flex justify-between py-2 [border-bottom:1px_solid_#F0DDD5]">
-                    <span className="[font-size:0.82rem] text-lunara-body">{s.label}</span>
+                    <span className="[font-size:0.82rem] text-lunara-body">{t(s.label)}</span>
                     <span className="[font-size:0.88rem] text-lunara-ink [font-weight:500]">{s.value}</span>
                   </div>)}
               </div>

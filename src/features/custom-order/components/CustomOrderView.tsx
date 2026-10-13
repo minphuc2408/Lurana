@@ -1,3 +1,4 @@
+import { useLocale } from "@/shared/i18n";
 import { ContactStep } from "./ContactStep";
 import { DetailsStep } from "./DetailsStep";
 import { StyleStep } from "./StyleStep";
@@ -9,6 +10,7 @@ import { ChevronRight, ChevronLeft } from "lucide-react";
 import type { CustomOrderModel } from "../hooks/useCustomOrder";
 import type { FormData } from "../custom-order.types";
 export function CustomOrderView(model: CustomOrderModel) {
+  const { t } = useLocale("custom-order");
   const {
     step,
     setStep,
@@ -25,13 +27,11 @@ export function CustomOrderView(model: CustomOrderModel) {
       {/* Header */}
       <div className="[background:linear-gradient(135deg,_#F9EDE9_0%,_#F5E8E4_100%)] [padding:60px_24px_40px]">
         <div className="max-w-3xl mx-auto text-center">
-          <span className="[font-size:0.75rem] [letter-spacing:0.2em] [text-transform:uppercase] text-lunara-rose-strong">Bespoke Florals</span>
+          <span className="[font-size:0.75rem] [letter-spacing:0.2em] [text-transform:uppercase] text-lunara-rose-strong">{t("Bespoke Florals")}</span>
           <h1 className="font-display [font-size:clamp(2rem,_4vw,_3rem)] [font-weight:600] text-lunara-ink [margin-top:8px]">
-            Custom Flower Request
-          </h1>
+            {t("Custom Flower Request")}</h1>
           <p className="text-lunara-body [font-size:0.92rem] [margin-top:12px]">
-            Tell us your vision and our floral artists will bring it to life
-          </p>
+            {t("Tell us your vision and our floral artists will bring it to life")}</p>
         </div>
       </div>
 
@@ -55,10 +55,9 @@ export function CustomOrderView(model: CustomOrderModel) {
           {/* Navigation Buttons */}
           <div className="flex justify-between mt-8">
             <button onClick={previousStep} disabled={step === 1} className={cn("flex items-center gap-2 px-6 py-3 rounded-full [border:1px_solid_#F0DDD5] bg-transparent [font-size:0.85rem]", step === 1 ? "text-[#D0C0C4]" : "text-lunara-body", step === 1 ? "[cursor:not-allowed]" : "[cursor:pointer]")}>
-              <ChevronLeft size={16} /> Back
-            </button>
+              <ChevronLeft size={16} /> {t("Back")}</button>
             <button onClick={continueRequest} className="flex items-center gap-2 px-8 py-3 rounded-full bg-lunara-rose-strong text-white [border:none] [cursor:pointer] [font-size:0.85rem] [letter-spacing:0.08em]">
-              {step === totalSteps ? "Submit Request" : "Continue"} <ChevronRight size={16} />
+              {step === totalSteps ? t("Submit Request") : t("Continue")} <ChevronRight size={16} />
             </button>
           </div>
         </div>

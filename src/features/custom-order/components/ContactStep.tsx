@@ -1,13 +1,15 @@
+import { useLocale } from "@/shared/i18n";
 import type { CustomOrderModel } from "../hooks/useCustomOrder";
 import type { FormData } from "../custom-order.types";
 export function ContactStep(model: CustomOrderModel) {
+  const { t } = useLocale("custom-order");
   const {
     formData,
     setFormData
   } = model;
   return <div>
-              <h2 className="font-display [font-size:1.8rem] text-lunara-ink [margin-bottom:6px]">Your contact details</h2>
-              <p className="[font-size:0.85rem] text-lunara-body [margin-bottom:24px]">So our team can reach you about your order</p>
+              <h2 className="font-display [font-size:1.8rem] text-lunara-ink [margin-bottom:6px]">{t("Your contact details")}</h2>
+              <p className="[font-size:0.85rem] text-lunara-body [margin-bottom:24px]">{t("So our team can reach you about your order")}</p>
 
               <div className="flex flex-col gap-4">
                 {[{
@@ -27,7 +29,7 @@ export function ContactStep(model: CustomOrderModel) {
         type: "tel"
       }].map(field => <div key={field.key}>
                     <label className="[display:block] [font-size:0.78rem] text-lunara-body [letter-spacing:0.1em] [text-transform:uppercase] [margin-bottom:6px]" htmlFor={`contactstep-1-${field.key}`}>
-                      {field.label}
+                      {t(field.label)}
                     </label>
                     <input type={field.type} placeholder={field.placeholder} value={formData[field.key as keyof FormData] as string} onChange={e => setFormData({
           ...formData,
@@ -37,25 +39,25 @@ export function ContactStep(model: CustomOrderModel) {
 
                 {/* Summary */}
                 <div className="rounded-xl p-5 mt-2 bg-lunara-blush [border:1px_solid_#F0DDD5]">
-                  <h4 className="font-display [font-size:1rem] text-lunara-ink [margin-bottom:12px]">Request Summary</h4>
+                  <h4 className="font-display [font-size:1rem] text-lunara-ink [margin-bottom:12px]">{t("Request Summary")}</h4>
                   <div className="flex flex-col gap-1">
                     {[{
             label: "Occasion",
-            value: formData.occasion || "Not specified"
+            value: t(formData.occasion || "Not specified")
           }, {
             label: "Colors",
-            value: formData.colors.join(", ") || "Not specified"
+            value: formData.colors.map(color => t(color)).join(", ") || t("Not specified")
           }, {
             label: "Flowers",
-            value: formData.flowers.join(", ") || "Not specified"
+            value: formData.flowers.map(flower => t(flower)).join(", ") || t("Not specified")
           }, {
             label: "Size",
-            value: formData.size || "Not specified"
+            value: t(formData.size || "Not specified")
           }, {
             label: "Date Needed",
-            value: formData.date || "Not specified"
+            value: formData.date || t("Not specified")
           }].map(item => <div key={item.label} className="flex gap-2">
-                        <span className="[font-size:0.78rem] text-lunara-body [min-width:80px]">{item.label}:</span>
+                        <span className="[font-size:0.78rem] text-lunara-body [min-width:80px]">{t(item.label)}:</span>
                         <span className="[font-size:0.78rem] text-lunara-ink">{item.value}</span>
                       </div>)}
                   </div>

@@ -1,7 +1,9 @@
+import { useLocale } from "@/shared/i18n";
 import { cn } from "@/shared/lib/utils";
 import { Heart, Star, Settings, LogOut } from "lucide-react";
 import type { ProfileModel } from "../hooks/useProfile";
 export function ProfileSettings(model: ProfileModel) {
+  const { t } = useLocale("profile");
   const {
     logout
   } = model;
@@ -25,8 +27,8 @@ export function ProfileSettings(model: ProfileModel) {
                     <span className="text-lunara-rose-strong">{item.icon}</span>
                   </div>
                   <div className="flex-1">
-                    <div className="[font-size:0.9rem] text-lunara-ink [font-weight:500]">{item.label}</div>
-                    <div className="[font-size:0.78rem] text-lunara-body">{item.desc}</div>
+                    <div className="[font-size:0.9rem] text-lunara-ink [font-weight:500]">{t(item.label)}</div>
+                    <div className="[font-size:0.78rem] text-lunara-body">{t(item.desc)}</div>
                   </div>
                   <span className="text-lunara-body">›</span>
                 </button>)}
@@ -34,7 +36,7 @@ export function ProfileSettings(model: ProfileModel) {
                 <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#FFF0F0]">
                   <LogOut size={18} className="text-[#B42318]" />
                 </div>
-                <span className="[font-size:0.9rem] text-[#B42318]">Sign Out</span>
+                <span className="[font-size:0.9rem] text-[#B42318]">{t("Sign Out")}</span>
               </button>
             </div>
           </div>;

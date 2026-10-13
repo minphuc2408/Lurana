@@ -1,7 +1,9 @@
+import { useLocale } from "@/shared/i18n";
 import { Link } from "react-router";
 import { Check } from "lucide-react";
 import type { SignupModel } from "../hooks/useSignup";
 export function SignupSuccess(model: SignupModel) {
+  const { t } = useLocale("auth");
   const {
     form
   } = model;
@@ -11,14 +13,11 @@ export function SignupSuccess(model: SignupModel) {
             <Check size={28} className="text-lunara-rose-strong" />
           </div>
           <h2 className="font-display [font-size:2rem] [font-weight:600] text-lunara-ink [margin-bottom:10px]">
-            Account Preview Ready
-          </h2>
+            {t("Account Preview Ready")}</h2>
           <p className="text-lunara-body [font-size:0.9rem] [line-height:1.7] [margin-bottom:28px]">
-            This is an account form preview for <strong>{form.firstName}</strong>. No account was created. Use a demo account to sign in.
-          </p>
+            {t("This is an account form preview for")}{" "}<strong>{form.firstName}</strong>{t(". No account was created. Use a demo account to sign in.")}</p>
           <Link to="/login" className="block py-3 rounded-full bg-lunara-rose-strong text-white [text-decoration:none] [font-size:0.85rem]">
-            Sign In to Your Account
-          </Link>
+            {t("Sign In to Your Account")}</Link>
         </div>
       </div>;
 }

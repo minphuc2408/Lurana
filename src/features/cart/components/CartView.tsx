@@ -1,3 +1,4 @@
+import { useLocale } from "@/shared/i18n";
 import { CartSummary } from "./CartSummary";
 import { CheckoutForm } from "./CheckoutForm";
 import { DeliveryOptions } from "./DeliveryOptions";
@@ -8,6 +9,7 @@ import { Link } from "react-router";
 import { ShoppingBag, ChevronRight } from "lucide-react";
 import type { CartModel } from "../hooks/useCheckout";
 export function CartView(model: CartModel) {
+  const { t } = useLocale("cart");
   const {
     items,
     step
@@ -20,7 +22,7 @@ export function CartView(model: CartModel) {
       <div className="[background:linear-gradient(135deg,_#F9EDE9_0%,_#F5E8E4_100%)] [padding:50px_24px_30px]">
         <div className="max-w-7xl mx-auto">
           <h1 className="font-display [font-size:clamp(2rem,_4vw,_3rem)] [font-weight:600] text-lunara-ink">
-            {step === "cart" ? "Your Cart" : "Checkout"}
+            {step === "cart" ? t("Your Cart") : t("Checkout")}
           </h1>
           {/* Breadcrumb steps */}
           <div className="flex items-center gap-2 mt-3">
@@ -29,7 +31,7 @@ export function CartView(model: CartModel) {
                   <div className={cn("w-7 h-7 rounded-full flex items-center justify-center [font-size:0.75rem] [font-weight:600]", step === s || s === "cart" && step === "checkout" ? "bg-lunara-rose-strong" : "bg-lunara-border", step === s || s === "cart" && step === "checkout" ? "text-white" : "text-lunara-body")}>
                     {i + 1}
                   </div>
-                  <span className={cn("[font-size:0.82rem] [text-transform:capitalize]", step === s ? "text-lunara-rose-strong" : "text-lunara-body")}>{s}</span>
+                  <span className={cn("[font-size:0.82rem] [text-transform:capitalize]", step === s ? "text-lunara-rose-strong" : "text-lunara-body")}>{t(s)}</span>
                 </div>
                 {i < 1 && <ChevronRight size={14} className="text-lunara-body" />}
               </div>)}
@@ -37,14 +39,14 @@ export function CartView(model: CartModel) {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-10 grid lg:grid-cols-3 gap-10">
+      <div className="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-10">
         {/* Left: Cart or Checkout Form */}
-        <div className="lg:col-span-2">
+        <div className="min-w-0 lg:col-span-2">
           {step === "cart" ? <>
               {items.length === 0 ? <div className="text-center py-20">
                   <ShoppingBag size={48} className="text-lunara-rose-light [margin:0_auto_16px]" />
-                  <p className="text-lunara-body [font-size:1rem]">Your cart is empty.</p>
-                  <Link to="/shop" className="text-lunara-rose-strong [font-size:0.88rem] [text-decoration:none]">Browse flowers →</Link>
+                  <p className="text-lunara-body [font-size:1rem]">{t("Your cart is empty.")}</p>
+                  <Link to="/shop" className="text-lunara-rose-strong [font-size:0.88rem] [text-decoration:none]">{t("Browse flowers →")}</Link>
                 </div> : <CartItemList {...model} />}
 
               {/* Delivery Options */}

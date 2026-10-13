@@ -1,8 +1,10 @@
+import { useLocale } from "@/shared/i18n";
 import { cn } from "@/shared/lib/utils";
 import { Flower, Palette, Package, MessageSquare } from "lucide-react";
 import type { CustomOrderModel } from "../hooks/useCustomOrder";
 import type { FormData } from "../custom-order.types";
 export function CustomOrderProgress(model: CustomOrderModel) {
+  const { t } = useLocale("custom-order");
   const {
     step,
     totalSteps
@@ -25,11 +27,11 @@ export function CustomOrderProgress(model: CustomOrderModel) {
                 <div className={cn("w-10 h-10 rounded-full flex items-center justify-center transition-all", i + 1 <= step ? "bg-lunara-rose-strong" : "bg-lunara-border", i + 1 <= step ? "text-white" : "text-lunara-body")}>
                   {s.icon}
                 </div>
-                <span className={cn("[font-size:0.72rem] [letter-spacing:0.05em]", i + 1 <= step ? "text-lunara-rose-strong" : "text-lunara-body")}>{s.label}</span>
+                <span className={cn("[font-size:0.72rem] [letter-spacing:0.05em]", i + 1 <= step ? "text-lunara-rose-strong" : "text-lunara-body")}>{t(s.label)}</span>
               </div>)}
           </div>
           <div className="h-1 rounded-full bg-lunara-border">
-            <progress value={(step - 1) / (totalSteps - 1) * 100} max="100" aria-label="Progress" className="h-full rounded-full transition-all duration-500 block w-full appearance-none overflow-hidden [&::-webkit-progress-bar]:bg-transparent [&::-webkit-progress-value]:bg-current [&::-moz-progress-bar]:bg-current text-lunara-rose-strong" />
+            <progress value={(step - 1) / (totalSteps - 1) * 100} max="100" aria-label={t("Progress")} className="h-full rounded-full transition-all duration-500 block w-full appearance-none overflow-hidden [&::-webkit-progress-bar]:bg-transparent [&::-webkit-progress-value]:bg-current [&::-moz-progress-bar]:bg-current text-lunara-rose-strong" />
           </div>
         </div>;
 }
