@@ -1,4 +1,5 @@
-export type StockItem = {
+import type { LocalizedNameFields } from "@/shared/i18n/language";
+export type StockItem = LocalizedNameFields & {
   id: number;
   name: string;
   category: string;

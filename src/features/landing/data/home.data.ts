@@ -3,13 +3,16 @@ export const shopImage = "https://images.unsplash.com/photo-1758262616385-58fb14
 export const testimonials = [{
   name: "Sofia M.",
   review: "The most beautiful arrangement I've ever received. Lunara truly understands what flowers should feel like.",
+  review_vi: "Đây là mẫu hoa đẹp nhất tôi từng nhận. Lunara thật sự hiểu cảm xúc mà những đóa hoa mang lại.",
   stars: 5
 }, {
   name: "Isabella R.",
   review: "My wedding was absolutely perfect. The florals exceeded every expectation I had!",
+  review_vi: "Đám cưới của tôi thật hoàn hảo. Hoa đẹp vượt mọi mong đợi!",
   stars: 5
 }, {
   name: "Andrea T.",
   review: "Fast delivery and the flowers stayed fresh for over two weeks. Will always come back!",
+  review_vi: "Giao nhanh và hoa vẫn tươi hơn hai tuần. Tôi chắc chắn sẽ quay lại!",
   stars: 5
 }];

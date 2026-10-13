@@ -1,6 +1,7 @@
 export type Step = "cart" | "checkout" | "confirmation";
 export type ProductSize = "Small" | "Medium" | "Large";
-export interface CartItem {
+import type { LocalizedNameFields } from "@/shared/i18n/language";
+export interface CartItem extends LocalizedNameFields {
   id: string;
   productId: number;
   name: string;

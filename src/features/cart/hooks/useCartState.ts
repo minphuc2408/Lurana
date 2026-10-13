@@ -5,7 +5,7 @@ import { cartReducer } from "../cart.service";
 import type { CartItem, ProductSize } from "../cart.types";
 function makeItem(productId: number, size: ProductSize, qty = 1): CartItem | null {
   const product = getProduct(productId);
-  return product ? { id: `${productId}:${size}`, productId, name: product.name, price: product.price, image: product.image, size, qty } : null;
+  return product ? { id: `${productId}:${size}`, productId, name: product.name, name_en: product.name_en, name_vi: product.name_vi, name_vn: product.name_vn, price: product.price, image: product.image, size, qty } : null;
 }
 function initialItems() {
   return demoCart.map(item => makeItem(item.productId, item.size, item.qty)).filter((item): item is CartItem => item !== null);

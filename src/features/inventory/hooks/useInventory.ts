@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { StockItem, ModalMode } from "../inventory.types";
 import { getInventoryDemoData } from "../inventory.service";
+import { normalizeSearch } from "@/shared/i18n";
 export function useInventory() {
   const {
     initialStock,
@@ -14,7 +15,7 @@ export function useInventory() {
   const [editingItem, setEditingItem] = useState<StockItem | null>(null);
   const [formData, setFormData] = useState<Omit<StockItem, "id">>(emptyItem);
   const filtered = stockItems.filter(item => {
-    const matchSearch = item.name.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = [item.name, item.name_en, item.name_vi, item.name_vn].some(name => name && normalizeSearch(name).includes(normalizeSearch(search)));
     const matchCat = category === "All" || item.category === category;
     return matchSearch && matchCat;
   });
@@ -44,6 +45,9 @@ export function useInventory() {
   const openEdit = (item: StockItem) => {
     setFormData({
       name: item.name,
+      name_en: item.name_en,
+      name_vi: item.name_vi ?? item.name_vn ?? "",
+      name_vn: item.name_vn,
       category: item.category,
       price: item.price,
       stock: item.stock,
@@ -56,12 +60,13 @@ export function useInventory() {
     setModal("edit");
   };
   const handleSave = () => {
+    const savedItem = { ...formData, name_en: formData.name };
     if (modal === "add") setStockItems(prev => [...prev, {
       id: Date.now(),
-      ...formData
+      ...savedItem
     }]);else if (modal === "edit" && editingItem) setStockItems(prev => prev.map(i => i.id === editingItem.id ? {
       ...i,
-      ...formData
+      ...savedItem
     } : i));
     setModal(null);
   };

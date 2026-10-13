@@ -8,7 +8,7 @@ export const orders = [{
   date: "March 10, 2026",
   status: "Delivered" as OrderStatus,
   items: [{
-    name: "Blush Peony Bouquet",
+    name: "Blush Peony Bouquet", name_en: "Blush Peony Bouquet", name_vi: "Bó mẫu đơn hồng phấn",
     qty: 1,
     price: 1200,
     image: peonyImage
@@ -23,12 +23,12 @@ export const orders = [{
   date: "February 22, 2026",
   status: "Delivered" as OrderStatus,
   items: [{
-    name: "White Lily Elegance",
+    name: "White Lily Elegance", name_en: "White Lily Elegance", name_vi: "Ly trắng thanh lịch",
     qty: 2,
     price: 1100,
     image: lilyImage
   }, {
-    name: "Sunshine Daisy Mix",
+    name: "Sunshine Daisy Mix", name_en: "Sunshine Daisy Mix", name_vi: "Hoa cúc ngập nắng",
     qty: 1,
     price: 850,
     image: sunflowerImage
@@ -43,7 +43,7 @@ export const orders = [{
   date: "March 14, 2026",
   status: "In Transit" as OrderStatus,
   items: [{
-    name: "Garden Party Mix",
+    name: "Garden Party Mix", name_en: "Garden Party Mix", name_vi: "Sắc hoa vườn",
     qty: 1,
     price: 1350,
     image: mixedImage
@@ -58,7 +58,7 @@ export const orders = [{
   date: "March 15, 2026",
   status: "Processing" as OrderStatus,
   items: [{
-    name: "Blush Peony Bouquet",
+    name: "Blush Peony Bouquet", name_en: "Blush Peony Bouquet", name_vi: "Bó mẫu đơn hồng phấn",
     qty: 2,
     price: 1200,
     image: peonyImage

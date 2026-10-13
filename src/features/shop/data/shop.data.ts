@@ -10,6 +10,8 @@ export const wildflowerImage = "https://images.unsplash.com/photo-1735302600702-
 export const products: Product[] = [{
   id: 1,
   name: "Blush Peony Bouquet",
+  name_en: "Blush Peony Bouquet",
+  name_vi: "Bó mẫu đơn hồng phấn",
   price: 1200,
   category: "Bouquets",
   image: peonyImage,
@@ -19,6 +21,8 @@ export const products: Product[] = [{
 }, {
   id: 2,
   name: "Red Rose Romance",
+  name_en: "Red Rose Romance",
+  name_vi: "Hồng đỏ lãng mạn",
   price: 1500,
   category: "Bouquets",
   image: roseImage,
@@ -28,6 +32,8 @@ export const products: Product[] = [{
 }, {
   id: 3,
   name: "Sunshine Daisy Mix",
+  name_en: "Sunshine Daisy Mix",
+  name_vi: "Hoa cúc ngập nắng",
   price: 850,
   category: "Arrangements",
   image: sunflowerImage,
@@ -37,6 +43,8 @@ export const products: Product[] = [{
 }, {
   id: 4,
   name: "Lavender Dreams",
+  name_en: "Lavender Dreams",
+  name_vi: "Giấc mơ oải hương",
   price: 950,
   category: "Arrangements",
   image: lavenderImage,
@@ -46,6 +54,8 @@ export const products: Product[] = [{
 }, {
   id: 5,
   name: "White Lily Elegance",
+  name_en: "White Lily Elegance",
+  name_vi: "Ly trắng thanh lịch",
   price: 1100,
   category: "Bouquets",
   image: lilyImage,
@@ -55,6 +65,8 @@ export const products: Product[] = [{
 }, {
   id: 6,
   name: "Garden Party Mix",
+  name_en: "Garden Party Mix",
+  name_vi: "Sắc hoa vườn",
   price: 1350,
   category: "Gift Sets",
   image: mixedImage,
@@ -64,6 +76,8 @@ export const products: Product[] = [{
 }, {
   id: 7,
   name: "Pastel Tulip Set",
+  name_en: "Pastel Tulip Set",
+  name_vi: "Bộ tulip pastel",
   price: 900,
   category: "Bouquets",
   image: tulipImage,
@@ -73,6 +87,8 @@ export const products: Product[] = [{
 }, {
   id: 8,
   name: "Wildflower Meadow",
+  name_en: "Wildflower Meadow",
+  name_vi: "Đồng hoa dại",
   price: 750,
   category: "Dried Flowers",
   image: wildflowerImage,

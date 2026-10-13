@@ -1,5 +1,6 @@
 export type ProductCategory = "Bouquets" | "Arrangements" | "Dried Flowers" | "Gift Sets";
-export interface Product {
+import type { LocalizedNameFields } from "@/shared/i18n/language";
+export interface Product extends LocalizedNameFields {
   id: number;
   name: string;
   price: number;
@@ -10,3 +11,4 @@ export interface Product {
   reviews: number;
 }
 export interface ProductFilters { category: string; search: string; sort: string; }
+export type ProductDto = Omit<Product, "name"> & LocalizedNameFields;
