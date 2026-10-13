@@ -1,5 +1,7 @@
 /* Shared Lunara palette and typography. Page styles live in Tailwind classes. */
 :root {
+  --lunara-font-display: 'Cormorant Garamond', serif;
+  --lunara-font-body: 'Jost', sans-serif;
   --lunara-rose: #C17B8A;
   --lunara-rose-strong: #9D586B;
   --lunara-rose-light: #D4A0AC;
@@ -18,9 +20,15 @@
   --lunara-danger: #E8453C;
 }
 
+/* i18n updates the root language; utilities inherit these fonts in dialogs too. */
+html[lang='vi'] {
+  --lunara-font-display: 'Lora', serif;
+  --lunara-font-body: 'Be Vietnam Pro', sans-serif;
+}
+
 @theme inline {
-  --font-display: 'Cormorant Garamond', serif;
-  --font-body: 'Jost', sans-serif;
+  --font-display: var(--lunara-font-display);
+  --font-body: var(--lunara-font-body);
   --color-lunara-rose: var(--lunara-rose);
   --color-lunara-rose-strong: var(--lunara-rose-strong);
   --color-lunara-rose-light: var(--lunara-rose-light);
