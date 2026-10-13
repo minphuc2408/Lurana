@@ -22,6 +22,8 @@ Vite 6.4.4, React Router 7.18.4, React/React DOM 18.3.1, Tailwind CSS 4.1.12. Ve
 
 This is a frontend demo. Auth, registration, checkout, inventory, orders, and custom requests are not backed by production services.
 
+English/Vietnamese switching uses `react-i18next` + `i18next` with bundled JSON per feature. EN/VI controls are at the top right; English is the default and the choice persists locally. Products support `name_en`, `name_vi`, and a compatibility `name_vn` alias. Localization keeps PHP pricing and Asia/Manila settings. Read [frontend entities](docs/FRONTEND_ENTITIES.md) and the [database proposal](docs/DATABASE_DESIGN.md) before designing the backend.
+
 Pages in `src/pages` compose modules in `src/features`; generic UI/helpers live in `src/shared`. Cross-feature imports use each feature's `index.ts`. `src/app/router.tsx` owns routing, and `src/app/providers.tsx` composes auth and the shared cart. Admin routes are lazy-loaded. Shop, Cart and navbar share in-memory cart state; reload restores demo fixtures.
 
 With preview running, `npm run check:ui -- http://127.0.0.1:4173` verifies routes and flows using Edge headless on Windows. This check blocks external image/font hosts; local evidence stays in `.security-review`. Run `npm audit` after dependency changes. No ESLint script is configured.

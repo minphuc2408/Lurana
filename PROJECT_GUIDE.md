@@ -16,7 +16,7 @@ ChatGPT thông thường không tự đọc file trên máy. Với phiên không
 
 ## Hiện trạng và bản đồ dự án
 
-UI branding là **Lunara**; repository GitHub tên **Lurana**. Copy sản phẩm dùng tiếng Anh, tiền PHP/₱, settings mặc định Asia/Manila. Giao tiếp với chủ dự án bằng tiếng Việt.
+UI branding là **Lunara**; repository GitHub tên **Lurana**. UI có English/Tiếng Việt, mặc định English; tiền PHP/₱ và settings Asia/Manila giữ nguyên khi đổi ngôn ngữ. Giao tiếp với chủ dự án bằng tiếng Việt.
 
 Đây là **frontend demo**, chưa có backend, database, API catalog, dịch vụ email hay thanh toán. Auth dùng tài khoản fixture; role/session trong trình duyệt chỉ điều khiển UI. Các màn hình success của signup, checkout và custom request mô tả preview, không xác nhận account/order/email thật.
 
@@ -29,7 +29,7 @@ src/
 │   ├── App.tsx
 │   ├── providers.tsx           # AuthProvider + CartProvider
 │   ├── router.tsx              # route tree duy nhất
-│   └── layouts/                # MainLayout, AdminLayout, app hooks
+│   └── layouts/                # MainLayout, AdminLayout, AuthLayout, app hooks
 ├── pages/                      # page mỏng: ghép view và feature hooks
 │   └── admin/                  # các page admin được lazy-load
 ├── features/
@@ -46,7 +46,8 @@ src/
 │   ├── ui/                     # button, input, dialog
 │   ├── components/             # ImageWithFallback, route feedback
 │   ├── hooks/                  # useIsMobile
-│   └── lib/                    # cn, formatMoney, finite color classes
+│   ├── lib/                    # cn, formatMoney, finite color classes
+│   └── i18n/                   # config/hooks/switch + JSON en/vi theo feature
 └── styles/                     # fonts, Tailwind entry, global theme/brand
 ```
 
@@ -125,6 +126,16 @@ Giữ cream/rose floral, rounded cards, pill CTAs, shadow nhẹ, ảnh hoa và L
 
 ## Component có sẵn
 
+### Localization
+
+`shared/i18n/config.ts` tạo i18next instance; `AppProviders` gắn I18nextProvider. Resources JSON được bundle tại `shared/i18n/locales/en|vi/`, tách namespace common/admin/auth/cart/custom-order/inventory/landing/orders/profile/shop. Không gọi dịch vụ dịch hoặc backend để đổi UI. English text hiện tại được giữ làm key/value; keySeparator/nsSeparator tắt để copy có dấu chấm/dấu hai chấm hoạt động. Message có count dùng các suffix plural của i18next và interpolation, không nối hậu tố English `s` trong JSX.
+
+EN/VI nằm ở mép phải header storefront/admin và góc phải trên màn hình auth (kể cả signup preview). Mặc định English, nhớ preference `lunara_language` ở localStorage; khi storage bị chặn vẫn đổi được trong phiên. `document.documentElement.lang` cập nhật theo locale. Tiếng Việt thiếu key fallback English. Navbar chuyển sang menu mobile ở dưới breakpoint lg để chứa nhãn Việt và language switch.
+
+Catalog có `name_en/name_vi`; `name` giữ compatibility. `name_vn` chỉ là alias tiếng Việt cho DTO từ backend tương lai. `getLocalizedName` ưu tiên vi → vn → en → legacy cho tiếng Việt; English ưu tiên en → legacy → vi → vn. Cart/historical item giữ tên snapshot song ngữ; thêm/sửa inventory có tên Anh và Việt riêng. Search catalog/stock/order mẫu chấp nhận tên Việt và bỏ dấu. Đổi ngôn ngữ không đổi ID, state cart, giá, PHP hoặc Asia/Manila; tên khách, contact, notes và dữ liệu nhập giữ nguyên.
+
+Thống kê dữ liệu hiện có ở [docs/FRONTEND_ENTITIES.md](docs/FRONTEND_ENTITIES.md); đề xuất bảng/quan hệ/constraint/backend adapter ở [docs/DATABASE_DESIGN.md](docs/DATABASE_DESIGN.md). Đây là tài liệu thiết kế, chưa có migration/API được chạy.
+
 `shared/ui` giữ **Button, Input, Dialog** và các subcomponent của Dialog. Các module không được app import đã loại bỏ, gồm calendar/menubar/input-otp/resizable và các wrapper khác. Không cần khôi phục cả bộ UI để thêm một primitive.
 
 Customize Button/Input bằng Lunara classes; default shadcn primary vẫn là màu dark generic. Dialog inventory hỗ trợ focus trapping, Escape, title/description. `cn` dùng clsx/tailwind-merge; `useIsMobile` ở shared/hooks. `ImageWithFallback` giữ img/alt/dimensions và hiển thị placeholder khi ảnh lỗi.
@@ -156,7 +167,7 @@ npm run preview
 npm run check:ui -- http://127.0.0.1:4173
 ```
 
-Dev `http://127.0.0.1:5173`, preview `http://127.0.0.1:4173`; Vite có thể chọn port kế nếu bận. Build ở `dist/`. Browser test hiện dùng **Edge headless trên Windows** và Node 24, chạy 15 route rồi kiểm tra commerce, wizard, profile/orders, admin, auth guards và mobile storefront. Nó chặn mạng ngoài để ổn định; không chứng minh ảnh/font remote tải được. Bằng chứng/screenshot/profile browser nằm trong `.security-review/`, không vào Git.
+Dev `http://127.0.0.1:5173`, preview `http://127.0.0.1:4173`; Vite có thể chọn port kế nếu bận. Build ở `dist/`. Browser test hiện dùng **Edge headless trên Windows** và Node 24, chạy 15 route rồi kiểm tra commerce, wizard, profile/orders, admin, auth guards, ngôn ngữ và mobile storefront/admin. Kiểm tra i18n gồm reload persistence, shared cart và request state, cùng layout 320/390/768/1024px. Nó chặn mạng ngoài để ổn định; không chứng minh ảnh/font remote tải được. Bằng chứng/screenshot/profile browser nằm trong `.security-review/`, không vào Git.
 
 `typecheck` dùng compiler project được pin; `check:architecture` kiểm tra chiều import/public API, presentation state và inline styles; `npm test` dùng Node test runner cho commerce/auth/contrast. Chưa cấu hình ESLint. Vite build chỉ kiểm tra bundle và không thay semantic typecheck.
 

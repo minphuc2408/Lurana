@@ -2,7 +2,7 @@
 
 ## Context and communication
 
-- Communicate with the owner in Vietnamese. Existing product copy is English; keep that convention unless the task requests localization.
+- Communicate with the owner in Vietnamese. UI supports English and Vietnamese through react-i18next; keep locale JSON in shared/i18n and preserve English fallback. Product names use name_en/name_vi, with name_vn accepted as a Vietnamese alias. Do not translate customer-entered data or change currency/timezone with locale.
 - This is Lunara, a flower shop storefront and admin UI. The GitHub repository is named `Lurana`; preserve existing UI branding as `Lunara`.
 - Read the relevant section of `PROJECT_GUIDE.md` for project context. Current code is authoritative when the guide and implementation diverge; update the guide when an architectural or product decision changes.
 - For UI, component, storefront, checkout, admin, or flower shop planning work, use the repo skill at `.agents/skills/lunara-flower-shop/SKILL.md`. Read it directly if the current session has not discovered newly added skills yet.

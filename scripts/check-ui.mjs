@@ -4,6 +4,7 @@ import path from 'node:path';
 
 const root = process.cwd();
 const mode = 'verification';
+const i18nOnly = process.argv.includes('--i18n-only');
 const baseUrl = process.argv[2] || 'http://127.0.0.1:4173';
 if (new URL(baseUrl).hostname !== '127.0.0.1') throw new Error('UI checks require the local preview on 127.0.0.1');
 const profile = path.join(root, '.security-review', `refactor-edge-${mode}-${Date.now()}`);
@@ -44,7 +45,7 @@ async function navigate(route) {
   await delay(200);
 }
 async function click(text) {
-  const ok = await evaluate(`(() => { const el = [...document.querySelectorAll('button,a')].find(e => e.textContent.trim() === ${JSON.stringify(text)} && e.getBoundingClientRect().width > 0); if(!el) return false; el.click(); return true; })()`);
+  const ok = await evaluate(`(() => { const scope = document.querySelector('[role="dialog"]') || document; const el = [...scope.querySelectorAll('button,a')].find(e => e.textContent.trim() === ${JSON.stringify(text)} && e.getBoundingClientRect().width > 0); if(!el) return false; el.click(); return true; })()`);
   if (!ok) throw new Error(`Missing visible control: ${text} on ${routeName}`);
   await delay(100);
 }
@@ -86,17 +87,20 @@ try {
   const seedScript = await send('Page.addScriptToEvaluateOnNewDocument', { source: `if(location.hostname === '127.0.0.1') sessionStorage.setItem('lunara_user', JSON.stringify({name:'Demo Administrator',email:'demo@example.test',role:'admin'}));` });
   const routes = ['/', '/shop', '/cart', '/request', '/orders', '/profile', '/login', '/signup', '/admin', '/admin/dashboard', '/admin/stock', '/admin/orders', '/admin/customers', '/admin/requests', '/admin/settings'];
   const results = [];
-  for (const route of routes) {
+  for (const route of i18nOnly ? [] : routes) {
     await navigate(route);
     results.push({ route, ...await evaluate(`(() => { const h = document.querySelector('h1') || document.querySelector('h2'); const r = h?.getBoundingClientRect(); return {heading:h?.textContent.trim(),headingRect:r ? {x:r.x,y:r.y,width:r.width,height:r.height} : null,bodyWidth:document.body.scrollWidth,buttons:document.querySelectorAll('button').length}; })()`) });
     if (['/', '/shop', '/cart', '/admin/dashboard'].includes(route)) await screenshot(route.replaceAll('/', '-') || 'home');
   }
+  let localeChecks;
   if (mode !== 'baseline') {
-    await import('./check-ui-flows.mjs').then(module => module.verify({ navigate, click, input, assert, evaluate, waitFor, send, screenshot, delay, seedScriptIdentifier: seedScript.identifier }));
+    if (!i18nOnly) await import('./check-ui-flows.mjs').then(module => module.verify({ navigate, click, input, assert, evaluate, waitFor, send, screenshot, delay, seedScriptIdentifier: seedScript.identifier }));
+    else await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: seedScript.identifier });
+    localeChecks = await import('./check-ui-i18n.mjs').then(module => module.verifyI18n({ navigate, click, input, assert, evaluate, send, delay, screenshot }));
   }
-  writeFileSync(path.join(root, '.security-review', `${mode}-ui-results.json`), JSON.stringify({ results, exceptions }, null, 2));
+  writeFileSync(path.join(root, '.security-review', `${mode}-ui-results.json`), JSON.stringify({ results, localeChecks, exceptions }, null, 2));
   if (exceptions.length) throw new Error(JSON.stringify(exceptions));
-  console.log(JSON.stringify({ mode, routes: results.length, exceptions: exceptions.length }));
+  console.log(JSON.stringify({ mode, routes: results.length, localeChecks, exceptions: exceptions.length }));
 } finally {
   if (ws?.readyState === WebSocket.OPEN) { try { await send('Browser.close'); } catch {} ws.close(); }
   browser.kill();
