@@ -1,3 +1,4 @@
+import { useLocale, LanguageSwitcher } from "@/shared/i18n";
 import { useAdminLayout } from "./hooks/useAdminLayout";
 import { useAdminSidebar } from "./hooks/useAdminSidebar";
 import { navItems } from "./navigation";
@@ -11,6 +12,7 @@ function SidebarContent({
 }: {
   onClose?: () => void;
 }) {
+  const { t, language } = useLocale("common");
   const {
     location,
     navigate,
@@ -30,26 +32,24 @@ function SidebarContent({
               lunara
             </span>
           </Link>
-          {onClose && <button onClick={onClose} className="bg-transparent [border:none] [cursor:pointer] text-lunara-rose-light" aria-label="Close">
+          {onClose && <button onClick={onClose} className="bg-transparent [border:none] [cursor:pointer] text-lunara-rose-light" aria-label={t("Close")}>
               <X size={18} />
             </button>}
         </div>
         <span className="[font-size:0.62rem] text-lunara-rose-light [text-transform:uppercase] [letter-spacing:0.18em] [padding-left:30px] [display:block] [margin-top:2px]">
-          Admin Panel
-        </span>
+          {t("Admin Panel")}</span>
       </div>
 
       {/* Nav */}
       <nav className="[padding:16px_12px] [flex:1] [overflow-y:auto]">
         <p className="[font-size:0.62rem] text-lunara-rose-light [letter-spacing:0.18em] [text-transform:uppercase] [padding:0_12px_10px]">
-          Main Menu
-        </p>
+          {t("Main Menu")}</p>
         {navItems.map(item => {
         const active = location.pathname === item.path || item.path !== "/admin/dashboard" && location.pathname.startsWith(item.path);
         const Icon = item.icon;
         return <Link key={item.path} to={item.path} onClick={onClose} className={cn("flex items-center gap-3 px-3 py-2.5 rounded-xl mb-0.5 [text-decoration:none] [transition:all_0.15s]", active ? "bg-[rgba(193,123,138,0.18)]" : "bg-transparent", active ? "text-[#E8B0BC]" : "text-lunara-rose-light", active ? "[border-left:3px_solid_#C17B8A]" : "[border-left:3px_solid_transparent]")}>
               <Icon size={17} />
-              <span className="[font-size:0.85rem] [letter-spacing:0.04em] [flex:1]">{item.label}</span>
+              <span className="[font-size:0.85rem] [letter-spacing:0.04em] [flex:1]">{t(item.label)}</span>
               {active && <ChevronRight size={13} className="[opacity:0.5]" />}
             </Link>;
       })}
@@ -62,8 +62,7 @@ function SidebarContent({
       <div className="[padding:12px]">
         <Link to="/" onClick={onClose} className="flex items-center gap-2 px-3 py-2.5 rounded-xl [text-decoration:none] text-lunara-rose-light [font-size:0.82rem] [transition:color_0.15s]">
           <ArrowLeft size={15} />
-          Back to Store
-        </Link>
+          {t("Back to Store")}</Link>
       </div>
 
       {/* User Footer */}
@@ -76,9 +75,9 @@ function SidebarContent({
             <div className="[font-size:0.82rem] text-lunara-rose-light [font-weight:500] [overflow:hidden] [text-overflow:ellipsis] [white-space:nowrap]">
               {user?.name}
             </div>
-            <div className="[font-size:0.68rem] text-lunara-rose-light [margin-top:1px]">Administrator</div>
+            <div className="[font-size:0.68rem] text-lunara-rose-light [margin-top:1px]">{t("Administrator")}</div>
           </div>
-          <button onClick={handleLogout} title="Sign Out" className="bg-transparent [border:none] [cursor:pointer] text-lunara-rose-light [padding:4px] [flex-shrink:0]" aria-label="Sign Out">
+          <button onClick={handleLogout} title={t("Sign Out")} className="bg-transparent [border:none] [cursor:pointer] text-lunara-rose-light [padding:4px] [flex-shrink:0]" aria-label={t("Sign Out")}>
             <LogOut size={15} />
           </button>
         </div>
@@ -86,6 +85,7 @@ function SidebarContent({
     </div>;
 }
 export function AdminLayout() {
+  const { t, language } = useLocale("common");
   const {
     user,
     location,
@@ -112,26 +112,26 @@ export function AdminLayout() {
       {/* Main area */}
       <div className="flex-1 flex flex-col overflow-hidden bg-lunara-admin-background">
         {/* Top Bar */}
-        <header className="flex items-center justify-between px-6 flex-shrink-0 [height:62px] bg-white [border-bottom:1px_solid_#F0DDD5]">
-          <div className="flex items-center gap-3">
-            <button onClick={() => setSidebarOpen(true)} className="md:hidden bg-transparent [border:none] [cursor:pointer] text-lunara-body [padding:4px]" aria-label="Open menu">
+        <header className="flex items-center justify-between gap-2 px-4 sm:px-6 flex-shrink-0 [height:62px] bg-white [border-bottom:1px_solid_#F0DDD5]">
+          <div className="flex min-w-0 items-center gap-3">
+            <button onClick={() => setSidebarOpen(true)} className="md:hidden bg-transparent [border:none] [cursor:pointer] text-lunara-body [padding:4px]" aria-label={t("Open menu")}>
               <Menu size={22} />
             </button>
             <div>
-              <h1 className="font-display [font-size:1.25rem] text-lunara-ink [font-weight:600] [line-height:1.2]">
-                {currentNav.label}
+              <h1 className="font-display truncate [font-size:1.25rem] text-lunara-ink [font-weight:600] [line-height:1.2]">
+                {t(currentNav.label)}
               </h1>
               <p className="[font-size:0.68rem] text-lunara-body [margin-top:1px]">
                 <Link to="/" className="text-lunara-body [text-decoration:none]">Lunara</Link>
                 {" / "}
-                <span className="text-lunara-rose-strong">{currentNav.label}</span>
+                <span className="text-lunara-rose-strong">{t(currentNav.label)}</span>
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             {/* Notifications */}
-            <button className="relative bg-transparent [border:none] [cursor:pointer] text-lunara-body [padding:6px]" aria-label="Notifications">
+            <button className="relative bg-transparent [border:none] [cursor:pointer] text-lunara-body [padding:6px]" aria-label={t("Notifications")}>
               <Bell size={19} />
               <span className="absolute top-0 right-0 w-4 h-4 rounded-full flex items-center justify-center text-white bg-lunara-rose-strong [font-size:0.55rem] [font-weight:700]">
                 3
@@ -145,9 +145,9 @@ export function AdminLayout() {
               </div>
               <span className="[font-size:0.78rem] text-lunara-ink [font-weight:500]">{user.name}</span>
               <span className="px-2 py-0.5 rounded-full bg-lunara-rose-strong text-white [font-size:0.6rem] [letter-spacing:0.08em] [text-transform:uppercase]">
-                admin
-              </span>
+                {t("admin")}</span>
             </div>
+            <LanguageSwitcher />
           </div>
         </header>
 

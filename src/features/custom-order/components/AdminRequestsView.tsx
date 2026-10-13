@@ -1,8 +1,10 @@
+import { useLocale } from "@/shared/i18n";
 import { cn } from "@/shared/lib/utils";
 import { colorClass } from "@/shared/lib/color-classes";
 import { MessageSquare, Check, X, Eye, Clock } from "lucide-react";
 import type { AdminRequestsModel } from "../hooks/useAdminRequests";
 export function AdminRequestsView(model: AdminRequestsModel) {
+  const { t } = useLocale("custom-order");
   const {
     reqs,
     expanded,
@@ -38,7 +40,7 @@ export function AdminRequestsView(model: AdminRequestsModel) {
               <MessageSquare size={16} className={cn("", colorClass(s.color, "color"))} />
             </div>
             <div className="font-display [font-size:1.8rem] [font-weight:600] text-lunara-ink [line-height:1]">{s.value}</div>
-            <div className="[font-size:0.78rem] text-lunara-body [margin-top:4px]">{s.label}</div>
+            <div className="[font-size:0.78rem] text-lunara-body [margin-top:4px]">{t(s.label)}</div>
           </div>)}
       </div>
 
@@ -56,13 +58,13 @@ export function AdminRequestsView(model: AdminRequestsModel) {
                     <span className="[font-size:0.72rem] text-lunara-rose-strong">{req.id}</span>
                   </div>
                   <div className="[font-size:0.78rem] text-lunara-body [margin-top:2px]">
-                    {req.occasion} · {req.budget} budget · {req.date}
+                    {t(req.occasion)} · {req.budget} {t("budget ·")}{" "}{req.date}
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <span className={cn("px-3 py-1 rounded-full [font-size:0.72rem] [font-weight:500]", colorClass(statusConfig[req.status].bg, "backgroundColor"), colorClass(statusConfig[req.status].color, "color"))}>
-                  {req.status}
+                  {t(req.status)}
                 </span>
                 <Eye size={15} className="text-lunara-body" />
               </div>
@@ -71,24 +73,22 @@ export function AdminRequestsView(model: AdminRequestsModel) {
             {expanded === req.id && <div className="[padding:0_20px_20px] [border-top:1px_solid_#F0DDD5]">
                 <div className="grid md:grid-cols-2 gap-4 pt-4">
                   <div>
-                    <p className="[font-size:0.72rem] text-lunara-body [text-transform:uppercase] [letter-spacing:0.1em] [margin-bottom:4px]">Requested Flowers</p>
+                    <p className="[font-size:0.72rem] text-lunara-body [text-transform:uppercase] [letter-spacing:0.1em] [margin-bottom:4px]">{t("Requested Flowers")}</p>
                     <p className="[font-size:0.88rem] text-lunara-ink">{req.flowers}</p>
                   </div>
                   <div>
-                    <p className="[font-size:0.72rem] text-lunara-body [text-transform:uppercase] [letter-spacing:0.1em] [margin-bottom:4px]">Special Notes</p>
+                    <p className="[font-size:0.72rem] text-lunara-body [text-transform:uppercase] [letter-spacing:0.1em] [margin-bottom:4px]">{t("Special Notes")}</p>
                     <p className="[font-size:0.88rem] text-lunara-ink">{req.notes}</p>
                   </div>
                 </div>
                 {(req.status === "Pending" || req.status === "In Review" || req.status === "Approved") && <div className="flex gap-2 mt-4">
                     {req.status !== "Approved" && <button onClick={() => updateStatus(req.id, req.status === "Pending" ? "In Review" : "Approved")} className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#EDF7EF] text-[#426647] [border:none] [cursor:pointer] [font-size:0.82rem]">
-                      <Check size={13} /> {req.status === "Pending" ? "Start Review" : "Approve"}
+                      <Check size={13} /> {req.status === "Pending" ? t("Start Review") : t("Approve")}
                     </button>}
                     {req.status !== "Approved" && <button onClick={() => updateStatus(req.id, "Declined")} className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#FFF0F0] text-[#B42318] [border:none] [cursor:pointer] [font-size:0.82rem]">
-                      <X size={13} /> Decline
-                    </button>}
+                      <X size={13} /> {t("Decline")}</button>}
                     {req.status === "Approved" && <button onClick={() => updateStatus(req.id, "Completed")} className="flex items-center gap-2 px-4 py-2 rounded-full bg-lunara-blush text-lunara-rose-strong [border:none] [cursor:pointer] [font-size:0.82rem]">
-                        <Clock size={13} /> Mark Completed
-                      </button>}
+                        <Clock size={13} /> {t("Mark Completed")}</button>}
                   </div>}
               </div>}
           </div>)}

@@ -1,8 +1,10 @@
+import { useLocale } from "@/shared/i18n";
 import { cn } from "@/shared/lib/utils";
 import { colorClass } from "@/shared/lib/color-classes";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import type { AdminDashboardModel } from "../hooks/useAdminDashboard";
 export function DashboardCharts(model: AdminDashboardModel) {
+  const { t } = useLocale("admin");
   const {
     period,
     setPeriod,
@@ -14,8 +16,8 @@ export function DashboardCharts(model: AdminDashboardModel) {
         <div className="lg:col-span-2 rounded-2xl p-6 bg-white [border:1px_solid_#F0DDD5]">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h2 className="font-display [font-size:1.15rem] text-lunara-ink">Revenue Overview</h2>
-              <p className="[font-size:0.72rem] text-lunara-body [margin-top:2px]">Monthly revenue trends</p>
+              <h2 className="font-display [font-size:1.15rem] text-lunara-ink">{t("Revenue Overview")}</h2>
+              <p className="[font-size:0.72rem] text-lunara-body [margin-top:2px]">{t("Monthly revenue trends")}</p>
             </div>
             <div className="flex gap-1">
               {["3M", "6M", "1Y"].map(p => <button key={p} onClick={() => setPeriod(p)} className={cn("px-3 py-1 rounded-full [font-size:0.7rem] [cursor:pointer]", period === p ? "[border:1px_solid_#C17B8A]" : "[border:1px_solid_#F0DDD5]", period === p ? "bg-lunara-rose-strong" : "bg-transparent", period === p ? "text-white" : "text-lunara-body")}>
@@ -24,7 +26,7 @@ export function DashboardCharts(model: AdminDashboardModel) {
             </div>
           </div>
           <ResponsiveContainer width="100%" height={210}>
-            <AreaChart data={salesData} margin={{
+            <AreaChart data={salesData.map(row => ({ ...row, month: t(row.month) }))} margin={{
           top: 5,
           right: 10,
           left: 0,
@@ -62,11 +64,11 @@ export function DashboardCharts(model: AdminDashboardModel) {
 
         {/* Category Pie */}
         <div className="rounded-2xl p-6 bg-white [border:1px_solid_#F0DDD5]">
-          <h2 className="font-display [font-size:1.15rem] text-lunara-ink [margin-bottom:4px]">Sales by Category</h2>
-          <p className="[font-size:0.72rem] text-lunara-body [margin-bottom:12px]">Product distribution</p>
+          <h2 className="font-display [font-size:1.15rem] text-lunara-ink [margin-bottom:4px]">{t("Sales by Category")}</h2>
+          <p className="[font-size:0.72rem] text-lunara-body [margin-bottom:12px]">{t("Product distribution")}</p>
           <ResponsiveContainer width="100%" height={150}>
             <PieChart>
-              <Pie data={categoryData} cx="50%" cy="50%" innerRadius={42} outerRadius={65} paddingAngle={3} dataKey="value">
+              <Pie data={categoryData.map(row => ({ ...row, name: t(row.name) }))} cx="50%" cy="50%" innerRadius={42} outerRadius={65} paddingAngle={3} dataKey="value">
                 {categoryData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
               </Pie>
               <Tooltip contentStyle={{
@@ -81,7 +83,7 @@ export function DashboardCharts(model: AdminDashboardModel) {
             {categoryData.map(cat => <div key={cat.name} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className={cn("w-2.5 h-2.5 rounded-full", colorClass(cat.color, "backgroundColor"))} />
-                  <span className="[font-size:0.78rem] text-lunara-body">{cat.name}</span>
+                  <span className="[font-size:0.78rem] text-lunara-body">{t(cat.name)}</span>
                 </div>
                 <span className="[font-size:0.78rem] text-lunara-ink [font-weight:500]">{cat.value}%</span>
               </div>)}
