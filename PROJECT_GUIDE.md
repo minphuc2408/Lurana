@@ -118,7 +118,9 @@ Profile/edit chưa đồng bộ AuthProvider. Signup chưa có đăng ký thật
 | Sidebar admin | `lunara-sidebar` | `#1A0D12` |
 | Nền admin | `lunara-admin-background` | `#F8F4F2` |
 
-Headings/logo dùng `font-display` (Cormorant Garamond); body/forms dùng `font-body` (Jost). Font Google được import trong `fonts.css`. Token trong `brand.css` tách riêng token shadcn `theme.css`; không có dark-mode product flow hoàn chỉnh.
+Mỗi ngôn ngữ dùng 2 họ font: English giữ Cormorant Garamond cho headings/logo (`font-display`) và Jost cho body/forms (`font-body`); tiếng Việt dùng Lora và Be Vietnam Pro tương ứng, có bộ ký tự Vietnamese. Font Google được import trong `fonts.css` với `display=swap`. `brand.css` ánh xạ hai utility qua biến `--lunara-font-display` / `--lunara-font-body`; selector `html[lang='vi']` đổi font theo locale i18n, kể cả dialog được portal ra ngoài layout. Lora dùng weight 400–700 (weight 300 của heading sẽ dùng 400 gần nhất). Token trong `brand.css` tách riêng token shadcn `theme.css`; không có dark-mode product flow hoàn chỉnh.
+
+Nguồn font: [Lora](https://github.com/google/fonts/tree/main/ofl/lora), [Be Vietnam Pro](https://github.com/google/fonts/tree/main/ofl/bevietnampro). Cả hai được phát hành theo SIL Open Font License. Kiểm tra typography bằng `node scripts/check-ui.mjs http://127.0.0.1:4173 --i18n-only --fonts` sau khi mở preview; chế độ `--fonts` cho phép tải Google Fonts để xác nhận font thật và dấu tiếng Việt, thay vì chỉ kiểm tra fallback offline.
 
 Giữ cream/rose floral, rounded cards, pill CTAs, shadow nhẹ, ảnh hoa và Lucide icons. Chữ trắng trên rose gốc không đủ contrast cho normal text; dùng rose-strong. Status labels nhỏ dùng màu tối hơn màu icon/chart. Giữ focus visible, labels, keyboard access và reduced motion khi thêm animation.
 
