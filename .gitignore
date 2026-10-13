@@ -29,9 +29,16 @@
 !/scripts/check-architecture.mjs
 !/scripts/check-ui.mjs
 !/scripts/check-ui-flows.mjs
+!/scripts/check-ui-i18n.mjs
 !/tests/auth.test.mjs
 !/tests/commerce.test.mjs
 !/tests/design.test.mjs
+!/tests/i18n.test.mjs
+
+# Reviewed backend design documents.
+!/docs/
+!/docs/FRONTEND_ENTITIES.md
+!/docs/DATABASE_DESIGN.md
 
 # Reviewed feature architecture and source files.
 !/tsconfig.json
@@ -81,11 +88,16 @@
 !/src/shared/
 !/src/shared/components/
 !/src/shared/hooks/
+!/src/shared/i18n/
+!/src/shared/i18n/locales/
+!/src/shared/i18n/locales/en/
+!/src/shared/i18n/locales/vi/
 !/src/shared/lib/
 !/src/shared/ui/
 !/src/styles/
 !/src/app/App.tsx
 !/src/app/layouts/AdminLayout.tsx
+!/src/app/layouts/AuthLayout.tsx
 !/src/app/layouts/MainLayout.tsx
 !/src/app/layouts/hooks/useAdminLayout.ts
 !/src/app/layouts/hooks/useAdminSidebar.ts
@@ -237,6 +249,33 @@
 !/src/shared/components/RouteError.tsx
 !/src/shared/components/RouteLoading.tsx
 !/src/shared/hooks/use-mobile.ts
+!/src/shared/i18n/LanguageSwitcher.tsx
+!/src/shared/i18n/config.ts
+!/src/shared/i18n/index.ts
+!/src/shared/i18n/language.ts
+!/src/shared/i18n/locales/en/admin.json
+!/src/shared/i18n/locales/en/auth.json
+!/src/shared/i18n/locales/en/cart.json
+!/src/shared/i18n/locales/en/common.json
+!/src/shared/i18n/locales/en/custom-order.json
+!/src/shared/i18n/locales/en/inventory.json
+!/src/shared/i18n/locales/en/landing.json
+!/src/shared/i18n/locales/en/orders.json
+!/src/shared/i18n/locales/en/profile.json
+!/src/shared/i18n/locales/en/shop.json
+!/src/shared/i18n/locales/vi/admin.json
+!/src/shared/i18n/locales/vi/auth.json
+!/src/shared/i18n/locales/vi/cart.json
+!/src/shared/i18n/locales/vi/common.json
+!/src/shared/i18n/locales/vi/custom-order.json
+!/src/shared/i18n/locales/vi/inventory.json
+!/src/shared/i18n/locales/vi/landing.json
+!/src/shared/i18n/locales/vi/orders.json
+!/src/shared/i18n/locales/vi/profile.json
+!/src/shared/i18n/locales/vi/shop.json
+!/src/shared/i18n/resources.ts
+!/src/shared/i18n/useLanguageSwitcher.ts
+!/src/shared/i18n/useLocale.ts
 !/src/shared/lib/color-classes.ts
 !/src/shared/lib/format.ts
 !/src/shared/lib/utils.ts

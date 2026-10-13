@@ -1,0 +1,22 @@
+import en0 from "./locales/en/common.json";
+import vi0 from "./locales/vi/common.json";
+import en1 from "./locales/en/admin.json";
+import vi1 from "./locales/vi/admin.json";
+import en2 from "./locales/en/auth.json";
+import vi2 from "./locales/vi/auth.json";
+import en3 from "./locales/en/cart.json";
+import vi3 from "./locales/vi/cart.json";
+import en4 from "./locales/en/custom-order.json";
+import vi4 from "./locales/vi/custom-order.json";
+import en5 from "./locales/en/inventory.json";
+import vi5 from "./locales/vi/inventory.json";
+import en6 from "./locales/en/landing.json";
+import vi6 from "./locales/vi/landing.json";
+import en7 from "./locales/en/orders.json";
+import vi7 from "./locales/vi/orders.json";
+import en8 from "./locales/en/profile.json";
+import vi8 from "./locales/vi/profile.json";
+import en9 from "./locales/en/shop.json";
+import vi9 from "./locales/vi/shop.json";
+
+export const resources = { en: { "common": en0, "admin": en1, "auth": en2, "cart": en3, "custom-order": en4, "inventory": en5, "landing": en6, "orders": en7, "profile": en8, "shop": en9 }, vi: { "common": vi0, "admin": vi1, "auth": vi2, "cart": vi3, "custom-order": vi4, "inventory": vi5, "landing": vi6, "orders": vi7, "profile": vi8, "shop": vi9 } };
