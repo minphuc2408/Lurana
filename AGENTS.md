@@ -14,7 +14,7 @@
 In repositories indexed by CodeGraph (a `.codegraph/` directory exists at the repo root), reach for it BEFORE grep/find or reading files when you need to understand or locate code:
 
 - **MCP tool**: use `codegraph_explore` with this repository's absolute `projectPath`. Name a file or symbol in the query. Treat returned source as already read.
-- **Local CLI fallback**: `npm run graph:explore -- "Shop toggleAdd Cart"`. For exact source when explore omits the requested file, use `node scripts/codegraph.mjs node --file src/app/pages/Shop.tsx --offset 1 --limit 100`.
+- **Local CLI fallback**: `npm run graph:explore -- "useProducts useCartState useCheckout"`. For exact source when explore omits the requested file, use `node scripts/codegraph.mjs node --file src/features/shop/hooks/useProducts.ts --offset 1 --limit 100`.
 - Check `npm run graph:status -- --json` when the index may be stale, then `npm run graph:sync`. Untracked files blocked by the Git allowlist are not indexed: review them and add their exact paths to `.gitignore` before syncing.
 - CSS, Markdown, JSON, and other files absent from the graph may be inspected with ordinary file tools. If no index exists, `npm run assistant:setup` initializes this project; do not index unrelated repositories.
 
@@ -24,10 +24,11 @@ The wrapper uses the pinned project dependency, fixes the working directory to t
 ## Architecture and behavior
 
 - React 18 + TypeScript/TSX, React Router 7, Vite 6, Tailwind CSS 4. Keep the pinned versions and npm lockfile consistent; do not migrate frameworks or add a second UI stack for routine changes.
-- Routing lives in `src/app/routes.ts`. `Layout` wraps customer pages; `AdminLayout` wraps admin pages and performs its current UI role checks. `AuthProvider` wraps `RouterProvider` in `App.tsx`.
+- Routing lives in `src/app/router.tsx`. `MainLayout` wraps customer pages; `AdminLayout` wraps admin pages and performs demo UI role checks. `AppProviders` in `src/app/providers.tsx` composes `AuthProvider` and `CartProvider`. Admin pages use `React.lazy` with Suspense in the admin shell.
+- Pages in `src/pages/` only compose feature views/hooks. State, business actions, services, types and fixtures live in `src/features/`; primitives and generic helpers live in `src/shared/`. Dependencies flow `pages → features → shared`; cross-feature imports use the feature's `index.ts`. App layouts keep their menu/routing state in app hooks.
 - This is a frontend demo: login accounts are fixtures; registration, checkout confirmation, requests, stock edits, and settings are not backed by a server. Do not describe these as real payment, account creation, email delivery, or durable storage.
 - `AdminRoute` exists but is not wired into the router. Client-side role checks and `sessionStorage` do not provide production authorization.
-- Keep short-lived UI state local. Shared catalog/cart behavior requires one shared source of truth; do not create another independent product list or another fake cart. No cart context or product service exists yet.
+- Keep short-lived UI state local. `features/shop/shop.service.ts` is the canonical product source; `CartProvider` owns the shared cart across route changes. Cart line identity includes product ID and size. Landing, wishlist and initial inventory derive current product data through the Shop public API; historical orders remain snapshots. Reload resets the cart demo; stock edits and other forms remain local.
 - Preserve existing PHP/₱ demo pricing and Asia/Manila settings unless requested otherwise. Currency conversion, real delivery cutoffs, and business policy require explicit product decisions.
 
 ## Design and reuse
@@ -35,8 +36,8 @@ The wrapper uses the pinned project dependency, fixes the working directory to t
 - Use the existing cream/rose floral direction: rose `#C17B8A`, cream `#FDF6F0`, ink `#3D2228`, body text `#6B4C55`, blush `#F9EDE9`, border `#F0DDD5`.
 - New UI uses `src/styles/brand.css` tokens or its `lunara-*` Tailwind utilities; headings/logo use `font-display` (Cormorant Garamond), body/forms use `font-body` (Jost). Keep global shadcn tokens separate until a requested migration is scoped.
 - The original rose with white text fails normal-text contrast. For new white-text CTAs, use `lunara-rose-strong` (`#9D586B`); preserve focus visibility and test actual foreground/background pairs. Do not use pale muted/status colors for essential small text.
-- Check `src/app/components/ui/` before creating a primitive. It already contains 46 UI modules plus `cn` and `useIsMobile`. Customize existing primitives for Lunara, rather than accepting their default dark button styling.
-- Pages mostly use native HTML and inline styles today. Do not refactor all pages merely to make one change. Extract shared product cards, status badges, headers, or money formatting when the requested behavior actually needs reuse; these domain components do not exist yet.
+- Check `src/shared/ui/` before creating a primitive. Retained primitives are `button`, `input` and `dialog`; unused modules were removed. `cn` lives in `shared/lib/utils.ts`, `useIsMobile` in `shared/hooks/use-mobile.ts`. Customize retained primitives for Lunara.
+- Use Tailwind directly in presentation JSX; CSS holds global theme, brand tokens and focus styling. Reuse `features/shop` ProductCard/ProductGrid/FilterBar, feature sections, `ImageWithFallback`, and `shared/lib/format.ts`. Keep changes within the requested feature; do not reorganize unrelated modules for routine edits.
 - Keep rounded cards, pill CTAs, restrained shadows, flower photography, and Lucide icons. Preserve responsive navigation, usable forms, loading/error/empty/success states, accessible labels, and keyboard access for changed flows.
 
 ## Tooling, security, and delivery
@@ -47,6 +48,6 @@ The wrapper uses the pinned project dependency, fixes the working directory to t
 - `.gitignore` is a default-deny allowlist. For a new shared file, add its exact path and any required parent-directory exceptions after reviewing its contents. Never use `git add -f` to bypass the policy.
 - CodeGraph is a local navigation aid, not a security scanner. It must not index dependency/build/audit/secret folders; exclusions are in root `codegraph.json`.
 - Use official OpenAI Docs MCP for Codex/OpenAI questions when available; otherwise read official OpenAI documentation. Do not inject unrelated OpenAI integration into this storefront.
-- For runtime/style/build changes, run `npm run build` and verify the affected page or flow. For dependency changes, also run `npm audit`. There is currently no lint, typecheck, or test script; do not claim those passed or treat Vite build as a full typecheck.
+- For runtime/style/build changes, run `npm run typecheck`, `npm run check:architecture`, `npm test`, `npm run build`, and verify affected flows. For dependency changes, also run `npm audit`. `npm run check:ui -- http://127.0.0.1:4173` checks a running preview with Edge headless on Windows. Vite build does not replace typecheck; no ESLint script is configured.
 - Test behavior that can regress; documentation-only changes need link/path review, not a new test framework. Sync CodeGraph after code changes.
 - Before commit/push, review `git status`, file inclusion, and `git diff --check`. Commit/push/deploy only when included in the current request or standing authorization; a previous one-time push is not blanket authorization for future pushes.

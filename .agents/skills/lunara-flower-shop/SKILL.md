@@ -18,21 +18,21 @@ The maintained project reference is [PROJECT_GUIDE.md](../../../PROJECT_GUIDE.md
 
 Resolve the guide relative to this skill folder, not to the shell's current subdirectory. If documentation is stale, inspect current code and update the relevant reference with the changed behavior.
 
-Use CodeGraph first to locate code and its dependents when `.codegraph/` exists. Query the symbols that span the requested flow, for example `Shop toggleAdd Cart` or `AuthProvider login AdminLayout`. If retrieval omits the target source, use the local `node --file` command documented in `AGENTS.md`.
+Use CodeGraph first to locate code and its dependents when `.codegraph/` exists. Query the symbols that span the requested flow, for example `useProducts useCartState useCheckout` or `AuthProvider useAuthState AdminLayout`. If retrieval omits the target source, use the local `node --file` command documented in `AGENTS.md`.
 
 ## Implement visual and component work
 
 - Match the existing soft floral layout: cream backgrounds, dusty rose accents, dark warm text, editorial serif headings, clean sans-serif forms, rounded cards, and pill CTAs.
 - Read `src/styles/brand.css` and use its semantic tokens/utilities for new work. The legacy `theme.css` primary is a generic dark color; do not mistake it for the Lunara brand.
-- Search the guide's component inventory before inventing primitives. Prefer the existing shadcn/Radix wrappers, `cn`, and Lucide icons, with brand-specific classes. None of `ProductCard`, `CartContext`, `StatusBadge`, or a shared catalog service exists yet.
+- Search the guide's component inventory before inventing primitives. Prefer retained `shared/ui` shadcn/Radix wrappers, `cn`, and Lucide icons, with brand-specific classes. ProductCard/ProductGrid/FilterBar, a shared CartProvider and the canonical Shop service already exist; a generic domain StatusBadge does not.
 - Default to local changes. Extract a domain component when more than one affected surface needs the same behavior; maintain one canonical data source when connecting Shop, Cart, Stock, or Dashboard.
 - Use the stronger rose token for small white CTA text. Ensure readable labels, visible keyboard focus, accessible icon buttons, useful image alt text, and reduced-motion behavior if animations are added.
 
 ## Implement commerce and admin behavior
 
 - Determine whether the requested action affects UI state, demo data, or a real backend before choosing storage. The current app has no API, real checkout, or server authorization.
-- Follow the existing route boundaries: customer pages use `Layout`, admin pages use `AdminLayout`, and standalone auth pages stay outside both. Do not create a duplicate route tree.
-- The Shop add indicator is not a real cart mutation; Cart starts from independent fixtures. Connecting them needs shared state and consistent product/variant identifiers, not another local indicator.
+- Follow the existing route boundaries in `app/router.tsx`: customer pages use `MainLayout`, admin pages use `AdminLayout`, and standalone auth pages stay outside both. Do not create a duplicate route tree.
+- Shop Add, Cart and navbar already share CartProvider. Use the canonical product IDs and product/size line IDs; do not create an independent cart. Providers retain this in-memory demo across route changes, and reload restores the fixtures.
 - Keep amounts numeric and format at display boundaries. Preserve PHP/₱ defaults unless localization is requested. Validate quantities, inventory, delivery choices, recipient/contact fields, and empty states relevant to the change.
 - Client-side demo auth may control visible UI only. If production auth/payment is requested, design and implement the needed server/provider boundary; never ship fixture credentials or browser role checks as the security solution.
 - Avoid claiming success before persistence or provider confirmation exists. If work remains a demo, explain that fact in the delivery notes.

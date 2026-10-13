@@ -1,4 +1,4 @@
-/* Lunara brand tokens. Existing inline styles remain the visual baseline. */
+/* Shared Lunara palette and typography. Page styles live in Tailwind classes. */
 :root {
   --lunara-rose: #C17B8A;
   --lunara-rose-strong: #9D586B;
@@ -37,4 +37,11 @@
   --color-lunara-warning: var(--lunara-warning);
   --color-lunara-info: var(--lunara-info);
   --color-lunara-danger: var(--lunara-danger);
+}
+
+@layer base {
+  :where(a, button, input, select, textarea):focus-visible {
+    outline: 2px solid var(--lunara-rose-strong);
+    outline-offset: 3px;
+  }
 }

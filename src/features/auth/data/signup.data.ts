@@ -1,0 +1,1 @@
+export const bgImage = "https://images.unsplash.com/photo-1769867296317-bb70cd68b565?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxyb3NlJTIwZ2FyZGVuJTIwcm9tYW50aWMlMjBwaW5rJTIwYWVzdGhldGljJTIwYmFja2dyb3VuZHxlbnwxfHx8fDE3NzM1NTI5NjV8MA&ixlib=rb-4.1.0&q=80&w=1080";
