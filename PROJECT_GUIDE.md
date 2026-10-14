@@ -1,6 +1,6 @@
 # Sổ tay dự án Lunara Flower Shop
 
-Tham chiếu cho chủ dự án và Codex về kiến trúc, giao diện, component và giới hạn demo. Quy tắc làm việc ở [AGENTS.md](AGENTS.md); workflow UI/nghiệp vụ ở [.agents/skills/lunara-flower-shop/SKILL.md](.agents/skills/lunara-flower-shop/SKILL.md). Cập nhật kiến trúc: **13/10/2026**. Code hiện tại là nguồn quyết định khi tài liệu khác với implementation.
+Tham chiếu cho chủ dự án và Codex về kiến trúc, giao diện, component và giới hạn demo. Quy tắc làm việc ở [AGENTS.md](AGENTS.md); workflow UI/nghiệp vụ ở [.agents/skills/lunara-flower-shop/SKILL.md](.agents/skills/lunara-flower-shop/SKILL.md). Cập nhật kiến trúc: **14/10/2026**. Code hiện tại là nguồn quyết định khi tài liệu khác với implementation.
 
 ## Cách sử dụng với Codex
 
@@ -18,9 +18,33 @@ ChatGPT thông thường không tự đọc file trên máy. Với phiên không
 
 UI branding là **Lunara**; repository GitHub tên **Lurana**. UI có English/Tiếng Việt, mặc định English; tiền PHP/₱ và settings Asia/Manila giữ nguyên khi đổi ngôn ngữ. Giao tiếp với chủ dự án bằng tiếng Việt.
 
-Đây là **frontend demo**, chưa có backend, database, API catalog, dịch vụ email hay thanh toán. Auth dùng tài khoản fixture; role/session trong trình duyệt chỉ điều khiển UI. Các màn hình success của signup, checkout và custom request mô tả preview, không xác nhận account/order/email thật.
+| Keyword | Hiện trạng |
+| --- | --- |
+| Commerce | **Frontend demo**; fixture/local UI, chưa có API catalog/checkout/auth/order |
+| Worker | Hono + `@cloudflare/vite-plugin`; `GET /api/health` → `{ data: { ok: true, time } }`; API khác → JSON 404 |
+| Health | Worker liveness; chưa kiểm tra kết nối/bảng D1 |
+| Auth | Fixture + role/session browser; chưa có server authorization |
+| Success | Signup/checkout/request là preview; chưa tạo account/order, gửi email hay thu tiền |
+| Frontend pin | React/React DOM `18.3.1`; Router `7.18.4`; Vite `6.4.4`; Tailwind `4.1.12`; React plugin `4.7.0`; Recharts `2.15.2` |
+| Tooling pin | TypeScript `5.7.3`; types React 18; CodeGraph `1.5.0` |
+| Môi trường đã dùng | Node `24.11.1`, npm `11.6.3`; Wrangler hiện yêu cầu Node ≥22 |
 
-Stack runtime giữ nguyên: React/React DOM `18.3.1`, React Router `7.18.4`, Vite `6.4.4`, Tailwind CSS `4.1.12`, React Vite plugin `4.7.0`, Recharts `2.15.2`. TypeScript `5.7.3`, types React 18 và CodeGraph `1.5.0` được pin trong dev dependencies. Môi trường kiểm chứng: Node `24.11.1`, npm `11.6.2`.
+### Kiến trúc MVP đã chọn
+
+[Tech stack](docs/TECH_STACK.md) và [pipeline](docs/pipeline/README.md) ghi mục tiêu; code hiện tại ở Phase 0.
+
+| Phạm vi | Đã có / còn thiếu |
+| --- | --- |
+| Runtime MVP | Hono/Cloudflare Workers · D1/SQLite · Zod · SQL tham số hóa |
+| Media MVP | Cloudinary; chưa nối upload/catalog |
+| Order MVP | COD khách vãng lai; server tính tổng/tồn/ghi đơn chưa triển khai |
+| Admin auth | Secret + JWT cookie dự kiến Phase 4; auth khách để sau |
+| Schema | [Draft 10 bảng](docs/sql/MVP_SCHEMA.sql), [thiết kế CSDL](docs/DATABASE_DESIGN.md); [v2 pipeline](docs/pipeline/MVP_SCHEMA.sql) thay `custom_requests` bằng `delivery_zones`; Phase 1 cần thống nhất |
+| D1 local | Worker binding `DB`; chưa migration/seed/bảng ứng dụng |
+| Cloudflare remote | Chủ dự án đã đăng nhập Wrangler và tạo `lunara-db` trống; Phase 0 không truy cập remote |
+| Persistence | Cart hiện in-memory, wishlist riêng từng flow; localStorage là mục tiêu MVP |
+| Thị trường | SQL draft VND/tỉnh-phường; UI hiện PHP/Asia/Manila, chuyển ở Phase 5 |
+| Vận hành | Chưa deploy/domain, Turnstile, rate limit, email hoặc payment provider |
 
 ```text
 src/
@@ -50,6 +74,15 @@ src/
 │   └── i18n/                   # config/hooks/switch + JSON en/vi theo feature
 └── styles/                     # fonts, Tailwind entry, global theme/brand
 ```
+
+| Backend keyword | File / cấu hình |
+| --- | --- |
+| Entry + env | `worker/index.ts`; `worker/env.ts`: DB, ADMIN_PASSWORD, JWT_SECRET, TURNSTILE_SECRET tùy chọn |
+| Typecheck | `tsconfig.worker.json`: `worker/`, root `shared/` dự kiến và declaration; tách globals frontend |
+| SPA/API routing | `wrangler.jsonc`: SPA fallback, `run_worker_first: ["/api/*"]` |
+| Local bindings | Vite `remoteBindings: false`; plugin tự quản lý assets output |
+| Typegen | `npm run cf:typegen` → `worker-configuration.d.ts`; `--include-runtime=false` + Workers types |
+| Secrets | `.dev.vars` local; chỉ placeholder `.dev.vars.example` vào Git |
 
 ### Ranh giới module
 
@@ -100,7 +133,15 @@ Fixtures nằm trong `features/auth/data/demo-accounts.ts`; không chép mật k
 
 `AdminLayout` redirect guest về `/login`, user thường về `/`. `AdminRoute` có trong auth public API nhưng chưa được router dùng. Role/session client có thể bị sửa; đây không phải authorization production.
 
-Profile/edit chưa đồng bộ AuthProvider. Signup chưa có đăng ký thật. Request wizard chưa nối AdminRequests; trường budget có trong model nhưng chưa có input. Order fixture khách và admin dùng model riêng. Dashboard period chưa tính lại metrics. Settings Save chỉ phản hồi trong phiên page và không đổi cấu hình/currency toàn app. Form/stock/order/request state có thể mất khi remount/reload.
+| Flow | Khoảng trống hiện tại |
+| --- | --- |
+| Profile | Edit chưa đồng bộ AuthProvider |
+| Signup | Preview, chưa đăng ký thật |
+| Request | Wizard chưa nối AdminRequests; model budget chưa có input |
+| Orders | Fixture/model khách và admin riêng |
+| Dashboard | Period chưa tính lại metrics |
+| Settings | Save local, chưa đổi cấu hình/currency toàn app |
+| Form/stock/order/request | State có thể mất khi remount/reload |
 
 ## Bộ nhận diện và token thiết kế
 
@@ -118,7 +159,12 @@ Profile/edit chưa đồng bộ AuthProvider. Signup chưa có đăng ký thật
 | Sidebar admin | `lunara-sidebar` | `#1A0D12` |
 | Nền admin | `lunara-admin-background` | `#F8F4F2` |
 
-Mỗi ngôn ngữ dùng 2 họ font: English giữ Cormorant Garamond cho headings/logo (`font-display`) và Jost cho body/forms (`font-body`); tiếng Việt dùng Lora và Be Vietnam Pro tương ứng, có bộ ký tự Vietnamese. Font Google được import trong `fonts.css` với `display=swap`. `brand.css` ánh xạ hai utility qua biến `--lunara-font-display` / `--lunara-font-body`; selector `html[lang='vi']` đổi font theo locale i18n, kể cả dialog được portal ra ngoài layout. Lora dùng weight 400–700 (weight 300 của heading sẽ dùng 400 gần nhất). Token trong `brand.css` tách riêng token shadcn `theme.css`; không có dark-mode product flow hoàn chỉnh.
+| Locale | `font-display` — heading/logo | `font-body` — body/form |
+| --- | --- | --- |
+| EN | Cormorant Garamond | Jost |
+| VI | Lora | Be Vietnam Pro |
+
+Google Fonts ở `fonts.css`, `display=swap`; `brand.css` đổi biến font qua `html[lang='vi']`, kể cả dialog portal. Lora: weight 400–700; heading weight 300 dùng 400 gần nhất. Brand tokens tách `theme.css`; dark-mode product flow chưa hoàn chỉnh.
 
 Nguồn font: [Lora](https://github.com/google/fonts/tree/main/ofl/lora), [Be Vietnam Pro](https://github.com/google/fonts/tree/main/ofl/bevietnampro). Cả hai được phát hành theo SIL Open Font License. Kiểm tra typography bằng `node scripts/check-ui.mjs http://127.0.0.1:4173 --i18n-only --fonts` sau khi mở preview; chế độ `--fonts` cho phép tải Google Fonts để xác nhận font thật và dấu tiếng Việt, thay vì chỉ kiểm tra fallback offline.
 
@@ -134,9 +180,11 @@ Giữ cream/rose floral, rounded cards, pill CTAs, shadow nhẹ, ảnh hoa và L
 
 EN/VI nằm ở mép phải header storefront/admin và góc phải trên màn hình auth (kể cả signup preview). Mặc định English, nhớ preference `lunara_language` ở localStorage; khi storage bị chặn vẫn đổi được trong phiên. `document.documentElement.lang` cập nhật theo locale. Tiếng Việt thiếu key fallback English. Navbar chuyển sang menu mobile ở dưới breakpoint lg để chứa nhãn Việt và language switch.
 
+Footer storefront được tách thành `app/layouts/components/StorefrontFooter.tsx`: giữ khối thương hiệu Lunara bên trái, thêm chăm sóc khách hàng, mạng xã hội và địa chỉ/công ty FlowerCorner theo nội dung chủ website cung cấp. Các đích liên kết ngoài nằm trong `shared/config/storefront-footer.ts`, mở tab mới; nhãn hỗ trợ EN/VI, tên công ty và địa chỉ giữ nguyên. Desktop từ 1024px dùng 4 cột; mobile/tablet đặt chăm sóc khách hàng và mạng xã hội cạnh nhau, khối thương hiệu và địa chỉ chiếm toàn hàng. `tailwind.css` đăng ký rõ thư mục layout components để Vite theo dõi cả file mới. `ZaloContact.tsx` portal vào body, hiển thị biểu tượng Zalo cố định góc dưới trái, nâng lên trên CTA giỏ hàng dưới 1024px. Chưa có tài khoản Zalo: bấm nút chỉ mở thông báo sẽ cập nhật sớm, chưa mở chat hoặc hiển thị số tin nhắn. UI checks kiểm tra số cột, vị trí và hit-test nút Zalo ở 320–1440px.
+
 Catalog có `name_en/name_vi`; `name` giữ compatibility. `name_vn` chỉ là alias tiếng Việt cho DTO từ backend tương lai. `getLocalizedName` ưu tiên vi → vn → en → legacy cho tiếng Việt; English ưu tiên en → legacy → vi → vn. Cart/historical item giữ tên snapshot song ngữ; thêm/sửa inventory có tên Anh và Việt riêng. Search catalog/stock/order mẫu chấp nhận tên Việt và bỏ dấu. Đổi ngôn ngữ không đổi ID, state cart, giá, PHP hoặc Asia/Manila; tên khách, contact, notes và dữ liệu nhập giữ nguyên.
 
-Thống kê dữ liệu hiện có ở [docs/FRONTEND_ENTITIES.md](docs/FRONTEND_ENTITIES.md); đề xuất bảng/quan hệ/constraint/backend adapter ở [docs/DATABASE_DESIGN.md](docs/DATABASE_DESIGN.md). Đây là tài liệu thiết kế, chưa có migration/API được chạy.
+Thống kê dữ liệu hiện có ở [docs/FRONTEND_ENTITIES.md](docs/FRONTEND_ENTITIES.md); stack ở [docs/TECH_STACK.md](docs/TECH_STACK.md); thiết kế D1 và SQL dự thảo ở [docs/DATABASE_DESIGN.md](docs/DATABASE_DESIGN.md). Schema đã lưu cục bộ; health API có trong Phase 0, chưa có API commerce hoặc migration local/remote được chạy.
 
 `shared/ui` giữ **Button, Input, Dialog** và các subcomponent của Dialog. Các module không được app import đã loại bỏ, gồm calendar/menubar/input-otp/resizable và các wrapper khác. Không cần khôi phục cả bộ UI để thêm một primitive.
 
@@ -159,6 +207,10 @@ Không đưa secrets, customer data thật hoặc password thật vào source/do
 ```bash
 npm ci
 npm run dev
+# Terminal khác trên PowerShell:
+curl.exe http://127.0.0.1:5173/api/health
+npm run smoke
+npm run cf:typegen
 npm run typecheck
 npm run check:architecture
 npm test
@@ -169,9 +221,9 @@ npm run preview
 npm run check:ui -- http://127.0.0.1:4173
 ```
 
-Dev `http://127.0.0.1:5173`, preview `http://127.0.0.1:4173`; Vite có thể chọn port kế nếu bận. Build ở `dist/`. Browser test hiện dùng **Edge headless trên Windows** và Node 24, chạy 15 route rồi kiểm tra commerce, wizard, profile/orders, admin, auth guards, ngôn ngữ và mobile storefront/admin. Kiểm tra i18n gồm reload persistence, shared cart và request state, cùng layout 320/390/768/1024px. Nó chặn mạng ngoài để ổn định; không chứng minh ảnh/font remote tải được. Bằng chứng/screenshot/profile browser nằm trong `.security-review/`, không vào Git.
+Dev `http://127.0.0.1:5173`, preview `http://127.0.0.1:4173`; Vite có thể chọn port kế nếu bận. Build frontend ở `dist/client/`, Worker và Wrangler config sinh tự động ở `dist/lunara/`. Browser test hiện dùng **Edge headless trên Windows** và Node 24, chạy 15 route rồi kiểm tra commerce, wizard, profile/orders, admin, auth guards, ngôn ngữ và mobile storefront/admin. Kiểm tra i18n gồm reload persistence, shared cart và request state, cùng layout 320/390/768/1024px. Nó chặn mạng ngoài để ổn định; không chứng minh ảnh/font remote tải được. Bằng chứng/screenshot/profile browser nằm trong `.security-review/`, không vào Git.
 
-`typecheck` dùng compiler project được pin; `check:architecture` kiểm tra chiều import/public API, presentation state và inline styles; `npm test` dùng Node test runner cho commerce/auth/contrast. Chưa cấu hình ESLint. Vite build chỉ kiểm tra bundle và không thay semantic typecheck.
+`typecheck` dùng compiler project được pin, kiểm tra frontend và `tsconfig.worker.json`; `check:architecture` kiểm tra chiều import/public API, presentation state và inline styles; `npm test` dùng Node test runner cho commerce/auth/contrast. `smoke` gọi health và API 404 trên server local đang chạy. `cf:typegen` sinh types bindings với `--include-runtime=false`, runtime types dùng `@cloudflare/workers-types`. Scripts D1 migrate/seed/reset chuẩn bị cho Phase 1; `deploy` chỉ chạy khi có yêu cầu deploy. Chưa cấu hình ESLint. Vite build chỉ kiểm tra bundle và không thay semantic typecheck.
 
 Trên Windows, Vite/CodeGraph đang chạy có thể khóa native binaries trong `node_modules`, làm `npm ci` báo EPERM. Dừng đúng process của workspace trước khi cài, rồi khởi động lại server; không bật dependency scripts để xử lý lỗi.
 
@@ -199,14 +251,21 @@ Setup tạo `.codex/config.toml` local cho CodeGraph STDIO và OpenAI Docs MCP, 
 | --- | --- |
 | Validation form đầy đủ | Checkout đã có kiểm tra cơ bản; signup/request cần validation nghiệp vụ theo quyết định sản phẩm |
 | Product detail và filter theo dịp | Dùng catalog/ProductCard hiện có; bổ sung description, variants, occasion tags |
-| Wishlist/reviews thật | Shop/Profile/testimonials vẫn là demo độc lập |
+| Cart/wishlist persistence | MVP lưu localStorage cho khách vãng lai, hợp nhất wishlist Shop/Profile; hiện vẫn demo |
 | Delivery/message/gift options | Phải chốt khu vực, cutoff và policy; delivery hiện là fixture |
-| Backend auth/catalog/orders/requests | Cần API/database và server authorization; browser role guards chưa đủ |
-| Payment | Chọn provider/thị trường; server tính tổng, xác minh confirmation/webhooks |
-| Inventory vận hành | Stock edits chưa nối shared catalog, checkout không trừ stock |
+| Backend auth/catalog/orders/requests | Phase 0 có Hono Worker/health và D1 local binding; catalog/auth/orders chưa nối API, Phase 1 cần thống nhất schema |
+| Checkout COD | Server tính tổng, trừ tồn và ghi đơn nguyên tử; thanh toán online nằm ngoài MVP |
+| Inventory vận hành | D1 lưu tồn theo product variant; stock edits và checkout cần nối cùng API |
+| Reviews và payment online | Làm sau MVP khi có chính sách/provider phù hợp |
 | SEO/performance | Admin đã lazy-load; còn metadata, ảnh/font tối ưu và rendering strategy |
 
-Chưa chốt VND/thị trường Việt Nam, đổi thương hiệu, provider, delivery cutoff, refund/cancel policy, multi-store, subscription, loyalty hay chatbot. Chỉ hỏi quyết định thực sự ảnh hưởng task đang được yêu cầu.
+Backend/media đã chọn; pipeline dự kiến auth admin secret + JWT cookie, chuyển frontend sang VND/múi giờ Việt Nam ở Phase 5. Auth khách, delivery cutoff/phí giao thật và refund/cancel policy còn cần chốt khi triển khai. Multi-store, subscription, loyalty hay chatbot nằm ngoài MVP. Chỉ hỏi quyết định thực sự ảnh hưởng task đang được yêu cầu.
+
+### Thông tin chủ dự án cần bổ sung theo phase
+
+Checklist hiện trạng/đầu vào ở [PROJECT_STATUS.md](docs/PROJECT_STATUS.md): catalog/ảnh/giá VND/tồn, khu vực/phí/cutoff giao hàng, policy đơn, Zalo/liên hệ, Cloudinary/domain và cấu hình production theo phase.
+
+Việc kỹ thuật còn lại: thống nhất schema → migrations/seed → API catalog/order → auth admin → nối UI/persistence/thị trường → deploy. Các tài khoản hoặc credentials thật không đưa vào source, docs hay `VITE_*`.
 
 ## File chia sẻ và cách duy trì
 

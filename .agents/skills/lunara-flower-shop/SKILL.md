@@ -30,11 +30,11 @@ Use CodeGraph first to locate code and its dependents when `.codegraph/` exists.
 
 ## Implement commerce and admin behavior
 
-- Determine whether the requested action affects UI state, demo data, or a real backend before choosing storage. The current app has no API, real checkout, or server authorization.
+- Determine whether the requested action affects UI state, demo data, or a backend before choosing storage. Phase 0 provides a Hono Worker with `/api/health`, JSON API 404 and a local D1 binding; commerce APIs, durable checkout and server authorization are not implemented. Health does not verify database readiness.
 - Follow the existing route boundaries in `app/router.tsx`: customer pages use `MainLayout`, admin pages use `AdminLayout`, and standalone auth pages stay outside both. Do not create a duplicate route tree.
 - Shop Add, Cart and navbar already share CartProvider. Use the canonical product IDs and product/size line IDs; do not create an independent cart. Providers retain this in-memory demo across route changes, and reload restores the fixtures.
 - Use shared/i18n hooks and EN/VI locale JSON for interface copy; preserve English fallback and customer-entered content. Product names use name_en/name_vi; name_vn is a Vietnamese compatibility alias. Locale must not change IDs, quantities, PHP currency or Asia/Manila settings. Entity and database references are in docs/FRONTEND_ENTITIES.md and docs/DATABASE_DESIGN.md.
-- Keep amounts numeric and format at display boundaries. Preserve PHP/₱ defaults unless localization is requested. Validate quantities, inventory, delivery choices, recipient/contact fields, and empty states relevant to the change.
+- Keep amounts numeric and format at display boundaries. Preserve PHP/₱ and Asia/Manila unless a market migration is explicitly requested; changing EN/VI copy alone does not change currency/timezone. Validate quantities, inventory, delivery choices, recipient/contact fields, and empty states relevant to the change.
 - Client-side demo auth may control visible UI only. If production auth/payment is requested, design and implement the needed server/provider boundary; never ship fixture credentials or browser role checks as the security solution.
 - Avoid claiming success before persistence or provider confirmation exists. If work remains a demo, explain that fact in the delivery notes.
 
@@ -42,4 +42,4 @@ Use CodeGraph first to locate code and its dependents when `.codegraph/` exists.
 
 Ground proposals in the actual missing flow, reusable primitives, and current visual language. State user benefit, dependencies, and what would demonstrate completion. Separate current functionality from suggested work; do not implement unrequested roadmap items.
 
-Verify affected behavior, build runtime changes, audit dependency changes, and sync the graph. Maintain the guide and Git allowlist when adding shared files. Give the owner a short Vietnamese report with the result, checks performed, and material limitations.
+Verify affected behavior; run the required typecheck/architecture/tests/build checks for runtime changes, local smoke for Worker changes, audit for dependency changes, and sync CodeGraph after code changes. Documentation changes need link/path review. Maintain the guide and Git allowlist when adding shared files. Give the owner a short Vietnamese report with the result, checks performed, and material limitations.

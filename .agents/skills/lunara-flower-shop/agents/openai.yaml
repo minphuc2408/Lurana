@@ -1,6 +1,6 @@
 interface:
   display_name: "Lunara Flower Shop"
-  short_description: "UI, component và nghiệp vụ cho Lunara Flower Shop"
+  short_description: "Storefront/admin, EN/VI và giới hạn demo Lunara"
   default_prompt: "Dùng $lunara-flower-shop để thực hiện thay đổi theo giao diện và kiến trúc hiện tại của project."
 policy:
   allow_implicit_invocation: true
