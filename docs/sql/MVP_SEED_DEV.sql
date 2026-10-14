@@ -1,7 +1,7 @@
 -- =============================================================================
 -- Lunara MVP — DỮ LIỆU MẪU (dev/demo). Chạy lại nhiều lần an toàn (INSERT OR IGNORE).
--- Cấu trúc tương thích đề xuất v2 docs/pipeline/MVP_SCHEMA.sql, không phải canonical v1.
--- Chỉ chạy local sau khi Phase 1 thống nhất/migrate schema. Phase 0 chưa chạy seed.
+-- Tương thích canonical duy nhất: migrations/0001_mvp.sql (DDL v2 đã chốt Phase 1).
+-- Chỉ chạy local sau npm run db:migrate:local. Seed đã được nghiệm thu chạy lặp ở Phase 1.
 -- Ảnh dùng placehold.co làm chỗ giữ chỗ: THAY bằng URL ảnh thật (Cloudinary) trước khi bán thật.
 -- delivery_zones chỉ là VÍ DỤ: THAY bằng khu vực giao thật của shop (xem Phase 1/6).
 -- Giá VND; tồn mẫu: S=20, M=15, L=10.

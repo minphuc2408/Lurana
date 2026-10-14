@@ -31,7 +31,7 @@ UI branding là **Lunara**; repository GitHub tên **Lurana**. UI có English/Ti
 
 ### Kiến trúc MVP đã chọn
 
-[Tech stack](docs/TECH_STACK.md) và [pipeline](docs/pipeline/README.md) ghi mục tiêu; code hiện tại ở Phase 0.
+[Tech stack](docs/TECH_STACK.md) và [pipeline](docs/pipeline/README.md) ghi mục tiêu; Phase 0 có Worker/health, Phase 1 có database local. [Checklist và bằng chứng Phase 1](docs/pipeline/PHASE_1_DATABASE.md).
 
 | Phạm vi | Đã có / còn thiếu |
 | --- | --- |
@@ -39,11 +39,11 @@ UI branding là **Lunara**; repository GitHub tên **Lurana**. UI có English/Ti
 | Media MVP | Cloudinary; chưa nối upload/catalog |
 | Order MVP | COD khách vãng lai; server tính tổng/tồn/ghi đơn chưa triển khai |
 | Admin auth | Secret + JWT cookie dự kiến Phase 4; auth khách để sau |
-| Schema | [Draft 10 bảng](docs/sql/MVP_SCHEMA.sql), [thiết kế CSDL](docs/DATABASE_DESIGN.md); [v2 pipeline](docs/pipeline/MVP_SCHEMA.sql) thay `custom_requests` bằng `delivery_zones`; Phase 1 cần thống nhất |
-| D1 local | Worker binding `DB`; chưa migration/seed/bảng ứng dụng |
-| Cloudflare remote | Chủ dự án đã đăng nhập Wrangler và tạo `lunara-db` trống; Phase 0 không truy cập remote |
+| Schema | [Canonical duy nhất: 10 bảng](migrations/0001_mvp.sql), nguyên DDL v2 có `delivery_zones`, idempotency và CHECK/unique; `custom_requests` deferred. [Đối chiếu v1/v2](docs/DATABASE_DESIGN.md); hai file schema cũ chỉ dẫn về migration |
+| D1 local | Worker binding `DB`; migration `0001_mvp.sql`; seed 4 categories/8 products/24 variants/8 images/4 zones; verifier 13 nhóm qua `db:verify` |
+| Cloudflare remote | Chủ dự án đã đăng nhập Wrangler và tạo `lunara-db`; Phase 0–1 không truy cập hoặc thay đổi remote |
 | Persistence | Cart hiện in-memory, wishlist riêng từng flow; localStorage là mục tiêu MVP |
-| Thị trường | SQL draft VND/tỉnh-phường; UI hiện PHP/Asia/Manila, chuyển ở Phase 5 |
+| Thị trường | Schema backend VND/tỉnh-phường; UI hiện PHP/Asia/Manila, chuyển ở Phase 5 |
 | Vận hành | Chưa deploy/domain, Turnstile, rate limit, email hoặc payment provider |
 
 ```text
@@ -184,7 +184,7 @@ Footer storefront được tách thành `app/layouts/components/StorefrontFooter
 
 Catalog có `name_en/name_vi`; `name` giữ compatibility. `name_vn` chỉ là alias tiếng Việt cho DTO từ backend tương lai. `getLocalizedName` ưu tiên vi → vn → en → legacy cho tiếng Việt; English ưu tiên en → legacy → vi → vn. Cart/historical item giữ tên snapshot song ngữ; thêm/sửa inventory có tên Anh và Việt riêng. Search catalog/stock/order mẫu chấp nhận tên Việt và bỏ dấu. Đổi ngôn ngữ không đổi ID, state cart, giá, PHP hoặc Asia/Manila; tên khách, contact, notes và dữ liệu nhập giữ nguyên.
 
-Thống kê dữ liệu hiện có ở [docs/FRONTEND_ENTITIES.md](docs/FRONTEND_ENTITIES.md); stack ở [docs/TECH_STACK.md](docs/TECH_STACK.md); thiết kế D1 và SQL dự thảo ở [docs/DATABASE_DESIGN.md](docs/DATABASE_DESIGN.md). Schema đã lưu cục bộ; health API có trong Phase 0, chưa có API commerce hoặc migration local/remote được chạy.
+Thống kê dữ liệu hiện có ở [docs/FRONTEND_ENTITIES.md](docs/FRONTEND_ENTITIES.md); stack ở [docs/TECH_STACK.md](docs/TECH_STACK.md); thiết kế D1, canonical và quyết định schema ở [docs/DATABASE_DESIGN.md](docs/DATABASE_DESIGN.md). Health API có trong Phase 0; Phase 1 bổ sung migration/seed/verifier D1 local, chưa có API commerce hoặc thay đổi D1 remote. Schema chỉ kiểm dạng ngày bằng GLOB, dùng SQLite affinity; validation ngày lịch/số nguyên, transition và hoàn tồn đúng một lần thuộc API các phase sau.
 
 `shared/ui` giữ **Button, Input, Dialog** và các subcomponent của Dialog. Các module không được app import đã loại bỏ, gồm calendar/menubar/input-otp/resizable và các wrapper khác. Không cần khôi phục cả bộ UI để thêm một primitive.
 
@@ -211,6 +211,9 @@ npm run dev
 curl.exe http://127.0.0.1:5173/api/health
 npm run smoke
 npm run cf:typegen
+npm run db:migrate:local
+npm run db:seed:local
+npm run db:verify
 npm run typecheck
 npm run check:architecture
 npm test
@@ -223,7 +226,7 @@ npm run check:ui -- http://127.0.0.1:4173
 
 Dev `http://127.0.0.1:5173`, preview `http://127.0.0.1:4173`; Vite có thể chọn port kế nếu bận. Build frontend ở `dist/client/`, Worker và Wrangler config sinh tự động ở `dist/lunara/`. Browser test hiện dùng **Edge headless trên Windows** và Node 24, chạy 15 route rồi kiểm tra commerce, wizard, profile/orders, admin, auth guards, ngôn ngữ và mobile storefront/admin. Kiểm tra i18n gồm reload persistence, shared cart và request state, cùng layout 320/390/768/1024px. Nó chặn mạng ngoài để ổn định; không chứng minh ảnh/font remote tải được. Bằng chứng/screenshot/profile browser nằm trong `.security-review/`, không vào Git.
 
-`typecheck` dùng compiler project được pin, kiểm tra frontend và `tsconfig.worker.json`; `check:architecture` kiểm tra chiều import/public API, presentation state và inline styles; `npm test` dùng Node test runner cho commerce/auth/contrast. `smoke` gọi health và API 404 trên server local đang chạy. `cf:typegen` sinh types bindings với `--include-runtime=false`, runtime types dùng `@cloudflare/workers-types`. Scripts D1 migrate/seed/reset chuẩn bị cho Phase 1; `deploy` chỉ chạy khi có yêu cầu deploy. Chưa cấu hình ESLint. Vite build chỉ kiểm tra bundle và không thay semantic typecheck.
+`typecheck` dùng compiler project được pin, kiểm tra frontend và `tsconfig.worker.json`; `check:architecture` kiểm tra chiều import/public API, presentation state và inline styles; `npm test` dùng Node test runner cho commerce/auth/contrast. `smoke` gọi health và API 404 trên server local đang chạy. `cf:typegen` sinh types bindings với `--include-runtime=false`, runtime types dùng `@cloudflare/workers-types`. D1 migrate/seed chỉ chạy `--local`; `db:verify` tự động kiểm 13 nhóm ràng buộc trên D1 local, dùng database tạm cho phép thử ghi/xóa. `db:reset:local` xóa trạng thái D1 local, chỉ dùng khi cần reset; `deploy` chỉ chạy khi có yêu cầu deploy. Chưa cấu hình ESLint. Vite build chỉ kiểm tra bundle và không thay semantic typecheck.
 
 Trên Windows, Vite/CodeGraph đang chạy có thể khóa native binaries trong `node_modules`, làm `npm ci` báo EPERM. Dừng đúng process của workspace trước khi cài, rồi khởi động lại server; không bật dependency scripts để xử lý lỗi.
 
@@ -253,7 +256,7 @@ Setup tạo `.codex/config.toml` local cho CodeGraph STDIO và OpenAI Docs MCP, 
 | Product detail và filter theo dịp | Dùng catalog/ProductCard hiện có; bổ sung description, variants, occasion tags |
 | Cart/wishlist persistence | MVP lưu localStorage cho khách vãng lai, hợp nhất wishlist Shop/Profile; hiện vẫn demo |
 | Delivery/message/gift options | Phải chốt khu vực, cutoff và policy; delivery hiện là fixture |
-| Backend auth/catalog/orders/requests | Phase 0 có Hono Worker/health và D1 local binding; catalog/auth/orders chưa nối API, Phase 1 cần thống nhất schema |
+| Backend auth/catalog/orders/requests | Worker/health và schema/seed D1 local đã có; catalog/auth/orders chưa nối API, requests deferred |
 | Checkout COD | Server tính tổng, trừ tồn và ghi đơn nguyên tử; thanh toán online nằm ngoài MVP |
 | Inventory vận hành | D1 lưu tồn theo product variant; stock edits và checkout cần nối cùng API |
 | Reviews và payment online | Làm sau MVP khi có chính sách/provider phù hợp |
@@ -265,7 +268,7 @@ Backend/media đã chọn; pipeline dự kiến auth admin secret + JWT cookie, 
 
 Checklist hiện trạng/đầu vào ở [PROJECT_STATUS.md](docs/PROJECT_STATUS.md): catalog/ảnh/giá VND/tồn, khu vực/phí/cutoff giao hàng, policy đơn, Zalo/liên hệ, Cloudinary/domain và cấu hình production theo phase.
 
-Việc kỹ thuật còn lại: thống nhất schema → migrations/seed → API catalog/order → auth admin → nối UI/persistence/thị trường → deploy. Các tài khoản hoặc credentials thật không đưa vào source, docs hay `VITE_*`.
+Việc kỹ thuật còn lại: API catalog/order → auth admin → nối UI/persistence/thị trường → deploy khi được yêu cầu. Schema/seed local không thay dữ liệu thật trước mở bán. Các tài khoản hoặc credentials thật không đưa vào source, docs hay `VITE_*`.
 
 ## File chia sẻ và cách duy trì
 

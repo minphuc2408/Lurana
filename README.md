@@ -7,7 +7,7 @@ Storefront + admin từ thiết kế Flower Shop Figma. **UI: Lunara · GitHub: 
 | Frontend | React/React DOM 18.3.1 · React Router 7.18.4 · Vite 6.4.4 · Tailwind 4.1.12 |
 | Worker | Hono + `@cloudflare/vite-plugin`; Phase 0 local |
 | API | `GET /api/health` → `{ data: { ok: true, time } }`; `/api/*` chưa có → JSON 404 |
-| D1 | Binding `DB` local; remote `lunara-db` đã tạo, trống theo thông tin chủ dự án |
+| D1 | Binding `DB` local; canonical 10 bảng, migration/seed/verifier Phase 1; remote chưa truy cập |
 | Commerce | Auth/cart/checkout/stock/orders/requests: frontend demo, chưa nối API |
 | Locale | EN mặc định + VI; giữ PHP/₱ và Asia/Manila khi đổi ngôn ngữ |
 | Build | Frontend `dist/client/` · Worker + Wrangler config `dist/lunara/` |
@@ -34,6 +34,9 @@ PowerShell: dùng `npm.cmd`/`npx.cmd` khi truyền đối số qua `--`; dùng `
 
 ```bash
 npm run cf:typegen
+npm run db:migrate:local
+npm run db:seed:local
+npm run db:verify
 npm run typecheck
 npm run check:architecture
 npm test
@@ -46,6 +49,8 @@ npm run check:ui -- http://127.0.0.1:4173
 
 `cf:typegen`: bindings, `--include-runtime=false`; runtime types từ `@cloudflare/workers-types`. `check:ui`: Edge headless trên Windows, chặn ảnh/font ngoài ở chế độ mặc định; evidence local ở `.security-review/`. Chạy audit khi đổi dependency. Chưa có ESLint.
 
+Database chỉ local: migration tạo 10 bảng; seed gồm 4 categories, 8 products, 24 variants, 8 images, 4 zones. `db:verify` kiểm 13 nhóm trên D1 local, dùng database tạm cho phép thử ghi/xóa; xem [output nghiệm thu Phase 1](docs/pipeline/PHASE_1_DATABASE.md). Khu vực/phí, ảnh và giá/tồn seed là dữ liệu mẫu. Không áp `docs/sql/deferred/0002_custom_requests.sql`.
+
 ## Tài liệu và phần tiếp theo
 
 | Cần tra | File |
@@ -55,9 +60,9 @@ npm run check:ui -- http://127.0.0.1:4173
 | Instructions + skill | [AGENTS.md](AGENTS.md) · [lunara-flower-shop](.agents/skills/lunara-flower-shop/SKILL.md) |
 | Phase 0 → deploy | [Pipeline](docs/pipeline/README.md) · [Phase 0](docs/pipeline/PHASE_0_PREPARE.md) |
 | Stack + entity map | [TECH_STACK.md](docs/TECH_STACK.md) · [FRONTEND_ENTITIES.md](docs/FRONTEND_ENTITIES.md) |
-| DB draft + đối chiếu schema | [DATABASE_DESIGN.md](docs/DATABASE_DESIGN.md) · [SQL](docs/sql/MVP_SCHEMA.sql) |
+| Database + đối chiếu v1/v2 | [DATABASE_DESIGN.md](docs/DATABASE_DESIGN.md) · [Canonical SQL](migrations/0001_mvp.sql) |
 
-MVP: **Hono/Workers · D1/SQLite · Cloudinary · Zod · COD khách vãng lai**. Phase 1 cần thống nhất draft SQL với đề xuất v2 của pipeline trước migration/seed. Cart/wishlist localStorage, API commerce, admin auth và chuyển frontend sang VND/múi giờ Việt Nam còn ở các phase tiếp theo. Database migrate/seed/reset scripts mới được chuẩn bị; chưa chạy trong Phase 0.
+MVP: **Hono/Workers · D1/SQLite · Cloudinary · Zod · COD khách vãng lai**. Phase 1 chốt nguyên DDL v2 thành `migrations/0001_mvp.sql`, nguồn schema duy nhất; hai file SQL schema cũ chỉ chứa chú thích dẫn về migration. `delivery_zones` trong MVP; `custom_requests` deferred. API commerce, admin auth, cart localStorage và chuyển frontend sang VND/múi giờ Việt Nam thuộc các phase tiếp theo; wishlist server ngoài MVP. Không thay D1 remote trong Phase 1.
 
 ## Codex và CodeGraph
 

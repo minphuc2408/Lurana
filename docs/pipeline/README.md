@@ -4,7 +4,7 @@ Cập nhật: **14/10/2026**. Tech stack giữ nguyên như [TECH_STACK.md](../T
 
 Pipeline mô tả đích MVP và các phase tiếp theo; nó không tự cho phép thực hiện tất cả phase. Phase 0 chỉ dựng Worker local và health API. Storefront/admin tiếp tục dùng fixtures, PHP/₱ và Asia/Manila đến Phase 5. Chủ dự án đã đăng ký Cloudflare, đăng nhập Wrangler và tạo D1 remote `lunara-db` còn trống ngoài lượt Phase 0; không cần làm lại các bước đó.
 
-**Trạng thái:** Phase 0 DONE (6/6 tiêu chí) · Phase 1–6 PLANNED. [Hiện trạng / gaps / đầu vào chủ shop](../PROJECT_STATUS.md). Lịch 2 ngày và gói Free là ước lượng kế hoạch, không phải cam kết thời gian/chi phí.
+**Trạng thái:** Phase 0 DONE (6/6 tiêu chí) · Phase 1 DONE (5/5 tiêu chí, D1 local) · Phase 2–6 PLANNED. [Hiện trạng / gaps / đầu vào chủ shop](../PROJECT_STATUS.md). Lịch 2 ngày và gói Free là ước lượng kế hoạch, không phải cam kết thời gian/chi phí.
 
 ## 1. Mục tiêu MVP
 
@@ -39,16 +39,16 @@ Khách vào web, xem hoa, thêm giỏ, **đặt hàng COD** (không cần tài k
 | Phase | File | Trạng thái | Ước lượng | Cổng nghiệm thu |
 | --- | --- | --- | --- | --- |
 | 0 | [PHASE_0_PREPARE](PHASE_0_PREPARE.md) | DONE | 1 giờ | FE + health/JSON 404 + SPA reload + D1 local + build/typecheck pass |
-| 1 | [PHASE_1_DATABASE](PHASE_1_DATABASE.md) | PLANNED | 1 giờ | Thống nhất v1/v2, migration + seed local, schema verify |
+| 1 | [PHASE_1_DATABASE](PHASE_1_DATABASE.md) | DONE | 1 giờ | Canonical 10 bảng; migration + seed local, 13/13 nhóm verify pass |
 | 2 | [PHASE_2_API_CATALOG](PHASE_2_API_CATALOG.md) | PLANNED | 2,5 giờ | Catalog, phí giao, quote qua curl |
 | 3 | [PHASE_3_CHECKOUT_ORDERS](PHASE_3_CHECKOUT_ORDERS.md) | PLANNED | 3 giờ | COD, tồn, idempotency, tra đơn, hủy |
 | 4 | [PHASE_4_ADMIN](PHASE_4_ADMIN.md) | PLANNED | 2 giờ | Admin login + đơn/sản phẩm/tồn/phí giao |
 | 5 | [PHASE_5_FRONTEND](PHASE_5_FRONTEND.md) | PLANNED | 4,5 giờ | FE dùng API, VND, thay fixture ở luồng MVP |
 | 6 | [PHASE_6_DEPLOY](PHASE_6_DEPLOY.md) | PLANNED | 1,5 giờ | Deploy + remote smoke + dữ liệu thật |
 
-Tài liệu dùng chung: [API_CONTRACT](API_CONTRACT.md) • [BACKLOG](BACKLOG.md) • SQL: [`../sql/MVP_SCHEMA.sql`](../sql/MVP_SCHEMA.sql), [`../sql/MVP_SEED_DEV.sql`](../sql/MVP_SEED_DEV.sql).
+Tài liệu dùng chung: [API_CONTRACT](API_CONTRACT.md) • [BACKLOG](BACKLOG.md) • SQL: [migration canonical](../../migrations/0001_mvp.sql), [dev seed](../sql/MVP_SEED_DEV.sql).
 
-**Schema đang có hai bản dự thảo khác nhau:** [`../sql/MVP_SCHEMA.sql`](../sql/MVP_SCHEMA.sql) là canonical hiện có; [`MVP_SCHEMA.sql`](MVP_SCHEMA.sql) là đề xuất v2 trong pipeline (thêm `delivery_zones`, chuyển `custom_requests` sang deferred và bổ sung ràng buộc). Phase 0 giữ nguyên canonical, không áp migration/seed. Phase 1 phải đối chiếu và thống nhất hai bản trước khi tạo `migrations/0001_mvp.sql`; seed hiện phù hợp với v2. [`verify_schema.reference.py`](verify_schema.reference.py) chỉ là verifier tham chiếu trên SQLite in-memory, không thay nghiệm thu D1 local ở Phase 1.
+**Schema đã thống nhất ở Phase 1:** dùng nguyên DDL v2 cho 10 bảng, có `delivery_zones`, idempotency và các ràng buộc; `custom_requests` deferred. [`migrations/0001_mvp.sql`](../../migrations/0001_mvp.sql) là nguồn DDL duy nhất; hai file `MVP_SCHEMA.sql` cũ chỉ dẫn về migration. [Đối chiếu v1/v2 và lý do](../DATABASE_DESIGN.md). Seed và migration đã áp D1 local; `npm run db:verify` pass 13/13 nhóm trên binding D1 local, dùng database cô lập cho ca ghi/xóa thử. Verifier Python tham chiếu cũ đã được thay bằng script Node này, không còn suite tự áp deferred/0002. [Output nghiệm thu](PHASE_1_DATABASE.md#bằng-chứng-lệnh--14102026). Không truy cập D1 remote.
 
 **Lịch 2 ngày:** Ngày 1 = Phase 0 → 3 (+ bắt đầu 4). Ngày 2 = Phase 4 → 6.
 **Phase 0–5 làm local, không cần tài khoản Cloudflare.** Phase 6 dùng tài khoản/D1 đã được chủ dự án tạo; đăng ký/login/create lại chỉ khi còn thiếu.
@@ -91,7 +91,8 @@ Tham số sizing của bản kế hoạch: Workers 100.000 requests/ngày, 10 ms
 │  ├─ routes/                   # public.ts, orders.ts, admin/*.ts
 │  ├─ services/                 # pricing.ts, orders.ts, delivery.ts
 │  └─ lib/                      # errors.ts, ids.ts, auth.ts, validate.ts
-├─ migrations/0001_mvp.sql      # = docs/sql/MVP_SCHEMA.sql
+├─ migrations/0001_mvp.sql      # nguồn DDL canonical duy nhất
+├─ scripts/verify-schema.mjs    # 13 nhóm ràng buộc trên D1 local
 ├─ scripts/smoke.mjs            # kiểm thử end-to-end bằng fetch
 ├─ docs/                        # tài liệu (có pipeline/ và sql/)
 ├─ wrangler.jsonc

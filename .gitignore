@@ -38,6 +38,7 @@
 !/scripts/check-ui-flows.mjs
 !/scripts/check-ui-i18n.mjs
 !/scripts/reset-d1-local.mjs
+!/scripts/verify-schema.mjs
 !/scripts/smoke.mjs
 !/tests/auth.test.mjs
 !/tests/commerce.test.mjs
@@ -67,7 +68,8 @@
 !/docs/pipeline/PHASE_4_ADMIN.md
 !/docs/pipeline/PHASE_5_FRONTEND.md
 !/docs/pipeline/PHASE_6_DEPLOY.md
-!/docs/pipeline/verify_schema.reference.py
+!/migrations/
+!/migrations/0001_mvp.sql
 
 # Reviewed feature architecture and source files.
 !/tsconfig.json

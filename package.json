@@ -16,6 +16,7 @@
     "cf:typegen": "wrangler types --include-runtime=false",
     "db:migrate:local": "wrangler d1 migrations apply lunara-db --local",
     "db:seed:local": "wrangler d1 execute lunara-db --local --file=./docs/sql/MVP_SEED_DEV.sql",
+    "db:verify": "node scripts/verify-schema.mjs",
     "db:reset:local": "node scripts/reset-d1-local.mjs && npm run db:migrate:local && npm run db:seed:local",
     "smoke": "node scripts/smoke.mjs",
     "deploy": "npm run build && wrangler deploy",

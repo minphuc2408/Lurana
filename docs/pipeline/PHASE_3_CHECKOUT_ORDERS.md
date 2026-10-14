@@ -2,7 +2,7 @@
 
 **Mục tiêu:** `POST /api/orders` đúng, an toàn và không bán quá tồn; tra đơn cho khách; dịch vụ chuyển trạng thái đơn (dùng lại ở Phase 4). Hợp đồng: [API_CONTRACT.md](API_CONTRACT.md). Đây là phase **quan trọng nhất**; không cắt.
 
-**Trạng thái:** PLANNED · chưa ghi order/tồn/idempotency. [Hiện trạng](../PROJECT_STATUS.md). Thuật toán dưới phụ thuộc schema v2 đã được thống nhất/migrate ở Phase 1 và services Phase 2.
+**Trạng thái:** PLANNED · chưa có API ghi order/tồn/idempotency. [Hiện trạng](../PROJECT_STATUS.md). Thuật toán dưới dùng [schema canonical](../../migrations/0001_mvp.sql) đã thống nhất/migrate local ở Phase 1 và phụ thuộc services Phase 2. Phase 1 đã kiểm CHECK/unique/rollback D1 batch; concurrency và retry HTTP thuộc Phase 3.
 
 ## Thuật toán tạo đơn (`worker/services/orders.ts`)
 
