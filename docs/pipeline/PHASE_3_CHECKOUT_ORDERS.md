@@ -2,11 +2,11 @@
 
 **Mục tiêu:** `POST /api/orders` đúng, an toàn và không bán quá tồn; tra đơn cho khách; dịch vụ chuyển trạng thái đơn (dùng lại ở Phase 4). Hợp đồng: [API_CONTRACT.md](API_CONTRACT.md). Đây là phase **quan trọng nhất**; không cắt.
 
-**Trạng thái:** PLANNED · chưa có API ghi order/tồn/idempotency. [Hiện trạng](../PROJECT_STATUS.md). Thuật toán dưới dùng [schema canonical](../../migrations/0001_mvp.sql) đã thống nhất/migrate local ở Phase 1 và phụ thuộc services Phase 2. Phase 1 đã kiểm CHECK/unique/rollback D1 batch; concurrency và retry HTTP thuộc Phase 3.
+**Trạng thái:** DONE local · **5/5 tiêu chí**, 14/10/2026. Đã có API ghi order/tồn/idempotency, tra đơn và service chuyển trạng thái; không làm frontend/admin. [Hiện trạng](../PROJECT_STATUS.md). Dùng nguyên [schema canonical](../../migrations/0001_mvp.sql) Phase 1 và services Phase 2. [Bằng chứng/output](#bằng-chứng-lệnh--14102026).
 
 ## Điều kiện bắt đầu — đã kiểm 14/10/2026
 
-**Sẵn sàng triển khai Phase 3 local.** Không cần tạo tài nguyên Cloudflare hoặc chỉnh DDL trước khi bắt đầu.
+**Đầu vào đã được đáp ứng và Phase 3 đã triển khai/nghiệm thu local.** Mục này ghi các điều kiện bắt đầu và kết quả đối chiếu sau khi hoàn tất; không phải danh sách việc còn thiếu. Không tạo tài nguyên Cloudflare hoặc chỉnh DDL trong Phase 3.
 
 | Điều kiện | Bằng chứng / lưu ý |
 | --- | --- |
@@ -14,11 +14,11 @@
 | Catalog/quote Phase 2 đã nghiệm thu | 8/8 tiêu chí, 53 test pass, dev/preview smoke 16/16; [output](PHASE_2_API_CATALOG.md#bằng-chứng-lệnh--14102026) |
 | Service dùng lại | `priceCart(db, items, province, ward, methodCode)` trả totals + issues; `phoneSchema`/`normalizePhone`, `validateDeliverySlot`, `todayInVN`, `toIso`, AppError và validator đã có |
 | D1/query budget | Giỏ tối đa 15 dòng; replay 1 + pricing 2 + batch 32 = 35 statements cho luồng tạo đơn bình thường. Phải đếm thực tế và giữ các nhánh retry/error trong giới hạn 40 |
-| Config/policy | Dùng giả định Phase 2 cho test local; trước mở bán chủ shop cần chốt khu vực/phí/cutoff/slot thật. Chưa cần frontend chuyển VND hoặc admin để làm backend Phase 3 |
-| Turnstile | Chưa có verifier; triển khai ở Phase 3. Có `TURNSTILE_SECRET` thì xác minh token; local không có secret được bỏ qua, test các nhánh bằng mock không dùng secret thật |
-| Phạm vi tiếp theo | Còn schema order/lookup, UUID v4/mã đơn, create/lookup/transition services, routes và 10 kịch bản smoke. Phase 3 chưa được triển khai bởi việc rà điều kiện này |
+| Config/policy | Dùng giả định Phase 2 cho test local; trước mở bán chủ shop cần chốt khu vực/phí/cutoff/slot thật. UI preview đã dùng VND; admin vẫn thuộc Phase 4 |
+| Turnstile | Verifier đã triển khai ở Phase 3: có `TURNSTILE_SECRET` thì xác minh token; local thiếu secret được bỏ qua. Nhánh provider đã kiểm bằng mock; cấu hình widget/secrets thật còn lại |
+| Phạm vi hoàn tất / tiếp theo | Schema order/lookup, UUID v4/mã đơn, create/lookup/transition services, routes và 10 ca smoke đã xong. Tiếp theo Phase 4 auth/admin, rồi UI còn lại Phase 5; không có route transition hoặc hủy đơn khách ở Phase 3 |
 
-Smoke có ca ghi/chỉnh tồn phải dùng D1 local cô lập hoặc snapshot/restore đầy đủ dữ liệu test; không reset/xóa seed đang dùng trên 5173 và không truy cập remote. `smoke.mjs` Phase 2 vẫn chỉ đọc.
+Smoke hiện giữ các ca catalog read-only trên URL positional local; ca ghi/chỉnh tồn Phase 3 tự dùng HTTP loopback + workerd D1 `persist:false`, `remoteBindings:false`. Không reset/xóa seed đang dùng trên 5173/4173 và không truy cập remote.
 
 ## Thuật toán tạo đơn (`worker/services/orders.ts`)
 
@@ -37,7 +37,7 @@ Smoke có ca ghi/chỉnh tồn phải dùng D1 local cô lập hoặc snapshot/r
 9. **Bắt lỗi batch:**
    - Thông điệp chứa `CHECK constraint failed` và `stock_quantity` → đọc lại tồn, trả `OUT_OF_STOCK` với `[{variant_id, requested, available}]`.
    - `UNIQUE constraint failed: orders.idempotency_key` → đọc đơn theo key, trả `200 replayed`.
-   - `UNIQUE constraint failed: orders.order_number` → sinh mã mới, thử lại tối đa 3 lần.
+   - `UNIQUE constraint failed: orders.order_number` → sinh mã mới, tối đa 3 batch tổng cộng; chỉ retry nếu ngân sách còn đủ cho cả batch và một diagnostic read. Không đủ → `CONFLICT` 409, không ghi thêm.
    - Lỗi khác → `INTERNAL`.
 10. Trả `201 OrderSummary` (dựng từ dữ liệu đã tính, không cần đọc lại).
 
@@ -105,17 +105,88 @@ Không có `variant_id` (variant đã bị xóa cứng) thì bỏ qua dòng đó
 
 ## Tiêu chí nghiệm thu
 
-- [ ] 10 kịch bản smoke trên pass (output đính kèm trong commit/PR).
-- [ ] Không có đường nào ghi `orders` mà không trừ tồn, hoặc trừ tồn mà không có đơn (kiểm tra bằng truy vấn đối chiếu sau smoke: tổng `order_items.quantity` của đơn chưa hủy khớp mức tồn giảm).
-- [ ] Tổng số truy vấn D1 của `POST /api/orders` với giỏ 15 dòng ≤ 40 (đếm trong test).
-- [ ] Không có SQL nối chuỗi từ input; mọi tham số đều bind.
-- [ ] `npm run typecheck`, `npm test` pass.
+- [x] 10 kịch bản smoke trên pass (output lưu bên dưới; chưa có yêu cầu commit/PR).
+- [x] Không có đường nào ghi `orders` mà không trừ tồn, hoặc trừ tồn mà không có đơn (đối chiếu sau smoke: tổng `order_items.quantity` của đơn chưa hủy khớp mức tồn giảm).
+- [x] Tổng số truy vấn D1 của `POST /api/orders` với giỏ 15 dòng ≤ 40 (success 35, CHECK/unique race 36, collision dừng ở 35; đếm nguyên failed batch).
+- [x] Không có SQL nối chuỗi từ input; mọi tham số đều bind (review source và test chuỗi customer chứa SQL trong batch binds).
+- [x] `npm run typecheck`, `npm test` pass.
 
-## Goal prompt (dán vào `/goal`)
+## Triển khai và phạm vi kiểm chứng
+
+- [Schemas](../../shared/schemas.ts) dùng chung FE/Worker; trim tên/địa chỉ, normalize SĐT, giữ nội dung khách nhập; client giá/tổng/role bị bỏ qua. [ids.ts](../../worker/lib/ids.ts) kiểm UUID v4, mã đơn dùng ngày VN và `crypto.getRandomValues` với rejection sampling.
+- [orders.ts](../../worker/services/orders.ts): replay → pricing hai queries → validate delivery → một batch INSERT order/items, trừ tồn không điều kiện rồi history. FK của item chống ghi đơn khi variant bị xóa giữa pricing và batch; CHECK rollback toàn bộ khi hụt tồn. Lookup ba statements với whitelist DTO, giữ snapshot, không trả admin_note/stock_released/actor.
+- `transitionOrder(db, orderNumber, newStatus, actorLabel = 'ADMIN', note?)` dùng đúng thứ tự SQL hoàn tồn trước CAS đổi trạng thái sau. Kiểm `meta.changes`, bỏ qua variant_id null, history NOT EXISTS; service chưa có route public/admin. Đã kiểm hủy từ PENDING/CONFIRMED/PREPARING, hủy đồng thời, race CONFIRMED/CANCELLED, DELIVERED/PAID và variant xóa cứng.
+- [turnstile.ts](../../worker/lib/turnstile.ts): có secret thì bắt buộc Siteverify explicit success, provider failure fail closed; thiếu secret local bypass. UUID được gửi trong `idempotency_key` Siteverify để hỗ trợ retry xác minh. Test dùng provider mock; chưa cấu hình domain/site key/secret thật. Theo [Cloudflare Siteverify](https://developers.cloudflare.com/turnstile/get-started/server-side-validation/), token single-use/hết hạn; client cần token mới khi token không còn hợp lệ, forwarding UUID không thay thế token hợp lệ.
+- Ngân sách bảo thủ: mỗi batch tính toàn bộ số statement gửi, kể cả lỗi ở statement đầu. Trước mỗi lần ghi, service dành một statement cho chẩn đoán; giỏ 15 dòng dùng 35 hoặc 36 khi có diagnostic read. Trùng order_number ở giỏ này trả CONFLICT an toàn sau batch đầu, vì retry nguyên batch sẽ vượt 40; giỏ nhỏ có tối đa ba batch.
+- [smoke.mjs](../../scripts/smoke.mjs) giữ 16 nhóm catalog trên URL positional loopback rồi tạo HTTP server `127.0.0.1` cổng ngẫu nhiên với workerd D1 `persist:false`, `remoteBindings:false`. Mười ca order và đối chiếu tồn chạy trên DB này; cleanup server/proxy trong finally. Không reset/snapshot/chỉnh seed persisted, không dùng D1 remote; không đổi DDL/dependency/frontend/admin. Phase 3 smoke chạy source Hono qua HTTP + binding D1 thật; catalog/validation cũng kiểm build preview.
+
+## Bằng chứng lệnh — 14/10/2026
+
+Output trích từ source cuối; các lệnh kiểm tra exit 0. `[exit 0]` là chú thích kết quả.
 
 ```text
-Đọc docs/pipeline/README.md, API_CONTRACT.md, PHASE_2_API_CATALOG.md (để biết các service đã có) và PHASE_3_CHECKOUT_ORDERS.md rồi thực hiện Phase 3.
-Cài POST /api/orders (Idempotency-Key, trừ tồn bằng UPDATE không điều kiện + CHECK để rollback batch), POST /api/orders/lookup, và service transitionOrder (hoàn tồn đúng một lần theo mẫu SQL trong tài liệu).
-Ràng buộc: server tự tính tiền/phí; ≤ 40 truy vấn D1 mỗi request với giỏ 15 dòng; mọi SQL bind tham số; không thêm dependency; không làm admin/frontend ở phase này.
-Mở rộng scripts/smoke.mjs với 10 kịch bản trong tài liệu, gồm test song song mua nốt món cuối. Xong khi mọi "Tiêu chí nghiệm thu" Phase 3 pass, kèm output.
+> npm run typecheck
+> tsc --noEmit && tsc -p tsconfig.worker.json --noEmit
+[exit 0]
+
+> npm run check:architecture
+Architecture checked: 178 source files; layer boundaries, public APIs, presentation state, and Tailwind page styles.
+
+> npm test
+Phase 3 D1 LOCAL race: last stock=1; HTTP=[201,409/OUT_OF_STOCK]; final stock=0; orders/items/history=[1,1,1]; submitted=[7,8].
+Phase 3 D1 LOCAL idempotency race: HTTP=[201,200 replayed]; exactly one decrement and one order; submitted=[7,8].
+Phase 3 D1 LOCAL statement budget: 15 lines success=35; last-stock CHECK failure=36; failed order/items/history=[0,0,0]; all earlier decrements rolled back; limit=40.
+Phase 3 D1 LOCAL transition: PENDING -> CONFIRMED -> PREPARING -> IN_TRANSIT -> DELIVERED; history=5; payment=PAID; paid_at=delivered_at; terminal changes rejected.
+Phase 3 D1 LOCAL cancellation: PENDING/CONFIRMED/PREPARING -> CANCELLED restores both lines exactly once; second cancel=INVALID_TRANSITION; no extra history/stock.
+Phase 3 D1 LOCAL concurrent cancellation: both pre-read PENDING; one success/one INVALID_TRANSITION; stock restored once; history=[PENDING,CANCELLED].
+Phase 3 D1 statement budget: collision lines=15 submitted=35 batches=1, limit=40.
+ℹ tests 92
+ℹ pass 92
+ℹ fail 0
+
+> npm run build
+vite v6.4.4 building SSR bundle for production...
+✓ 147 modules transformed.
+dist/lunara/index.js 269.99 kB
+✓ built in 847ms
+vite v6.4.4 building for production...
+✓ 1816 modules transformed.
+✓ built in 3.00s
 ```
+
+```text
+> npm run preview -- --port 4173 --strictPort
+➜ Local: http://127.0.0.1:4173/
+> npm run smoke -- http://127.0.0.1:4173
+Catalog smoke: 16/16 PASS, 0 FAIL at http://127.0.0.1:4173.
+Phase 3 isolated HTTP smoke at http://127.0.0.1:54936; real D1, persist=false, remoteBindings=false.
+PASS Phase 3 01/10 valid COD order: DB totals, stock deducted, snapshots/history persisted
+PASS Phase 3 02/10 same idempotency key replays once without order/stock writes
+D1 Phase 3 concurrency: HTTP statuses=201,409; last_stock=0; new_orders=1; loser_statements=8.
+PASS Phase 3 03/10 parallel HTTP last-item purchase: exactly 201 + 409; no hanging order
+PASS Phase 3 04/10 forged client prices/totals/fees are ignored
+PASS Phase 3 05/10 overstock rejection includes merged requested/available; DB unchanged
+PASS Phase 3 06/10 unavailable province rejects; ward fee and both free thresholds use DB
+PASS Phase 3 07/10 SAME_DAY tomorrow and past delivery date reject without writes
+PASS Phase 3 08/10 lookup accepts sender/recipient normalized phones; wrong code/phone share 404
+PASS Phase 3 09/10 missing/malformed/non-v4 idempotency keys return 400 without writes
+D1 Phase 3 transitions: history=PENDING,CONFIRMED,PREPARING,IN_TRANSIT,DELIVERED; payment=PAID; cancellation=+2 once; repeat=INVALID_TRANSITION/+0.
+PASS Phase 3 10/10 transition history + DELIVERED/PAID; cancellation releases stock once
+Phase 3 mandatory smoke: 10/10 PASS, 0 FAIL.
+D1 Phase 3 query budget: cart_lines=15; submitted_statements=35; limit=40; maximum_all_order_requests=35.
+D1 Phase 3 reconciliation: variants=24; every stock reduction=uncancelled order_items quantity; dangling_orders=0; foreign_key_check=[]; orders=8.
+PASS Phase 3 acceptance: 15-line query budget and full stock/order reconciliation
+Local smoke: 27/27 PASS, 0 FAIL; persisted seed untouched.
+```
+
+```text
+> npm run graph:sync
+* Synced 9 changed files
+• Added: 9 - 94 nodes in 501ms
+> npm run graph:status -- --json
+pendingChanges: { added: 0, modified: 0, removed: 0 }
+> git diff --check
+[exit 0]
+```
+
+Rollup có warning chú thích PURE trong dependency Zod; Node có warning SQLite experimental. Các warning không làm thất bại kiểm tra. Commit/push/deploy chỉ khi có yêu cầu riêng.

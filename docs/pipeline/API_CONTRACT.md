@@ -2,7 +2,7 @@
 
 Base path: `/api` (cùng origin với frontend). JSON UTF-8. Đây là hợp đồng giữa Worker và frontend; thay đổi phải sửa file này trước.
 
-**Trạng thái:** Phase 2 đã triển khai local: health, categories, products, products/:slug, delivery/options và checkout/quote. Các API đặt đơn/tra đơn/admin còn **PLANNED** (Phase 3–4); frontend chưa nối API (Phase 5). Route API lạ trả `NOT_FOUND` JSON 404 (message `Không tìm thấy API.`). [Hiện trạng](../PROJECT_STATUS.md) · [nghiệm thu Phase 2](PHASE_2_API_CATALOG.md).
+**Trạng thái:** Phase 2–3 đã triển khai local: health, catalog, delivery/options, checkout/quote, đặt đơn COD và tra đơn. `transitionOrder` là service nội bộ cho Phase 4; chưa có route admin/auth/hủy đơn khách. Frontend Home/Shop/Cart/Delivery/Quote giữ preview; gửi/tra đơn qua UI thuộc Phase 5. Route API lạ trả `NOT_FOUND` JSON 404 (message `Không tìm thấy API.`). [Hiện trạng](../PROJECT_STATUS.md) · [nghiệm thu Phase 3](PHASE_3_CHECKOUT_ORDERS.md).
 
 ## Quy ước chung
 
@@ -20,7 +20,7 @@ Base path: `/api` (cùng origin với frontend). JSON UTF-8. Đây là hợp đ�
 | `VALIDATION_ERROR` | 400 | Zod không qua; `details` = danh sách `{path, message}` |
 | `UNAUTHORIZED` | 401 | Thiếu/hết hạn cookie admin |
 | `INVALID_CREDENTIALS` | 401 | Sai mật khẩu admin |
-| `FORBIDDEN` | 403 | Sai `Origin` ở request ghi, hoặc Turnstile không hợp lệ |
+| `FORBIDDEN` | 403 | Turnstile order không hợp lệ; kiểm Origin ở request ghi admin thuộc Phase 4 PLANNED |
 | `NOT_FOUND` | 404 | Không có tài nguyên; tra đơn sai mã hoặc SĐT dùng chung mã này |
 | `CONFLICT` | 409 | Trùng slug/SKU/mã |
 | `OUT_OF_STOCK` | 409 | Thiếu tồn; `details`: `[{variant_id, requested, available}]` |
@@ -104,15 +104,20 @@ Header **bắt buộc:** `Idempotency-Key: <uuid v4>`. Body:
   turnstile_token?: string }           // bắt buộc khi Worker có TURNSTILE_SECRET
 ```
 - **201** `data: OrderSummary` (đơn mới) • **200** cùng `OrderSummary` + `replayed: true` khi trùng `Idempotency-Key`.
+- Replay dùng envelope `{ data: { ...OrderSummary, replayed: true } }`; UUID v4 được chuẩn hóa chữ thường. Sau validate/Turnstile, replay chỉ đọc một statement, không tính lại giá/ngày giao hay ghi tồn. Key xác định đơn đã tạo, kể cả body hợp lệ gửi lại thay đổi.
 - Server **bỏ qua** mọi giá/tổng/phí từ client; tính lại từ DB.
+- Giỏ 15 dòng dùng 35 statements; failed batch được tính nguyên khối, thêm một diagnostic read thành 36. Trùng mã đơn thử tối đa ba batch, nhưng dừng `CONFLICT` 409 trước retry có thể vượt 40 statements (không có đơn/tồn được ghi bởi batch thất bại).
+- Khi có `TURNSTILE_SECRET`, verifier bắt buộc token hợp lệ, fail closed khi Siteverify lỗi; gửi UUID qua `idempotency_key` của Siteverify để hỗ trợ retry xác minh. Token Turnstile có hạn/single-use; client phải lấy token mới khi token cũ hết hạn/đã dùng. Local không secret bỏ qua verifier; test nhánh provider bằng mock.
 ```ts
 type OrderSummary = { order_number: string; status_code: string; payment_method: 'COD'; payment_status: 'UNPAID'|'PAID';
   subtotal; discount_total; delivery_fee; grand_total; placed_at: string }
 ```
-Lỗi có thể gặp: `VALIDATION_ERROR`, `OUT_OF_STOCK`, `VARIANT_UNAVAILABLE`, `NO_DELIVERY_ZONE`, `INVALID_DELIVERY_SLOT`, `CART_LIMIT`, `FORBIDDEN`.
+Lỗi có thể gặp: `VALIDATION_ERROR`, `OUT_OF_STOCK`, `VARIANT_UNAVAILABLE`, `NO_DELIVERY_ZONE`, `INVALID_DELIVERY_SLOT`, `CART_LIMIT`, `FORBIDDEN`, `CONFLICT`, `INTERNAL`.
 
 ### `POST /api/orders/lookup`
 Body `{ order_number, phone }` (khớp SĐT người đặt **hoặc** người nhận). `data: OrderDetail`. Sai mã hoặc sai SĐT đều trả cùng `NOT_FOUND` (không lộ mã nào tồn tại).
+
+Body/schema không hợp lệ (ví dụ SĐT không chuẩn hóa được về 10 chữ số) trả `VALIDATION_ERROR` 400; mã hoặc SĐT hợp lệ về cấu trúc nhưng không khớp đơn trả cùng `NOT_FOUND` 404. Lookup dùng ba statements và không trả admin_note/stock_released/actor.
 
 ```ts
 type OrderDetail = OrderSummary & {
@@ -123,10 +128,12 @@ type OrderDetail = OrderSummary & {
   delivered_at: string|null; paid_at: string|null }
 ```
 
-### `POST /api/orders/:orderNumber/cancel` *(tùy chọn nếu kịp)*
+### `POST /api/orders/:orderNumber/cancel` *(tùy chọn, chưa triển khai)*
 Body `{ phone }`. Khách chỉ hủy được khi `PENDING`. Cùng cơ chế hoàn tồn như admin.
 
 ## Admin (cookie `lunara_admin`, HttpOnly)
+
+**PLANNED — Phase 4 chưa triển khai.** Toàn bộ routes/cookie/authorization bên dưới là hợp đồng đích; hiện `/api/admin/*` trả JSON API 404, không phải đã có middleware trả 401. Máy trạng thái/hoàn tồn đã có ở service nội bộ Phase 3, nhưng chưa có HTTP endpoint chuyển trạng thái. UI admin còn ẩn và sẽ nối ở Phase 5.
 
 Mọi route dưới `/api/admin/*` (trừ `login`) yêu cầu cookie hợp lệ; request ghi (`POST/PATCH/PUT/DELETE`) phải có `Content-Type: application/json` và `Origin` trùng host.
 
@@ -177,4 +184,4 @@ Mọi route dưới `/api/admin/*` (trừ `login`) yêu cầu cookie hợp lệ;
 
 **Phí giao** = (phí khu vực; bằng 0 nếu `subtotal ≥ free_from_amount`) + phụ phí phương thức (`config.ts`). Giá trị phụ phí, giờ chốt, khung giờ trong `config.ts` là **giả định ban đầu**, chủ shop cần chỉnh.
 
-Phase 2 dựng helper ngày/khung giờ để dùng ở Phase 3, chưa áp vào quote (body quote không có ngày/slot). Giả định config: STANDARD/EXPRESS/SAME_DAY có phụ phí 0/30000/50000; EXPRESS và SAME_DAY dùng cutoff 16:00, chuẩn bị ít nhất 120 phút. Sáu khung 2 giờ từ 08:00 đến 20:00; STANDARD ngày hôm nay không nhận khung đã bắt đầu trong quá khứ. Ngày hợp lệ đến +30 ngày theo Asia/Ho_Chi_Minh, gồm kiểm tra ngày có thật trong lịch.
+Helper ngày/khung giờ Phase 2 đã được order service Phase 3 sử dụng; quote không kiểm ngày/slot vì body không có các trường này. Giả định config: STANDARD/EXPRESS/SAME_DAY có phụ phí 0/30000/50000; EXPRESS và SAME_DAY dùng cutoff 16:00, chuẩn bị ít nhất 120 phút. Sáu khung 2 giờ từ 08:00 đến 20:00; STANDARD ngày hôm nay không nhận khung đã bắt đầu trong quá khứ. Ngày hợp lệ đến +30 ngày theo Asia/Ho_Chi_Minh, gồm kiểm tra ngày có thật trong lịch.

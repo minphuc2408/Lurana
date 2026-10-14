@@ -2,7 +2,9 @@
 
 **Mục tiêu:** chủ shop đăng nhập an toàn, quản lý đơn, sản phẩm/tồn kho, phí giao. Hợp đồng: [API_CONTRACT.md](API_CONTRACT.md) (mục Admin).
 
-**Trạng thái:** PLANNED · UI auth hiện là fixture/sessionStorage. [Hiện trạng](../PROJECT_STATUS.md). Secret trong `.dev.vars.example` chỉ là demo; chưa có login/JWT/API authorization server.
+**Trạng thái:** PLANNED · Phase 3 backend đã DONE local; chưa triển khai API auth/admin và chưa nghiệm thu Phase 4. Source auth fixture/sessionStorage được giữ nhưng AuthProvider và route admin legacy đang ẩn trong preview. [Hiện trạng](../PROJECT_STATUS.md). Secret trong `.dev.vars.example` chỉ là demo; không phải credentials production.
+
+**Đầu vào đã có:** `worker/services/orders.ts` export createOrder, lookupOrder và `transitionOrder(db, orderNumber, newStatus, actorLabel = 'ADMIN', note?)`; máy trạng thái/PAID/hoàn tồn một lần và các race đã kiểm D1 local cô lập. Phase 4 bổ sung authorization và routes quản trị gọi lại service này, không viết lại thuật toán hoàn tồn. lookupOrder public không trả admin_note/stock_released; admin detail cần projection có quyền riêng. [Nghiệm thu Phase 3](PHASE_3_CHECKOUT_ORDERS.md#bằng-chứng-lệnh--14102026).
 
 ## Thiết kế đăng nhập — MVP đề xuất
 
@@ -49,12 +51,3 @@ Sizing pipeline giả định **10 ms CPU/request**; kiểm tra gói/runtime th�
 - [ ] Sửa phí giao ở admin có hiệu lực ngay ở báo giá.
 - [ ] Không có response nào chứa mật khẩu, JWT hay secret.
 - [ ] `npm run typecheck`, `npm test`, `npm run smoke` pass.
-
-## Goal prompt (dán vào `/goal`)
-
-```text
-Đọc docs/pipeline/README.md, API_CONTRACT.md, PHASE_3_CHECKOUT_ORDERS.md (service transitionOrder) và PHASE_4_ADMIN.md rồi thực hiện Phase 4.
-Cài đăng nhập admin bằng secret + JWT cookie (KHÔNG băm mật khẩu nặng trong Worker, giới hạn CPU 10ms), middleware requireAdmin/requireSameOrigin, và các API quản trị: summary, orders (list/detail/status/note), products (list/create/patch), variants (stock_delta), delivery-zones.
-Ràng buộc: không tạo bảng mới, không thêm dependency, mọi SQL bind tham số, không log secret.
-Mở rộng scripts/smoke.mjs theo tài liệu. Dừng và nhắc tôi ([NGƯỜI]) nếu cần đặt giá trị secret thật. Xong khi mọi "Tiêu chí nghiệm thu" Phase 4 pass, kèm output.
-```

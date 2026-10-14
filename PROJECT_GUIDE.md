@@ -16,42 +16,42 @@ ChatGPT thông thường không tự đọc file trên máy. Với phiên không
 
 ## Hiện trạng và bản đồ dự án
 
-UI branding là **Lunara**; repository GitHub tên **Lurana**. UI có English/Tiếng Việt, mặc định English; tiền PHP/₱ và settings Asia/Manila giữ nguyên khi đổi ngôn ngữ. Giao tiếp với chủ dự án bằng tiếng Việt.
+UI branding là **Lunara**; repository GitHub tên **Lurana**. UI có English/Tiếng Việt, mặc định English; bản preview hiện hiển thị VND từ D1; các màn settings/auth/admin legacy tạm ẩn. Giao tiếp với chủ dự án bằng tiếng Việt.
 
 | Keyword | Hiện trạng |
 | --- | --- |
-| Commerce | **Frontend demo**; fixture/local UI chưa nối catalog/quote D1; auth/đặt đơn server chưa có |
-| Worker | Hono + `@cloudflare/vite-plugin`; health, catalog, delivery options và quote local; API lạ → JSON 404 |
+| Commerce | **D1 preview**: Home/Shop/Cart/Delivery/Quote đã nối API; backend COD/tra đơn Phase 3 đã có, UI gửi đơn/auth/admin chưa nối và tạm ẩn |
+| Worker | Hono + `@cloudflare/vite-plugin`; health, catalog, delivery/quote, COD và tra đơn local; API lạ → JSON 404 |
 | Health | Worker liveness; chưa kiểm tra kết nối/bảng D1 |
-| Auth | Fixture + role/session browser; chưa có server authorization |
-| Success | Signup/checkout/request là preview; chưa tạo account/order, gửi email hay thu tiền |
+| Auth | Demo AuthProvider không active; login/profile/admin tạm ẩn, chưa có server authorization |
+| Success | Cart hiện chỉ báo giá từ DB; signup/request/order/auth/admin tạm ẩn, không giả thành công hoặc thu tiền |
 | Frontend pin | React/React DOM `18.3.1`; Router `7.18.4`; Vite `6.4.4`; Tailwind `4.1.12`; React plugin `4.7.0`; Recharts `2.15.2` |
 | Tooling pin | TypeScript `5.7.3`; types React 18; CodeGraph `1.5.0` |
 | Môi trường đã dùng | Node `24.11.1`, npm `11.6.3`; Wrangler hiện yêu cầu Node ≥22 |
 
 ### Kiến trúc MVP đã chọn
 
-[Tech stack](docs/TECH_STACK.md) và [pipeline](docs/pipeline/README.md) ghi mục tiêu; Phase 0 có Worker/health, Phase 1 có database local, Phase 2 có catalog/phí giao/quote local. Checklist và bằng chứng: [Phase 1](docs/pipeline/PHASE_1_DATABASE.md) · [Phase 2](docs/pipeline/PHASE_2_API_CATALOG.md).
+[Tech stack](docs/TECH_STACK.md) và [pipeline](docs/pipeline/README.md) ghi mục tiêu và tiến độ: Phase 0–3 DONE local; Phase 4/6 PLANNED; Phase 5 PARTIAL. Phase 3 bổ sung COD/tồn/idempotency/tra đơn và service chuyển trạng thái. Checklist và bằng chứng: [Phase 1](docs/pipeline/PHASE_1_DATABASE.md) · [Phase 2](docs/pipeline/PHASE_2_API_CATALOG.md) · [Phase 3](docs/pipeline/PHASE_3_CHECKOUT_ORDERS.md).
 
 | Phạm vi | Đã có / còn thiếu |
 | --- | --- |
 | Runtime MVP | Hono/Cloudflare Workers · D1/SQLite · Zod · SQL tham số hóa |
 | Media MVP | API catalog trả URL ảnh từ D1; seed dùng placeholder, Cloudinary upload chưa nối |
-| Order MVP | Quote tính giá/phí VND từ DB; COD, trừ tồn/idempotency và ghi đơn thuộc Phase 3 |
+| Order MVP | Phase 3: COD, server tính tiền, batch trừ tồn/CHECK rollback, UUID idempotency, tra đơn bằng mã/SĐT; transitionOrder hoàn tồn một lần, DELIVERED → PAID; UI gửi đơn/admin thuộc Phase 4–5 |
 | Admin auth | Secret + JWT cookie dự kiến Phase 4; auth khách để sau |
 | Schema | [Canonical duy nhất: 10 bảng](migrations/0001_mvp.sql), nguyên DDL v2 có `delivery_zones`, idempotency và CHECK/unique; `custom_requests` deferred. [Đối chiếu v1/v2](docs/DATABASE_DESIGN.md); hai file schema cũ chỉ dẫn về migration |
 | D1 local | Worker binding `DB`; migration `0001_mvp.sql`; seed 4 categories/8 products/24 variants/8 images/4 zones; verifier 13 nhóm qua `db:verify` |
-| Cloudflare remote | Chủ dự án đã đăng nhập Wrangler và tạo `lunara-db`; Phase 0–2 không truy cập hoặc thay đổi remote |
-| Persistence | Cart hiện in-memory, wishlist riêng từng flow; localStorage là mục tiêu MVP |
-| Thị trường | Schema backend VND/tỉnh-phường; UI hiện PHP/Asia/Manila, chuyển ở Phase 5 |
-| Vận hành | Chưa deploy/domain, Turnstile, rate limit, email hoặc payment provider |
+| Cloudflare remote | Chủ dự án đã đăng nhập Wrangler và tạo `lunara-db`; Phase 0–3 không truy cập hoặc thay đổi remote |
+| Persistence | CartProvider + localStorage version 1, chỉ variantId/quantity; wishlist tạm ẩn |
+| Thị trường | UI active VND/tỉnh-phường từ API; legacy PHP/settings ẩn. Quote lấy giá/phí DB |
+| Vận hành | Turnstile server verifier có điều kiện secret, đã kiểm mock; chưa deploy/domain, cấu hình Turnstile thật, rate limit, email hoặc payment provider |
 
 ```text
 src/
 ├── main.tsx
 ├── app/
 │   ├── App.tsx
-│   ├── providers.tsx           # AuthProvider + CartProvider
+│   ├── providers.tsx           # I18nextProvider + CatalogProvider + CartProvider
 │   ├── router.tsx              # route tree duy nhất
 │   └── layouts/                # MainLayout, AdminLayout, AuthLayout, app hooks
 ├── pages/                      # page mỏng: ghép view và feature hooks
@@ -79,6 +79,7 @@ src/
 | --- | --- |
 | Entry + env | `worker/index.ts`; `worker/env.ts`: DB, ADMIN_PASSWORD, JWT_SECRET, TURNSTILE_SECRET tùy chọn |
 | Public routes | `worker/routes/public.ts`: categories/products/product detail, delivery options, checkout quote |
+| Orders | `worker/routes/orders.ts`: POST orders/lookup; `worker/services/orders.ts`: create/lookup/transition, 35 statements cho 15 dòng và guard retry ≤40; chưa expose transition qua API |
 | Services | `worker/services/catalog.ts`: tối đa 3 truy vấn; `delivery.ts`: phường rồi mặc định tỉnh; `pricing.ts`: một truy vấn variants `IN`, gộp giỏ và báo issues, chỉ đọc |
 | Validation/lỗi | Root `shared/constants.ts` và `shared/schemas.ts`; `worker/lib/validate.ts`, `errors.ts`; JSON lỗi tiếng Việt, INTERNAL chỉ trả request_id |
 | Middleware | Secure headers, X-Request-Id; GET catalog thành công cache public 30 giây; API khác/lỗi no-store |
@@ -101,11 +102,13 @@ src/
 
 ## Trang và luồng nghiệp vụ
 
+Preview hiện chỉ active /, /shop và /cart; URL khác hiện sắp ra mắt. Các dòng legacy dưới đây mô tả source được giữ, không phải chức năng đang hiển thị.
+
 | Route | Page | Feature và hành vi hiện có |
 | --- | --- | --- |
 | `/` | `HomePage` | Landing sections; featured products lấy từ catalog chung |
-| `/shop` | `ShopPage` | Search/category/sort, wishlist indicator, Add cập nhật shared cart |
-| `/cart` | `CartPage` | Số lượng, xóa, delivery, coupon, validation delivery và checkout preview |
+| `/shop` | `ShopPage` | Catalog D1, search/category code/sort, chọn variant S/M/L và Add shared cart; wishlist/rating ẩn |
+| `/cart` | `CartPage` | Variant cart/localStorage, số lượng/xóa, delivery DB và quote; coupon/đặt đơn ẩn |
 | `/request` | `CustomOrderPage` | Wizard 4 bước Occasion/Style/Details/Contact, preview/reset |
 | `/orders` | `MyOrdersPage` | Order fixture, search/filter, expand và tracking timeline |
 | `/profile` | `ProfilePage` | Login guard, profile/edit, orders/wishlist/settings |
@@ -118,21 +121,15 @@ src/
 | `/admin/requests` | `AdminRequestsPage` | Expand, review/approve/decline/complete request fixture |
 | `/admin/settings` | `AdminSettingsPage` | Store/settings fixture, notification switches, phản hồi save cục bộ |
 
-Sáu page admin dùng `React.lazy`; `AdminLayout` giữ shell trong khi Suspense hiển thị loading. Route lỗi có fallback dùng chung. Không có route tree thứ hai hoặc thay đổi URL cũ.
+Preview router hiện chỉ ghép Home/Shop/Cart và UnavailablePage, chưa nối các page admin legacy. Source AdminLayout/guards được giữ cho Phase 5 sau khi API Phase 4 có authorization; không coi chúng đang bảo vệ route quản trị vận hành. Route lỗi có fallback dùng chung; không có route tree thứ hai.
 
 ### Ownership của catalog và cart
 
-`features/shop/data/shop.data.ts` giữ 8 sản phẩm với ID, tên, category, ảnh và **giá numeric** thống nhất. `shop.service.ts` cung cấp snapshot và truy vấn; `useProducts` lo filter/sort/wishlist indicator. `ProductCard`, `ProductGrid`, `FilterBar` nhận props.
+CatalogProvider gọi Shop service để tải categories/products qua API cùng origin; DTO adapter thành model UI, không nhập shop.data.ts hay fallback fixture. Featured lấy is_featured từ DB; ratings/reviews/wishlist không có dữ liệu server được ẩn.
 
-Catalog backend Phase 2 đọc D1 riêng qua Hono theo [API contract](docs/pipeline/API_CONTRACT.md), giới hạn 100 sản phẩm ACTIVE, category/variant active và không trả tồn chính xác trong catalog. Quote luôn lấy giá DB, bỏ giá client, gộp variant trùng; thiếu tồn vẫn trả dòng và issue, variant không còn bán chỉ trả issue. Phí khớp phường active trước, rồi mặc định tỉnh; ngưỡng miễn phí chỉ bỏ phí khu vực, vẫn cộng phụ phí phương thức. Backend giới hạn 15 dòng raw và 20 sản phẩm mỗi variant sau gộp; frontend PHP/demo hiện chưa sử dụng API này.
+CartProvider dùng variant ID làm line identity, bắt đầu rỗng. localStorage lunara.cart.v1 chỉ lưu version/variantId/quantity, parse Zod và bỏ dữ liệu hỏng; reload dựng tên/ảnh/giá từ catalog và quote. Giỏ tối đa 15 dòng, 20 mỗi dòng và max_quantity từ API. useQuoteCart gọi delivery/options + checkout/quote, bỏ response cũ khi items/khu vực/method đổi. Giá, phí và tổng hiển thị VND từ DB; lỗi có i18n/retry, không thay bằng giá demo. Chưa có đặt đơn/trừ tồn/thu tiền.
 
-`CartProvider` nằm ngoài router, sở hữu một giỏ hàng dùng chung cho Shop, Cart và navbar. Cart line ID gồm **product ID + size**; thêm cùng variant tăng số lượng, size khác tạo line riêng. Số lượng trong demo nằm trong 1–99; badge navbar đếm tổng quantity. Giỏ khởi tạo bằng 3 line mẫu: Peony Medium ×1, Lavender Large ×2, Lily Small ×1. Chuyển route giữ cart; reload khôi phục fixture. Không ghi cart lên server hoặc browser storage.
-
-- `subtotal = Σ(price × qty)`; coupon `lunara10` giảm `floor(subtotal × 0.1)`.
-- Standard `₱150`, Express `₱300`, Same-day `₱500`; `total = subtotal + deliveryFee - discount`.
-- Giỏ rỗng có tổng 0 và không cho tiến checkout. Thông tin giao hàng trống/email sai không hoàn tất preview.
-- Checkout preview không tạo order, trừ stock, thu tiền hoặc gửi email. OrderHistory vẫn là fixture lịch sử.
-- Landing/wishlist và inventory ban đầu lấy product hiện tại qua Shop public API. Stock edits giữ state riêng của trang; không cập nhật catalog hoặc cart. Historical orders giữ snapshot, không thay theo giá catalog hiện tại.
+Preview chỉ active Home/Shop/Cart. Login/signup/profile/orders/custom request/admin hiện FeatureUnavailable; source legacy giữ để nối các phase sau. [Backup và kiểm chứng](docs/pipeline/FE_AUDIT.md).
 
 ### Auth và các demo độc lập
 
@@ -189,9 +186,9 @@ EN/VI nằm ở mép phải header storefront/admin và góc phải trên màn h
 
 Footer storefront được tách thành `app/layouts/components/StorefrontFooter.tsx`: giữ khối thương hiệu Lunara bên trái, thêm chăm sóc khách hàng, mạng xã hội và địa chỉ/công ty FlowerCorner theo nội dung chủ website cung cấp. Các đích liên kết ngoài nằm trong `shared/config/storefront-footer.ts`, mở tab mới; nhãn hỗ trợ EN/VI, tên công ty và địa chỉ giữ nguyên. Desktop từ 1024px dùng 4 cột; mobile/tablet đặt chăm sóc khách hàng và mạng xã hội cạnh nhau, khối thương hiệu và địa chỉ chiếm toàn hàng. `tailwind.css` đăng ký rõ thư mục layout components để Vite theo dõi cả file mới. `ZaloContact.tsx` portal vào body, hiển thị biểu tượng Zalo cố định góc dưới trái, nâng lên trên CTA giỏ hàng dưới 1024px. Chưa có tài khoản Zalo: bấm nút chỉ mở thông báo sẽ cập nhật sớm, chưa mở chat hoặc hiển thị số tin nhắn. UI checks kiểm tra số cột, vị trí và hit-test nút Zalo ở 320–1440px.
 
-Catalog có `name_en/name_vi`; `name` giữ compatibility. `name_vn` chỉ là alias tiếng Việt cho DTO từ backend tương lai. `getLocalizedName` ưu tiên vi → vn → en → legacy cho tiếng Việt; English ưu tiên en → legacy → vi → vn. Cart/historical item giữ tên snapshot song ngữ; thêm/sửa inventory có tên Anh và Việt riêng. Search catalog/stock/order mẫu chấp nhận tên Việt và bỏ dấu. Đổi ngôn ngữ không đổi ID, state cart, giá, PHP hoặc Asia/Manila; tên khách, contact, notes và dữ liệu nhập giữ nguyên.
+Catalog có `name_en/name_vi`; `name` giữ compatibility. `name_vn` là alias tiếng Việt tương thích dữ liệu legacy; API hiện trả `name_vi/name_en`. `getLocalizedName` ưu tiên vi → vn → en → legacy cho tiếng Việt; English ưu tiên en → legacy → vi → vn. Cart/order item giữ tên snapshot song ngữ; source inventory legacy có tên Anh và Việt riêng. Search catalog/stock/order mẫu chấp nhận tên Việt và bỏ dấu. Đổi ngôn ngữ không đổi ID, state cart, giá, VND hoặc Asia/Ho_Chi_Minh; tên khách, contact, notes và dữ liệu nhập giữ nguyên.
 
-Thống kê dữ liệu hiện có ở [docs/FRONTEND_ENTITIES.md](docs/FRONTEND_ENTITIES.md); stack ở [docs/TECH_STACK.md](docs/TECH_STACK.md); thiết kế D1, canonical và quyết định schema ở [docs/DATABASE_DESIGN.md](docs/DATABASE_DESIGN.md). Phase 0 có health; Phase 1 có migration/seed/verifier D1 local; Phase 2 có catalog/phí giao/quote, schema số nguyên/chuẩn hóa SĐT và helper kiểm ngày/khung giờ theo Việt Nam. Schema SQL chỉ kiểm dạng ngày bằng GLOB; endpoint đặt đơn, transition và hoàn tồn đúng một lần thuộc các phase sau. Chưa thay đổi D1 remote.
+Thống kê dữ liệu hiện có ở [docs/FRONTEND_ENTITIES.md](docs/FRONTEND_ENTITIES.md); stack ở [docs/TECH_STACK.md](docs/TECH_STACK.md); thiết kế D1, canonical và quyết định schema ở [docs/DATABASE_DESIGN.md](docs/DATABASE_DESIGN.md). Phase 0 có health; Phase 1 có migration/seed/verifier D1 local; Phase 2 có catalog/phí giao/quote. Phase 3 đã có endpoint đặt/tra đơn, UUID idempotency, server pricing và batch trừ tồn/CHECK rollback; transitionOrder hoàn tồn một lần và DELIVERED → PAID. GLOB trong SQL chỉ kiểm dạng ngày, service đặt đơn kiểm ngày lịch và slot theo giờ VN. Chưa thay đổi D1 remote hoặc nối UI checkout/admin.
 
 `shared/ui` giữ **Button, Input, Dialog** và các subcomponent của Dialog. Các module không được app import đã loại bỏ, gồm calendar/menubar/input-otp/resizable và các wrapper khác. Không cần khôi phục cả bộ UI để thêm một primitive.
 
@@ -203,7 +200,7 @@ Các domain component nằm trong feature tương ứng: Shop cards/filter/grid;
 
 Giữ route boundaries, public API của feature, catalog/cart source chung và URL cũ. Tách state/actions sang hook/service; fixture vào `data/`; presentation nhận props. Không thêm UI stack, backend giả hoặc feature roadmap ngoài yêu cầu.
 
-Giá numeric, currency PHP và timezone Asia/Manila là mặc định demo. Đổi thị trường, delivery cutoff, business policy, payment/provider hoặc backend cần quyết định sản phẩm riêng. Không mô tả demo success thành account/order/email/payment bền vững.
+Giá numeric, currency VND và timezone Asia/Ho_Chi_Minh đã được chủ dự án chốt; preview active dùng giá/phí D1. PHP/Asia/Manila chỉ còn ở source legacy ẩn. Delivery cutoff/phí/khu vực thật vẫn cần chủ shop chốt trước mở bán. Không mô tả demo success thành account/order/email/payment bền vững; COD chỉ PAID khi transition sang DELIVERED.
 
 Giữ labels, focus, keyboard, empty/error/success/loading states và responsive layout. Test logic có thể hồi quy. Không viết test mirror implementation hoặc dựng framework mới cho sửa tài liệu.
 
@@ -231,9 +228,9 @@ npm run preview
 npm run check:ui -- http://127.0.0.1:4173
 ```
 
-Dev `http://127.0.0.1:5173`, preview `http://127.0.0.1:4173`; Vite có thể chọn port kế nếu bận. Build frontend ở `dist/client/`, Worker và Wrangler config sinh tự động ở `dist/lunara/`. Browser test hiện dùng **Edge headless trên Windows** và Node 24, chạy 15 route rồi kiểm tra commerce, wizard, profile/orders, admin, auth guards, ngôn ngữ và mobile storefront/admin. Kiểm tra i18n gồm reload persistence, shared cart và request state, cùng layout 320/390/768/1024px. Nó chặn mạng ngoài để ổn định; không chứng minh ảnh/font remote tải được. Bằng chứng/screenshot/profile browser nằm trong `.security-review/`, không vào Git.
+Dev `http://127.0.0.1:5173`, preview `http://127.0.0.1:4173`; Vite có thể chọn port kế nếu bận. Build frontend ở `dist/client/`, Worker và Wrangler config sinh tự động ở `dist/lunara/`. Browser test dùng **Edge headless trên Windows** và Node 24, chạy 15 route: Home/Shop/Cart active, các route legacy auth/customer/admin hiện sắp ra mắt. Kiểm tra commerce gồm chọn variant, cart reload/storage hỏng, phí phường/mặc định tỉnh, surcharge, EN/VI, network error/retry và layout 320/390/768/1024px. Không coi source wizard/profile/admin ẩn là flow vận hành đã nghiệm thu. Mạng ngoài bị chặn mặc định; test không chứng minh ảnh/font remote tải được. Bằng chứng/screenshot/profile browser nằm trong `.security-review/`, không vào Git.
 
-`typecheck` dùng compiler project được pin, kiểm tra frontend và `tsconfig.worker.json`; `check:architecture` kiểm tra chiều import/public API, presentation state và inline styles; `npm test` dùng Node test runner cho commerce/auth/contrast và Worker/schema/pricing. Test Worker dùng SQLite in-memory và binding workerd D1 `persist:false`, `remoteBindings:false` với canonical migration/seed, có đếm truy vấn và thử ẩn sản phẩm, không sửa D1 local đang chạy. `smoke` kiểm 16 nhóm health/404/SPA/catalog/delivery/quote/validation trên server local; URL positional, guard host `127.0.0.1`. `cf:typegen` sinh types bindings với `--include-runtime=false`, runtime types dùng `@cloudflare/workers-types`. D1 migrate/seed chỉ chạy `--local`; `db:verify` tự động kiểm 13 nhóm ràng buộc trên D1 local, dùng database tạm cho phép thử ghi/xóa. `db:reset:local` xóa trạng thái D1 local, chỉ dùng khi cần reset; `deploy` chỉ chạy khi có yêu cầu deploy. Chưa cấu hình ESLint. Vite build chỉ kiểm tra bundle và không thay semantic typecheck.
+`typecheck` kiểm frontend và `tsconfig.worker.json`; `check:architecture` kiểm chiều import/public API, presentation state và inline styles. Node test runner đã nghiệm thu 92/92 ở Phase 3, gồm Worker/schema/pricing/orders/lookup/transitions/Turnstile mock, concurrent last-stock/same-key/cancel và rollback/query budget. Test Worker dùng SQLite in-memory hoặc workerd D1 `persist:false`, `remoteBindings:false` với canonical migration/seed; không sửa seed persisted. `smoke` giữ 16 nhóm catalog trên URL local positional, rồi chạy 10 ca order qua HTTP loopback + D1 cô lập và một nhóm đối chiếu tồn/query budget; tổng 27/27. Guard host `127.0.0.1`, chưa có smoke remote. [Output](docs/pipeline/PHASE_3_CHECKOUT_ORDERS.md#bằng-chứng-lệnh--14102026). `cf:typegen` sinh binding types với `--include-runtime=false`; D1 migrate/seed chỉ `--local`; `db:verify` kiểm 13 nhóm ràng buộc bằng D1 local/cô lập. `db:reset:local` xóa trạng thái local, chỉ dùng khi cần reset; `deploy` cần yêu cầu riêng. Chưa có ESLint. Vite build không thay semantic typecheck.
 
 Trên Windows, Vite/CodeGraph đang chạy có thể khóa native binaries trong `node_modules`, làm `npm ci` báo EPERM. Dừng đúng process của workspace trước khi cài, rồi khởi động lại server; không bật dependency scripts để xử lý lỗi.
 
@@ -259,23 +256,23 @@ Setup tạo `.codex/config.toml` local cho CodeGraph STDIO và OpenAI Docs MCP, 
 
 | Hướng tiếp theo | Cơ sở và việc còn thiếu |
 | --- | --- |
-| Validation form đầy đủ | Checkout đã có kiểm tra cơ bản; signup/request cần validation nghiệp vụ theo quyết định sản phẩm |
+| Validation form đầy đủ | Server order/lookup và shared Zod schemas đã có; form gửi/nhận/ngày/slot/thiệp theo contract còn phải nối ở Phase 5; signup/request deferred |
 | Product detail và filter theo dịp | Dùng catalog/ProductCard hiện có; bổ sung description, variants, occasion tags |
-| Cart/wishlist persistence | MVP lưu localStorage cho khách vãng lai, hợp nhất wishlist Shop/Profile; hiện vẫn demo |
-| Delivery/message/gift options | Phải chốt khu vực, cutoff và policy; delivery hiện là fixture |
-| Backend auth/orders/requests | Catalog/phí giao/quote D1 local đã có; nối frontend ở Phase 5, auth/đặt đơn chưa triển khai, requests deferred |
-| Checkout COD | Dùng pricing service hiện có để tính lại giá/phí; bổ sung trừ tồn/idempotency và ghi đơn nguyên tử, thanh toán online nằm ngoài MVP |
-| Inventory vận hành | D1 lưu tồn theo product variant; stock edits và checkout cần nối cùng API |
+| Cart/wishlist persistence | Cart variant/localStorage đã có; wishlist server/hợp nhất Shop/Profile ngoài MVP |
+| Delivery/message/gift options | Options/quote từ D1 đã có; order API kiểm ngày/slot và lưu thiệp; form checkout và policy thật còn cần hoàn thiện |
+| Backend auth/orders/requests | Catalog/quote/COD/tra đơn và transition service đã có local; auth/admin thuộc Phase 4, UI còn lại thuộc Phase 5, requests deferred |
+| Checkout COD | Backend Phase 3 đã nghiệm thu; tiếp theo nối form, gửi/retry cùng key, xác nhận mã đơn và tra đơn theo contract ở Phase 5 |
+| Inventory vận hành | Đặt đơn đã trừ tồn, hủy bằng service đã hoàn một lần; API admin chỉnh tồn thuộc Phase 4, UI vận hành thuộc Phase 5 |
 | Reviews và payment online | Làm sau MVP khi có chính sách/provider phù hợp |
 | SEO/performance | Admin đã lazy-load; còn metadata, ảnh/font tối ưu và rendering strategy |
 
-Backend/media đã chọn; pipeline dự kiến auth admin secret + JWT cookie, chuyển frontend sang VND/múi giờ Việt Nam ở Phase 5. Auth khách, delivery cutoff/phí giao thật và refund/cancel policy còn cần chốt khi triển khai. Multi-store, subscription, loyalty hay chatbot nằm ngoài MVP. Chỉ hỏi quyết định thực sự ảnh hưởng task đang được yêu cầu.
+Backend/media đã chọn; auth admin secret + JWT cookie còn thuộc Phase 4. VND/múi giờ Việt Nam và cart persistence đã có ở preview; checkout/lookup/admin UI chưa nối. Máy trạng thái và hoàn tồn Phase 3 đã chốt theo contract; policy vận hành, delivery cutoff/phí/khu vực thật vẫn cần chủ shop chốt. Auth khách, multi-store, subscription, loyalty hay chatbot ngoài MVP. Chỉ hỏi quyết định thực sự ảnh hưởng task đang được yêu cầu.
 
 ### Thông tin chủ dự án cần bổ sung theo phase
 
 Checklist hiện trạng/đầu vào ở [PROJECT_STATUS.md](docs/PROJECT_STATUS.md): catalog/ảnh/giá VND/tồn, khu vực/phí/cutoff giao hàng, policy đơn, Zalo/liên hệ, Cloudinary/domain và cấu hình production theo phase.
 
-Việc kỹ thuật còn lại: API đặt đơn/tồn/idempotency → auth admin → nối UI/persistence/thị trường → deploy khi được yêu cầu. Schema/seed local không thay dữ liệu thật trước mở bán. Các tài khoản hoặc credentials thật không đưa vào source, docs hay `VITE_*`.
+Việc kỹ thuật còn lại: Phase 4 auth/admin → hoàn thiện Phase 5 checkout/lookup/admin UI → Phase 6 khi được yêu cầu. Không làm lại COD/tồn/idempotency, catalog adapters, cart storage hoặc VND đã nghiệm thu. Schema/seed local không thay dữ liệu thật trước mở bán. Các tài khoản hoặc credentials thật không đưa vào source, docs hay `VITE_*`.
 
 ## File chia sẻ và cách duy trì
 

@@ -2,7 +2,7 @@
 
 **Mục tiêu:** khung Hono chuẩn (lỗi, validate, middleware), các API đọc: danh mục, sản phẩm, tùy chọn giao hàng, báo giá giỏ. Hợp đồng: [API_CONTRACT.md](API_CONTRACT.md).
 
-**Trạng thái:** DONE · 8/8 tiêu chí local, **14/10/2026**. [Hiện trạng](../PROJECT_STATUS.md). Dùng schema/seed đã nghiệm thu Phase 1; chưa đặt đơn/admin hoặc nối frontend.
+**Trạng thái:** DONE · 8/8 tiêu chí local, **14/10/2026**. Đây là phạm vi/nghiệm thu catalog/quote tại mốc Phase 2, chưa bao gồm order/admin. Hiện Phase 3 COD/tồn/idempotency/lookup/transition đã DONE local ([output](PHASE_3_CHECKOUT_ORDERS.md#bằng-chứng-lệnh--14102026)); auth/admin Phase 4 chưa triển khai. Preview Home/Shop/Cart/Delivery/Quote đã nối D1: [FE_AUDIT](FE_AUDIT.md). [Tiến độ chung](README.md).
 
 ## Việc cần làm
 
@@ -47,12 +47,12 @@
 - [Catalog](../../worker/services/catalog.ts): sản phẩm có dữ liệu dùng 3 statements; rỗng/404 dùng 1. Danh sách tối đa 100, bind mỗi truy vấn con ≤100, không N+1. Lọc sản phẩm/category/variant inactive và chỉ trả DTO trong contract.
 - [Delivery](../../worker/services/delivery.ts)/[pricing](../../worker/services/pricing.ts): một query variants và một query phí; ưu tiên phường rồi mặc định tỉnh đang active; miễn phí phần base, giữ surcharge. Bỏ mọi giá/tổng client gửi; gộp ID trùng, kiểm raw lines và quantity sau gộp. Quote luôn read-only, issue không tạo đơn hoặc giữ tồn.
 - [Config](../../worker/config.ts): phụ phí 0/30000/50000, cutoff 16:00, chuẩn bị 120 phút; TIME_SLOTS 08:00–20:00, giỏ 15/20, ngày +30, Asia/Ho_Chi_Minh. Các chính sách/phí/khung giờ là giả định cần chủ shop chỉnh trước mở bán. Helper ngày/SĐT dựng sẵn để Phase 3 sử dụng; quote không có ngày/slot.
-- Node runner hiện có: 35 test mới (catalog 8, delivery/pricing 14, validation 6, Hono 6, D1 thật 1), tổng repo 53. Ca thay trạng thái/tồn chỉ ghi vào SQLite in-memory hoặc workerd D1 `persist:false`, `remoteBindings:false`; seed persisted không bị sửa. Không thêm dependency/framework hay sửa DDL.
-- [smoke.mjs](../../scripts/smoke.mjs): 16 nhóm HTTP, giữ health/JSON 404/SPA; mặc định 127.0.0.1:5173, URL positional, guard chỉ local và không theo redirect. Có kiểm tra POST route chưa triển khai rồi GET 404 nhằm giữ hồi quy keep-alive.
+- Node runner tại mốc Phase 2: 35 test mới (catalog 8, delivery/pricing 14, validation 6, Hono 6, D1 thật 1), tổng repo 53. Ca thay trạng thái/tồn chỉ ghi vào SQLite in-memory hoặc workerd D1 `persist:false`, `remoteBindings:false`; seed persisted không bị sửa. Không thêm dependency/framework hay sửa DDL. Source sau Phase 3 đã nghiệm thu 92 tests; giữ output 53 bên dưới làm lịch sử.
+- [smoke.mjs](../../scripts/smoke.mjs) tại Phase 2: 16 nhóm HTTP, health/JSON 404/SPA; URL positional, local-only và không redirect. Source sau Phase 3 giữ 16 nhóm catalog, đổi assertion deferred orders thành validation 400, thêm 10 ca order qua HTTP/D1 cô lập + đối chiếu tồn/query budget; tổng 27/27.
 
 ## Test thủ công trên host 5173
 
-Chạy `npm run dev`, dùng đúng URL `http://127.0.0.1:5173` Vite in ra; nếu port bận thì dùng port thực tế. Server chỉ bind loopback, không phải hosting public. `npm run smoke` test 16 nhóm API/SPA và không ghi D1; URL khác dùng `npm.cmd run smoke -- http://127.0.0.1:<port>` trên PowerShell.
+Chạy `npm run dev`, dùng đúng URL `http://127.0.0.1:5173` Vite in ra; nếu port bận thì dùng port thực tế. Server chỉ bind loopback, không phải hosting public. `npm run smoke` hiện chạy 16 nhóm catalog trên server đó và 11 nhóm Phase 3 trên HTTP + D1 cô lập (`persist:false`); không ghi seed persisted. URL khác dùng `npm.cmd run smoke -- http://127.0.0.1:<port>` trên PowerShell.
 
 | Cách test | Chức năng đã xong / kết quả seed |
 | --- | --- |
@@ -63,7 +63,7 @@ Chạy `npm run dev`, dùng đúng URL `http://127.0.0.1:5173` Vite in ra; nếu
 | Mở `/api/products/blush-peony-bouquet` | Chi tiết sản phẩm; slug thiếu hoặc sản phẩm ẩn → JSON 404 |
 | Mở `/api/delivery/options` | 2 tỉnh, 2 phường riêng và phí mặc định, methods/surcharges/slots/limits |
 | POST `/api/checkout/quote` qua PowerShell/Postman | Giá DB, gộp variant trùng, phí phường/mặc định tỉnh, ngưỡng miễn phí, issues khi thiếu tồn/variant không bán, lỗi validate/cart limit |
-| Mở `/`, `/shop`, `/cart`, `/admin` | Giao diện demo hiện có; chưa dùng các API D1 mới, vẫn PHP/₱ và fixtures. Đặt đơn thật/tra đơn/admin API là Phase 3–4, nối UI là Phase 5 |
+| Mở `/`, `/shop`, `/cart`, `/admin` | Hiện chỉ Home/Shop/Cart active, dùng catalog/quote D1 và VND; route chưa có API hiện sắp ra mắt. Xem FE_AUDIT.md cho preview nối sớm một phần Phase 5 |
 
 Ví dụ PowerShell lấy variant ID thực từ catalog và cố gửi giá 1 để kiểm server không tin giá client:
 
@@ -80,7 +80,7 @@ $body = @{
 Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:5173/api/checkout/quote' -ContentType 'application/json; charset=utf-8' -Body $body | ConvertTo-Json -Depth 8
 ```
 
-Seed cho kết quả `unit_price = subtotal = 450000`, `delivery_fee = 20000`, `grand_total = 470000`, `issues = []`. Quote không tạo đơn hoặc trừ tồn; reload giỏ UI vẫn reset demo.
+Seed cho kết quả `unit_price = subtotal = 450000`, `delivery_fee = 20000`, `grand_total = 470000`, `issues = []`. Quote không tạo đơn hoặc trừ tồn. Preview hiện lưu giỏ variant/quantity trong localStorage; reload giữ số lượng và lấy lại giá/phí qua API.
 
 ## Bằng chứng lệnh — 14/10/2026
 
@@ -157,4 +157,4 @@ Phase 2 smoke: 16/16 PASS, 0 FAIL at http://127.0.0.1:4173.
 
 Stress HTTP độc lập trên preview: 25 cặp POST `/api/orders` body `{}` → GET `/api/admin/products` đều 404 JSON UTF-8/no-store; 25 cặp POST quote `text/plain` → GET health đều 400 `VALIDATION_ERROR` rồi 200 JSON UTF-8. Tổng 100 request không gặp 500/fetch failed. Đây là kiểm tra hồi quy lỗi socket do payload không đọc, không triển khai các API đặt đơn/admin.
 
-Rollup bỏ chú thích PURE trong dependency Zod; Node báo SQLite experimental. Các thông báo này không làm thất bại kiểm tra. Không đổi dependency nên không cần chạy lại audit. Frontend vẫn fixture/PHP/Asia/Manila; quote/catalog VND local chưa đồng nghĩa checkout thật. Nghiệm thu này không deploy hoặc truy cập D1 remote. Commit/push chỉ thực hiện theo yêu cầu của chủ dự án.
+Rollup bỏ chú thích PURE trong dependency Zod; Node báo SQLite experimental. Các thông báo này không làm thất bại kiểm tra. Không đổi dependency nên không cần chạy lại audit. Bằng chứng Phase 2 ở trên ghi trước lượt nối FE. Hiện preview Home/Shop/Cart dùng D1/VND/localStorage; vẫn chỉ báo giá, chưa checkout thật. Nghiệm thu này không deploy hoặc truy cập D1 remote. Commit/push chỉ thực hiện theo yêu cầu của chủ dự án.

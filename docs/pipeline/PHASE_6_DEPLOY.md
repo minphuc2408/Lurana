@@ -4,6 +4,8 @@
 
 **Trạng thái:** PLANNED · chưa deploy/migrate/seed remote/secrets production. [Hiện trạng / đầu vào](../PROJECT_STATUS.md). Tài khoản, login Wrangler và D1 `lunara-db` đã được chủ dự án tạo; không làm lại. Smoke hiện **local-only**, chưa hỗ trợ remote/`--base-url`.
 
+**Đầu vào hiện tại:** Phase 0–3 DONE local, Phase 4 chưa triển khai, Phase 5 PARTIAL; chưa đủ cổng mở bán. Smoke Phase 3 chạy order bằng source Hono + HTTP loopback + workerd D1 cô lập, không kiểm order trên deployment remote. Verifier Turnstile đã có nhưng widget/domain/site key/secret thật và rate limit chưa có. Chỉ thêm chế độ remote khi thực hiện Phase 6 có authorization; giữ nguyên isolation và guard local của bộ test hiện tại.
+
 ## Việc cần làm
 
 | # | Ai | Việc |
