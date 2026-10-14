@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { randomUUID } from 'node:crypto';
+import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
@@ -14,11 +14,24 @@ const request = (route, options = {}) => fetch(new URL(route, baseUrl), {
   ...options, redirect: 'error', signal: AbortSignal.timeout(10_000),
 });
 const navigationHeaders = { accept: 'text/html', 'sec-fetch-mode': 'navigate' };
-const forbiddenKeys = new Set(['stock_quantity', 'archived_at', 'cloudinary_public_id', 'password_hash', 'stack', 'stack_trace', 'sql']);
+const forbiddenKeys = new Set(['stock_quantity', 'archived_at', 'cloudinary_public_id']);
+const confidentialKeys = new Set(['password', 'password_hash', 'admin_password', 'jwt_secret', 'secret', 'jwt', 'token', 'cookie', 'stack', 'stack_trace', 'sql']);
 let passed = 0;
 let failed = 0;
 let products;
 let categories;
+let deliveryOptions;
+
+function safeApiData(value) {
+  if (typeof value === 'string') {
+    assert.doesNotMatch(value, /\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/, 'Response body leaked a JWT');
+  }
+  if (!value || typeof value !== 'object') return;
+  for (const [key, child] of Object.entries(value)) {
+    assert.ok(!confidentialKeys.has(key.toLowerCase()), `API response leaked ${key}`);
+    safeApiData(child);
+  }
+}
 
 function safePublicData(value) {
   if (!value || typeof value !== 'object') return;
@@ -35,6 +48,7 @@ async function json(route, status = 200, init = {}) {
   assert.ok(response.headers.get('x-request-id'), 'API response must have a request ID');
   assert.equal(response.headers.get('x-content-type-options'), 'nosniff');
   const payload = await response.json();
+  safeApiData(payload);
   safePublicData(payload);
   return { response, payload };
 }
@@ -200,6 +214,7 @@ await check('category/featured filters match catalog', async () => {
 await check('delivery options: DB provinces/wards/fees + configured limits', async () => {
   const { payload } = await json('/api/delivery/options');
   const options = payload.data;
+  deliveryOptions = options;
   const provinces = [...options.provinces].sort((a, b) => a.province_name.localeCompare(b.province_name));
   assert.deepEqual(provinces, [
     { province_name: 'Thành phố Hà Nội', default_fee: 35000, free_from_amount: 1000000, wards: [{ ward_name: 'Phường Hoàn Kiếm', fee: 20000 }] },
@@ -273,9 +288,9 @@ await check('malformed JSON / empty cart / invalid method are safe validation er
   await error('/api/checkout/quote', 400, 'VALIDATION_ERROR', post(quoteBody({ delivery_method_code: 'NOT_A_METHOD' })));
 });
 
-await check('orders reject missing key; deferred admin returns JSON 404 and no-store', async () => {
+await check('orders reject missing key; admin without cookie returns 401 and no-store', async () => {
   await error('/api/orders', 400, 'VALIDATION_ERROR', post({}));
-  await error('/api/admin/products', 404, 'NOT_FOUND');
+  await error('/api/admin/products', 401, 'UNAUTHORIZED');
 });
 
 console.log(`Catalog smoke: ${passed}/${passed + failed} PASS, ${failed} FAIL at ${baseUrl.origin}.`);
@@ -284,12 +299,17 @@ console.log(`Catalog smoke: ${passed}/${passed + failed} PASS, ${failed} FAIL at
 // HTTP bridge exercises concurrent requests against the current Worker source and
 // a real workerd D1 binding with all persistence and remote bindings disabled.
 async function orderSmoke() {
+  // Node's WebCrypto lacks workerd's native timingSafeEqual extension. Only this
+  // local HTTP bridge uses the Node implementation; Worker code remains native.
+  if (!crypto.subtle.timingSafeEqual) {
+    crypto.subtle.timingSafeEqual = (left, right) => timingSafeEqual(Buffer.from(left), Buffer.from(right));
+  }
   const [{ default: app }, { transitionOrder }, { todayInVN }] = await Promise.all([
     import('../worker/index.ts'), import('../worker/services/orders.ts'), import('../worker/lib/datetime.ts'),
   ]);
   const platform = await getPlatformProxy({
     configPath: fileURLToPath(new URL('../wrangler.jsonc', import.meta.url)),
-    persist: false, remoteBindings: false,
+    persist: false, remoteBindings: false, envFiles: ['.dev.vars.example'],
   });
   let server;
   try {
@@ -311,6 +331,11 @@ async function orderSmoke() {
     const stock = async id => (await first('SELECT stock_quantity FROM product_variants WHERE id = ?', [id])).stock_quantity;
     const orderCount = async () => (await first('SELECT COUNT(*) AS total FROM orders')).total;
     const requestCounts = [];
+    // Synthetic credentials belong only to this persist:false test environment.
+    // Never read .dev.vars or use production secrets for destructive acceptance.
+    const demoPassword = 'isolated-smoke-admin-password-24-characters';
+    const demoJwtSecret = 'isolated-smoke-jwt-secret-32-characters-distinct';
+    const authEnv = { ADMIN_PASSWORD: demoPassword, JWT_SECRET: demoJwtSecret };
 
     server = createServer(async (incoming, outgoing) => {
       let queries = 0;
@@ -346,7 +371,7 @@ async function orderSmoke() {
         const method = incoming.method || 'GET';
         const response = await app.fetch(new Request(url, {
           method, headers, ...(!['GET', 'HEAD'].includes(method) ? { body } : {}),
-        }), { DB: requestDb });
+        }), { DB: requestDb, ...authEnv });
         requestCounts.push({ route: incoming.url, method, status: response.status, queries });
         outgoing.writeHead(response.status, {
           ...Object.fromEntries(response.headers), 'x-smoke-d1-statements': String(queries),
@@ -364,7 +389,7 @@ async function orderSmoke() {
     });
     const isolatedUrl = new URL(`http://127.0.0.1:${server.address().port}`);
     assert.equal(isolatedUrl.hostname, '127.0.0.1');
-    console.log(`Phase 3 isolated HTTP smoke at ${isolatedUrl.origin}; real D1, persist=false, remoteBindings=false.`);
+    console.log(`Phase 3/4 isolated HTTP smoke at ${isolatedUrl.origin}; real D1, persist=false, remoteBindings=false; synthetic auth only.`);
     const tomorrow = new Date(`${todayInVN()}T00:00:00Z`);
     tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
     const tomorrowDate = tomorrow.toISOString().slice(0, 10);
@@ -387,10 +412,14 @@ async function orderSmoke() {
       });
       const payload = await response.json();
       assert.match(response.headers.get('content-type'), /^application\/json;\s*charset=utf-8$/i);
-      assert.equal(response.headers.get('cache-control'), 'no-store');
+      const publicCatalog = !init?.method && /^(?:\/api\/(?:products|delivery\/options|categories))(?:[/?]|$)/.test(route);
+      assert.equal(response.headers.get('cache-control'), publicCatalog && response.status === 200 ? 'public, max-age=30' : 'no-store');
       assert.equal(response.headers.get('x-content-type-options'), 'nosniff');
       assert.ok(response.headers.get('x-request-id'));
-      safePublicData(payload);
+      safeApiData(payload);
+      if (!route.startsWith('/api/admin/')) safePublicData(payload);
+      const serialized = JSON.stringify(payload);
+      assert.equal(serialized.includes(demoPassword) || serialized.includes(demoJwtSecret), false, 'Response body leaked synthetic credentials');
       if (expectedStatus !== undefined) assert.equal(response.status, expectedStatus, `${route}: ${JSON.stringify(payload)}`);
       const queryCount = Number(response.headers.get('x-smoke-d1-statements'));
       if (route === '/api/orders') assert.ok(queryCount <= 40, `POST /api/orders submitted ${queryCount} D1 statements`);
@@ -613,6 +642,324 @@ async function orderSmoke() {
       console.log(`D1 Phase 3 query budget: cart_lines=15; submitted_statements=${result.queryCount}; limit=40; maximum_all_order_requests=${Math.max(...created.map(attempt => attempt.queries))}.`);
       console.log(`D1 Phase 3 reconciliation: variants=${current.length}; every stock reduction=uncancelled order_items quantity; dangling_orders=0; foreign_key_check=[]; orders=${await orderCount()}.`);
     });
+
+    const adminBeforePassed = passed;
+    const adminBeforeFailed = failed;
+    let adminCookie;
+    const adminInit = (method = 'GET', input, cookie = adminCookie) => ({
+      method, headers: {
+        ...(cookie ? { cookie } : {}),
+        ...(['POST', 'PATCH', 'PUT', 'DELETE'].includes(method)
+          ? { origin: isolatedUrl.origin, 'content-type': 'application/json' } : {}),
+      }, ...(input !== undefined ? { body: JSON.stringify(input) } : {}),
+    });
+    const admin = (route, method = 'GET', input, status = 200) => localJson(`/api/admin${route}`, adminInit(method, input), status);
+    const adminDetail = async number => (await admin(`/orders/${number}`)).payload.data;
+    const statusPatch = (number, to_status, note = 'Isolated admin smoke transition') =>
+      adminInit('PATCH', { to_status, note });
+    const signedTestCookie = claims => {
+      const unsigned = [
+        Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url'),
+        Buffer.from(JSON.stringify(claims)).toString('base64url'),
+      ].join('.');
+      return `lunara_admin=${unsigned}.${createHmac('sha256', demoJwtSecret).update(unsigned).digest('base64url')}`;
+    };
+
+    await check('Phase 4 01/12 wrong/right login, fail-closed secrets, strict HTTP/HTTPS cookies', async () => {
+      await localError('/api/admin/login', adminInit('POST', { password: 'wrong-synthetic-password' }, null), 401, 'INVALID_CREDENTIALS');
+      for (const credentials of [
+        {}, { ADMIN_PASSWORD: demoPassword }, { JWT_SECRET: demoJwtSecret },
+        { ADMIN_PASSWORD: '', JWT_SECRET: demoJwtSecret },
+        { ADMIN_PASSWORD: demoPassword, JWT_SECRET: '' },
+        { ADMIN_PASSWORD: 'short', JWT_SECRET: demoJwtSecret },
+        { ADMIN_PASSWORD: demoPassword, JWT_SECRET: 'short' },
+        { ADMIN_PASSWORD: demoPassword, JWT_SECRET: demoPassword },
+      ]) {
+        const response = await app.fetch(new Request(new URL('/api/admin/login', isolatedUrl), {
+          ...adminInit('POST', { password: demoPassword }, null),
+        }), { DB: db, ...credentials });
+        assert.equal(response.status, 401, 'Missing/empty secrets must reject login');
+        assert.equal(response.headers.has('set-cookie'), false);
+        safeApiData(await response.json());
+      }
+      const login = await localJson('/api/admin/login', adminInit('POST', { password: demoPassword }, null), 200);
+      assert.deepEqual(login.payload, { data: { ok: true } });
+      assert.equal(login.queryCount, 0);
+      const setCookie = login.response.headers.get('set-cookie');
+      assert.match(setCookie, /^lunara_admin=/);
+      assert.match(setCookie, /; HttpOnly(?:;|$)/i);
+      assert.match(setCookie, /; SameSite=Strict(?:;|$)/i);
+      assert.match(setCookie, /; Path=\/(?:;|$)/i);
+      assert.match(setCookie, /; Max-Age=43200(?:;|$)/i);
+      assert.doesNotMatch(setCookie, /; Secure(?:;|$)/i);
+      adminCookie = setCookie.split(';', 1)[0];
+      assert.deepEqual((await admin('/me')).payload, { data: { role: 'ADMIN' } });
+      const httpsOrigin = 'https://127.0.0.1';
+      const secureResponse = await app.fetch(new Request(`${httpsOrigin}/api/admin/login`, {
+        method: 'POST', headers: { origin: httpsOrigin, 'content-type': 'application/json' },
+        body: JSON.stringify({ password: demoPassword }),
+      }), { DB: db, ...authEnv });
+      assert.equal(secureResponse.status, 200);
+      assert.match(secureResponse.headers.get('set-cookie'), /; Secure(?:;|$)/i);
+      safeApiData(await secureResponse.json());
+      console.log('D1 Phase 4 auth: wrong=INVALID_CREDENTIALS; missing/empty secrets=401; cookie=HttpOnly/SameSite=Strict/Path=/; HTTP=no Secure; HTTPS=Secure; login_queries=0.');
+    });
+
+    await check('Phase 4 02/12 every admin route without cookie returns 401 before validation', async () => {
+      assert.ok(firstOrder);
+      for (const [method, route] of [
+        ['POST', '/logout'], ['GET', '/me'], ['GET', '/summary'], ['GET', '/orders'],
+        ['GET', `/orders/${firstOrder.order_number}`], ['PATCH', `/orders/${firstOrder.order_number}/status`],
+        ['PATCH', `/orders/${firstOrder.order_number}/note`], ['GET', '/products'], ['POST', '/products'],
+        ['PATCH', '/products/1'], ['PATCH', `/variants/${peonyVariant.id}`],
+        ['GET', '/delivery-zones'], ['POST', '/delivery-zones'], ['PUT', '/delivery-zones/1'],
+        ['GET', '/unknown'], ['DELETE', '/unknown'],
+      ]) {
+        await localError(`/api/admin${route}`, adminInit(method, method === 'GET' ? undefined : {}, null), 401, 'UNAUTHORIZED');
+      }
+    });
+
+    await check('Phase 4 03/12 expired/tampered/wrong-role JWT rejected', async () => {
+      assert.ok(adminCookie);
+      const now = Math.floor(Date.now() / 1000);
+      const [header, payload] = adminCookie.slice('lunara_admin='.length).split('.');
+      for (const cookie of [
+        signedTestCookie({ role: 'ADMIN', iat: now - 60, exp: now - 1 }),
+        `lunara_admin=${header}.${payload}.${Buffer.alloc(32).toString('base64url')}`,
+        signedTestCookie({ role: 'CUSTOMER', iat: now, exp: now + 60 }),
+        'lunara_admin=not.a.valid-session',
+      ]) {
+        await localError('/api/admin/me', adminInit('GET', undefined, cookie), 401, 'UNAUTHORIZED');
+      }
+    });
+
+    await check('Phase 4 04/12 admin writes require exact Origin and JSON Content-Type', async () => {
+      assert.ok(adminCookie);
+      for (const route of ['/api/admin/login', `/api/admin/variants/${peonyVariant.id}`]) {
+        const method = route.endsWith('/login') ? 'POST' : 'PATCH';
+        const input = method === 'POST' ? { password: demoPassword } : { stock_delta: 1 };
+        const initial = adminInit(method, input);
+        for (const origin of [undefined, 'https://attacker.example.test', 'null', `${isolatedUrl.origin}/path`, isolatedUrl.origin.replace('http:', 'https:')]) {
+          const headers = { ...initial.headers };
+          if (origin === undefined) delete headers.origin;
+          else headers.origin = origin;
+          await localError(route, { ...initial, headers }, 403, 'FORBIDDEN');
+        }
+        for (const contentType of [undefined, 'text/plain', 'application/jsonp']) {
+          const headers = { ...initial.headers };
+          if (contentType === undefined) delete headers['content-type'];
+          else headers['content-type'] = contentType;
+          await localError(route, { ...initial, headers }, 400, 'VALIDATION_ERROR');
+        }
+      }
+    });
+
+    await check('Phase 4 05/12 summary <=3 queries, filtered/paged orders and privileged detail', async () => {
+      // A UTC timestamp on yesterday's calendar date can already be today in VN.
+      // This boundary distinguishes the required VN day from naive UTC grouping.
+      const vietnamDayStart = new Date(`${todayInVN()}T00:00:00+07:00`).getTime();
+      await execute('UPDATE orders SET placed_at = ? WHERE order_number = ?', [
+        new Date(vietnamDayStart + 30 * 60_000).toISOString(), firstOrder.order_number,
+      ]);
+      const summary = await admin('/summary');
+      assert.ok(summary.queryCount <= 3, `Summary used ${summary.queryCount} statements`);
+      const expectedStatus = Object.fromEntries((await all('SELECT status_code, COUNT(*) AS total FROM orders GROUP BY status_code'))
+        .map(row => [row.status_code, row.total]));
+      for (const [status, count] of Object.entries(summary.payload.data.orders_by_status)) {
+        assert.equal(count, expectedStatus[status] || 0);
+      }
+      for (const [status, count] of Object.entries(expectedStatus)) assert.equal(summary.payload.data.orders_by_status[status], count);
+      assert.equal(summary.payload.data.today_orders, (await first("SELECT COUNT(*) AS total FROM orders WHERE substr(datetime(placed_at, '+7 hours'), 1, 10) = ?", [todayInVN()])).total);
+      assert.equal(summary.payload.data.low_stock_count, (await first('SELECT COUNT(*) AS total FROM product_variants WHERE stock_quantity <= low_stock_threshold')).total);
+      const listed = (await admin('/orders?status=PENDING&date=' + tomorrowDate + '&limit=2&offset=0')).payload.data;
+      const pending = (await first('SELECT COUNT(*) AS total FROM orders WHERE status_code = ? AND delivery_date = ?', ['PENDING', tomorrowDate])).total;
+      assert.equal(listed.total, pending);
+      assert.equal(listed.items.length, Math.min(2, pending));
+      assert.ok(listed.items.every(order => order.status_code === 'PENDING'));
+      const secondPage = (await admin('/orders?status=PENDING&date=' + tomorrowDate + '&limit=2&offset=2')).payload.data;
+      assert.equal(secondPage.total, pending);
+      assert.equal(secondPage.items.some(row => listed.items.some(other => other.order_number === row.order_number)), false);
+      const detail = await adminDetail(firstOrder.order_number);
+      assert.equal(detail.admin_note, 'Internal synthetic note');
+      assert.ok(Object.hasOwn(detail, 'stock_released'));
+      assert.equal(detail.items.length, 1);
+      assert.equal(detail.timeline.length, 5);
+      assert.equal(Object.hasOwn(await lookup(firstOrder.order_number, '0900000000'), 'admin_note'), false);
+      for (const query of ['limit=51', 'offset=-1', 'status=UNKNOWN', 'date=2026-02-30']) {
+        await localError(`/api/admin/orders?${query}`, adminInit(), 400, 'VALIDATION_ERROR');
+      }
+      console.log(`D1 Phase 4 summary: submitted_statements=${summary.queryCount}; limit=3; orders_total=${await orderCount()}.`);
+    });
+
+    await check('Phase 4 06/12 status API rejects invalid transitions, DELIVERED sets PAID/timestamps/history', async () => {
+      const number = (await create()).payload.data.order_number;
+      await localError(`/api/admin/orders/${number}/status`, statusPatch(number, 'DELIVERED'), 409, 'INVALID_TRANSITION');
+      assert.equal((await adminDetail(number)).status_code, 'PENDING');
+      for (const to of ['CONFIRMED', 'PREPARING', 'IN_TRANSIT', 'DELIVERED']) {
+        await localJson(`/api/admin/orders/${number}/status`, statusPatch(number, to), 200);
+        assert.equal((await adminDetail(number)).status_code, to);
+        if (to === 'IN_TRANSIT') {
+          await localError(`/api/admin/orders/${number}/status`, statusPatch(number, 'CANCELLED'), 409, 'INVALID_TRANSITION');
+        }
+      }
+      const delivered = await adminDetail(number);
+      assert.equal(delivered.payment_status, 'PAID');
+      assert.match(delivered.paid_at, /Z$/);
+      assert.match(delivered.delivered_at, /Z$/);
+      assert.deepEqual(delivered.timeline.map(event => event.to_status), ['PENDING', 'CONFIRMED', 'PREPARING', 'IN_TRANSIT', 'DELIVERED']);
+      await localError(`/api/admin/orders/${number}/status`, statusPatch(number, 'CANCELLED'), 409, 'INVALID_TRANSITION');
+      const actors = await all(`SELECT h.actor_id, h.actor_label FROM order_status_history h
+        JOIN orders o ON o.id = h.order_id WHERE o.order_number = ? AND h.from_status IS NOT NULL`, [number]);
+      assert.ok(actors.length === 4 && actors.every(row => row.actor_id === null && row.actor_label === 'ADMIN'));
+      console.log('D1 Phase 4 transitions: invalid PENDING→DELIVERED=409; PENDING,CONFIRMED,PREPARING,IN_TRANSIT,DELIVERED; payment=PAID; paid_at/delivered_at=UTC; actor=ADMIN/NULL.');
+    });
+
+    await check('Phase 4 07/12 cancellation API returns stock once for repeat and concurrent requests', async () => {
+      const number = (await create(body({ items: [{ variant_id: peonyVariant.id, quantity: 2 }] }))).payload.data.order_number;
+      const beforeCancel = await stock(peonyVariant.id);
+      await localJson(`/api/admin/orders/${number}/status`, statusPatch(number, 'CANCELLED'), 200);
+      assert.equal(await stock(peonyVariant.id), beforeCancel + 2);
+      await localError(`/api/admin/orders/${number}/status`, statusPatch(number, 'CANCELLED'), 409, 'INVALID_TRANSITION');
+      assert.equal(await stock(peonyVariant.id), beforeCancel + 2);
+      assert.equal(Number((await adminDetail(number)).stock_released), 1);
+      const racingNumber = (await create(body({ items: [{ variant_id: peonyVariant.id, quantity: 2 }] }))).payload.data.order_number;
+      const beforeRace = await stock(peonyVariant.id);
+      const attempts = await Promise.all([
+        localJson(`/api/admin/orders/${racingNumber}/status`, statusPatch(racingNumber, 'CANCELLED')),
+        localJson(`/api/admin/orders/${racingNumber}/status`, statusPatch(racingNumber, 'CANCELLED')),
+      ]);
+      assert.deepEqual(attempts.map(result => result.response.status).sort(), [200, 409]);
+      assert.equal(attempts.find(result => result.response.status === 409).payload.error.code, 'INVALID_TRANSITION');
+      assert.equal(await stock(peonyVariant.id), beforeRace + 2);
+      const detail = await adminDetail(racingNumber);
+      assert.deepEqual(detail.timeline.map(event => event.to_status), ['PENDING', 'CANCELLED']);
+      assert.equal(Number(detail.stock_released), 1);
+      for (const from of ['CONFIRMED', 'PREPARING']) {
+        const pending = (await create()).payload.data.order_number;
+        await localJson(`/api/admin/orders/${pending}/status`, statusPatch(pending, 'CONFIRMED'), 200);
+        if (from === 'PREPARING') await localJson(`/api/admin/orders/${pending}/status`, statusPatch(pending, 'PREPARING'), 200);
+        const beforeAllowedCancel = await stock(peonyVariant.id);
+        await localJson(`/api/admin/orders/${pending}/status`, statusPatch(pending, 'CANCELLED'), 200);
+        assert.equal(await stock(peonyVariant.id), beforeAllowedCancel + 1);
+      }
+      console.log('D1 Phase 4 cancellation: sequential=200,409/+2 once; parallel=200,409/+2 once; stock_released=1; cancellation_history_rows=1.');
+    });
+
+    await check('Phase 4 08/12 admin note stays private; q escapes percent/underscore/backslash', async () => {
+      await admin(`/orders/${firstOrder.order_number}/note`, 'PATCH', { admin_note: 'Isolated private admin note' });
+      assert.equal((await adminDetail(firstOrder.order_number)).admin_note, 'Isolated private admin note');
+      const publicDetail = await lookup(firstOrder.order_number, '0900000000');
+      assert.equal(JSON.stringify(publicDetail).includes('Isolated private admin note'), false);
+      const literalName = 'Synthetic %_\\ literal search';
+      const searchable = (await create(body({ sender: { ...body().sender, name: literalName } }))).payload.data;
+      const literal = (await admin('/orders?q=' + encodeURIComponent('%_\\'))).payload.data;
+      assert.equal(literal.total, 1);
+      assert.deepEqual(literal.items.map(row => row.order_number), [searchable.order_number]);
+      const phone = (await admin('/orders?q=0900000000&limit=50')).payload.data;
+      assert.ok(phone.total > 0);
+      const empty = (await admin('/orders?q=' + encodeURIComponent("' OR 1=1 --"))).payload.data;
+      assert.deepEqual(empty, { items: [], total: 0 });
+      await admin(`/orders/${firstOrder.order_number}/note`, 'PATCH', { admin_note: null });
+      assert.equal((await adminDetail(firstOrder.order_number)).admin_note, null);
+    });
+
+    await check('Phase 4 09/12 atomic stock_delta survives concurrent new order; negative/compare-price checks', async () => {
+      const id = peonyVariant.id;
+      const before = await stock(id);
+      await admin(`/variants/${id}`, 'PATCH', { stock_delta: 5 });
+      assert.equal(await stock(id), before + 5);
+      await admin(`/variants/${id}`, 'PATCH', { stock_delta: -2, stock_quantity: 999999 });
+      assert.equal(await stock(id), before + 3, 'stock_delta must take priority over absolute stock_quantity');
+      await localError(`/api/admin/variants/${id}`, adminInit('PATCH', { stock_delta: -(before + 4) }), 400, 'VALIDATION_ERROR');
+      assert.equal(await stock(id), before + 3);
+      const raceBefore = await stock(id);
+      await Promise.all([admin(`/variants/${id}`, 'PATCH', { stock_delta: 4 }), create()]);
+      assert.equal(await stock(id), raceBefore + 3, 'Concurrent order deduction must survive delta adjustment');
+      const variant = await first('SELECT price, compare_at_price FROM product_variants WHERE id = ?', [id]);
+      await localError(`/api/admin/variants/${id}`, adminInit('PATCH', { compare_at_price: variant.price - 1 }), 400, 'VALIDATION_ERROR');
+      assert.deepEqual(await first('SELECT price, compare_at_price FROM product_variants WHERE id = ?', [id]), variant);
+      await admin(`/variants/${id}`, 'PATCH', { stock_quantity: await stock(id) });
+      console.log('D1 Phase 4 stock: delta +5/-2 exact; delta beats absolute; below-zero=400/unchanged; concurrent(delta +4,order -1)=+3; compare_at_price<price=400.');
+    });
+
+    await check('Phase 4 10/12 product batch create/conflict, public ACTIVE, hidden/archive remain admin', async () => {
+      const catalog = await admin('/products');
+      assert.ok(catalog.queryCount <= 3, 'Admin product list must use at most 3 queries');
+      assert.equal(catalog.payload.data.items.length, 8);
+      assert.equal(catalog.payload.data.items.flatMap(product => product.variants).every(variant => Number.isInteger(variant.stock_quantity)), true);
+      const input = {
+        category_id: categories[0].id, slug: 'isolated-admin-smoke-product',
+        name_vi: 'Sản phẩm thử local', name_en: 'Isolated admin smoke product', status: 'ACTIVE',
+        image: { url: 'https://images.example.test/smoke.jpg', alt_vi: 'Hoa thử', alt_en: 'Test flowers' },
+        variants: [{ sku: 'ISOLATED-SMOKE-STANDARD', size_code: 'STANDARD', price: 100000, compare_at_price: 120000, stock_quantity: 12, low_stock_threshold: 2, is_active: true }],
+      };
+      const created = await admin('/products', 'POST', input, 201);
+      const id = created.payload.data.id;
+      assert.ok(Number.isInteger(id));
+      assert.equal(created.queryCount, 3, 'One product + one variant + one image must be one 3-statement batch');
+      const active = (await localJson('/api/products', undefined, 200)).payload.data.items;
+      assert.ok(active.some(product => product.id === id));
+      const beforeConflict = (await first('SELECT COUNT(*) AS total FROM products')).total;
+      await localError('/api/admin/products', adminInit('POST', input), 409, 'CONFLICT');
+      await localError('/api/admin/products', adminInit('POST', { ...input, slug: 'isolated-conflicting-sku' }), 409, 'CONFLICT');
+      assert.equal((await first('SELECT COUNT(*) AS total FROM products')).total, beforeConflict, 'SKU conflict must roll back inserted product');
+      for (const status of ['HIDDEN', 'ARCHIVED']) {
+        await admin(`/products/${id}`, 'PATCH', {
+          status, name_en: 'Patched isolated product', image: { url: 'https://images.example.test/patched.jpg' },
+        });
+        const publicItems = (await localJson('/api/products', undefined, 200)).payload.data.items;
+        assert.equal(publicItems.some(product => product.id === id), false);
+        await localError(`/api/products/${input.slug}`, {}, 404, 'NOT_FOUND');
+        const record = (await admin('/products')).payload.data.items.find(product => product.id === id);
+        assert.equal(record.status, status);
+        assert.equal(record.name_en, 'Patched isolated product');
+        assert.equal(record.images.filter(image => image.is_primary).length, 1);
+        assert.equal(record.images.find(image => image.is_primary).url, 'https://images.example.test/patched.jpg');
+        if (status === 'ARCHIVED') assert.match((await first('SELECT archived_at FROM products WHERE id = ?', [id])).archived_at, /Z$/);
+      }
+      console.log('D1 Phase 4 products: list_statements<=3; create_batch=3; slug/SKU=CONFLICT/rollback; ACTIVE visible; HIDDEN/ARCHIVED public absent/admin retained.');
+    });
+
+    await check('Phase 4 11/12 zone create/fee edit changes quote immediately; soft delete removes delivery', async () => {
+      const zones = (await admin('/delivery-zones')).payload.data.items;
+      const existing = zones.find(zone => zone.province_name === 'Thành phố Hà Nội' && zone.ward_name === 'Phường Hoàn Kiếm');
+      assert.ok(existing);
+      const localQuote = async input => (await localJson('/api/checkout/quote', post(input), 200)).payload.data;
+      const input = {
+        items: [{ variant_id: peonyVariant.id, quantity: 1 }],
+        province_name: existing.province_name, ward_name: existing.ward_name, delivery_method_code: 'STANDARD',
+      };
+      assert.equal((await localQuote(input)).delivery_fee, 20000);
+      await admin(`/delivery-zones/${existing.id}`, 'PUT', {
+        province_name: existing.province_name, ward_name: existing.ward_name, fee: 23000,
+        free_from_amount: null, eta_minutes: existing.eta_minutes, is_active: true,
+      });
+      assert.equal((await localQuote(input)).delivery_fee, 23000);
+      const newZone = {
+        province_name: 'Tỉnh smoke local', ward_name: '', fee: 17000,
+        free_from_amount: null, eta_minutes: 120, is_active: true,
+      };
+      const created = (await admin('/delivery-zones', 'POST', newZone, 201)).payload.data;
+      const newQuote = { ...input, province_name: newZone.province_name, ward_name: 'Phường smoke local' };
+      assert.equal((await localQuote(newQuote)).delivery_fee, 17000);
+      await localError('/api/admin/delivery-zones', adminInit('POST', newZone), 409, 'CONFLICT');
+      await admin(`/delivery-zones/${created.id}`, 'PUT', { ...newZone, is_active: false });
+      await localError('/api/checkout/quote', post(newQuote), 422, 'NO_DELIVERY_ZONE');
+      assert.equal((await admin('/delivery-zones')).payload.data.items.some(zone => zone.id === created.id && !zone.is_active), true);
+      console.log('D1 Phase 4 delivery: admin fee 20000→23000; next quote=23000; create default zone=17000; inactive quote=NO_DELIVERY_ZONE; row retained.');
+    });
+
+    await check('Phase 4 12/12 logout expires cookie; private bodies contain no credentials/JWT; D1 intact', async () => {
+      const result = await admin('/logout', 'POST', {});
+      assert.deepEqual(result.payload, { data: { ok: true } });
+      assert.match(result.response.headers.get('set-cookie'), /^lunara_admin=;/);
+      assert.match(result.response.headers.get('set-cookie'), /; Max-Age=0(?:;|$)/i);
+      await localError('/api/admin/me', adminInit('GET', undefined, null), 401, 'UNAUTHORIZED');
+      assert.deepEqual(await all('PRAGMA foreign_key_check'), []);
+      assert.equal((await first('SELECT COUNT(*) AS total FROM product_variants WHERE stock_quantity < 0')).total, 0);
+      console.log('D1 Phase 4 privacy: every parsed public/admin JSON body checked for credentials/JWT/secret/SQL/stack; JWT only in intended HttpOnly Set-Cookie header; foreign_key_check=[]; negative_stock=0.');
+    });
+    console.log(`Phase 4 mandatory smoke: ${passed - adminBeforePassed}/12 PASS, ${failed - adminBeforeFailed} FAIL.`);
   } finally {
     if (server) await new Promise((resolve, reject) => server.close(cause => cause ? reject(cause) : resolve()));
     await platform.dispose();
@@ -623,7 +970,12 @@ try {
   await orderSmoke();
 } catch (cause) {
   failed++;
-  console.error(`FAIL Phase 3 isolated smoke setup: ${cause.stack || cause.message}`);
+  console.error(`FAIL Phase 3/4 isolated smoke setup: ${cause.stack || cause.message}`);
 }
+await check('persisted preview catalog/categories/delivery seed unchanged after isolated Phase 3/4 writes', async () => {
+  assert.deepEqual((await json('/api/products')).payload.data.items, products);
+  assert.deepEqual((await json('/api/categories')).payload.data, categories);
+  assert.deepEqual((await json('/api/delivery/options')).payload.data, deliveryOptions);
+});
 console.log(`Local smoke: ${passed}/${passed + failed} PASS, ${failed} FAIL; persisted seed untouched.`);
 if (failed) process.exitCode = 1;
