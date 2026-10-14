@@ -1,12 +1,13 @@
 # Database MVP — Cloudflare D1
 
-**Cập nhật:** 14/10/2026 · **Runtime:** D1/SQLite · **Phase 0:** DONE · **Phase 1:** migration, seed và verifier local. [Bằng chứng nghiệm thu Phase 1](pipeline/PHASE_1_DATABASE.md) · [Hiện trạng](PROJECT_STATUS.md) · [Stack](TECH_STACK.md) · [Entity frontend](FRONTEND_ENTITIES.md).
+**Cập nhật:** 14/10/2026 · **Runtime:** D1/SQLite · **Phase 0:** DONE · **Phase 1:** migration, seed và verifier local · **Phase 2:** catalog/quote đọc D1 local. [Bằng chứng Phase 1](pipeline/PHASE_1_DATABASE.md) · [Phase 2](pipeline/PHASE_2_API_CATALOG.md) · [Hiện trạng](PROJECT_STATUS.md) · [Stack](TECH_STACK.md) · [Entity frontend](FRONTEND_ENTITIES.md).
 
 | Phạm vi | Trạng thái |
 | --- | --- |
 | Schema chuẩn | [`migrations/0001_mvp.sql`](../migrations/0001_mvp.sql), DDL v2 đã thống nhất theo đúng 10 bảng Phase 1 |
 | D1 local | Migration `0001_mvp.sql`; seed và `npm run db:verify`; output nghiệm thu ở [Phase 1](pipeline/PHASE_1_DATABASE.md) |
-| D1 remote | Chủ dự án đã tạo `lunara-db`; Phase 0–1 không truy cập hoặc thay đổi remote |
+| API D1 local | Catalog tối đa 3 statements; quote đọc variants + phí giao, không ghi order/tồn. Test trạng thái/tồn dùng DB cô lập; DDL Phase 1 giữ nguyên |
+| D1 remote | Chủ dự án đã tạo `lunara-db`; Phase 0–2 không truy cập hoặc thay đổi remote |
 | Frontend | Fixtures, PHP/₱, Asia/Manila; chưa nối API commerce |
 
 ## Một nguồn schema chuẩn

@@ -1,8 +1,10 @@
 # Entity đang có trong frontend Lunara
 
-**Cập nhật:** 14/10/2026 · **UI:** demo/fixtures · **Backend:** health local + schema D1 local (Phase 1) · **Commerce API:** PLANNED. [Hiện trạng](PROJECT_STATUS.md) · [Stack](TECH_STACK.md) · [Schema canonical](../migrations/0001_mvp.sql). UI **Lunara**, repo **Lurana**.
+**Cập nhật:** 14/10/2026 · **UI:** demo/fixtures · **Backend:** catalog/delivery/quote D1 local (Phase 2), health và JSON API 404 · **Đặt đơn/admin:** PLANNED. [Hiện trạng](PROJECT_STATUS.md) · [Stack](TECH_STACK.md) · [Schema canonical](../migrations/0001_mvp.sql). UI **Lunara**, repo **Lurana**.
 
 **Giữ hiện tại:** English mặc định/fallback, EN/VI JSON, PHP/₱, Asia/Manila, cart in-memory. **Đích pipeline:** COD guest + admin server, VND/giờ Việt Nam ở Phase 5. Phase 1 chốt 10 bảng DDL v2, có `delivery_zones`, idempotency và các CHECK/unique; `custom_requests` deferred. Schema/seed/verifier ở D1 local không tự nối các entity FE vào API; các ánh xạ dưới đây vẫn là việc cần triển khai. [Nghiệm thu database](pipeline/PHASE_1_DATABASE.md).
+
+Phase 2 trả Product/variants/images, delivery options và CartQuote theo [contract](pipeline/API_CONTRACT.md). Root `shared/constants.ts` và `shared/schemas.ts` dùng chung cho Worker/FE; `src/shared/` vẫn là thư viện UI hiện tại. Giá VND, variant ID và DTO API chưa được adapter vào `shop.service.ts`/CartProvider: duyệt `/shop` hoặc `/cart` vẫn test fixture, test backend bằng `/api/*`. [Hướng dẫn test 5173](pipeline/PHASE_2_API_CATALOG.md#test-thủ-công-trên-host-5173).
 
 | Entity/khái niệm | Field hiện có ở FE | Source | Ánh xạ MVP D1 / mở rộng |
 | --- | --- | --- | --- |
@@ -43,4 +45,4 @@
 8. Cart là demo in-memory, reload reset. Ngôn ngữ là preference riêng, không đổi giá, currency, timezone hoặc tên khách.
 9. Schema dùng VND/địa chỉ tỉnh-phường và status uppercase; FE còn PHP/Asia/Manila/English labels. Cần adapter và chuyển thị trường riêng trước khi nối API.
 
-Xem [DATABASE_DESIGN.md](DATABASE_DESIGN.md) để tra canonical, khác biệt v1/v2 và giới hạn schema; [pipeline](pipeline/README.md) cho scope/phase. Seed local có 4 categories, 8 products, 24 variants, 8 images, 4 zones; chưa đồng bộ fixture frontend. Cloudflare/D1 remote đã được chủ dự án chuẩn bị; Phase 1 chỉ local. Không coi demo success, role client hoặc state cục bộ là nghiệp vụ bền vững.
+Xem [DATABASE_DESIGN.md](DATABASE_DESIGN.md) để tra canonical, khác biệt v1/v2 và giới hạn schema; [pipeline](pipeline/README.md) cho scope/phase. Seed local có 4 categories, 8 products, 24 variants, 8 images, 4 zones; chưa đồng bộ fixture frontend. Cloudflare/D1 remote đã được chủ dự án chuẩn bị; Phase 0–2 chỉ local. Không coi demo success, role client hoặc state cục bộ là nghiệp vụ bền vững.

@@ -2,7 +2,7 @@
 
 Base path: `/api` (cùng origin với frontend). JSON UTF-8. Đây là hợp đồng giữa Worker và frontend; thay đổi phải sửa file này trước.
 
-**Trạng thái:** Phase 0 chỉ triển khai `GET /api/health` và fallback `NOT_FOUND` JSON 404 (message `Không tìm thấy API.`). Mọi endpoint/schema nghiệp vụ dưới đây là **PLANNED**, phụ thuộc Phase 1–5. [Hiện trạng](../PROJECT_STATUS.md). Không coi DTO dự kiến là dữ liệu đang được trả từ runtime.
+**Trạng thái:** Phase 2 đã triển khai local: health, categories, products, products/:slug, delivery/options và checkout/quote. Các API đặt đơn/tra đơn/admin còn **PLANNED** (Phase 3–4); frontend chưa nối API (Phase 5). Route API lạ trả `NOT_FOUND` JSON 404 (message `Không tìm thấy API.`). [Hiện trạng](../PROJECT_STATUS.md) · [nghiệm thu Phase 2](PHASE_2_API_CATALOG.md).
 
 ## Quy ước chung
 
@@ -11,6 +11,7 @@ Base path: `/api` (cùng origin với frontend). JSON UTF-8. Đây là hợp đ�
 - **Số điện thoại:** server chuẩn hóa về dạng `0xxxxxxxxx` (chấp nhận `+84...`, khoảng trắng, dấu chấm). Hợp lệ: `^0\d{9}$` sau khi chuẩn hóa.
 - **Tên sản phẩm:** luôn trả cả `name_vi` và `name_en`; frontend chọn theo locale.
 - Không bao giờ trả `password_hash`, secret, stack trace, SQL.
+- API dùng `Content-Type: application/json; charset=utf-8`, security headers và `X-Request-Id`. GET catalog thành công (categories/products/detail/delivery options) dùng `Cache-Control: public, max-age=30`; health, request ghi/admin và mọi lỗi dùng `no-store`. Lỗi `INTERNAL` chỉ có mã tham chiếu trong `error.details.request_id`; chi tiết lỗi được log phía server.
 
 ## Mã lỗi
 
@@ -55,6 +56,8 @@ type Product = {
 ```
 Chỉ trả variant `is_active = 1`. Không lộ `stock_quantity` chính xác.
 
+Chỉ sản phẩm thuộc category đang active. `in_stock = stock > 0`; `low_stock = 0 < stock ≤ low_stock_threshold`. Danh sách sắp theo ID; variants theo S/M/L/STANDARD/DELUXE, ảnh theo `sort_order`, ID. `category` lọc theo code; `featured` chỉ nhận `1` khi có mặt. Danh sách/chi tiết có dữ liệu dùng đúng 3 statement D1 (products → variants → images); danh sách rỗng/slug không tồn tại chỉ cần 1. Mỗi truy vấn con có tối đa 100 tham số bind.
+
 ### `GET /api/products/:slug`
 `data: Product`; 404 nếu không `ACTIVE`.
 
@@ -84,6 +87,10 @@ Body:
   issues: { variant_id: number; code: 'OUT_OF_STOCK'|'VARIANT_UNAVAILABLE'; available?: number }[] }
 ```
 Luôn 200 nếu body hợp lệ (kể cả có `issues`) để UI hiển thị; `NO_DELIVERY_ZONE` trả 422.
+
+Giỏ kiểm tra 1–15 dòng đầu vào, quantity nguyên 1–20, rồi gộp cùng `variant_id`; tổng quantity sau gộp >20 trả `CART_LIMIT` (422). Quantity 0/sai kiểu và giỏ rỗng trả `VALIDATION_ERROR` (400); >15 dòng hoặc quantity >20 trả `CART_LIMIT`. Các field ngoài schema (kể cả `price`, tổng, phí, role) bị bỏ qua. Tên tỉnh/phường được trim, dài 1–100 ký tự.
+
+Variant thiếu/inactive, sản phẩm HIDDEN/ARCHIVED hoặc category inactive tạo `VARIANT_UNAVAILABLE` và không có dòng giá trong `lines`. Variant bán được nhưng thiếu tồn vẫn có dòng giá theo số lượng yêu cầu, kèm `OUT_OF_STOCK`/`available`. `subtotal` cộng các `lines`; ngưỡng miễn phí dùng subtotal này. Quote chỉ đọc, không giữ/trừ tồn hoặc tạo đơn; Phase 3 phải từ chối đặt đơn khi có issues. Ảnh snapshot ưu tiên ảnh chính, rồi sort_order/ID; không có ảnh → null. Giá hiện tại đọc từ DB bằng một statement variants `IN`, phí giao bằng một statement chọn phường trước/mặc định tỉnh sau.
 
 ### `POST /api/orders`
 Header **bắt buộc:** `Idempotency-Key: <uuid v4>`. Body:
@@ -169,3 +176,5 @@ Mọi route dưới `/api/admin/*` (trừ `login`) yêu cầu cookie hợp lệ;
 | `province_name`/`ward_name` | khớp `delivery_zones` đang hoạt động (phường không có dòng riêng thì dùng dòng mặc định của tỉnh) |
 
 **Phí giao** = (phí khu vực; bằng 0 nếu `subtotal ≥ free_from_amount`) + phụ phí phương thức (`config.ts`). Giá trị phụ phí, giờ chốt, khung giờ trong `config.ts` là **giả định ban đầu**, chủ shop cần chỉnh.
+
+Phase 2 dựng helper ngày/khung giờ để dùng ở Phase 3, chưa áp vào quote (body quote không có ngày/slot). Giả định config: STANDARD/EXPRESS/SAME_DAY có phụ phí 0/30000/50000; EXPRESS và SAME_DAY dùng cutoff 16:00, chuẩn bị ít nhất 120 phút. Sáu khung 2 giờ từ 08:00 đến 20:00; STANDARD ngày hôm nay không nhận khung đã bắt đầu trong quá khứ. Ngày hợp lệ đến +30 ngày theo Asia/Ho_Chi_Minh, gồm kiểm tra ngày có thật trong lịch.

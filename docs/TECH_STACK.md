@@ -1,8 +1,8 @@
 # Tech stack Lunara
 
-Chốt hướng MVP ngày **14/10/2026**. Thương hiệu: **Lunara**; repository: **Lurana**. Phase 0 bổ sung Worker và health API local; Phase 1 thêm schema, seed và verifier D1 local. Storefront/admin vẫn dùng dữ liệu demo. Chủ dự án đã đăng ký Cloudflare, đăng nhập Wrangler và tạo D1 remote `lunara-db`; Phase 0–1 không truy cập hoặc tạo tài nguyên remote.
+Chốt hướng MVP ngày **14/10/2026**. Thương hiệu: **Lunara**; repository: **Lurana**. Phase 0 bổ sung Worker và health API local; Phase 1 thêm schema, seed và verifier D1 local; Phase 2 thêm catalog, phí giao và quote từ DB. Storefront/admin vẫn dùng dữ liệu demo. Chủ dự án đã đăng ký Cloudflare, đăng nhập Wrangler và tạo D1 remote `lunara-db`; Phase 0–2 không truy cập hoặc tạo tài nguyên remote.
 
-**Trạng thái:** Phase 0 DONE · Phase 1 database local ([nghiệm thu](pipeline/PHASE_1_DATABASE.md)) · Phase 2–6 PLANNED · commerce demo. [Hiện trạng / việc còn thiếu](PROJECT_STATUS.md).
+**Trạng thái:** Phase 0 DONE · Phase 1 database local ([nghiệm thu](pipeline/PHASE_1_DATABASE.md)) · Phase 2 API local DONE ([nghiệm thu](pipeline/PHASE_2_API_CATALOG.md)) · Phase 3–6 PLANNED · commerce UI demo. [Hiện trạng / việc còn thiếu](PROJECT_STATUS.md).
 
 ## Công nghệ
 
@@ -11,8 +11,8 @@ Chốt hướng MVP ngày **14/10/2026**. Thương hiệu: **Lunara**; repositor
 | Frontend | React 18, TypeScript, React Router 7, Vite 6, Tailwind CSS 4 | Storefront/Admin theo `src/features/*`; đã có |
 | i18n | `i18next` + `react-i18next`, JSON EN/VI | `src/shared/i18n/`; mặc định và fallback English; dữ liệu sản phẩm dùng `name_en/name_vi` |
 | Browser storage | `localStorage`, `sessionStorage` | Hiện lưu ngôn ngữ và session demo; Phase 5 dự kiến cart guest localStorage, wishlist ngoài pipeline MVP |
-| API/runtime | Hono + Cloudflare Workers + `@cloudflare/vite-plugin` | Phase 0 có `/api/health`, JSON 404 cho `/api/*`; catalog/tồn/đơn COD chưa triển khai, custom requests để sau MVP |
-| Validation/truy vấn | Zod + SQL tham số hóa | Zod đã chuẩn bị; schema/validation và server tính tiền/kiểm tra tồn ở phase sau |
+| API/runtime | Hono + Cloudflare Workers + `@cloudflare/vite-plugin` | Health, JSON API 404, categories/products/detail, delivery options và checkout quote đã có local; đặt đơn/tồn/admin chưa triển khai |
+| Validation/truy vấn | Zod + SQL tham số hóa | Root `shared/` giữ schema/constants; validator Hono, errors/middleware và pricing DB-only có ở Phase 2; catalog ≤3 truy vấn, quote 2 truy vấn |
 | Database | Cloudflare D1 (SQLite) | Binding `DB` local; [migration canonical](../migrations/0001_mvp.sql) có 10 bảng, seed dev và `db:verify` 13 nhóm. Remote chưa truy cập; `custom_requests` deferred |
 | Media | Cloudinary | Chưa tích hợp; MVP dán URL ảnh, upload/resize/CDN làm sau |
 | Hạ tầng | Cloudflare DNS/CDN/SSL, Turnstile + rate limit | Chưa cấu hình/deploy; tài khoản đã có, cấu hình ở Phase 6 khi được yêu cầu |
@@ -37,7 +37,8 @@ Schema canonical dùng tiền nguyên **VND** và địa chỉ tỉnh/phường.
 | --- | --- |
 | Phase 0 | Hono health API cùng Vite, SPA fallback, D1 local binding, worker types và scripts; không đổi frontend pins. `.dev.vars`/`.wrangler` giữ local |
 | Phase 1 local | Chốt DDL v2 làm [canonical duy nhất](../migrations/0001_mvp.sql), migrate/seed/verify; 4 categories, 8 products, 24 variants, 8 images, 4 zones. [Đối chiếu v1/v2 và giới hạn](DATABASE_DESIGN.md) |
-| Phase 2–5 | API catalog/COD/auth, adapter FE, cart persistence, chuyển thị trường và test giá/tồn/retry theo [pipeline](pipeline/README.md) |
+| Phase 2 local — DONE | Catalog/delivery/quote từ D1, shared Zod schemas và khung lỗi/cache/security headers; 53 test và smoke 16/16. [Output](pipeline/PHASE_2_API_CATALOG.md) |
+| Phase 3–5 | Đặt đơn COD/tồn/idempotency/auth, adapter FE, cart persistence, chuyển thị trường và test concurrency/retry theo [pipeline](pipeline/README.md) |
 | Phase 6 khi được yêu cầu | Dùng D1 remote đã tạo, migration/seed remote, secrets, Turnstile, deploy API/frontend với SPA fallback, DNS/domain và kiểm tra môi trường thật. Không cần đăng ký/login/create D1 lại |
 
 Auth khách còn mở: nếu dùng Better Auth, cần đối chiếu schema auth riêng trước migration. Secrets chỉ nằm phía server; dữ liệu trình duyệt không quyết định giá, tồn hoặc quyền admin. `.dev.vars.example` chỉ là placeholder cho demo local, không phải thông tin đăng nhập production.

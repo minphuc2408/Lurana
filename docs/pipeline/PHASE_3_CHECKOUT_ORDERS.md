@@ -4,12 +4,28 @@
 
 **Trạng thái:** PLANNED · chưa có API ghi order/tồn/idempotency. [Hiện trạng](../PROJECT_STATUS.md). Thuật toán dưới dùng [schema canonical](../../migrations/0001_mvp.sql) đã thống nhất/migrate local ở Phase 1 và phụ thuộc services Phase 2. Phase 1 đã kiểm CHECK/unique/rollback D1 batch; concurrency và retry HTTP thuộc Phase 3.
 
+## Điều kiện bắt đầu — đã kiểm 14/10/2026
+
+**Sẵn sàng triển khai Phase 3 local.** Không cần tạo tài nguyên Cloudflare hoặc chỉnh DDL trước khi bắt đầu.
+
+| Điều kiện | Bằng chứng / lưu ý |
+| --- | --- |
+| Schema/seed Phase 1 đủ bảng và ràng buộc | `npm run db:verify`: 13/13 nhóm, 46 assertions; 10 bảng, FK sạch, counts 4/8/24/8/4; đã kiểm unique idempotency, total CHECK và rollback batch |
+| Catalog/quote Phase 2 đã nghiệm thu | 8/8 tiêu chí, 53 test pass, dev/preview smoke 16/16; [output](PHASE_2_API_CATALOG.md#bằng-chứng-lệnh--14102026) |
+| Service dùng lại | `priceCart(db, items, province, ward, methodCode)` trả totals + issues; `phoneSchema`/`normalizePhone`, `validateDeliverySlot`, `todayInVN`, `toIso`, AppError và validator đã có |
+| D1/query budget | Giỏ tối đa 15 dòng; replay 1 + pricing 2 + batch 32 = 35 statements cho luồng tạo đơn bình thường. Phải đếm thực tế và giữ các nhánh retry/error trong giới hạn 40 |
+| Config/policy | Dùng giả định Phase 2 cho test local; trước mở bán chủ shop cần chốt khu vực/phí/cutoff/slot thật. Chưa cần frontend chuyển VND hoặc admin để làm backend Phase 3 |
+| Turnstile | Chưa có verifier; triển khai ở Phase 3. Có `TURNSTILE_SECRET` thì xác minh token; local không có secret được bỏ qua, test các nhánh bằng mock không dùng secret thật |
+| Phạm vi tiếp theo | Còn schema order/lookup, UUID v4/mã đơn, create/lookup/transition services, routes và 10 kịch bản smoke. Phase 3 chưa được triển khai bởi việc rà điều kiện này |
+
+Smoke có ca ghi/chỉnh tồn phải dùng D1 local cô lập hoặc snapshot/restore đầy đủ dữ liệu test; không reset/xóa seed đang dùng trên 5173 và không truy cập remote. `smoke.mjs` Phase 2 vẫn chỉ đọc.
+
 ## Thuật toán tạo đơn (`worker/services/orders.ts`)
 
-1. Zod validate body; bắt buộc header `Idempotency-Key` (UUID). Chuẩn hóa SĐT. Nếu `TURNSTILE_SECRET` có giá trị → xác minh `turnstile_token` qua Siteverify (thiếu/sai → `FORBIDDEN`).
+1. Zod validate body; bắt buộc header `Idempotency-Key` (UUID v4 theo contract). Chuẩn hóa SĐT. Nếu `TURNSTILE_SECRET` có giá trị → xác minh `turnstile_token` qua Siteverify (thiếu/sai → `FORBIDDEN`).
 2. **Replay:** `SELECT ... FROM orders WHERE idempotency_key = ?`; có → trả `200` + `replayed: true` (không ghi gì).
-3. `priceCart()` (Phase 2): đọc variants bằng 1 truy vấn, kiểm tra còn bán/đủ tồn → thiếu thì `OUT_OF_STOCK` kèm `details`.
-4. `resolveFee()`: 1 truy vấn dạng `WHERE province_name = ? AND ward_name IN (?, '') AND is_active = 1 ORDER BY ward_name DESC LIMIT 1`.
+3. `priceCart(db, items, province, ward, methodCode)` (Phase 2): đọc variants bằng 1 truy vấn, gộp dòng, trả snapshot `lines`, tổng và `issues`. Khác quote HTTP 200, createOrder phải từ chối `VARIANT_UNAVAILABLE` hoặc `OUT_OF_STOCK` (409); chuyển issue thiếu tồn thành `details: [{variant_id, requested, available}]`, `requested` lấy quantity sau gộp. Không ghi batch khi có issue.
+4. Phí đã được `priceCart()` tính qua `resolveFee()` bằng 1 truy vấn ưu tiên phường active trước mặc định tỉnh. Dùng `delivery_fee` trong kết quả pricing, **không gọi lại resolveFee**. Vẫn phải xử lý `NO_DELIVERY_ZONE` 422.
 5. Kiểm tra ngày/khung giờ/phương thức giao (`INVALID_DELIVERY_SLOT`).
 6. Tính `subtotal`, `discount_total = 0`, `delivery_fee`, `grand_total = subtotal - discount_total + delivery_fee`.
 7. Sinh `order_number` = `LNR-<YYMMDD giờ VN>-<6 ký tự ngẫu nhiên>` từ bảng chữ cái không gây nhầm lẫn (bỏ `0 O 1 I L`), dùng `crypto.getRandomValues`.
@@ -27,7 +43,7 @@
 
 > **Vì sao không dùng `UPDATE ... WHERE stock_quantity >= ?`:** statement đó ảnh hưởng 0 dòng vẫn là *thành công* nên batch không rollback, dẫn tới đơn được ghi mà tồn không trừ. Dùng trừ không điều kiện và để `CHECK` ném lỗi. D1 ghi tuần tự theo từng database nên hai đơn song song không xen kẽ; đơn nào chạm tồn âm sẽ rollback.
 
-**Ngân sách truy vấn kế hoạch (giả định 50/request; kiểm tra quota trước deploy):** pre-read ≈ 3–4 + batch `2N + 2` với `N ≤ 15` → tối đa ≈ 36. Không thêm truy vấn trong vòng lặp theo từng dòng.
+**Ngân sách truy vấn kế hoạch (giả định 50/request; kiểm tra quota trước deploy):** pre-read = replay 1 + pricing 2; batch `2N + 2` với `N ≤ 15` → 35 statements cho luồng thường, cổng nghiệm thu vẫn ≤40. Không thêm truy vấn đọc variants trong vòng lặp. Đếm riêng các nhánh lỗi/retry, gồm từng statement trong batch; không giả định retry nguyên batch miễn phí. Nếu retry có thể vượt 40, phải giảm số statements hoặc dừng an toàn trong giới hạn trước khi ghi lại.
 
 ## Tra đơn
 
@@ -71,7 +87,7 @@ Không có `variant_id` (variant đã bị xóa cứng) thì bỏ qua dòng đó
 | 3.2 | AGENT | `worker/lib/ids.ts`: `newOrderNumber()`, `isUuid()`; `worker/lib/turnstile.ts` (chỉ chạy khi có secret) |
 | 3.3 | AGENT | `worker/services/orders.ts`: `createOrder`, `lookupOrder`, `transitionOrder` theo mô tả trên |
 | 3.4 | AGENT | `worker/routes/orders.ts`: `POST /api/orders`, `POST /api/orders/lookup`; (tùy chọn) `POST /api/orders/:orderNumber/cancel` — khách chỉ hủy khi `PENDING` và đúng SĐT |
-| 3.5 | AGENT | Mở rộng `scripts/smoke.mjs` với các kịch bản dưới đây (dùng `wrangler d1 execute --local --command` qua `child_process` để chỉnh tồn khi cần) |
+| 3.5 | AGENT | Mở rộng `scripts/smoke.mjs` với các kịch bản dưới đây; chỉnh tồn chỉ trong DB local cô lập hoặc snapshot/restore dữ liệu test. Mọi lệnh Wrangler phải `--local`; giữ guard 127.0.0.1 |
 | 3.6 | AGENT | Unit test các hàm thuần: tính tiền, sinh mã, kiểm tra khung giờ |
 
 ## Kịch bản smoke bắt buộc

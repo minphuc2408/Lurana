@@ -2,7 +2,7 @@
 
 **Mục tiêu:** khung Hono chuẩn (lỗi, validate, middleware), các API đọc: danh mục, sản phẩm, tùy chọn giao hàng, báo giá giỏ. Hợp đồng: [API_CONTRACT.md](API_CONTRACT.md).
 
-**Trạng thái:** PLANNED · hiện chỉ health/JSON 404. [Hiện trạng](../PROJECT_STATUS.md). Bắt đầu sau nghiệm thu schema/seed Phase 1.
+**Trạng thái:** DONE · 8/8 tiêu chí local, **14/10/2026**. [Hiện trạng](../PROJECT_STATUS.md). Dùng schema/seed đã nghiệm thu Phase 1; chưa đặt đơn/admin hoặc nối frontend.
 
 ## Việc cần làm
 
@@ -32,11 +32,129 @@
 
 ## Tiêu chí nghiệm thu
 
-- [ ] `GET /api/categories` trả 4 danh mục; `GET /api/products` trả 8 sản phẩm, mỗi sản phẩm 3 variant S/M/L và 1 ảnh chính.
-- [ ] Ẩn sản phẩm (`UPDATE products SET status='HIDDEN'`) → biến mất khỏi API; `GET /api/products/<slug>` trả 404.
-- [ ] Số truy vấn D1 của `GET /api/products` ≤ 3 (kiểm chứng bằng log hoặc test đếm).
-- [ ] `GET /api/delivery/options` liệt kê tỉnh/phường/phí từ DB.
-- [ ] `POST /api/checkout/quote`: giá lấy từ DB dù body có thêm `price`; phí đúng theo phường; phường lạ nhưng tỉnh có mặc định → dùng mặc định; tỉnh lạ → `NO_DELIVERY_ZONE`.
-- [ ] Giỏ 16 dòng → `CART_LIMIT`; số lượng 0 hoặc 21 → `VALIDATION_ERROR`/`CART_LIMIT` đúng contract.
-- [ ] Mọi lỗi trả JSON theo contract, không lộ stack trace.
-- [ ] Unit test pass; `npm run typecheck` pass.
+- [x] `GET /api/categories` trả 4 danh mục; `GET /api/products` trả 8 sản phẩm, mỗi sản phẩm 3 variant S/M/L và 1 ảnh chính.
+- [x] Ẩn sản phẩm (`UPDATE products SET status='HIDDEN'`) → biến mất khỏi API; `GET /api/products/<slug>` trả 404.
+- [x] Số truy vấn D1 của `GET /api/products` ≤ 3 (kiểm chứng bằng log hoặc test đếm).
+- [x] `GET /api/delivery/options` liệt kê tỉnh/phường/phí từ DB.
+- [x] `POST /api/checkout/quote`: giá lấy từ DB dù body có thêm `price`; phí đúng theo phường; phường lạ nhưng tỉnh có mặc định → dùng mặc định; tỉnh lạ → `NO_DELIVERY_ZONE`.
+- [x] Giỏ 16 dòng → `CART_LIMIT`; số lượng 0 hoặc 21 → `VALIDATION_ERROR`/`CART_LIMIT` đúng contract.
+- [x] Mọi lỗi trả JSON theo contract, không lộ stack trace.
+- [x] Unit test pass; `npm run typecheck` pass.
+
+## Triển khai và phạm vi kiểm chứng
+
+- Hằng số/schema dùng chung: [constants.ts](../../shared/constants.ts), [schemas.ts](../../shared/schemas.ts). Hono dùng validator hook + Zod, secureHeaders, request ID, cache theo route/status, lỗi AppError/INTERNAL an toàn. Middleware đọc hết payload bị bỏ qua bằng stream để chuỗi POST 404 → GET tiếp theo không gặp lỗi socket của proxy Miniflare.
+- [Catalog](../../worker/services/catalog.ts): sản phẩm có dữ liệu dùng 3 statements; rỗng/404 dùng 1. Danh sách tối đa 100, bind mỗi truy vấn con ≤100, không N+1. Lọc sản phẩm/category/variant inactive và chỉ trả DTO trong contract.
+- [Delivery](../../worker/services/delivery.ts)/[pricing](../../worker/services/pricing.ts): một query variants và một query phí; ưu tiên phường rồi mặc định tỉnh đang active; miễn phí phần base, giữ surcharge. Bỏ mọi giá/tổng client gửi; gộp ID trùng, kiểm raw lines và quantity sau gộp. Quote luôn read-only, issue không tạo đơn hoặc giữ tồn.
+- [Config](../../worker/config.ts): phụ phí 0/30000/50000, cutoff 16:00, chuẩn bị 120 phút; TIME_SLOTS 08:00–20:00, giỏ 15/20, ngày +30, Asia/Ho_Chi_Minh. Các chính sách/phí/khung giờ là giả định cần chủ shop chỉnh trước mở bán. Helper ngày/SĐT dựng sẵn để Phase 3 sử dụng; quote không có ngày/slot.
+- Node runner hiện có: 35 test mới (catalog 8, delivery/pricing 14, validation 6, Hono 6, D1 thật 1), tổng repo 53. Ca thay trạng thái/tồn chỉ ghi vào SQLite in-memory hoặc workerd D1 `persist:false`, `remoteBindings:false`; seed persisted không bị sửa. Không thêm dependency/framework hay sửa DDL.
+- [smoke.mjs](../../scripts/smoke.mjs): 16 nhóm HTTP, giữ health/JSON 404/SPA; mặc định 127.0.0.1:5173, URL positional, guard chỉ local và không theo redirect. Có kiểm tra POST route chưa triển khai rồi GET 404 nhằm giữ hồi quy keep-alive.
+
+## Test thủ công trên host 5173
+
+Chạy `npm run dev`, dùng đúng URL `http://127.0.0.1:5173` Vite in ra; nếu port bận thì dùng port thực tế. Server chỉ bind loopback, không phải hosting public. `npm run smoke` test 16 nhóm API/SPA và không ghi D1; URL khác dùng `npm.cmd run smoke -- http://127.0.0.1:<port>` trên PowerShell.
+
+| Cách test | Chức năng đã xong / kết quả seed |
+| --- | --- |
+| Mở `/api/health` | Worker liveness, `data.ok = true`; không phải check DB |
+| Mở `/api/categories` | 4 danh mục song ngữ đang active |
+| Mở `/api/products` | 8 sản phẩm, mỗi sản phẩm S/M/L và 1 ảnh chính, giá VND, thông tin khả dụng tồn |
+| Mở `/api/products?category=bouquets&featured=1` | Lọc theo category code và featured |
+| Mở `/api/products/blush-peony-bouquet` | Chi tiết sản phẩm; slug thiếu hoặc sản phẩm ẩn → JSON 404 |
+| Mở `/api/delivery/options` | 2 tỉnh, 2 phường riêng và phí mặc định, methods/surcharges/slots/limits |
+| POST `/api/checkout/quote` qua PowerShell/Postman | Giá DB, gộp variant trùng, phí phường/mặc định tỉnh, ngưỡng miễn phí, issues khi thiếu tồn/variant không bán, lỗi validate/cart limit |
+| Mở `/`, `/shop`, `/cart`, `/admin` | Giao diện demo hiện có; chưa dùng các API D1 mới, vẫn PHP/₱ và fixtures. Đặt đơn thật/tra đơn/admin API là Phase 3–4, nối UI là Phase 5 |
+
+Ví dụ PowerShell lấy variant ID thực từ catalog và cố gửi giá 1 để kiểm server không tin giá client:
+
+```powershell
+$catalog = Invoke-RestMethod 'http://127.0.0.1:5173/api/products'
+$product = $catalog.data.items | Where-Object slug -eq 'blush-peony-bouquet'
+$variant = $product.variants | Where-Object size_code -eq 'S'
+$body = @{
+  items = @(@{ variant_id = $variant.id; quantity = 1; price = 1 })
+  province_name = 'Thành phố Hà Nội'
+  ward_name = 'Phường Hoàn Kiếm'
+  delivery_method_code = 'STANDARD'
+} | ConvertTo-Json -Depth 5
+Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:5173/api/checkout/quote' -ContentType 'application/json; charset=utf-8' -Body $body | ConvertTo-Json -Depth 8
+```
+
+Seed cho kết quả `unit_price = subtotal = 450000`, `delivery_fee = 20000`, `grand_total = 470000`, `issues = []`. Quote không tạo đơn hoặc trừ tồn; reload giỏ UI vẫn reset demo.
+
+## Bằng chứng lệnh — 14/10/2026
+
+Output dưới đây trích từ lệnh chạy thực tế trên source Phase 2 cuối; mọi lệnh kiểm tra kết thúc exit 0. `[exit 0]` là chú thích kết quả.
+
+```text
+> npm run typecheck
+> tsc --noEmit && tsc -p tsconfig.worker.json --noEmit
+[exit 0]
+
+> npm run check:architecture
+Architecture checked: 170 source files; layer boundaries, public APIs, presentation state, and Tailwind page styles.
+
+> npm test
+Catalog D1 evidence: products=8, variants=24, primary_images=8, executed_statements=3.
+Catalog D1 evidence: stored_products=118, returned_products=100, child_bind_parameters=100, executed_statements=3.
+D1 LOCAL API evidence: categories=4 products=8 variants=24 primary_images=8 GET /api/products statements=3.
+D1 LOCAL API evidence: HIDDEN -> list=7/detail=404; DB price=450000; ward_fee=20000; fallback_fee=35000; unknown_province=422/NO_DELIVERY_ZONE.
+D1 LOCAL API evidence: cart16=422/CART_LIMIT qty0=400/VALIDATION_ERROR qty21=422/CART_LIMIT; stock unchanged; orders=0; persist=false.
+ℹ tests 53
+ℹ pass 53
+ℹ fail 0
+```
+
+```text
+> npm run dev
+➜ Local: http://127.0.0.1:5173/
+> npm run smoke
+D1 LOCAL ONLY smoke at http://127.0.0.1:5173; requests do not create orders or mutate persisted data.
+PASS health + security headers
+PASS API JSON 404 with normal/navigation headers
+PASS home + SPA /shop return HTML
+PASS categories: four seeded active categories
+PASS products: eight products, S/M/L variants, primary image, safe DTO
+PASS product detail matches catalog; unknown slug is JSON 404
+PASS category/featured filters match catalog
+PASS delivery options: DB provinces/wards/fees + configured limits
+PASS quote ignores forged client price/totals; ward fee uses DB
+PASS quote unknown ward falls back to province default; unknown province is 422
+PASS quote free-delivery threshold preserves EXPRESS/SAME_DAY surcharge
+PASS quote merges duplicate variants; merged quantity above 20 is CART_LIMIT
+PASS quote returns 200 issues for unknown variant and insufficient stock
+PASS cart limits: 16 lines / quantity 0 / quantity 21
+PASS malformed JSON / empty cart / invalid method are safe validation errors
+PASS deferred orders/admin return JSON 404 and no-store
+Phase 2 smoke: 16/16 PASS, 0 FAIL at http://127.0.0.1:5173.
+```
+
+Build source cuối và smoke artifact preview:
+
+```text
+> npm run build
+vite v6.4.4 building SSR bundle for production...
+✓ 142 modules transformed.
+dist/lunara/index.js             252.97 kB
+✓ built in 1.02s
+vite v6.4.4 building for production...
+✓ 2492 modules transformed.
+✓ built in 10.50s
+
+> npm run preview
+➜ Local: http://127.0.0.1:4173/
+> npm run smoke -- http://127.0.0.1:4173
+Phase 2 smoke: 16/16 PASS, 0 FAIL at http://127.0.0.1:4173.
+
+> npm run graph:sync
+* Synced 16 changed files
+• Added: 16 - 148 nodes in 671ms
+— Done
+
+> git diff --check
+[exit 0]
+```
+
+Stress HTTP độc lập trên preview: 25 cặp POST `/api/orders` body `{}` → GET `/api/admin/products` đều 404 JSON UTF-8/no-store; 25 cặp POST quote `text/plain` → GET health đều 400 `VALIDATION_ERROR` rồi 200 JSON UTF-8. Tổng 100 request không gặp 500/fetch failed. Đây là kiểm tra hồi quy lỗi socket do payload không đọc, không triển khai các API đặt đơn/admin.
+
+Rollup bỏ chú thích PURE trong dependency Zod; Node báo SQLite experimental. Các thông báo này không làm thất bại kiểm tra. Không đổi dependency nên không cần chạy lại audit. Frontend vẫn fixture/PHP/Asia/Manila; quote/catalog VND local chưa đồng nghĩa checkout thật. Nghiệm thu này không deploy hoặc truy cập D1 remote. Commit/push chỉ thực hiện theo yêu cầu của chủ dự án.

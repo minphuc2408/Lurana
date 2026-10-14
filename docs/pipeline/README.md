@@ -4,7 +4,7 @@ Cập nhật: **14/10/2026**. Tech stack giữ nguyên như [TECH_STACK.md](../T
 
 Pipeline mô tả đích MVP và các phase tiếp theo; nó không tự cho phép thực hiện tất cả phase. Phase 0 chỉ dựng Worker local và health API. Storefront/admin tiếp tục dùng fixtures, PHP/₱ và Asia/Manila đến Phase 5. Chủ dự án đã đăng ký Cloudflare, đăng nhập Wrangler và tạo D1 remote `lunara-db` còn trống ngoài lượt Phase 0; không cần làm lại các bước đó.
 
-**Trạng thái:** Phase 0 DONE (6/6 tiêu chí) · Phase 1 DONE (5/5 tiêu chí, D1 local) · Phase 2–6 PLANNED. [Hiện trạng / gaps / đầu vào chủ shop](../PROJECT_STATUS.md). Lịch 2 ngày và gói Free là ước lượng kế hoạch, không phải cam kết thời gian/chi phí.
+**Trạng thái:** Phase 0 DONE (6/6 tiêu chí) · Phase 1 DONE (5/5 tiêu chí, D1 local) · Phase 2 DONE (8/8 tiêu chí, API local) · Phase 3–6 PLANNED. [Hiện trạng / gaps / đầu vào chủ shop](../PROJECT_STATUS.md). Lịch 2 ngày và gói Free là ước lượng kế hoạch, không phải cam kết thời gian/chi phí.
 
 ## 1. Mục tiêu MVP
 
@@ -40,7 +40,7 @@ Khách vào web, xem hoa, thêm giỏ, **đặt hàng COD** (không cần tài k
 | --- | --- | --- | --- | --- |
 | 0 | [PHASE_0_PREPARE](PHASE_0_PREPARE.md) | DONE | 1 giờ | FE + health/JSON 404 + SPA reload + D1 local + build/typecheck pass |
 | 1 | [PHASE_1_DATABASE](PHASE_1_DATABASE.md) | DONE | 1 giờ | Canonical 10 bảng; migration + seed local, 13/13 nhóm verify pass |
-| 2 | [PHASE_2_API_CATALOG](PHASE_2_API_CATALOG.md) | PLANNED | 2,5 giờ | Catalog, phí giao, quote qua curl |
+| 2 | [PHASE_2_API_CATALOG](PHASE_2_API_CATALOG.md) | DONE | 2,5 giờ | Catalog ≤3 queries; phí giao/quote; 53 tests + smoke 16/16 |
 | 3 | [PHASE_3_CHECKOUT_ORDERS](PHASE_3_CHECKOUT_ORDERS.md) | PLANNED | 3 giờ | COD, tồn, idempotency, tra đơn, hủy |
 | 4 | [PHASE_4_ADMIN](PHASE_4_ADMIN.md) | PLANNED | 2 giờ | Admin login + đơn/sản phẩm/tồn/phí giao |
 | 5 | [PHASE_5_FRONTEND](PHASE_5_FRONTEND.md) | PLANNED | 4,5 giờ | FE dùng API, VND, thay fixture ở luồng MVP |
@@ -51,6 +51,9 @@ Tài liệu dùng chung: [API_CONTRACT](API_CONTRACT.md) • [BACKLOG](BACKLOG.m
 **Schema đã thống nhất ở Phase 1:** dùng nguyên DDL v2 cho 10 bảng, có `delivery_zones`, idempotency và các ràng buộc; `custom_requests` deferred. [`migrations/0001_mvp.sql`](../../migrations/0001_mvp.sql) là nguồn DDL duy nhất; hai file `MVP_SCHEMA.sql` cũ chỉ dẫn về migration. [Đối chiếu v1/v2 và lý do](../DATABASE_DESIGN.md). Seed và migration đã áp D1 local; `npm run db:verify` pass 13/13 nhóm trên binding D1 local, dùng database cô lập cho ca ghi/xóa thử. Verifier Python tham chiếu cũ đã được thay bằng script Node này, không còn suite tự áp deferred/0002. [Output nghiệm thu](PHASE_1_DATABASE.md#bằng-chứng-lệnh--14102026). Không truy cập D1 remote.
 
 **Lịch 2 ngày:** Ngày 1 = Phase 0 → 3 (+ bắt đầu 4). Ngày 2 = Phase 4 → 6.
+
+**Phase 2 local đã nghiệm thu:** khung Hono/Zod, catalog 4 danh mục/8 sản phẩm, DTO an toàn, phí giao và quote lấy giá DB. Các ca HIDDEN/giới hạn/lỗi kiểm trên SQLite bộ nhớ và binding workerd D1 `persist: false`; smoke chỉ đọc DB local đã seed. [Checklist/output](PHASE_2_API_CATALOG.md#bằng-chứng-lệnh--14102026). Không đổi DDL, dependency, frontend, D1 remote hoặc triển khai đặt đơn/admin.
+
 **Phase 0–5 làm local, không cần tài khoản Cloudflare.** Phase 6 dùng tài khoản/D1 đã được chủ dự án tạo; đăng ký/login/create lại chỉ khi còn thiếu.
 
 **Nếu trễ, cắt theo thứ tự:** (1) trang admin sản phẩm chỉ giữ sửa giá/tồn, (2) bỏ admin sửa phí giao (sửa bằng SQL), (3) bỏ trang tra đơn khách (admin vẫn xem được), (4) bỏ Turnstile. **Không cắt:** tính tiền ở server, trừ tồn nguyên tử, idempotency.

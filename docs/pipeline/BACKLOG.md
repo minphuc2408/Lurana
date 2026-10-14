@@ -1,6 +1,6 @@
 # Backlog sau MVP và rủi ro đã biết
 
-**Trạng thái:** PLANNED · Phase 0 DONE, MVP chưa chạy thật. [Hiện trạng](../PROJECT_STATUS.md). Bảng dưới mô tả việc sau MVP/giảm thiểu dự kiến; không xác nhận các controls đã có. Quota/giá/cloud policy cần kiểm tra lại trước deploy.
+**Trạng thái:** PLANNED · Phase 0–2 DONE local, MVP chưa chạy thật. [Hiện trạng](../PROJECT_STATUS.md). Bảng dưới mô tả việc sau MVP/giảm thiểu dự kiến; không xác nhận các controls đã có. Quota/giá/cloud policy cần kiểm tra lại trước deploy.
 
 ## Ưu tiên cao (tuần đầu sau khi mở bán)
 
