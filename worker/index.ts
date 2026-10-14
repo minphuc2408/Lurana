@@ -8,6 +8,7 @@ import { orderRoutes } from './routes/orders.ts';
 import { requireAdmin, requireSameOrigin } from './lib/auth.ts';
 import { adminAuthRoutes } from './routes/admin-auth.ts';
 import { adminOrderRoutes } from './routes/admin-orders.ts';
+import { adminCatalogRoutes } from './routes/admin-catalog.ts';
 
 const app = new Hono<WorkerEnv>();
 app.use('/api/*', secureHeaders());
@@ -37,6 +38,7 @@ app.use('/api/admin', requireAdmin, requireSameOrigin);
 app.use('/api/admin/*', requireAdmin, requireSameOrigin);
 app.route('/api/admin', adminAuthRoutes);
 app.route('/api/admin', adminOrderRoutes);
+app.route('/api/admin', adminCatalogRoutes);
 
 app.notFound(c => c.json({
   error: { code: 'NOT_FOUND', message: 'Không tìm thấy API.' },
