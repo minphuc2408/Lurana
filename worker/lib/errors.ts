@@ -28,6 +28,7 @@ export const handleError: ErrorHandler<WorkerEnv> = (error, c) => {
     details: [{ path: '', message: 'Nội dung JSON không hợp lệ.' }],
   } }, 400);
   const request_id = c.get('request_id') || crypto.randomUUID();
-  console.error('API INTERNAL', { request_id, error });
+  // Avoid dumping request/provider errors that could contain credentials or cookies.
+  console.error('API INTERNAL', { request_id, error_name: error.name });
   return c.json({ error: { code: 'INTERNAL', message: 'Có lỗi xảy ra. Vui lòng thử lại.', details: { request_id } } }, 500);
 };

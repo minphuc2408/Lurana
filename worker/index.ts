@@ -5,6 +5,8 @@ import type { WorkerEnv } from './env.ts';
 import { handleError } from './lib/errors.ts';
 import { publicRoutes } from './routes/public.ts';
 import { orderRoutes } from './routes/orders.ts';
+import { requireAdmin, requireSameOrigin } from './lib/auth.ts';
+import { adminAuthRoutes } from './routes/admin-auth.ts';
 
 const app = new Hono<WorkerEnv>();
 app.use('/api/*', secureHeaders());
@@ -30,6 +32,9 @@ app.get('/api/health', c => c.json({
 
 app.route('/api', publicRoutes);
 app.route('/api/orders', orderRoutes);
+app.use('/api/admin', requireAdmin, requireSameOrigin);
+app.use('/api/admin/*', requireAdmin, requireSameOrigin);
+app.route('/api/admin', adminAuthRoutes);
 
 app.notFound(c => c.json({
   error: { code: 'NOT_FOUND', message: 'Không tìm thấy API.' },

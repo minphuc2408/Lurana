@@ -37,17 +37,25 @@
 !/worker/lib/datetime.ts
 !/worker/lib/ids.ts
 !/worker/lib/turnstile.ts
+!/worker/lib/auth.ts
 !/worker/routes/
 !/worker/routes/public.ts
 !/worker/routes/orders.ts
+!/worker/routes/admin-auth.ts
+!/worker/routes/admin-orders.ts
+!/worker/routes/admin-catalog.ts
 !/worker/services/
 !/worker/services/catalog.ts
 !/worker/services/delivery.ts
 !/worker/services/pricing.ts
 !/worker/services/orders.ts
+!/worker/services/admin-orders.ts
+!/worker/services/admin-catalog.ts
 !/shared/
 !/shared/constants.ts
 !/shared/schemas.ts
+!/shared/admin-order-schemas.ts
+!/shared/admin-catalog-schemas.ts
 
 # Reviewed verification tools and tests.
 !/tests/
@@ -65,6 +73,10 @@
 !/tests/i18n.test.mjs
 !/tests/helpers/
 !/tests/helpers/worker.mjs
+!/tests/helpers/admin.mjs
+!/tests/admin-auth.test.mjs
+!/tests/admin-orders.test.mjs
+!/tests/admin-catalog.test.mjs
 !/tests/catalog.test.mjs
 !/tests/pricing.test.mjs
 !/tests/validation.test.mjs

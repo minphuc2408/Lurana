@@ -67,7 +67,7 @@ test('Hono validation/404 errors share JSON envelope and never expose stack trac
     ['/api/products?category=a&category=b', {}, 400, 'VALIDATION_ERROR'],
     ['/api/unknown', {}, 404, 'NOT_FOUND'],
     ['/api/orders', post(quote), 400, 'VALIDATION_ERROR'],
-    ['/api/admin/me', {}, 404, 'NOT_FOUND'],
+    ['/api/admin/me', {}, 401, 'UNAUTHORIZED'],
   ];
   for (const [path, init, status, code] of cases) {
     const response = await app.request(path, init, env); assert.equal(response.status, status, path);
@@ -89,6 +89,8 @@ test('unexpected D1 failures log a reference server-side and expose only safe IN
   assert.equal(body.error.code, 'INTERNAL'); assert.equal(body.error.details.request_id, response.headers.get('X-Request-Id'));
   assert.deepEqual(Object.keys(body.error.details), ['request_id']); assert.doesNotMatch(text, /SELECT|password_hash|stack|Error:/);
   assert.equal(logs.length, 1); assert.equal(logs[0][1].request_id, body.error.details.request_id);
+  assert.deepEqual(Object.keys(logs[0][1]).sort(), ['error_name', 'request_id']);
+  assert.doesNotMatch(JSON.stringify(logs), /SELECT|password_hash|internal-stack/);
 });
 
 test('ignored POST payloads are drained before returning non-JSON validation errors', async t => {
