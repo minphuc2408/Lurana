@@ -9,6 +9,7 @@
     "isolatedModules": true,
     "resolveJsonModule": true,
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "types": ["@cloudflare/workers-types"]
   },
   "include": ["worker/**/*.ts", "shared/**/*.ts", "worker-configuration.d.ts"]

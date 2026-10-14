@@ -4,3 +4,5 @@ export interface Bindings {
   JWT_SECRET: string;
   TURNSTILE_SECRET?: string;
 }
+
+export type WorkerEnv = { Bindings: Bindings; Variables: { request_id: string } };

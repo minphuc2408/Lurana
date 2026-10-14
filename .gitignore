@@ -30,6 +30,20 @@
 !/worker/
 !/worker/index.ts
 !/worker/env.ts
+!/worker/config.ts
+!/worker/lib/
+!/worker/lib/errors.ts
+!/worker/lib/validate.ts
+!/worker/lib/datetime.ts
+!/worker/routes/
+!/worker/routes/public.ts
+!/worker/services/
+!/worker/services/catalog.ts
+!/worker/services/delivery.ts
+!/worker/services/pricing.ts
+!/shared/
+!/shared/constants.ts
+!/shared/schemas.ts
 
 # Reviewed verification tools and tests.
 !/tests/
@@ -44,6 +58,13 @@
 !/tests/commerce.test.mjs
 !/tests/design.test.mjs
 !/tests/i18n.test.mjs
+!/tests/helpers/
+!/tests/helpers/worker.mjs
+!/tests/catalog.test.mjs
+!/tests/pricing.test.mjs
+!/tests/validation.test.mjs
+!/tests/worker.test.mjs
+!/tests/worker-d1.test.mjs
 
 # Reviewed backend design documents.
 !/docs/
