@@ -8,6 +8,8 @@
     ".npm-cache/",
     ".agents/",
     ".codex/",
+    ".wrangler/",
+    "**/.dev.vars*",
     "**/.env*",
     "**/*.pem",
     "**/*.key"

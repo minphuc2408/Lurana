@@ -1,0 +1,18 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "lunara",
+  "main": "./worker/index.ts",
+  "compatibility_date": "2026-10-06",
+  "assets": {
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "lunara-db",
+      "database_id": "1796e7bf-d230-4bc1-a80a-f4be4d1eccc7",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
