@@ -66,7 +66,7 @@ test('Hono validation/404 errors share JSON envelope and never expose stack trac
     ['/api/products?featured=no', {}, 400, 'VALIDATION_ERROR'],
     ['/api/products?category=a&category=b', {}, 400, 'VALIDATION_ERROR'],
     ['/api/unknown', {}, 404, 'NOT_FOUND'],
-    ['/api/orders', post(quote), 404, 'NOT_FOUND'],
+    ['/api/orders', post(quote), 400, 'VALIDATION_ERROR'],
     ['/api/admin/me', {}, 404, 'NOT_FOUND'],
   ];
   for (const [path, init, status, code] of cases) {
@@ -91,12 +91,12 @@ test('unexpected D1 failures log a reference server-side and expose only safe IN
   assert.equal(logs.length, 1); assert.equal(logs[0][1].request_id, body.error.details.request_id);
 });
 
-test('ignored POST payloads are drained before returning 404 or non-JSON validation errors', async t => {
+test('ignored POST payloads are drained before returning non-JSON validation errors', async t => {
   const fixture = createTestDb(); t.after(() => fixture.close()); const env = { DB: fixture.db };
   for (const path of ['/api/orders', '/api/checkout/quote']) {
     const request = new Request(`http://127.0.0.1${path}`, { method: 'POST', body: JSON.stringify(quote) });
     const response = await app.fetch(request, env);
-    assert.equal(response.status, path === '/api/orders' ? 404 : 400);
+    assert.equal(response.status, 400);
     assert.equal(request.bodyUsed, true);
     assert.equal(response.headers.get('Content-Type'), 'application/json; charset=utf-8');
   }

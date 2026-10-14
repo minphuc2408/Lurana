@@ -35,12 +35,16 @@
 !/worker/lib/errors.ts
 !/worker/lib/validate.ts
 !/worker/lib/datetime.ts
+!/worker/lib/ids.ts
+!/worker/lib/turnstile.ts
 !/worker/routes/
 !/worker/routes/public.ts
+!/worker/routes/orders.ts
 !/worker/services/
 !/worker/services/catalog.ts
 !/worker/services/delivery.ts
 !/worker/services/pricing.ts
+!/worker/services/orders.ts
 !/shared/
 !/shared/constants.ts
 !/shared/schemas.ts
@@ -51,6 +55,7 @@
 !/scripts/check-ui.mjs
 !/scripts/check-ui-flows.mjs
 !/scripts/check-ui-i18n.mjs
+!/scripts/check-ui-live-catalog.mjs
 !/scripts/reset-d1-local.mjs
 !/scripts/verify-schema.mjs
 !/scripts/smoke.mjs
@@ -65,6 +70,11 @@
 !/tests/validation.test.mjs
 !/tests/worker.test.mjs
 !/tests/worker-d1.test.mjs
+!/tests/order-validation.test.mjs
+!/tests/ids.test.mjs
+!/tests/turnstile.test.mjs
+!/tests/orders.test.mjs
+!/tests/orders-d1.test.mjs
 
 # Reviewed backend design documents.
 !/docs/
@@ -88,6 +98,7 @@
 !/docs/pipeline/PHASE_3_CHECKOUT_ORDERS.md
 !/docs/pipeline/PHASE_4_ADMIN.md
 !/docs/pipeline/PHASE_5_FRONTEND.md
+!/docs/pipeline/FE_AUDIT.md
 !/docs/pipeline/PHASE_6_DEPLOY.md
 !/migrations/
 !/migrations/0001_mvp.sql
@@ -144,6 +155,15 @@
 !/src/pages/admin/
 !/src/shared/
 !/src/shared/components/
+!/src/shared/api/
+!/src/shared/api/client.ts
+!/src/shared/components/FeatureUnavailable.tsx
+!/src/pages/UnavailablePage.tsx
+!/src/features/shop/catalog.context.ts
+!/src/features/shop/CatalogProvider.tsx
+!/src/features/shop/hooks/useCatalog.ts
+!/src/features/cart/quote.service.ts
+!/src/features/cart/hooks/useQuoteCart.ts
 !/src/shared/hooks/
 !/src/shared/i18n/
 !/src/shared/i18n/locales/

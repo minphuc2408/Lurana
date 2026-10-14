@@ -1,4 +1,9 @@
 import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { createServer } from 'node:http';
+import { fileURLToPath } from 'node:url';
+import { getPlatformProxy, unstable_splitSqlQuery as splitSqlQuery } from 'wrangler';
 
 const baseUrl = new URL(process.argv[2] || 'http://127.0.0.1:5173');
 if (baseUrl.hostname !== '127.0.0.1' || !['http:', 'https:'].includes(baseUrl.protocol)) {
@@ -103,7 +108,7 @@ async function quote(body) {
   return payload.data;
 }
 
-console.log(`D1 LOCAL ONLY smoke at ${baseUrl.origin}; requests do not create orders or mutate persisted data.`);
+console.log(`D1 LOCAL ONLY read-only catalog smoke at ${baseUrl.origin}; order writes use a separate persist:false D1.`);
 
 await check('health + security headers', async () => {
   for (const headers of [{}, navigationHeaders]) {
@@ -268,10 +273,357 @@ await check('malformed JSON / empty cart / invalid method are safe validation er
   await error('/api/checkout/quote', 400, 'VALIDATION_ERROR', post(quoteBody({ delivery_method_code: 'NOT_A_METHOD' })));
 });
 
-await check('deferred orders/admin return JSON 404 and no-store', async () => {
-  await error('/api/orders', 404, 'NOT_FOUND', post({}));
+await check('orders reject missing key; deferred admin returns JSON 404 and no-store', async () => {
+  await error('/api/orders', 400, 'VALIDATION_ERROR', post({}));
   await error('/api/admin/products', 404, 'NOT_FOUND');
 });
 
-console.log(`Phase 2 smoke: ${passed}/${passed + failed} PASS, ${failed} FAIL at ${baseUrl.origin}.`);
+console.log(`Catalog smoke: ${passed}/${passed + failed} PASS, ${failed} FAIL at ${baseUrl.origin}.`);
+
+// Keep destructive acceptance checks away from the Vite/dev database. A loopback
+// HTTP bridge exercises concurrent requests against the current Worker source and
+// a real workerd D1 binding with all persistence and remote bindings disabled.
+async function orderSmoke() {
+  const [{ default: app }, { transitionOrder }, { todayInVN }] = await Promise.all([
+    import('../worker/index.ts'), import('../worker/services/orders.ts'), import('../worker/lib/datetime.ts'),
+  ]);
+  const platform = await getPlatformProxy({
+    configPath: fileURLToPath(new URL('../wrangler.jsonc', import.meta.url)),
+    persist: false, remoteBindings: false,
+  });
+  let server;
+  try {
+    const db = platform.env.DB;
+    for (const file of ['../migrations/0001_mvp.sql', '../docs/sql/MVP_SEED_DEV.sql']) {
+      const sql = readFileSync(new URL(file, import.meta.url), 'utf8');
+      await db.batch(splitSqlQuery(sql).map(statement => db.prepare(statement)));
+    }
+    const all = async (sql, values = []) => (await db.prepare(sql).bind(...values).all()).results;
+    const first = (sql, values = []) => db.prepare(sql).bind(...values).first();
+    const execute = (sql, values = []) => db.prepare(sql).bind(...values).run();
+    const variants = await all('SELECT id, sku, price, stock_quantity FROM product_variants ORDER BY id');
+    assert.equal(variants.length, 24);
+    const peonyVariant = variants.find(variant => variant.sku === 'BPB-S');
+    const scarceVariant = variants.at(-1);
+    await execute('UPDATE product_variants SET stock_quantity = ? WHERE id = ?', [1, scarceVariant.id]);
+    const initialStock = new Map((await all('SELECT id, stock_quantity FROM product_variants ORDER BY id'))
+      .map(variant => [variant.id, variant.stock_quantity]));
+    const stock = async id => (await first('SELECT stock_quantity FROM product_variants WHERE id = ?', [id])).stock_quantity;
+    const orderCount = async () => (await first('SELECT COUNT(*) AS total FROM orders')).total;
+    const requestCounts = [];
+
+    server = createServer(async (incoming, outgoing) => {
+      let queries = 0;
+      const rawStatements = new WeakMap();
+      const counted = statement => {
+        const wrapper = {
+          bind(...values) { return counted(statement.bind(...values)); },
+          async all() { queries++; return statement.all(); },
+          async first(column) { queries++; return statement.first(column); },
+          async run() { queries++; return statement.run(); },
+        };
+        rawStatements.set(wrapper, statement);
+        return wrapper;
+      };
+      const requestDb = {
+        prepare(sql) { return counted(db.prepare(sql)); },
+        async batch(statements) {
+          // Conservatively charge every submitted statement, even when the batch
+          // fails early. Retried batches therefore cannot hide query-budget use.
+          queries += statements.length;
+          return db.batch(statements.map(statement => rawStatements.get(statement)));
+        },
+      };
+      try {
+        const chunks = [];
+        for await (const chunk of incoming) chunks.push(chunk);
+        const headers = new Headers();
+        for (const [name, value] of Object.entries(incoming.headers)) {
+          if (value !== undefined) headers.set(name, Array.isArray(value) ? value.join(', ') : value);
+        }
+        const body = Buffer.concat(chunks);
+        const url = `http://127.0.0.1:${server.address().port}${incoming.url}`;
+        const method = incoming.method || 'GET';
+        const response = await app.fetch(new Request(url, {
+          method, headers, ...(!['GET', 'HEAD'].includes(method) ? { body } : {}),
+        }), { DB: requestDb });
+        requestCounts.push({ route: incoming.url, method, status: response.status, queries });
+        outgoing.writeHead(response.status, {
+          ...Object.fromEntries(response.headers), 'x-smoke-d1-statements': String(queries),
+        });
+        outgoing.end(Buffer.from(await response.arrayBuffer()));
+      } catch (cause) {
+        console.error(`Isolated smoke HTTP bridge failed: ${cause.message}`);
+        outgoing.writeHead(500, { 'content-type': 'application/json' });
+        outgoing.end(JSON.stringify({ error: { code: 'SMOKE_BRIDGE_FAILURE', message: 'Local smoke bridge failed.' } }));
+      }
+    });
+    await new Promise((resolve, reject) => {
+      server.once('error', reject);
+      server.listen(0, '127.0.0.1', resolve);
+    });
+    const isolatedUrl = new URL(`http://127.0.0.1:${server.address().port}`);
+    assert.equal(isolatedUrl.hostname, '127.0.0.1');
+    console.log(`Phase 3 isolated HTTP smoke at ${isolatedUrl.origin}; real D1, persist=false, remoteBindings=false.`);
+    const tomorrow = new Date(`${todayInVN()}T00:00:00Z`);
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+    const tomorrowDate = tomorrow.toISOString().slice(0, 10);
+    const yesterday = new Date(`${todayInVN()}T00:00:00Z`);
+    yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+    const body = (overrides = {}) => ({
+      items: [{ variant_id: peonyVariant.id, quantity: 1 }],
+      sender: { name: 'Smoke sender', phone: '0900000000', email: 'smoke@example.test', is_anonymous: false },
+      recipient: { name: 'Smoke recipient', phone: '0911111111', province_name: 'Thành phố Hà Nội', ward_name: 'Phường Hoàn Kiếm', address_line: 'Demo smoke address' },
+      delivery: { method_code: 'STANDARD', date: tomorrowDate, time_slot: '08:00-10:00' },
+      card: { type: 'GREETING_CARD', message: 'Synthetic local smoke data' },
+      customer_note: 'Local isolated test only', ...overrides,
+    });
+    const orderPost = (input, key = randomUUID()) => ({
+      ...post(input), headers: { 'content-type': 'application/json', ...(key === null ? {} : { 'Idempotency-Key': key }) },
+    });
+    const localJson = async (route, init, expectedStatus) => {
+      const response = await fetch(new URL(route, isolatedUrl), {
+        ...init, redirect: 'error', signal: AbortSignal.timeout(10_000),
+      });
+      const payload = await response.json();
+      assert.match(response.headers.get('content-type'), /^application\/json;\s*charset=utf-8$/i);
+      assert.equal(response.headers.get('cache-control'), 'no-store');
+      assert.equal(response.headers.get('x-content-type-options'), 'nosniff');
+      assert.ok(response.headers.get('x-request-id'));
+      safePublicData(payload);
+      if (expectedStatus !== undefined) assert.equal(response.status, expectedStatus, `${route}: ${JSON.stringify(payload)}`);
+      const queryCount = Number(response.headers.get('x-smoke-d1-statements'));
+      if (route === '/api/orders') assert.ok(queryCount <= 40, `POST /api/orders submitted ${queryCount} D1 statements`);
+      return { response, payload, queryCount };
+    };
+    const create = async (input = body(), key = randomUUID(), expectedStatus = 201) => {
+      const result = await localJson('/api/orders', orderPost(input, key), expectedStatus);
+      assert.deepEqual(Object.keys(result.payload), ['data']);
+      const summary = result.payload.data;
+      assert.equal(summary.discount_total, 0);
+      assert.equal(summary.grand_total, summary.subtotal + summary.delivery_fee);
+      assert.equal(summary.payment_method, 'COD');
+      assert.equal(summary.payment_status, 'UNPAID');
+      assert.equal(summary.status_code, 'PENDING');
+      assert.match(summary.order_number, /^LNR-\d{6}-[A-HJ-KM-NP-Z2-9]{6}$/);
+      assert.ok(Number.isFinite(Date.parse(summary.placed_at)));
+      assert.match(summary.placed_at, /Z$/);
+      return result;
+    };
+    const localError = async (route, init, status, code) => {
+      const result = await localJson(route, init, status);
+      assert.deepEqual(Object.keys(result.payload), ['error']);
+      assert.equal(result.payload.error.code, code);
+      assert.equal(typeof result.payload.error.message, 'string');
+      assert.doesNotMatch(result.payload.error.message, /(?:SELECT|INSERT|UPDATE|DELETE)\s|(?:TypeError|SyntaxError|Error):|\n\s*at\s/i);
+      return result.payload.error;
+    };
+    const lookup = async (order_number, phone) => (await localJson('/api/orders/lookup', post({ order_number, phone }), 200)).payload.data;
+    const beforePassed = passed;
+    const beforeFailed = failed;
+    let firstOrder;
+    const firstKey = randomUUID();
+
+    await check('Phase 3 01/10 valid COD order: DB totals, stock deducted, snapshots/history persisted', async () => {
+      const before = await stock(peonyVariant.id);
+      firstOrder = (await create(body(), firstKey)).payload.data;
+      assert.equal(firstOrder.subtotal, peonyVariant.price);
+      assert.equal(firstOrder.delivery_fee, 20000);
+      assert.equal(firstOrder.grand_total, 470000);
+      assert.equal(await stock(peonyVariant.id), before - 1);
+      const persisted = await first('SELECT id, grand_total FROM orders WHERE order_number = ?', [firstOrder.order_number]);
+      assert.equal(persisted.grand_total, firstOrder.grand_total);
+      const items = await all('SELECT variant_id, unit_price, quantity, line_total FROM order_items WHERE order_id = ?', [persisted.id]);
+      assert.deepEqual(items, [{ variant_id: peonyVariant.id, unit_price: peonyVariant.price, quantity: 1, line_total: peonyVariant.price }]);
+      const history = await all('SELECT from_status, to_status, actor_label FROM order_status_history WHERE order_id = ?', [persisted.id]);
+      assert.deepEqual(history, [{ from_status: null, to_status: 'PENDING', actor_label: 'CUSTOMER' }]);
+    });
+
+    await check('Phase 3 02/10 same idempotency key replays once without order/stock writes', async () => {
+      assert.ok(firstOrder);
+      const beforeOrders = await orderCount();
+      const beforeStock = await stock(peonyVariant.id);
+      const replay = await create(body(), firstKey, 200);
+      assert.equal(replay.payload.data.replayed, true);
+      const { replayed, ...summary } = replay.payload.data;
+      assert.deepEqual(summary, firstOrder);
+      assert.equal(replay.queryCount, 1);
+      assert.equal(await orderCount(), beforeOrders);
+      assert.equal(await stock(peonyVariant.id), beforeStock);
+    });
+
+    await check('Phase 3 03/10 parallel HTTP last-item purchase: exactly 201 + 409; no hanging order', async () => {
+      const beforeOrders = await orderCount();
+      assert.equal(await stock(scarceVariant.id), 1);
+      const input = body({ items: [{ variant_id: scarceVariant.id, quantity: 1 }] });
+      const attempts = await Promise.all([
+        localJson('/api/orders', orderPost(input)), localJson('/api/orders', orderPost(input)),
+      ]);
+      assert.deepEqual(attempts.map(attempt => attempt.response.status).sort(), [201, 409]);
+      const loser = attempts.find(attempt => attempt.response.status === 409);
+      assert.equal(loser.payload.error.code, 'OUT_OF_STOCK');
+      assert.deepEqual(loser.payload.error.details, [{ variant_id: scarceVariant.id, requested: 1, available: 0 }]);
+      assert.equal(await stock(scarceVariant.id), 0);
+      assert.equal(await orderCount(), beforeOrders + 1);
+      const rows = await all(`SELECT oi.quantity, o.order_number FROM order_items oi
+        JOIN orders o ON o.id = oi.order_id WHERE oi.variant_id = ?`, [scarceVariant.id]);
+      assert.equal(rows.length, 1);
+      assert.equal(rows[0].quantity, 1);
+      assert.equal(rows[0].order_number, attempts.find(attempt => attempt.response.status === 201).payload.data.order_number);
+      console.log(`D1 Phase 3 concurrency: HTTP statuses=201,409; last_stock=0; new_orders=1; loser_statements=${loser.queryCount}.`);
+    });
+
+    await check('Phase 3 04/10 forged client prices/totals/fees are ignored', async () => {
+      const forged = (await create(body({
+        items: [{ variant_id: peonyVariant.id, quantity: 1, price: 1, unit_price: 1, line_total: 1 }],
+        price: 1, subtotal: 1, discount_total: 1, delivery_fee: 1, grand_total: 1, role: 'ADMIN',
+      }))).payload.data;
+      assert.equal(forged.subtotal, peonyVariant.price);
+      assert.equal(forged.delivery_fee, 20000);
+      assert.equal(forged.grand_total, 470000);
+      const detail = await lookup(forged.order_number, '0900000000');
+      assert.equal(detail.items[0].unit_price, peonyVariant.price);
+      assert.equal(detail.items[0].line_total, peonyVariant.price);
+    });
+
+    await check('Phase 3 05/10 overstock rejection includes merged requested/available; DB unchanged', async () => {
+      const variant = variants.find(item => item.sku === 'BPB-L');
+      const beforeStock = await stock(variant.id);
+      const beforeOrders = await orderCount();
+      const requested = beforeStock + 1;
+      const failure = await localError('/api/orders', orderPost(body({
+        items: [{ variant_id: variant.id, quantity: 5 }, { variant_id: variant.id, quantity: requested - 5 }],
+      })), 409, 'OUT_OF_STOCK');
+      assert.deepEqual(failure.details, [{ variant_id: variant.id, requested, available: beforeStock }]);
+      assert.equal(await stock(variant.id), beforeStock);
+      assert.equal(await orderCount(), beforeOrders);
+    });
+
+    await check('Phase 3 06/10 unavailable province rejects; ward fee and both free thresholds use DB', async () => {
+      const beforeOrders = await orderCount();
+      const beforeStock = await stock(peonyVariant.id);
+      await localError('/api/orders', orderPost(body({
+        recipient: { ...body().recipient, province_name: 'Tỉnh mẫu chưa giao' },
+      })), 422, 'NO_DELIVERY_ZONE');
+      assert.equal(await orderCount(), beforeOrders);
+      assert.equal(await stock(peonyVariant.id), beforeStock);
+      const ward = (await create()).payload.data;
+      assert.equal(ward.delivery_fee, 20000);
+      const wardFree = (await create(body({ items: [{ variant_id: peonyVariant.id, quantity: 2 }] }))).payload.data;
+      assert.equal(wardFree.subtotal, 900000);
+      assert.equal(wardFree.delivery_fee, 0);
+      const provinceFree = (await create(body({
+        items: [{ variant_id: peonyVariant.id, quantity: 3 }],
+        recipient: { ...body().recipient, ward_name: 'Phường mẫu dùng phí tỉnh' },
+      }))).payload.data;
+      assert.equal(provinceFree.subtotal, 1350000);
+      assert.equal(provinceFree.delivery_fee, 0);
+    });
+
+    await check('Phase 3 07/10 SAME_DAY tomorrow and past delivery date reject without writes', async () => {
+      const beforeOrders = await orderCount();
+      const beforeStock = await stock(peonyVariant.id);
+      for (const delivery of [
+        { method_code: 'SAME_DAY', date: tomorrowDate, time_slot: '18:00-20:00' },
+        { method_code: 'STANDARD', date: yesterday.toISOString().slice(0, 10), time_slot: '08:00-10:00' },
+      ]) {
+        await localError('/api/orders', orderPost(body({ delivery })), 422, 'INVALID_DELIVERY_SLOT');
+      }
+      assert.equal(await orderCount(), beforeOrders);
+      assert.equal(await stock(peonyVariant.id), beforeStock);
+    });
+
+    await check('Phase 3 08/10 lookup accepts sender/recipient normalized phones; wrong code/phone share 404', async () => {
+      assert.ok(firstOrder);
+      await execute('UPDATE orders SET admin_note = ? WHERE order_number = ?', ['Internal synthetic note', firstOrder.order_number]);
+      const sender = await lookup(firstOrder.order_number, '+84 900.000.000');
+      const recipient = await lookup(firstOrder.order_number, '+84 911.111.111');
+      assert.deepEqual(sender, recipient);
+      assert.equal(sender.order_number, firstOrder.order_number);
+      assert.equal(sender.sender.phone, '0900000000');
+      assert.equal(sender.recipient.phone, '0911111111');
+      assert.equal(sender.items.length, 1);
+      assert.equal(sender.timeline.length, 1);
+      assert.equal(sender.timeline[0].to_status, 'PENDING');
+      assert.equal(Object.hasOwn(sender, 'admin_note'), false);
+      assert.equal(Object.hasOwn(sender, 'stock_released'), false);
+      const wrongPhone = await localError('/api/orders/lookup', post({ order_number: firstOrder.order_number, phone: '0999999999' }), 404, 'NOT_FOUND');
+      const wrongCode = await localError('/api/orders/lookup', post({ order_number: 'LNR-261014-ABC234', phone: '0900000000' }), 404, 'NOT_FOUND');
+      assert.deepEqual(wrongPhone, wrongCode);
+    });
+
+    await check('Phase 3 09/10 missing/malformed/non-v4 idempotency keys return 400 without writes', async () => {
+      const beforeOrders = await orderCount();
+      const beforeStock = await stock(peonyVariant.id);
+      for (const key of [null, 'not-a-uuid', '00000000-0000-1000-8000-000000000000']) {
+        await localError('/api/orders', orderPost(body(), key), 400, 'VALIDATION_ERROR');
+      }
+      assert.equal(await orderCount(), beforeOrders);
+      assert.equal(await stock(peonyVariant.id), beforeStock);
+    });
+
+    await check('Phase 3 10/10 transition history + DELIVERED/PAID; cancellation releases stock once', async () => {
+      assert.ok(firstOrder);
+      for (const to of ['CONFIRMED', 'PREPARING', 'IN_TRANSIT', 'DELIVERED']) {
+        const result = await transitionOrder(db, firstOrder.order_number, to, 'ADMIN', 'Local smoke transition');
+        assert.equal(result.status_code, to);
+      }
+      const delivered = await lookup(firstOrder.order_number, '0900000000');
+      assert.equal(delivered.status_code, 'DELIVERED');
+      assert.equal(delivered.payment_status, 'PAID');
+      assert.match(delivered.paid_at, /Z$/);
+      assert.match(delivered.delivered_at, /Z$/);
+      assert.deepEqual(delivered.timeline.map(event => event.to_status), ['PENDING', 'CONFIRMED', 'PREPARING', 'IN_TRANSIT', 'DELIVERED']);
+      assert.deepEqual(delivered.timeline.map(event => event.from_status), [null, 'PENDING', 'CONFIRMED', 'PREPARING', 'IN_TRANSIT']);
+      const cancellable = (await create(body({ items: [{ variant_id: peonyVariant.id, quantity: 2 }] }))).payload.data;
+      const beforeCancel = await stock(peonyVariant.id);
+      const cancelled = await transitionOrder(db, cancellable.order_number, 'CANCELLED', 'ADMIN', 'Local smoke cancellation');
+      assert.equal(cancelled.status_code, 'CANCELLED');
+      assert.equal(await stock(peonyVariant.id), beforeCancel + 2);
+      assert.equal((await first('SELECT stock_released FROM orders WHERE order_number = ?', [cancellable.order_number])).stock_released, 1);
+      await assert.rejects(() => transitionOrder(db, cancellable.order_number, 'CANCELLED', 'ADMIN'), cause => cause.code === 'INVALID_TRANSITION');
+      assert.equal(await stock(peonyVariant.id), beforeCancel + 2);
+      const detail = await lookup(cancellable.order_number, '0900000000');
+      assert.deepEqual(detail.timeline.map(event => event.to_status), ['PENDING', 'CANCELLED']);
+      console.log('D1 Phase 3 transitions: history=PENDING,CONFIRMED,PREPARING,IN_TRANSIT,DELIVERED; payment=PAID; cancellation=+2 once; repeat=INVALID_TRANSITION/+0.');
+    });
+    console.log(`Phase 3 mandatory smoke: ${passed - beforePassed}/10 PASS, ${failed - beforeFailed} FAIL.`);
+
+    await check('Phase 3 acceptance: 15-line query budget and full stock/order reconciliation', async () => {
+      const fifteen = variants.slice(0, 15).map(variant => ({ variant_id: variant.id, quantity: 1 }));
+      const result = await create(body({ items: fifteen }));
+      assert.ok(result.queryCount <= 40);
+      const lines = await lookup(result.payload.data.order_number, '0900000000');
+      assert.equal(lines.items.length, 15);
+      const current = await all('SELECT id, stock_quantity FROM product_variants ORDER BY id');
+      const sold = await all(`SELECT oi.variant_id, SUM(oi.quantity) AS quantity
+        FROM order_items oi JOIN orders o ON o.id = oi.order_id
+        WHERE o.status_code != ? GROUP BY oi.variant_id`, ['CANCELLED']);
+      const soldByVariant = new Map(sold.map(line => [line.variant_id, line.quantity]));
+      for (const variant of current) {
+        assert.equal(initialStock.get(variant.id) - variant.stock_quantity, soldByVariant.get(variant.id) || 0,
+          `Stock/order mismatch for variant ${variant.id}`);
+      }
+      assert.deepEqual(await all('PRAGMA foreign_key_check'), []);
+      assert.equal((await first(`SELECT COUNT(*) AS total FROM orders o
+        WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.order_id = o.id)
+          OR NOT EXISTS (SELECT 1 FROM order_status_history h WHERE h.order_id = o.id)`)).total, 0);
+      const created = requestCounts.filter(attempt => attempt.route === '/api/orders');
+      assert.ok(created.every(attempt => attempt.queries <= 40));
+      console.log(`D1 Phase 3 query budget: cart_lines=15; submitted_statements=${result.queryCount}; limit=40; maximum_all_order_requests=${Math.max(...created.map(attempt => attempt.queries))}.`);
+      console.log(`D1 Phase 3 reconciliation: variants=${current.length}; every stock reduction=uncancelled order_items quantity; dangling_orders=0; foreign_key_check=[]; orders=${await orderCount()}.`);
+    });
+  } finally {
+    if (server) await new Promise((resolve, reject) => server.close(cause => cause ? reject(cause) : resolve()));
+    await platform.dispose();
+  }
+}
+
+try {
+  await orderSmoke();
+} catch (cause) {
+  failed++;
+  console.error(`FAIL Phase 3 isolated smoke setup: ${cause.stack || cause.message}`);
+}
+console.log(`Local smoke: ${passed}/${passed + failed} PASS, ${failed} FAIL; persisted seed untouched.`);
 if (failed) process.exitCode = 1;

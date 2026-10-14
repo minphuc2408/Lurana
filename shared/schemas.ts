@@ -31,6 +31,49 @@ export function normalizePhone(value: string): string {
 }
 export const phoneSchema = z.string({ error: 'Số điện thoại không hợp lệ.' }).transform(normalizePhone)
   .pipe(z.string().regex(/^0\d{9}$/, 'Số điện thoại phải gồm 10 chữ số, bắt đầu bằng 0.'));
+const personNameSchema = z.string({ error: 'Vui lòng nhập tên.' }).trim()
+  .min(1, 'Vui lòng nhập tên.').max(100, 'Tên tối đa 100 ký tự.');
+export const orderSchema = z.object({
+  items: cartItemsSchema,
+  sender: z.object({
+    name: personNameSchema,
+    phone: phoneSchema,
+    email: z.string({ error: 'Email không hợp lệ.' }).trim().email('Email không hợp lệ.').max(254, 'Email tối đa 254 ký tự.').optional(),
+    is_anonymous: z.boolean({ error: 'Lựa chọn ẩn danh không hợp lệ.' }),
+  }),
+  recipient: deliveryAddressSchema.extend({
+    name: personNameSchema,
+    phone: phoneSchema,
+    address_line: z.string({ error: 'Vui lòng nhập địa chỉ.' }).trim()
+      .min(5, 'Địa chỉ cần ít nhất 5 ký tự.').max(200, 'Địa chỉ tối đa 200 ký tự.'),
+  }),
+  delivery: z.object({
+    method_code: methodCodeSchema,
+    // Calendar, configured slots and VN cutoff are checked by validateDeliverySlot.
+    date: z.string({ error: 'Ngày giao không hợp lệ.' }),
+    time_slot: z.string({ error: 'Khung giờ giao không hợp lệ.' }),
+  }),
+  card: z.object({
+    type: z.enum(['NONE', 'GREETING_CARD', 'BANNER'], { error: 'Loại thiệp không hợp lệ.' }),
+    message: z.string({ error: 'Lời nhắn không hợp lệ.' }).max(200, 'Lời nhắn tối đa 200 ký tự.').optional(),
+  }).superRefine((card, ctx) => {
+    if (card.type !== 'NONE' && !card.message?.trim()) {
+      ctx.addIssue({ code: 'custom', path: ['message'], message: 'Vui lòng nhập lời nhắn trên thiệp.' });
+    }
+  }),
+  customer_note: z.string({ error: 'Ghi chú không hợp lệ.' }).max(500, 'Ghi chú tối đa 500 ký tự.').optional(),
+  // Presence/validity is conditional on TURNSTILE_SECRET, checked on the server.
+  turnstile_token: z.string({ error: 'Mã xác minh không hợp lệ.' }).optional(),
+});
+export const orderBodySchema = orderSchema;
+export const lookupOrderSchema = z.object({
+  order_number: z.string({ error: 'Mã đơn không hợp lệ.' }).trim()
+    .min(1, 'Vui lòng nhập mã đơn.').max(100, 'Mã đơn không hợp lệ.'),
+  phone: phoneSchema,
+});
+export const orderLookupSchema = lookupOrderSchema;
 export type CartItem = z.infer<typeof cartItemSchema>;
 export type QuoteInput = z.infer<typeof quoteSchema>;
 export type DeliveryMethodCode = z.infer<typeof methodCodeSchema>;
+export type OrderInput = z.infer<typeof orderSchema>;
+export type LookupOrderInput = z.infer<typeof lookupOrderSchema>;
