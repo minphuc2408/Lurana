@@ -1,6 +1,6 @@
 # Frontend D1 preview — 14/10/2026
 
-Chủ dự án yêu cầu sao lưu frontend/ảnh demo, rồi dùng D1 local để kiểm tra. Đã nối Home/Shop/Cart/Delivery/Quote, tạm ẩn features ngoài preview. Đây là phần đầu Phase 5, thực hiện trước Phase 3; toàn Phase 5 vẫn PARTIAL. **Hiện Phase 3 backend đã DONE local**, nhưng UI gửi/tra đơn chưa nối và API auth/admin Phase 4 chưa triển khai. [Tiến độ hiện tại](README.md) · [nghiệm thu Phase 3](PHASE_3_CHECKOUT_ORDERS.md#bằng-chứng-lệnh--14102026).
+Chủ dự án yêu cầu sao lưu frontend/ảnh demo, rồi dùng D1 local để kiểm tra. Đã nối Home/Shop/Cart/Delivery/Quote, tạm ẩn features ngoài preview. Đây là phần đầu Phase 5, thực hiện trước Phase 3; toàn Phase 5 vẫn PARTIAL. **Phase 3 backend đã DONE local; backend Phase 4 auth/admin đã DONE local (9/9 tiêu chí)**, nhưng UI gửi/tra đơn/login/admin chưa nối. [Tiến độ hiện tại](README.md) · [nghiệm thu Phase 4](PHASE_4_ADMIN.md).
 
 ## Backup local trước khi sửa
 
@@ -27,13 +27,13 @@ Cloudinary chưa đăng ký và không cần để dùng API Phase 2. Catalog hi
 | Quote | `/api/checkout/quote`; frontend chỉ gửi IDs/quantity/địa chỉ/method. Tổng/phí từ response, kết quả cũ không dùng khi lựa chọn đổi, requests cũ bị abort |
 | Money/locale | VND từ DB, format theo EN/VI; mặc định/fallback vẫn English. Locale không đổi currency hoặc province/ward nhập bởi khách |
 | API lỗi | Loading/error/empty/retry, thông điệp i18n theo mã lỗi; không fallback về sản phẩm/giá frontend demo |
-| Features ngoài preview | Login/signup/profile/orders/custom request/admin/wishlist/reviews/coupon/đặt đơn bị ẩn. API tạo/lookup đơn đã có ở Phase 3, UI chưa nối; các API auth/admin/customer khác chưa có. URL cũ hiện sắp ra mắt, không render fixture hoặc giả thành công |
+| Features ngoài preview | Login/signup/profile/orders/custom request/admin/wishlist/reviews/coupon/đặt đơn bị ẩn. API tạo/lookup đơn Phase 3 và auth/admin Phase 4 đã có local, UI chưa nối; customer/profile/request APIs chưa có. URL cũ hiện sắp ra mắt, không render fixture hoặc giả thành công |
 
-Menu còn Home/Shop/Cart. Source legacy được giữ trong repo và backup; AppProviders hiện I18nextProvider → CatalogProvider → CartProvider, không khởi động demo AuthProvider. Lượt preview không thêm API ghi; Phase 3 tiếp theo đã thêm COD/tồn/lookup/transition backend, giữ frontend này. Hiện chưa có nút gửi đơn hoặc UI tra đơn/admin thật; báo giá không tạo đơn hoặc giữ tồn.
+Menu còn Home/Shop/Cart. Source legacy được giữ trong repo và backup; AppProviders hiện I18nextProvider → CatalogProvider → CartProvider, không khởi động demo AuthProvider. Lượt preview không thêm API ghi; Phase 3–4 tiếp theo đã thêm COD/tồn/lookup/transition và auth/admin backend, giữ frontend này. Hiện chưa có nút gửi đơn hoặc UI tra đơn/admin thật; báo giá không tạo đơn hoặc giữ tồn.
 
 ## Kiểm chứng lịch sử tại mốc nối preview
 
-Số liệu 54 tests/16 smoke và output bên dưới thuộc source tại lượt preview, giữ nguyên làm bằng chứng lịch sử. Source sau Phase 3 đã nghiệm thu **92/92 tests**, **10/10 ca order**, smoke tổng **27/27**, typecheck/architecture/build pass; xem [output Phase 3](PHASE_3_CHECKOUT_ORDERS.md#bằng-chứng-lệnh--14102026). Các kiểm chứng backend mới không thay thế nghiệm thu đủ checkout/admin UI Phase 5.
+Số liệu 54 tests/16 smoke và output bên dưới thuộc source tại lượt preview, giữ nguyên làm bằng chứng lịch sử. Mốc Phase 3 có **92/92 tests**, **10/10 ca order**, smoke tổng **27/27** và typecheck/architecture/build pass; [output lịch sử Phase 3](PHASE_3_CHECKOUT_ORDERS.md#bằng-chứng-lệnh--14102026). Số đếm source hiện tại và nghiệm thu auth/admin backend ghi ở [Phase 4](PHASE_4_ADMIN.md). Các kiểm chứng backend mới không thay thế nghiệm thu đủ checkout/admin UI Phase 5.
 
 `npm test`: 54 pass, 0 fail. Bao gồm adapter từ schema/seed trên SQLite cô lập, giá variant/ảnh chính, clone snapshot, giỏ theo variant, giới hạn 15/20 và tồn, storage bị hỏng/bị chặn, payload quote không có giá client, API envelope/network errors, VND/locale. Server giữ test D1 thật cô lập và đếm catalog ≤3 statements.
 

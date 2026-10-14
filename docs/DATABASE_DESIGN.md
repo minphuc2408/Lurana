@@ -1,13 +1,13 @@
 # Database MVP — Cloudflare D1
 
-**Cập nhật:** 14/10/2026 · **Runtime:** D1/SQLite · **Phase 0–3:** DONE local · **Phase 4/6:** PLANNED · **Phase 5:** PARTIAL. [Bằng chứng Phase 1](pipeline/PHASE_1_DATABASE.md) · [Phase 2](pipeline/PHASE_2_API_CATALOG.md) · [Phase 3](pipeline/PHASE_3_CHECKOUT_ORDERS.md) · [Hiện trạng](PROJECT_STATUS.md) · [Stack](TECH_STACK.md) · [Entity frontend](FRONTEND_ENTITIES.md).
+**Cập nhật:** 14/10/2026 · **Runtime:** D1/SQLite · **Phase 0–3:** DONE local · **Phase 4:** DONE local (9/9 tiêu chí) · **Phase 5:** PARTIAL · **Phase 6:** PLANNED. [Bằng chứng Phase 1](pipeline/PHASE_1_DATABASE.md) · [Phase 2](pipeline/PHASE_2_API_CATALOG.md) · [Phase 3](pipeline/PHASE_3_CHECKOUT_ORDERS.md) · [Phase 4](pipeline/PHASE_4_ADMIN.md) · [Hiện trạng](PROJECT_STATUS.md) · [Stack](TECH_STACK.md) · [Entity frontend](FRONTEND_ENTITIES.md).
 
 | Phạm vi | Trạng thái |
 | --- | --- |
 | Schema chuẩn | [`migrations/0001_mvp.sql`](../migrations/0001_mvp.sql), DDL v2 đã thống nhất theo đúng 10 bảng Phase 1 |
 | D1 local | Migration `0001_mvp.sql`; seed và `npm run db:verify`; output nghiệm thu ở [Phase 1](pipeline/PHASE_1_DATABASE.md) |
-| API D1 local | Catalog ≤3 statements; quote đọc variants + phí và luôn read-only; order API trừ tồn/CHECK rollback, lookup và transition hoàn tồn một lần đã có. Giỏ 15 dòng 35/36 statements, retry guard ≤40; test ghi dùng DB cô lập, DDL Phase 1 giữ nguyên |
-| D1 remote | Chủ dự án đã tạo `lunara-db`; Phase 0–3 không truy cập hoặc thay đổi remote |
+| API D1 local | Catalog/admin products/summary ≤3 statements; quote read-only; order API trừ/hoàn tồn, lookup; admin orders/products/variants/zones đã có. Giỏ 15 dòng 35/36 statements, retry guard ≤40; test ghi dùng DB cô lập, DDL Phase 1 giữ nguyên |
+| D1 remote | Chủ dự án đã tạo `lunara-db`; Phase 0–4 không truy cập hoặc thay đổi remote |
 | Frontend | Home/Shop/Cart/Delivery/Quote D1/VND/localStorage đã nối; UI checkout/lookup chưa nối API Phase 3; auth/admin và features ngoài preview ẩn |
 
 ## Một nguồn schema chuẩn
@@ -45,7 +45,7 @@ Không cần ràng buộc JSON cho 10 bảng hiện tại: các trường JSON n
 
 | Bảng | Vai trò / ràng buộc chính |
 | --- | --- |
-| `users` | Email chữ thường/unique, role/status, locale EN/VI; chưa dùng cho auth admin |
+| `users` | Email chữ thường/unique, role/status, locale EN/VI; admin MVP dùng secret, không đọc/ghi tài khoản trong bảng này |
 | `user_addresses` | FK user cascade; địa chỉ tỉnh/phường; tối đa một mặc định/user |
 | `categories` | Code/slug unique, tên EN/VI, thứ tự và trạng thái hoạt động |
 | `products` | Category FK restrict, slug unique, tên/mô tả EN/VI, badge/featured, ACTIVE/HIDDEN/ARCHIVED |
@@ -66,7 +66,7 @@ Auth khách/profile/wishlist/wizard làm sau. Cart guest đã lưu localStorage 
 - Tên dùng `name_en/name_vi`, snapshot song ngữ trong order items. `name_vn` chỉ là alias FE; nội dung khách nhập giữ nguyên.
 - Variant chấp nhận S/M/L/STANDARD/DELUXE; seed có S/M/L. Map Small/Medium/Large → S/M/L. PETITE/CLASSIC/GRANDE/LUXE thuộc wizard deferred.
 - `lower()` SQLite mặc định chủ yếu xử lý ASCII; email cần normalize/validate ở API. CHECK email không thay thế kiểm tra cấu trúc địa chỉ email.
-- `stock_released` chỉ là cờ 0/1; DDL tự nó không bảo đảm hoàn tồn một lần hay transition. Service Phase 3 đã dùng conditional stock release + CAS trạng thái trong một batch, kiểm meta.changes và chống history trùng; chưa expose route transition/admin.
+- `stock_released` chỉ là cờ 0/1; DDL tự nó không bảo đảm hoàn tồn một lần hay transition. Service Phase 3 dùng conditional stock release + CAS trạng thái trong một batch, kiểm meta.changes và chống history trùng; Phase 4 gọi lại qua route status có quyền admin, actor_label ADMIN và actor_id NULL.
 - Unique idempotency ngăn key trùng; API Phase 3 đã kiểm UUID v4, canonical lowercase, replay một read và xử lý UNIQUE race rollback. Key xác định đơn đã tạo; body hợp lệ gửi lại khác nội dung vẫn replay đơn cũ, không có kiểm hash payload. UI Phase 5 phải đổi key khi ý định/nội dung đặt hàng đổi.
 
 ## Quy tắc API và trạng thái triển khai
@@ -75,7 +75,8 @@ Auth khách/profile/wishlist/wizard làm sau. Cart guest đã lưu localStorage 
 2. Phase 3 đã ghi order/items/history và trừ tồn nguyên tử. Trừ tồn không điều kiện để `CHECK (stock_quantity >= 0)` ném lỗi và rollback D1 batch; `UPDATE` 0 dòng không tự gây rollback. Ngoài verifier Phase 1, test D1 thật cô lập Phase 3 đã kiểm lỗi dòng cuối rollback toàn batch, race mua món cuối và same-key; không phải nghiệm thu checkout UI/remote. [Bằng chứng Phase 3](pipeline/PHASE_3_CHECKOUT_ORDERS.md#bằng-chứng-lệnh--14102026).
 3. Ưu tiên archive sản phẩm đã bán; hiển thị đơn theo snapshot. Hủy chỉ hoàn tồn một lần theo transition hợp lệ.
 4. D1 thực thi FK mặc định; không đưa `PRAGMA foreign_keys` vào migration. Kiểm `PRAGMA foreign_key_check` trên D1 local. [D1 foreign keys](https://developers.cloudflare.com/d1/sql-api/foreign-keys/).
-5. Admin secret + JWT HttpOnly, server kiểm quyền/Origin ở Phase 4. Browser session vẫn là demo. Better Auth/auth khách cần đối chiếu schema riêng sau MVP.
+5. Admin secret + JWT HttpOnly đã triển khai local; server kiểm quyền/Origin/JSON tại Phase 4, không thêm bảng. Browser AuthProvider demo không active và UI admin chưa nối. Better Auth/auth khách cần đối chiếu schema riêng sau MVP.
+6. Admin tạo product/variants/ảnh chính bằng một D1 batch, không xóa sản phẩm đã bán; ARCHIVED ghi archived_at. Chỉnh tồn ưu tiên `stock_quantity = stock_quantity + ?`, CHECK chặn tồn âm và rollback; giá so sánh phải ≥ giá bán. Delivery zone ghi trực tiếp bảng hiện có nên quote mới đọc phí mới; không tạo ledger/cache/bảng rate limit.
 
 ## Nghiệm thu và phần tiếp theo
 
@@ -85,7 +86,7 @@ Auth khách/profile/wishlist/wizard làm sau. Cart guest đã lưu localStorage 
 | --- | --- |
 | 1 — DONE local | Canonical 10 bảng, migration/seed/verify local; không áp deferred/0002 |
 | 2–3 — DONE local | Catalog/quote → COD/idempotency/tồn/lookup và transition hoàn tồn một lần |
-| 4 — PLANNED | API auth/admin dùng lại transitionOrder |
+| 4 — DONE local (9/9 tiêu chí) | API auth/admin dùng lại transitionOrder; không DDL mới, không thêm bảng/dependency. [Checklist/output](pipeline/PHASE_4_ADMIN.md) |
 | 5 — PARTIAL | Adapter catalog/cart/delivery/quote, localStorage và VND đã có; còn checkout/lookup/admin UI |
 | 6 — PLANNED | Deploy/migration remote/secrets/dữ liệu thật khi được yêu cầu |
 | Sau MVP | Wizard, auth khách/profile/wishlist, upload ảnh, reviews/coupon |

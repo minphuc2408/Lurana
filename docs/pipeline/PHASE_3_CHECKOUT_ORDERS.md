@@ -14,9 +14,9 @@
 | Catalog/quote Phase 2 đã nghiệm thu | 8/8 tiêu chí, 53 test pass, dev/preview smoke 16/16; [output](PHASE_2_API_CATALOG.md#bằng-chứng-lệnh--14102026) |
 | Service dùng lại | `priceCart(db, items, province, ward, methodCode)` trả totals + issues; `phoneSchema`/`normalizePhone`, `validateDeliverySlot`, `todayInVN`, `toIso`, AppError và validator đã có |
 | D1/query budget | Giỏ tối đa 15 dòng; replay 1 + pricing 2 + batch 32 = 35 statements cho luồng tạo đơn bình thường. Phải đếm thực tế và giữ các nhánh retry/error trong giới hạn 40 |
-| Config/policy | Dùng giả định Phase 2 cho test local; trước mở bán chủ shop cần chốt khu vực/phí/cutoff/slot thật. UI preview đã dùng VND; admin vẫn thuộc Phase 4 |
+| Config/policy | Dùng giả định Phase 2 cho test local; trước mở bán chủ shop cần chốt khu vực/phí/cutoff/slot thật. UI preview đã dùng VND; admin backend đã triển khai Phase 4 local, UI thuộc Phase 5 |
 | Turnstile | Verifier đã triển khai ở Phase 3: có `TURNSTILE_SECRET` thì xác minh token; local thiếu secret được bỏ qua. Nhánh provider đã kiểm bằng mock; cấu hình widget/secrets thật còn lại |
-| Phạm vi hoàn tất / tiếp theo | Schema order/lookup, UUID v4/mã đơn, create/lookup/transition services, routes và 10 ca smoke đã xong. Tiếp theo Phase 4 auth/admin, rồi UI còn lại Phase 5; không có route transition hoặc hủy đơn khách ở Phase 3 |
+| Phạm vi hoàn tất / tiếp theo | Schema order/lookup, UUID v4/mã đơn, create/lookup/transition services, routes và 10 ca smoke đã xong. Phase 4 đã triển khai route admin status gọi lại transitionOrder; tiếp theo UI còn lại Phase 5. Không có route hủy đơn khách |
 
 Smoke hiện giữ các ca catalog read-only trên URL positional local; ca ghi/chỉnh tồn Phase 3 tự dùng HTTP loopback + workerd D1 `persist:false`, `remoteBindings:false`. Không reset/xóa seed đang dùng trên 5173/4173 và không truy cập remote.
 
@@ -101,11 +101,11 @@ Không có `variant_id` (variant đã bị xóa cứng) thì bỏ qua dòng đó
 7. `SAME_DAY` cho ngày mai, hoặc ngày quá khứ → 422 `INVALID_DELIVERY_SLOT`.
 8. Lookup đúng mã + SĐT người đặt / người nhận → 200; sai SĐT hoặc sai mã → 404 cùng thông điệp.
 9. Thiếu `Idempotency-Key` hoặc không phải UUID → 400.
-10. `transitionOrder`: `PENDING→CONFIRMED→PREPARING→IN_TRANSIT→DELIVERED` ghi đủ history, `PAID` sau `DELIVERED`; hủy một đơn → tồn hoàn; hủy lần hai → `INVALID_TRANSITION`, tồn **không** cộng thêm (viết thành test gọi trực tiếp service, hoặc chờ Phase 4 để gọi qua API).
+10. `transitionOrder`: `PENDING→CONFIRMED→PREPARING→IN_TRANSIT→DELIVERED` ghi đủ history, `PAID` sau `DELIVERED`; hủy một đơn → tồn hoàn; hủy lần hai → `INVALID_TRANSITION`, tồn **không** cộng thêm. Phase 3 kiểm service trực tiếp; Phase 4 đã bổ sung kiểm qua admin API.
 
 ## Tiêu chí nghiệm thu
 
-- [x] 10 kịch bản smoke trên pass (output lưu bên dưới; chưa có yêu cầu commit/PR).
+- [x] 10 kịch bản smoke trên pass (output tại mốc Phase 3 giữ bên dưới).
 - [x] Không có đường nào ghi `orders` mà không trừ tồn, hoặc trừ tồn mà không có đơn (đối chiếu sau smoke: tổng `order_items.quantity` của đơn chưa hủy khớp mức tồn giảm).
 - [x] Tổng số truy vấn D1 của `POST /api/orders` với giỏ 15 dòng ≤ 40 (success 35, CHECK/unique race 36, collision dừng ở 35; đếm nguyên failed batch).
 - [x] Không có SQL nối chuỗi từ input; mọi tham số đều bind (review source và test chuỗi customer chứa SQL trong batch binds).
@@ -115,12 +115,14 @@ Không có `variant_id` (variant đã bị xóa cứng) thì bỏ qua dòng đó
 
 - [Schemas](../../shared/schemas.ts) dùng chung FE/Worker; trim tên/địa chỉ, normalize SĐT, giữ nội dung khách nhập; client giá/tổng/role bị bỏ qua. [ids.ts](../../worker/lib/ids.ts) kiểm UUID v4, mã đơn dùng ngày VN và `crypto.getRandomValues` với rejection sampling.
 - [orders.ts](../../worker/services/orders.ts): replay → pricing hai queries → validate delivery → một batch INSERT order/items, trừ tồn không điều kiện rồi history. FK của item chống ghi đơn khi variant bị xóa giữa pricing và batch; CHECK rollback toàn bộ khi hụt tồn. Lookup ba statements với whitelist DTO, giữ snapshot, không trả admin_note/stock_released/actor.
-- `transitionOrder(db, orderNumber, newStatus, actorLabel = 'ADMIN', note?)` dùng đúng thứ tự SQL hoàn tồn trước CAS đổi trạng thái sau. Kiểm `meta.changes`, bỏ qua variant_id null, history NOT EXISTS; service chưa có route public/admin. Đã kiểm hủy từ PENDING/CONFIRMED/PREPARING, hủy đồng thời, race CONFIRMED/CANCELLED, DELIVERED/PAID và variant xóa cứng.
+- `transitionOrder(db, orderNumber, newStatus, actorLabel = 'ADMIN', note?)` dùng đúng thứ tự SQL hoàn tồn trước CAS đổi trạng thái sau. Kiểm `meta.changes`, bỏ qua variant_id null, history NOT EXISTS. Tại mốc Phase 3 service chưa expose route; Phase 4 đã bổ sung admin status với authorization và gọi nguyên service. Đã kiểm hủy từ PENDING/CONFIRMED/PREPARING, hủy đồng thời, race CONFIRMED/CANCELLED, DELIVERED/PAID và variant xóa cứng.
 - [turnstile.ts](../../worker/lib/turnstile.ts): có secret thì bắt buộc Siteverify explicit success, provider failure fail closed; thiếu secret local bypass. UUID được gửi trong `idempotency_key` Siteverify để hỗ trợ retry xác minh. Test dùng provider mock; chưa cấu hình domain/site key/secret thật. Theo [Cloudflare Siteverify](https://developers.cloudflare.com/turnstile/get-started/server-side-validation/), token single-use/hết hạn; client cần token mới khi token không còn hợp lệ, forwarding UUID không thay thế token hợp lệ.
 - Ngân sách bảo thủ: mỗi batch tính toàn bộ số statement gửi, kể cả lỗi ở statement đầu. Trước mỗi lần ghi, service dành một statement cho chẩn đoán; giỏ 15 dòng dùng 35 hoặc 36 khi có diagnostic read. Trùng order_number ở giỏ này trả CONFLICT an toàn sau batch đầu, vì retry nguyên batch sẽ vượt 40; giỏ nhỏ có tối đa ba batch.
 - [smoke.mjs](../../scripts/smoke.mjs) giữ 16 nhóm catalog trên URL positional loopback rồi tạo HTTP server `127.0.0.1` cổng ngẫu nhiên với workerd D1 `persist:false`, `remoteBindings:false`. Mười ca order và đối chiếu tồn chạy trên DB này; cleanup server/proxy trong finally. Không reset/snapshot/chỉnh seed persisted, không dùng D1 remote; không đổi DDL/dependency/frontend/admin. Phase 3 smoke chạy source Hono qua HTTP + binding D1 thật; catalog/validation cũng kiểm build preview.
 
 ## Bằng chứng lệnh — 14/10/2026
+
+Output bên dưới giữ nguyên tại mốc Phase 3 (**92 tests, 27 nhóm smoke**). Source hiện tại đã có Phase 4 auth/admin; số đếm và bằng chứng mới ở [PHASE_4_ADMIN.md](PHASE_4_ADMIN.md), không dùng output lịch sử này làm số đếm hiện tại.
 
 Output trích từ source cuối; các lệnh kiểm tra exit 0. `[exit 0]` là chú thích kết quả.
 

@@ -2,7 +2,7 @@
 
 Base path: `/api` (cùng origin với frontend). JSON UTF-8. Đây là hợp đồng giữa Worker và frontend; thay đổi phải sửa file này trước.
 
-**Trạng thái:** Phase 2–3 đã triển khai local: health, catalog, delivery/options, checkout/quote, đặt đơn COD và tra đơn. `transitionOrder` là service nội bộ cho Phase 4; chưa có route admin/auth/hủy đơn khách. Frontend Home/Shop/Cart/Delivery/Quote giữ preview; gửi/tra đơn qua UI thuộc Phase 5. Route API lạ trả `NOT_FOUND` JSON 404 (message `Không tìm thấy API.`). [Hiện trạng](../PROJECT_STATUS.md) · [nghiệm thu Phase 3](PHASE_3_CHECKOUT_ORDERS.md).
+**Trạng thái:** Phase 2–4 đã triển khai local: health, catalog, delivery/options, checkout/quote, đặt đơn COD, tra đơn và auth/API admin. Admin status dùng lại `transitionOrder`; không có route hủy đơn khách. Frontend Home/Shop/Cart/Delivery/Quote giữ preview; UI gửi/tra đơn và admin thuộc Phase 5. Route API lạ trả `NOT_FOUND` JSON 404 (message `Không tìm thấy API.`); boundary admin kiểm cookie trước khi trả 404. [Hiện trạng](../PROJECT_STATUS.md) · [nghiệm thu Phase 4](PHASE_4_ADMIN.md).
 
 ## Quy ước chung
 
@@ -11,7 +11,7 @@ Base path: `/api` (cùng origin với frontend). JSON UTF-8. Đây là hợp đ�
 - **Số điện thoại:** server chuẩn hóa về dạng `0xxxxxxxxx` (chấp nhận `+84...`, khoảng trắng, dấu chấm). Hợp lệ: `^0\d{9}$` sau khi chuẩn hóa.
 - **Tên sản phẩm:** luôn trả cả `name_vi` và `name_en`; frontend chọn theo locale.
 - Không bao giờ trả `password_hash`, secret, stack trace, SQL.
-- API dùng `Content-Type: application/json; charset=utf-8`, security headers và `X-Request-Id`. GET catalog thành công (categories/products/detail/delivery options) dùng `Cache-Control: public, max-age=30`; health, request ghi/admin và mọi lỗi dùng `no-store`. Lỗi `INTERNAL` chỉ có mã tham chiếu trong `error.details.request_id`; chi tiết lỗi được log phía server.
+- API dùng `Content-Type: application/json; charset=utf-8`, security headers và `X-Request-Id`. GET catalog thành công (categories/products/detail/delivery options) dùng `Cache-Control: public, max-age=30`; health, request ghi/admin và mọi lỗi dùng `no-store`. Lỗi `INTERNAL` chỉ có mã tham chiếu trong `error.details.request_id`; log chỉ ghi `request_id`/`error_name`, không dump message/stack/request/credential.
 
 ## Mã lỗi
 
@@ -20,7 +20,7 @@ Base path: `/api` (cùng origin với frontend). JSON UTF-8. Đây là hợp đ�
 | `VALIDATION_ERROR` | 400 | Zod không qua; `details` = danh sách `{path, message}` |
 | `UNAUTHORIZED` | 401 | Thiếu/hết hạn cookie admin |
 | `INVALID_CREDENTIALS` | 401 | Sai mật khẩu admin |
-| `FORBIDDEN` | 403 | Turnstile order không hợp lệ; kiểm Origin ở request ghi admin thuộc Phase 4 PLANNED |
+| `FORBIDDEN` | 403 | Turnstile order không hợp lệ; Origin thiếu/khác ở request ghi admin, kể cả login/logout |
 | `NOT_FOUND` | 404 | Không có tài nguyên; tra đơn sai mã hoặc SĐT dùng chung mã này |
 | `CONFLICT` | 409 | Trùng slug/SKU/mã |
 | `OUT_OF_STOCK` | 409 | Thiếu tồn; `details`: `[{variant_id, requested, available}]` |
@@ -133,9 +133,13 @@ Body `{ phone }`. Khách chỉ hủy được khi `PENDING`. Cùng cơ chế ho�
 
 ## Admin (cookie `lunara_admin`, HttpOnly)
 
-**PLANNED — Phase 4 chưa triển khai.** Toàn bộ routes/cookie/authorization bên dưới là hợp đồng đích; hiện `/api/admin/*` trả JSON API 404, không phải đã có middleware trả 401. Máy trạng thái/hoàn tồn đã có ở service nội bộ Phase 3, nhưng chưa có HTTP endpoint chuyển trạng thái. UI admin còn ẩn và sẽ nối ở Phase 5.
+**Đã triển khai local — Phase 4.** Auth/server middleware bảo vệ API; UI admin vẫn ẩn và chưa nối cookie/API, thuộc Phase 5. Không dùng auth fixture/sessionStorage để cấp quyền backend.
 
-Mọi route dưới `/api/admin/*` (trừ `login`) yêu cầu cookie hợp lệ; request ghi (`POST/PATCH/PUT/DELETE`) phải có `Content-Type: application/json` và `Origin` trùng host.
+Mọi route dưới `/api/admin` và `/api/admin/*` (trừ đúng `POST /api/admin/login`) yêu cầu cookie hợp lệ, kể cả route lạ và logout. Request ghi (`POST/PATCH/PUT/DELETE`), bao gồm login/logout, phải có `Content-Type: application/json` (chấp nhận charset) và `Origin` bằng origin đầy đủ của URL request: scheme/host/port. Thiếu/sai Origin → `FORBIDDEN` 403; thiếu/sai Content-Type → `VALIDATION_ERROR` 400. Thiếu cookie được trả 401 trước validate Origin/body.
+
+Login băm SHA-256 hai giá trị và dùng Workers `crypto.subtle.timingSafeEqual`; không băm mật khẩu chậm. Cấu hình thiếu/trống, ADMIN_PASSWORD <24 ký tự, JWT_SECRET <32 ký tự sau trim hoặc hai secret trùng nhau → login `INVALID_CREDENTIALS` 401, không đặt cookie. Secret ngẫu nhiên thật do [NGƯỜI] đặt, không commit. Login giới hạn body 4096 byte và password 1–1024 ký tự, giữ nguyên password (không trim).
+
+Cookie `lunara_admin`: HttpOnly; SameSite=Strict; Path=/; Max-Age=43200; Secure với HTTPS (HTTP loopback local bỏ Secure). JWT HS256 chỉ chứa role ADMIN/iat/exp, hạn 12 giờ; middleware kiểm chữ ký, thuật toán, role và thời gian bắt buộc. JSON không trả JWT/password/secret; JWT nằm trong header Set-Cookie theo thiết kế. Logout đặt cookie rỗng/Max-Age=0; JWT đã sao chép vẫn có hiệu lực đến exp (MVP stateless; xoay JWT_SECRET vô hiệu hóa toàn bộ session).
 
 | Method + path | Mô tả |
 | --- | --- |
@@ -152,6 +156,17 @@ Mọi route dưới `/api/admin/*` (trừ `login`) yêu cầu cookie hợp lệ;
 | `PATCH /api/admin/products/:id` | Sửa tên/mô tả/badge/featured/status/ảnh chính (URL) |
 | `PATCH /api/admin/variants/:id` | `{ price?, compare_at_price?, low_stock_threshold?, is_active?, stock_delta? | stock_quantity? }` — **ưu tiên `stock_delta`** (nguyên tử, không ghi đè lên đơn mới) |
 | `GET/POST /api/admin/delivery-zones`, `PUT /api/admin/delivery-zones/:id` | Quản lý phí giao; "xóa" = `is_active = 0` |
+
+### DTO và validation admin
+
+- Summary dùng đúng 3 aggregate statements. `today_orders` đếm `placed_at` giữa hai mốc nửa đêm giờ Việt Nam (bind UTC); `orders_by_status` có mọi trạng thái, kể cả 0; `low_stock_count` đếm variants có tồn ≤ ngưỡng.
+- Orders list: status thuộc enum máy trạng thái; date là ngày có thật YYYY-MM-DD; q trim ≤100 ký tự và khớp literal `%`, `_`, `\` (escape LIKE); limit mặc định20, nguyên1–50; offset mặc định0, nguyên không âm. `OrderRow` gồm id/order_number/status_code/payment_method/payment_status/sender_name/sender_phone/recipient_name/recipient_phone/delivery_date/delivery_time_slot/grand_total/placed_at. Sắp placed_at DESC, id DESC; total tính trước phân trang.
+- Admin detail = OrderDetail + admin_note nullable, stock_released boolean, timeline thêm actor_label. Không trả idempotency_key, user_id hoặc actor_id. Status PATCH trả OrderSummary; note PATCH nhận `{admin_note: string|null}` ≤500 ký tự, trả `{order_number,admin_note}`. Note chuyển trạng thái ≤500 ký tự.
+- Product create (201): `{category_id,slug,name_vi,name_en,description_vi?,description_en?,badge_code?,is_featured?,status?,image:{url,alt_vi?,alt_en?},variants:[{sku,size_code,price,compare_at_price?,stock_quantity?,low_stock_threshold?,is_active?}]}`. 1–5 variants, size/SKU không trùng; create atomic một batch. Price/stock/threshold là safe integer không âm; compare_at_price nullable và ≥ price. Slug lowercase chữ/số/gạch ngang, image URL HTTP(S). Name trim1–200; descriptions nullable ≤5000; image alt nullable ≤200.
+- Products GET trả `{items}` mọi trạng thái với id/slug/category_code/category_id/tên/mô tả/badge/featured/status/archived_at/images/variants; variants có stock_quantity/low_stock_threshold/is_active và giá chính xác. Dùng 3 truy vấn, không truy vấn từng sản phẩm. Product PATCH chỉ tên/mô tả/badge/featured/status/image; ARCHIVED ghi archived_at, rời ARCHIVED xóa mốc; ảnh chính cập nhật atomic, giữ 1 ảnh chính. POST/PATCH trả `{id}`.
+- Variant PATCH trả variant với id/product_id/sku/size_code/price/compare_at_price/stock_quantity/low_stock_threshold/is_active. stock_delta được cộng nguyên tử và ưu tiên khi có cả stock_quantity; stock_quantity tuyệt đối chỉ dùng khi không có delta. Không ghi đè price/compare_at_price/stock từ snapshot cũ khi client không sửa field đó. CHECK tồn âm → VALIDATION_ERROR400 "Tồn kho không thể âm"; phép cộng vượt safe integer cũng bị từ chối. compare_at_price được kiểm trước ghi và CHECK bảo vệ race. Không nhận SKU/size/product_id ở PATCH.
+- Delivery zones GET `{items}` gồm id/province_name/ward_name/fee/free_from_amount/eta_minutes/is_active. POST (201)/PUT full body `{province_name,ward_name?,fee,free_from_amount?,eta_minutes?,is_active?}`; ward_name mặc định `''` là mặc định tỉnh, fee/free_from_amount safe integer không âm, eta_minutes nullable hoặc nguyên dương. Trùng tỉnh/phường → CONFLICT409. POST/PUT trả zone cùng projection GET. Soft-delete is_active=false giữ dòng nhưng quote bỏ qua; quote đọc DB ngay ở request kế tiếp.
+- Object schemas bỏ field ngoài contract. PATCH rỗng sau strip → VALIDATION_ERROR400. Không tạo bảng mới, không thêm dependency. Mọi giá trị input bind; chỉ ghép SQL fragments/column names do server chọn.
 
 ### Máy trạng thái đơn
 

@@ -2,9 +2,9 @@
 
 **Mục tiêu:** các luồng MVP trong frontend dùng API thật, hiển thị VND, không còn fixture/₱ ở luồng MVP. Tham chiếu: [API_CONTRACT.md](API_CONTRACT.md), [FRONTEND_ENTITIES.md](../FRONTEND_ENTITIES.md). Phase này lớn nhất; làm theo thứ tự dưới đây để luôn có bản chạy được.
 
-**Trạng thái:** PARTIAL · bản preview nối sớm Home/Shop/Cart/Delivery/Quote D1/VND và variant cart localStorage đã có; giữ English default/fallback. Hiện API COD/lookup và transition service Phase 3 đã DONE local, nhưng UI gửi/tra đơn chưa nối; API auth/admin Phase 4 chưa có. Features ngoài preview vẫn ẩn. [Backup/audit/evidence](FE_AUDIT.md) · [Hiện trạng](../PROJECT_STATUS.md). Toàn Phase 5 chưa nghiệm thu.
+**Trạng thái:** PARTIAL · bản preview nối sớm Home/Shop/Cart/Delivery/Quote D1/VND và variant cart localStorage đã có; giữ English default/fallback. API COD/lookup và transition service Phase 3 đã DONE local; backend auth/admin Phase 4 DONE local (9/9 tiêu chí). UI gửi/tra đơn/login/admin chưa nối; features ngoài preview vẫn ẩn. [Backup/audit/evidence](FE_AUDIT.md) · [Hiện trạng](../PROJECT_STATUS.md). Toàn Phase 5 chưa nghiệm thu.
 
-## Tiến độ từng phần sau Phase 3
+## Tiến độ từng phần sau Phase 4 backend
 
 | Bước | Đã có / còn lại |
 | --- | --- |
@@ -14,7 +14,7 @@
 | 5.3–5.5 | Catalog adapter/provider, variant cart/localStorage và VND formatter đã có ở Home/Shop/Cart; còn kiểm khi mở rộng checkout/admin |
 | 5.6 | Delivery options/quote/khu vực/method đã nối; form sender/recipient/date/slot/card/note COD chưa nối |
 | 5.7–5.8 | API create/lookup Phase 3 sẵn sàng; UI gửi/retry/xác nhận/tra đơn chưa có, `/orders/track` chưa active |
-| 5.9–5.12 | Chưa làm; phải có API auth/admin Phase 4 trước khi nối UI quản trị |
+| 5.9–5.12 | UI chưa làm; API auth/admin Phase 4 đã triển khai local để nối login/me/logout, đơn, sản phẩm/tồn/phí giao/dashboard summary |
 | 5.13–5.16 | Preview đã ẩn fixture, có EN/VI, loading/error/retry, tests/UI evidence; checkout/lookup/admin và đủ 10 kịch bản Phase 5 chưa nghiệm thu |
 
 > Tài liệu này mô tả theo cấu trúc `src/features/*` trong [FRONTEND_ENTITIES.md](../FRONTEND_ENTITIES.md). Tên file thực tế có thể khác: bước 5.0 là kiểm kê trước khi sửa.
@@ -77,5 +77,5 @@
 Đọc docs/pipeline/README.md, API_CONTRACT.md, docs/FRONTEND_ENTITIES.md và PHASE_5_FRONTEND.md rồi thực hiện Phase 5 theo đúng thứ tự 5.0 → 5.16.
 Bắt đầu bằng cập nhật FE_AUDIT và đọc bảng tiến độ từng phần. Giữ catalog/variant cart/localStorage/delivery/quote/VND đã có. Nối phần còn lại: Checkout COD, gửi/retry/xác nhận đơn, Tra đơn từ API Phase 3, Admin (đăng nhập, đơn, sản phẩm/tồn, phí giao, dashboard tóm tắt) sau khi API Phase 4 hoàn tất.
 Ràng buộc: không đổi phiên bản gói đã pin; không tin giá/tồn từ client; không xóa code của tính năng chưa làm (ẩn bằng cờ); mọi chuỗi UI có vi và en; không gọi fetch trực tiếp trong component.
-English mặc định/fallback đã chốt, không hỏi lại hoặc đổi sang vi; locale không đổi VND/giờ VN. Xong khi mọi "Tiêu chí nghiệm thu" Phase 5 pass, kèm kết quả 10 kịch bản thủ công. Không tự đánh dấu toàn Phase 5 xong từ nghiệm thu preview hoặc backend Phase 3.
+English mặc định/fallback đã chốt, không hỏi lại hoặc đổi sang vi; locale không đổi VND/giờ VN. Xong khi mọi "Tiêu chí nghiệm thu" Phase 5 pass, kèm kết quả 10 kịch bản thủ công. Không tự đánh dấu toàn Phase 5 xong từ nghiệm thu preview hoặc backend Phase 3–4.
 ```

@@ -2,7 +2,7 @@
 
 **Mục tiêu:** khung Hono chuẩn (lỗi, validate, middleware), các API đọc: danh mục, sản phẩm, tùy chọn giao hàng, báo giá giỏ. Hợp đồng: [API_CONTRACT.md](API_CONTRACT.md).
 
-**Trạng thái:** DONE · 8/8 tiêu chí local, **14/10/2026**. Đây là phạm vi/nghiệm thu catalog/quote tại mốc Phase 2, chưa bao gồm order/admin. Hiện Phase 3 COD/tồn/idempotency/lookup/transition đã DONE local ([output](PHASE_3_CHECKOUT_ORDERS.md#bằng-chứng-lệnh--14102026)); auth/admin Phase 4 chưa triển khai. Preview Home/Shop/Cart/Delivery/Quote đã nối D1: [FE_AUDIT](FE_AUDIT.md). [Tiến độ chung](README.md).
+**Trạng thái:** DONE · 8/8 tiêu chí local, **14/10/2026**. Đây là phạm vi/nghiệm thu catalog/quote tại mốc Phase 2, chưa bao gồm order/admin. Hiện Phase 3 COD/tồn/idempotency/lookup/transition đã DONE local ([output lịch sử](PHASE_3_CHECKOUT_ORDERS.md#bằng-chứng-lệnh--14102026)); [Phase 4 auth/admin](PHASE_4_ADMIN.md) đã DONE local 9/9 tiêu chí, source hiện tại có 125 tests và 40 nhóm smoke. Preview Home/Shop/Cart/Delivery/Quote đã nối D1: [FE_AUDIT](FE_AUDIT.md). UI checkout/lookup/login/admin vẫn thuộc Phase 5 PARTIAL. [Tiến độ chung](README.md).
 
 ## Việc cần làm
 
@@ -10,7 +10,7 @@
 | --- | --- | --- |
 | 2.1 | AGENT | Tạo `shared/constants.ts`: `TIME_SLOTS`, `DELIVERY_METHOD_CODES`, `SIZE_CODES`, `ORDER_STATUSES`, giới hạn giỏ. Dùng chung cho FE và Worker |
 | 2.2 | AGENT | Tạo `worker/config.ts` (giá trị **giả định**, ghi chú để chủ shop chỉnh): phụ phí `STANDARD 0 / EXPRESS 30000 / SAME_DAY 50000`, giờ chốt same-day `16:00`, thời gian chuẩn bị tối thiểu `120` phút, `MAX_CART_LINES 15`, `MAX_QTY_PER_LINE 20`, `MAX_ADVANCE_DAYS 30`, múi giờ `Asia/Ho_Chi_Minh` |
-| 2.3 | AGENT | `worker/lib/errors.ts`: lớp `AppError(code, status, message, details?)` + `app.onError` trả JSON đúng contract; lỗi lạ → `INTERNAL` kèm `request_id`, log chi tiết server-side |
+| 2.3 | AGENT | `worker/lib/errors.ts`: lớp `AppError(code, status, message, details?)` + `app.onError` trả JSON đúng contract; lỗi lạ → `INTERNAL` kèm `request_id`. Phase 4 thu gọn log chỉ request_id/error_name để không lộ SQL/input/secret |
 | 2.4 | AGENT | `worker/lib/validate.ts`: bọc `zod` + hook của Hono trả `VALIDATION_ERROR`. Schema nằm trong `shared/schemas.ts` để FE dùng lại cho form |
 | 2.5 | AGENT | Middleware: `secureHeaders()`, `request_id`, `Cache-Control: no-store` cho mọi `/api/*` ghi/admin; `public, max-age=30` cho GET catalog |
 | 2.6 | AGENT | `GET /api/categories` |

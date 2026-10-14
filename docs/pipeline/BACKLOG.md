@@ -1,6 +1,6 @@
 # Backlog sau MVP và rủi ro đã biết
 
-**Trạng thái backlog:** PLANNED · Phase 0–3 DONE local, Phase 4/6 PLANNED, Phase 5 PARTIAL; MVP chưa chạy thật. [Hiện trạng](../PROJECT_STATUS.md). Bảng dưới mô tả việc sau MVP/giảm thiểu dự kiến; không xác nhận các controls đã có. Quota/giá/cloud policy cần kiểm tra lại trước deploy.
+**Trạng thái backlog:** PLANNED · Phase 0–3 DONE local, backend Phase 4 đã DONE local (9/9 tiêu chí), Phase 5 PARTIAL, Phase 6 PLANNED; MVP chưa chạy thật. [Hiện trạng](../PROJECT_STATUS.md). Bảng dưới mô tả việc sau MVP/giảm thiểu dự kiến; không xác nhận các controls đã có. Quota/giá/cloud policy cần kiểm tra lại trước deploy.
 
 ## Ưu tiên cao (tuần đầu sau khi mở bán)
 
@@ -10,7 +10,7 @@
 | Trạng thái `DELIVERY_FAILED` | Giao thất bại/khách không nhận: cần migration đổi `CHECK` của `orders.status_code` (SQLite phải tạo bảng mới + chép dữ liệu) và cập nhật máy trạng thái |
 | Trang chính sách | Quyền riêng tư (thu thập tên/SĐT/địa chỉ), đổi/trả hoa tươi, liên hệ. Là yêu cầu vận hành, không phải code |
 | Upload ảnh từ admin | Cloudinary Unsigned Upload Preset **giới hạn định dạng/dung lượng/thư mục**; lưu `image_url` + `cloudinary_public_id`. Xóa ảnh phải ký request ở Worker (secret không để ở trình duyệt) |
-| Rate limit / Turnstile cho toàn bộ route ghi | Phase 3 mới có verifier có điều kiện secret cho tạo order (mock-tested); widget/production setup, admin protection và rate limit vẫn chưa có |
+| Rate limit / Turnstile cho toàn bộ route ghi | Phase 3 có verifier theo secret cho tạo order (mock-tested); Phase 4 có cookie authorization + Origin/JSON cho ghi admin. Widget đăng nhập/checkout, production setup và rate limit chưa có; không thêm bảng đếm đăng nhập |
 
 ## Ưu tiên trung bình
 
@@ -23,7 +23,7 @@
 | Sổ cái tồn kho | `inventory_movements` (restock/sale/cancel/adjust) để đối soát; hiện chỉ có `stock_quantity` |
 | Ảnh duyệt trước khi giao / ảnh giao | `order_media` + R2 hoặc Cloudinary; kiểm tra chi phí/phương thức thanh toán/hạn mức trước khi chọn provider |
 | Review/rating | Bảng `reviews` có kiểm duyệt; hiển thị trung bình tính từ review được duyệt |
-| Dashboard thật | Tổng hợp doanh thu theo ngày/tuần, sản phẩm bán chạy; cẩn thận hạn mức đọc hàng của D1 |
+| Dashboard nâng cao | Phase 4 đã có summary đơn theo trạng thái/đơn hôm nay VN/tồn thấp; doanh thu ngày/tuần và sản phẩm bán chạy làm sau, cẩn thận hạn mức đọc hàng D1 |
 
 ## Ưu tiên thấp / khi quy mô lớn
 

@@ -5,15 +5,15 @@ Storefront + admin từ thiết kế Flower Shop Figma. **UI: Lunara · GitHub: 
 | Keyword | Hiện trạng |
 | --- | --- |
 | Frontend | React/React DOM 18.3.1 · React Router 7.18.4 · Vite 6.4.4 · Tailwind 4.1.12 |
-| Worker | Hono + `@cloudflare/vite-plugin`; Phase 0–3 DONE local, Zod validation và middleware/lỗi chuẩn |
-| API | Health/catalog/delivery/quote; `POST /api/orders`, `POST /api/orders/lookup`; service `transitionOrder` nội bộ; API lạ → JSON 404 |
+| Worker | Hono + `@cloudflare/vite-plugin`; Phase 0–3 DONE local, Phase 4 backend đã DONE local (9/9 tiêu chí) |
+| API | Health/catalog/delivery/quote/orders/lookup; auth và quản trị `/api/admin/*` dùng JWT cookie; API lạ → JSON 404, admin thiếu cookie → 401 |
 | D1 | Binding `DB` local; canonical 10 bảng, migration/seed/verifier Phase 1; remote chưa truy cập |
 | Commerce | Home/Shop/Cart/Delivery/Quote dùng D1 local; UI gửi/tra đơn chưa nối; auth/admin và các tính năng ngoài preview tạm ẩn |
 | Locale | EN mặc định + VI; catalog/giỏ hiển thị VND; Worker dùng Asia/Ho_Chi_Minh |
 | Build | Frontend `dist/client/` · Worker + Wrangler config `dist/lunara/` |
 | Môi trường đã dùng | Node 24.11.1 · npm 11.6.3; Wrangler hiện yêu cầu Node ≥22 |
 
-Health xác nhận Worker phản hồi, chưa kiểm tra DB. Giỏ bắt đầu rỗng, lưu variant ID/số lượng trong localStorage; giá và phí được báo lại từ server. Backend đặt đơn COD/tra đơn đã có ở Phase 3; UI checkout/tra đơn còn thuộc Phase 5. API auth/admin thuộc Phase 4, chưa triển khai.
+Health xác nhận Worker phản hồi, chưa kiểm tra DB. Giỏ bắt đầu rỗng, lưu variant ID/số lượng trong localStorage; giá và phí được báo lại từ server. Backend đặt đơn COD/tra đơn Phase 3 và auth/admin Phase 4 đã có local; UI checkout/tra đơn/admin còn thuộc Phase 5.
 
 ## Chạy local
 
@@ -53,13 +53,17 @@ Database chỉ local: migration tạo 10 bảng; seed gồm 4 categories, 8 prod
 
 Phase 2 đã có `GET /api/categories`, `GET /api/products`, `GET /api/products/:slug`, `GET /api/delivery/options` và `POST /api/checkout/quote`. Catalog dùng tối đa 3 truy vấn D1; quote đọc giá/tồn từ DB, gộp variant trùng và trả `issues`, luôn chỉ đọc. `shared/` ở root giữ constants/schema Zod dùng chung; frontend catalog/cart/quote đã nối sớm một phần Phase 5. [Contract](docs/pipeline/API_CONTRACT.md) và [nghiệm thu/output Phase 2](docs/pipeline/PHASE_2_API_CATALOG.md).
 
-Phase 3 hoàn tất local: API đặt đơn COD có UUID v4 `Idempotency-Key`, server tự tính tiền/phí, batch trừ tồn không điều kiện + CHECK rollback; API tra đơn bằng mã + SĐT; `transitionOrder` hoàn tồn một lần và đánh dấu COD PAID khi DELIVERED. Giỏ 15 dòng: success 35 statements, nhánh CHECK/unique diagnostic 36, retry được chặn trong giới hạn 40. `npm test` 92/92; smoke 10/10 ca Phase 3, tổng 27/27; typecheck/architecture/build pass. [Checklist/output Phase 3](docs/pipeline/PHASE_3_CHECKOUT_ORDERS.md#bằng-chứng-lệnh--14102026).
+Phase 3 hoàn tất local: API đặt đơn COD có UUID v4 `Idempotency-Key`, server tự tính tiền/phí, batch trừ tồn không điều kiện + CHECK rollback; API tra đơn bằng mã + SĐT; `transitionOrder` hoàn tồn một lần và đánh dấu COD PAID khi DELIVERED. Giỏ 15 dòng: success 35 statements, nhánh CHECK/unique diagnostic 36, retry được chặn trong giới hạn 40. Tại mốc Phase 3: `npm test` 92/92, smoke 10/10 ca order và tổng 27/27; typecheck/architecture/build pass. [Output lịch sử Phase 3](docs/pipeline/PHASE_3_CHECKOUT_ORDERS.md#bằng-chứng-lệnh--14102026).
 
-`npm run smoke` giữ 16 nhóm catalog trên URL local được truyền vào, rồi tự tạo HTTP loopback + D1 `persist:false`, `remoteBindings:false` để chạy 10 ca order và đối chiếu tồn/query budget. Không sửa seed persisted hoặc remote. Turnstile verifier đã có khi Worker cấu hình secret, test provider bằng mock; site key/widget/secret thật chưa cấu hình.
+Phase 4 DONE local (9/9 tiêu chí): đăng nhập bằng SHA-256 + `timingSafeEqual`, JWT HS256 trong cookie HttpOnly/SameSite=Strict 12 giờ, `requireAdmin`/`requireSameOrigin`, API summary/orders/products/variants/delivery-zones. Chuyển trạng thái gọi lại `transitionOrder`; chỉnh tồn ưu tiên `stock_delta` nguyên tử. Không thêm bảng hoặc dependency; không băm mật khẩu nặng trong Worker. Source hiện tại: **125/125 tests, 40/40 smoke trên dev và preview**, typecheck/architecture (178 files)/build/UI pass; 12/12 nhóm admin. Native workerd auth đã kiểm local, chưa đo CPU 10 ms trên cloud. [Checklist/output Phase 4](docs/pipeline/PHASE_4_ADMIN.md).
+
+`npm run smoke` giữ 16 nhóm catalog trên URL local được truyền vào, rồi tự tạo HTTP loopback + D1 `persist:false`, `remoteBindings:false` để chạy ca order/admin và đối chiếu tồn/query budget. Admin smoke dùng secret demo riêng trong bộ nhớ, không cần secret thật và không sửa seed persisted hoặc remote. Turnstile verifier đã có khi Worker cấu hình secret, test provider bằng mock; site key/widget/secret thật chưa cấu hình.
+
+**[NGƯỜI]** Trước khi dùng admin với dữ liệu thật tại local, tự đặt `ADMIN_PASSWORD` ≥24 ký tự ngẫu nhiên và `JWT_SECRET` ≥32 ký tự ngẫu nhiên, khác mật khẩu, trong `.dev.vars`; không gửi giá trị qua chat hoặc ghi vào Git/`VITE_*`. Cấu hình secret production thuộc Phase 6. Secret thiếu/trống bị từ chối; demo chỉ phục vụ kiểm thử.
 
 `worker/config.ts` chứa giả định để chủ shop chỉnh: phụ phí Standard/Express/Same-day lần lượt 0/30.000/50.000 VND, giờ chốt 16:00, chuẩn bị tối thiểu 120 phút, khung giờ 08:00–20:00. Giới hạn API: 15 dòng giỏ, 20 sản phẩm mỗi variant sau gộp, ngày giao tối đa +30 ngày theo Asia/Ho_Chi_Minh.
 
-Bạn có thể test ngay `/shop`/`cart` trên 5173 với D1 local: chọn size, thêm giỏ, reload và đổi khu vực/phương thức để nhận báo giá VND. UI hiện chỉ báo giá; nút gửi đơn và trang tra đơn chưa nối API Phase 3. [Backup và kiểm kê frontend](docs/pipeline/FE_AUDIT.md) · [test API catalog/quote](docs/pipeline/PHASE_2_API_CATALOG.md#test-thủ-công-trên-host-5173). Bước kế tiếp là [Phase 4 auth/admin](docs/pipeline/PHASE_4_ADMIN.md), sau đó hoàn thiện Phase 5 rồi Phase 6.
+Bạn có thể test ngay `/shop`/`cart` trên 5173 với D1 local: chọn size, thêm giỏ, reload và đổi khu vực/phương thức để nhận báo giá VND. UI hiện chỉ báo giá; nút gửi đơn và trang tra đơn chưa nối API Phase 3. [Backup và kiểm kê frontend](docs/pipeline/FE_AUDIT.md) · [test API catalog/quote](docs/pipeline/PHASE_2_API_CATALOG.md#test-thủ-công-trên-host-5173). Phần còn lại là hoàn thiện [Phase 5 UI checkout/lookup/admin](docs/pipeline/PHASE_5_FRONTEND.md), rồi Phase 6 khi được yêu cầu.
 
 ## Tài liệu và phần tiếp theo
 
@@ -72,7 +76,7 @@ Bạn có thể test ngay `/shop`/`cart` trên 5173 với D1 local: chọn size,
 | Stack + entity map | [TECH_STACK.md](docs/TECH_STACK.md) · [FRONTEND_ENTITIES.md](docs/FRONTEND_ENTITIES.md) |
 | Database + đối chiếu v1/v2 | [DATABASE_DESIGN.md](docs/DATABASE_DESIGN.md) · [Canonical SQL](migrations/0001_mvp.sql) |
 
-MVP: **Hono/Workers · D1/SQLite · Cloudinary (chưa tích hợp) · Zod · COD khách vãng lai**. Phase 1 chốt nguyên DDL v2 thành `migrations/0001_mvp.sql`, nguồn schema duy nhất; hai file SQL schema cũ chỉ chứa chú thích dẫn về migration. `delivery_zones` trong MVP; `custom_requests` deferred. **Phase 0–3 DONE local; Phase 4 PLANNED; Phase 5 PARTIAL; Phase 6 PLANNED.** VND và cart localStorage đã có ở preview; phần còn lại là auth/admin và UI gửi/tra đơn. Wishlist server ngoài MVP; Phase 0–3 chưa truy cập D1 remote hoặc deploy.
+MVP: **Hono/Workers · D1/SQLite · Cloudinary (chưa tích hợp) · Zod · COD khách vãng lai**. Phase 1 chốt nguyên DDL v2 thành `migrations/0001_mvp.sql`, nguồn schema duy nhất; hai file SQL schema cũ chỉ chứa chú thích dẫn về migration. `delivery_zones` trong MVP; `custom_requests` deferred. **Phase 0–3 DONE local; Phase 4 DONE local (9/9 tiêu chí); Phase 5 PARTIAL; Phase 6 PLANNED.** VND và cart localStorage đã có ở preview; phần còn lại là UI gửi/tra đơn/admin. Wishlist server ngoài MVP; Phase 0–4 chưa truy cập D1 remote hoặc deploy.
 
 ## Codex và CodeGraph
 
