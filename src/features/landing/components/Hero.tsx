@@ -23,26 +23,11 @@ export function Hero(model: HomeModel) {
               <Link to="/shop" className="flex items-center gap-2 px-8 py-4 rounded-full bg-lunara-rose-strong text-white [text-decoration:none] [font-size:0.85rem] [letter-spacing:0.1em] [text-transform:uppercase] [font-weight:500] [transition:all_0.2s_ease]">
                 {t("Explore Collection")}{" "}<ArrowRight size={16} />
               </Link>
-              <Link to="/request" className="flex items-center gap-2 px-8 py-4 rounded-full [border:1px_solid_#C17B8A] text-lunara-rose-strong [text-decoration:none] [font-size:0.85rem] [letter-spacing:0.1em] [text-transform:uppercase] [font-weight:500]">
-                {t("Custom Order")}</Link>
+
             </div>
 
             {/* Stats */}
-            <div className="flex gap-10 mt-14">
-              {[{
-            num: "500+",
-            label: "Bouquets Delivered"
-          }, {
-            num: "200+",
-            label: "Happy Clients"
-          }, {
-            num: "5★",
-            label: "Average Rating"
-          }].map(s => <div key={s.num}>
-                  <div className="font-display [font-size:2rem] [font-weight:600] text-lunara-ink">{s.num}</div>
-                  <div className="[font-size:0.75rem] text-lunara-body [letter-spacing:0.1em] [text-transform:uppercase]">{t(s.label)}</div>
-                </div>)}
-            </div>
+
           </div>
 
           {/* Hero Image */}
@@ -53,10 +38,7 @@ export function Hero(model: HomeModel) {
             </div>
 
             {/* Floating badge */}
-            <div className="absolute top-8 -left-4 rounded-2xl px-5 py-3 shadow-lg bg-white [border:1px_solid_#F0DDD5]">
-              <div className="[font-size:0.7rem] text-lunara-body [letter-spacing:0.1em] [text-transform:uppercase]">{t("Fresh Today")}</div>
-              <div className="font-display [font-size:1.1rem] text-lunara-ink [font-weight:500]">{t("Spring Collection")}</div>
-            </div>
+
 
             {/* Floating heart */}
             <div className="absolute bottom-12 -right-4 w-12 h-12 rounded-full flex items-center justify-center shadow-lg bg-lunara-rose-strong">

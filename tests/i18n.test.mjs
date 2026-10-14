@@ -1,10 +1,15 @@
-import test from 'node:test';
+import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import i18next from 'i18next';
 import ts from 'typescript';
 import { getLocalizedName, normalizeLanguage, normalizeSearch, readLanguage, saveLanguage } from '../src/shared/i18n/language.ts';
-import { getProducts, normalizeProduct, selectProducts } from '../src/features/shop/shop.service.ts';
+import { getProducts, loadCatalog, normalizeProduct, selectProducts } from '../src/features/shop/shop.service.ts';
+import app from '../worker/index.ts';
+import { createTestDb } from './helpers/worker.mjs';
+let fixture;
+before(async () => { fixture = createTestDb(); const original = globalThis.fetch; globalThis.fetch = (url, options) => app.request(String(url), options, { DB: fixture.db }); try { await loadCatalog(); } finally { globalThis.fetch = original; } });
+after(() => fixture.close());
 
 const root = new URL('../src/shared/i18n/locales/', import.meta.url);
 function resources(language) {
@@ -76,7 +81,7 @@ test('catalog search accepts accented, unaccented and English names without muta
   assert.deepEqual(filter('mẫu đơn'), [1]);
   assert.deepEqual(filter('mau don'), [1]);
   assert.deepEqual(filter('peony'), [1]);
-  assert.deepEqual(filter('OẢI HƯƠNG'), [4]);
+  assert.deepEqual(filter('OẢI HƯƠNG'), [7]);
   assert.equal(products[0].name, 'Blush Peony Bouquet');
   assert.equal(normalizeSearch('Đồng HOA'), 'dong hoa');
 });

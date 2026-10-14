@@ -1,4 +1,4 @@
-import { useLocale } from "@/shared/i18n";
+import { useLocale, getLocalizedName } from "@/shared/i18n";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import { Input } from "@/shared/ui/input";
 import { cn } from "@/shared/lib/utils";
@@ -6,7 +6,7 @@ import type { ProductsModel } from "../hooks/useProducts";
 export function FilterBar(model: Pick<ProductsModel, "search" | "setSearch" | "sortBy" | "setSortBy" | "filterOpen" | "setFilterOpen" | "categories" | "activeCategory" | "setActiveCategory"> & {
   count: number;
 }) {
-  const { t } = useLocale("shop");
+  const { t, language } = useLocale("shop");
   return <>
     <div className="mb-8 flex flex-col gap-4 sm:flex-row">
       <div className="relative flex-1">
@@ -16,13 +16,14 @@ export function FilterBar(model: Pick<ProductsModel, "search" | "setSearch" | "s
       </div>
       <div className="flex gap-3">
         <select aria-label={t("Sort products")} value={model.sortBy} onChange={event => model.setSortBy(event.target.value)} className="rounded-full border border-lunara-border bg-white px-5 py-3 text-[0.85rem] text-lunara-body">
-          <option value="featured">{t("Featured")}</option><option value="low">{t("Price: Low to High")}</option><option value="high">{t("Price: High to Low")}</option><option value="rating">{t("Top Rated")}</option>
+          <option value="featured">{t("Featured")}</option><option value="low">{t("Price: Low to High")}</option><option value="high">{t("Price: High to Low")}</option>
         </select>
         <button aria-expanded={model.filterOpen} onClick={() => model.setFilterOpen(!model.filterOpen)} className={cn("flex items-center gap-2 rounded-full border border-lunara-rose px-5 py-3 text-[0.85rem]", model.filterOpen ? "bg-lunara-rose-strong text-white" : "bg-white text-lunara-rose-strong")}><SlidersHorizontal size={16} /> {t("Filters")}</button>
       </div>
     </div>
     <div className="mb-10 flex flex-wrap gap-3">
-      {model.categories.map(category => <button key={category} aria-pressed={model.activeCategory === category} onClick={() => model.setActiveCategory(category)} className={cn("rounded-full border px-5 py-2 text-[0.82rem] tracking-[0.08em] transition-colors", model.activeCategory === category ? "border-lunara-rose bg-lunara-rose-strong text-white" : "border-lunara-border bg-white text-lunara-body")}>{t(category)}</button>)}
+      <button aria-pressed={model.activeCategory === 'All'} onClick={() => model.setActiveCategory('All')} className="rounded-full border border-lunara-border bg-white px-5 py-2 text-sm text-lunara-ink">{t('All')}</button>
+      {model.categories.map(category => <button key={category.code} aria-pressed={model.activeCategory === category.code} onClick={() => model.setActiveCategory(category.code)} className={cn("rounded-full border px-5 py-2 text-[0.82rem] tracking-[0.08em] transition-colors", model.activeCategory === category.code ? "border-lunara-rose bg-lunara-rose-strong text-white" : "border-lunara-border bg-white text-lunara-body")}>{getLocalizedName(category, language)}</button>)}
       <span className="ml-2 self-center text-[0.82rem] text-lunara-body" aria-live="polite">{t("productCount", { count: model.count })}</span>
     </div>
   </>;

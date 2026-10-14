@@ -82,6 +82,7 @@ try {
       else job?.resolve(response.result);
     }
     if (response.method === 'Runtime.exceptionThrown') exceptions.push({ route: routeName, detail: response.params.exceptionDetails.exception?.description });
+    if (response.method === 'Fetch.requestPaused') send('Fetch.failRequest', { requestId: response.params.requestId, errorReason: 'Failed' }).catch(() => {});
   });
   await send('Page.enable');
   await send('Runtime.enable');
@@ -96,7 +97,11 @@ try {
   }
   let localeChecks;
   const typographyChecks = [];
-  if (mode !== 'baseline') {
+  const liveCatalog = await evaluate("Boolean(document.querySelector('[data-d1-storefront]'))");
+  if (liveCatalog) {
+    await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: seedScript.identifier });
+    localeChecks = await import('./check-ui-live-catalog.mjs').then(module => module.verifyLiveCatalog({ navigate, click, input, assert, evaluate, waitFor, send, screenshot, delay }));
+  } else if (mode !== 'baseline') {
     if (!i18nOnly) await import('./check-ui-flows.mjs').then(module => module.verify({ navigate, click, input, assert, evaluate, waitFor, send, screenshot, delay, seedScriptIdentifier: seedScript.identifier }));
     else await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: seedScript.identifier });
     localeChecks = await import('./check-ui-i18n.mjs').then(module => module.verifyI18n({ navigate, click, input, assert, evaluate, waitFor, send, delay, screenshot }));
@@ -125,7 +130,7 @@ try {
       }
     }
     await screenshot('i18n-fonts-mobile-shop');
-    await navigate('/login');
+    await navigate(liveCatalog ? '/shop' : '/login');
     await assert(`getComputedStyle(document.querySelector('input')).fontFamily.includes('Be Vietnam Pro')`, 'Vietnamese form did not inherit the body font');
     await screenshot('i18n-fonts-mobile-login');
     await evaluate("document.querySelector('[data-language-switcher] button[lang=en]').click()");
@@ -137,6 +142,12 @@ try {
   writeFileSync(path.join(root, '.security-review', `${mode}-ui-results.json`), JSON.stringify({ results, localeChecks, typographyChecks, exceptions }, null, 2));
   if (exceptions.length) throw new Error(JSON.stringify(exceptions));
   console.log(JSON.stringify({ mode, routes: results.length, localeChecks, typographyChecks, exceptions: exceptions.length }));
+} catch (error) {
+  try {
+    await screenshot('failure');
+    writeFileSync(path.join(root, '.security-review', 'ui-failure.json'), JSON.stringify({ error: error.message, route: routeName, state: await evaluate("({url:location.href,text:document.body.innerText,cart:localStorage.getItem('lunara.cart.v1')})"), exceptions }, null, 2));
+  } catch {}
+  throw error;
 } finally {
   if (ws?.readyState === WebSocket.OPEN) { try { await send('Browser.close'); } catch {} ws.close(); }
   browser.kill();

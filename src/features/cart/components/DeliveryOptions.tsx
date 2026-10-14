@@ -1,28 +1,17 @@
-import { useLocale } from "@/shared/i18n";
-import { cn } from "@/shared/lib/utils";
-import { Truck } from "lucide-react";
-import type { CartModel } from "../hooks/useCheckout";
-export function DeliveryOptions(model: CartModel) {
-  const { t } = useLocale("cart");
-  const {
-    delivery,
-    setDelivery,
-    deliveryOptions
-  } = model;
-  return <div className="mt-8 p-6 rounded-2xl bg-white [border:1px_solid_#F0DDD5]">
-                <h3 className="font-display [font-size:1.2rem] text-lunara-ink [margin-bottom:16px] [display:flex] [align-items:center] [gap:8px]">
-                  <Truck size={18} className="text-lunara-rose-strong" /> {t("Delivery Options")}</h3>
-                <div className="flex flex-col gap-3">
-                  {deliveryOptions.map(opt => <label key={opt.id} className={cn("flex items-center justify-between p-4 rounded-xl cursor-pointer [transition:all_0.2s]", delivery === opt.id ? "[border:1px_solid_#C17B8A]" : "[border:1px_solid_#F0DDD5]", delivery === opt.id ? "bg-[#FDF0F3]" : "bg-transparent")}>
-                      <div className="min-w-0 flex items-center gap-3">
-                        <input type="radio" name="delivery" value={opt.id} checked={delivery === opt.id} onChange={() => setDelivery(opt.id)} className="accent-lunara-rose" />
-                        <div className="min-w-0">
-                          <div className="[font-size:0.88rem] text-lunara-ink [font-weight:500]">{t(opt.label)}</div>
-                          <div className="[font-size:0.76rem] text-lunara-body">{t(opt.sublabel)}</div>
-                        </div>
-                      </div>
-                      <span className="shrink-0 ml-2 [font-size:0.88rem] text-lunara-rose-strong [font-weight:500]">₱{opt.price}</span>
-                    </label>)}
-                </div>
-              </div>;
+import { useLocale } from '@/shared/i18n';
+import { formatVND } from '@/shared/lib/format';
+import { apiErrorKey } from '@/shared/api/client';
+import type { QuoteCartModel } from '../hooks/useQuoteCart';
+export function DeliveryOptions(model: QuoteCartModel) {
+  const { t, language } = useLocale("cart");
+  const province = model.options?.provinces.find(item => item.province_name === model.province);
+  return <section className="mt-8 rounded-2xl border border-lunara-border bg-white p-6">
+    <h2 className="mb-5 font-display text-2xl text-lunara-ink">{t('Delivery Options')}</h2>
+    {model.optionsError ? <div role="alert">{t(apiErrorKey(model.optionsError))}<button onClick={model.retry} className="ml-4 rounded-full bg-lunara-rose-strong px-4 py-2 text-white">{t('Retry')}</button></div> : !model.options ? <p role="status">{t('Loading delivery options')}</p> : <div className="space-y-5">
+      <label className="block text-sm text-lunara-body">{t('Province')}<select aria-label={t('Province')} value={model.province} onChange={event => model.setProvince(event.target.value)} className="mt-2 w-full rounded-xl border border-lunara-border bg-lunara-surface px-4 py-3 text-lunara-ink"><option value="">{t('Select province')}</option>{model.options.provinces.map(item => <option key={item.province_name} value={item.province_name}>{item.province_name}</option>)}</select></label>
+      <label className="block text-sm text-lunara-body">{t('Ward')}<input aria-label={t('Ward')} list="delivery-wards" value={model.ward} onChange={event => model.setWard(event.target.value)} className="mt-2 w-full rounded-xl border border-lunara-border bg-lunara-surface px-4 py-3 text-lunara-ink" /><datalist id="delivery-wards">{province?.wards.map(item => <option key={item.ward_name} value={item.ward_name} />)}</datalist></label>
+      {province && province.default_fee !== null && <p className="text-sm text-lunara-body">{t('Default delivery fee {{fee}}', { fee: formatVND(province.default_fee, language) })}</p>}
+      <fieldset className="space-y-3"><legend className="mb-3 text-sm text-lunara-body">{t('Delivery method')}</legend>{model.options.methods.map(item => <label key={item.code} className="flex items-center justify-between gap-3 rounded-xl border border-lunara-border p-4 text-lunara-ink"><span className="flex items-center gap-3"><input type="radio" name="delivery-method" value={item.code} checked={model.method === item.code} onChange={() => model.setMethod(item.code)} className="accent-lunara-rose-strong" />{t(item.code === 'STANDARD' ? 'Standard Delivery' : item.code === 'EXPRESS' ? 'Express Delivery' : 'Same-Day Delivery')}</span><span className="text-sm text-lunara-body">{t('Surcharge {{fee}}', { fee: formatVND(item.surcharge, language) })}</span></label>)}</fieldset>
+    </div>}
+  </section>;
 }

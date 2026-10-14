@@ -1,5 +1,6 @@
 import { useLocale, getLocalizedName } from "@/shared/i18n";
-import { formatMoney } from "@/shared/lib/format";
+import { formatVND } from "@/shared/lib/format";
+import { apiErrorKey } from '@/shared/api/client';
 import { Link } from "react-router";
 import { ArrowRight, Heart } from "lucide-react";
 import type { HomeModel } from "../hooks/useHome";
@@ -16,7 +17,10 @@ export function FeaturedCollection(model: HomeModel) {
           <div className="[width:60px] [height:2px] bg-lunara-rose-strong [margin:16px_auto_0]" />
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        {model.loading && <p role="status" className="mb-6 text-center text-lunara-body">{t('Loading catalog')}</p>}
+        {Boolean(model.error) && <div role="alert" className="mb-6 text-center text-lunara-ink">{t(apiErrorKey(model.error))}<button onClick={model.reload} className="ml-4 rounded-full bg-lunara-rose-strong px-5 py-2 text-white">{t('Retry')}</button></div>}
+        {!model.loading && !model.error && !featuredProducts.length && <p role="status" className="text-center text-lunara-body">{t('No featured products')}</p>}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
           {featuredProducts.map(product => <Link key={product.id} to="/shop" className="group [text-decoration:none]">
               <div className="rounded-2xl overflow-hidden shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-white">
                 <div className="relative overflow-hidden [aspect-ratio:3/4]">
@@ -24,15 +28,12 @@ export function FeaturedCollection(model: HomeModel) {
                   {product.tag && <span className="absolute top-3 left-3 px-3 py-1 rounded-full bg-lunara-rose-strong text-white [font-size:0.68rem] [letter-spacing:0.1em] [text-transform:uppercase]">
                       {t(product.tag)}
                     </span>}
-                  <button className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-white [border:none] [cursor:pointer]" aria-label={t("Wishlist")}>
-                    <Heart size={14} className="text-lunara-rose-strong" />
-                  </button>
                 </div>
                 <div className="p-4">
                   <h3 className="font-display [font-size:1rem] text-lunara-ink [margin-bottom:4px] [font-weight:500]">
                     {getLocalizedName(product, language)}
                   </h3>
-                  <p className="[font-size:0.9rem] text-lunara-rose-strong [font-weight:500]">{formatMoney(product.price)}</p>
+                  <p className="[font-size:0.9rem] text-lunara-rose-strong [font-weight:500]">{product.variants?.length ? t('From {{price}}', { price: formatVND(product.price, language) }) : t('Unavailable')}</p>
                 </div>
               </div>
             </Link>)}

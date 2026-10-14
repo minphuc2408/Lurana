@@ -1,7 +1,10 @@
 import { useState } from "react";
-import { getCategories, getProducts, selectProducts } from "../shop.service";
+import { selectProducts } from "../shop.service";
+import { useCatalog } from './useCatalog';
 export function useProducts() {
-  const [products] = useState(getProducts);
+  const catalog = useCatalog();
+  const products = catalog.products;
+  const [selectedVariants, setSelectedVariants] = useState<Record<number, number>>({});
   const [activeCategory, setActiveCategory] = useState("All");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("featured");
@@ -9,6 +12,7 @@ export function useProducts() {
   const [filterOpen, setFilterOpen] = useState(false);
   const sorted = selectProducts(products, { category: activeCategory, search, sort: sortBy });
   const toggleLike = (id: number) => setLiked(previous => previous.includes(id) ? previous.filter(item => item !== id) : [...previous, id]);
-  return { activeCategory, setActiveCategory, search, setSearch, sortBy, setSortBy, liked, toggleLike, filterOpen, setFilterOpen, sorted, categories: getCategories() };
+  return { ...catalog, activeCategory, setActiveCategory, search, setSearch, sortBy, setSortBy, liked, toggleLike, filterOpen, setFilterOpen, sorted, selectedVariants,
+    selectVariant: (productId: number, variantId: number) => setSelectedVariants(previous => ({ ...previous, [productId]: variantId })) };
 }
 export type ProductsModel = ReturnType<typeof useProducts>;

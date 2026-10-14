@@ -1,63 +1,17 @@
-import { useLocale } from "@/shared/i18n";
-import { CartSummary } from "./CartSummary";
-import { CheckoutForm } from "./CheckoutForm";
-import { DeliveryOptions } from "./DeliveryOptions";
-import { CartItemList } from "./CartItemList";
-import { CheckoutConfirmation } from "./CheckoutConfirmation";
-import { cn } from "@/shared/lib/utils";
-import { Link } from "react-router";
-import { ShoppingBag, ChevronRight } from "lucide-react";
-import type { CartModel } from "../hooks/useCheckout";
-export function CartView(model: CartModel) {
+import { useLocale } from '@/shared/i18n';
+import { apiErrorKey } from '@/shared/api/client';
+import { Link } from 'react-router';
+import { ShoppingBag } from 'lucide-react';
+import { CartItemList } from './CartItemList';
+import { CartSummary } from './CartSummary';
+import { DeliveryOptions } from './DeliveryOptions';
+import type { QuoteCartModel } from '../hooks/useQuoteCart';
+export function CartView(model: QuoteCartModel) {
   const { t } = useLocale("cart");
-  const {
-    items,
-    step
-  } = model;
-  if (step === "confirmation") {
-    return <CheckoutConfirmation {...model} />;
-  }
-  return <div className="bg-lunara-cream [min-height:100vh] font-body">
-      {/* Header */}
-      <div className="[background:linear-gradient(135deg,_#F9EDE9_0%,_#F5E8E4_100%)] [padding:50px_24px_30px]">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="font-display [font-size:clamp(2rem,_4vw,_3rem)] [font-weight:600] text-lunara-ink">
-            {step === "cart" ? t("Your Cart") : t("Checkout")}
-          </h1>
-          {/* Breadcrumb steps */}
-          <div className="flex items-center gap-2 mt-3">
-            {["cart", "checkout"].map((s, i) => <div key={s} className="flex items-center gap-2">
-                <div className="flex items-center gap-2">
-                  <div className={cn("w-7 h-7 rounded-full flex items-center justify-center [font-size:0.75rem] [font-weight:600]", step === s || s === "cart" && step === "checkout" ? "bg-lunara-rose-strong" : "bg-lunara-border", step === s || s === "cart" && step === "checkout" ? "text-white" : "text-lunara-body")}>
-                    {i + 1}
-                  </div>
-                  <span className={cn("[font-size:0.82rem] [text-transform:capitalize]", step === s ? "text-lunara-rose-strong" : "text-lunara-body")}>{t(s)}</span>
-                </div>
-                {i < 1 && <ChevronRight size={14} className="text-lunara-body" />}
-              </div>)}
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-10">
-        {/* Left: Cart or Checkout Form */}
-        <div className="min-w-0 lg:col-span-2">
-          {step === "cart" ? <>
-              {items.length === 0 ? <div className="text-center py-20">
-                  <ShoppingBag size={48} className="text-lunara-rose-light [margin:0_auto_16px]" />
-                  <p className="text-lunara-body [font-size:1rem]">{t("Your cart is empty.")}</p>
-                  <Link to="/shop" className="text-lunara-rose-strong [font-size:0.88rem] [text-decoration:none]">{t("Browse flowers →")}</Link>
-                </div> : <CartItemList {...model} />}
-
-              {/* Delivery Options */}
-              <DeliveryOptions {...model} />
-            </> : /* Checkout Form */<CheckoutForm {...model} />}
-        </div>
-
-        {/* Right: Order Summary */}
-        <div>
-          <CartSummary {...model} />
-        </div>
-      </div>
-    </div>;
+  return <div className="min-h-screen bg-lunara-cream font-body">
+    <div className="bg-lunara-blush px-6 py-12"><div className="mx-auto max-w-7xl"><h1 className="font-display text-4xl font-semibold text-lunara-ink">{t('Your Cart')}</h1><p className="mt-3 text-lunara-body">{t('Live cart quote')}</p></div></div>
+    <div className="mx-auto max-w-7xl px-6 py-10">
+      {model.catalogLoading ? <p role="status">{t('Loading catalog')}</p> : model.catalogError ? <div role="alert">{t(apiErrorKey(model.catalogError))}<button onClick={model.reloadCatalog} className="ml-4 rounded-full bg-lunara-rose-strong px-5 py-2 text-white">{t('Retry')}</button></div> : !model.items.length ? <div data-empty-cart className="py-20 text-center"><ShoppingBag size={48} className="mx-auto mb-4 text-lunara-rose-strong" /><p>{t('Your cart is empty.')}</p><Link to="/shop" className="text-lunara-rose-strong">{t('Browse flowers →')}</Link></div> : <div className="grid gap-8 lg:grid-cols-3"><div className="min-w-0 lg:col-span-2"><CartItemList {...model} /><DeliveryOptions {...model} /></div><CartSummary {...model} /></div>}
+    </div>
+  </div>;
 }

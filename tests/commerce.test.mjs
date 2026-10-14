@@ -1,61 +1,65 @@
-import test from 'node:test';
+import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { getProduct, getProducts, selectProducts } from '../src/features/shop/shop.service.ts';
-import { cartReducer, calculateCart, validateCheckout } from '../src/features/cart/cart.service.ts';
-import { formatMoney } from '../src/shared/lib/format.ts';
-
-const deliveries = [{ id: 'standard', price: 150 }, { id: 'express', price: 300 }, { id: 'sameday', price: 500 }];
-const item = (id, size = 'Medium', qty = 1) => ({ ...getProduct(id), id: `${id}:${size}`, productId: id, size, qty });
-
-test('catalog identities are unique and reads do not expose mutable fixtures', () => {
-  const products = getProducts();
-  assert.equal(new Set(products.map(product => product.id)).size, products.length);
-  products[0].price = 0;
-  assert.equal(getProduct(1).price, 1200);
-  assert.equal(getProduct(999), undefined);
+import app from '../worker/index.ts';
+import { createTestDb } from './helpers/worker.mjs';
+import { getProduct, getProducts, loadCatalog, normalizeProduct, selectProducts } from '../src/features/shop/shop.service.ts';
+import { cartReducer, readCart, saveCart, CART_STORAGE_KEY } from '../src/features/cart/cart.service.ts';
+import { formatVND } from '../src/shared/lib/format.ts';
+import { apiRequest, ApiError } from '../src/shared/api/client.ts';
+import { requestQuote } from '../src/features/cart/quote.service.ts';
+let fixture;
+before(async () => { fixture = createTestDb(); const original = globalThis.fetch; globalThis.fetch = (url, options) => app.request(String(url), options, { DB: fixture.db }); try { await loadCatalog(); } finally { globalThis.fetch = original; } });
+after(() => fixture.close());
+const item = (id, size = 'S', qty = 1) => { const p=getProduct(id),v=p.variants.find(v=>v.size_code===size);return {...p,id:'variant:'+v.id,productId:p.id,variantId:v.id,price:v.price,size,qty,maxQuantity:v.max_quantity}; };
+test('catalog is an API snapshot with variant prices, categories and no fabricated ratings', () => {
+ const products=getProducts();assert.equal(products.length,8);assert.equal(products[0].price,450000);assert.equal(products[0].rating,undefined);
+ products[0].variants[0].price=1;assert.equal(getProduct(1).variants[0].price,450000);
+ const product=getProduct(1);product.variants[0].price=1;assert.equal(getProduct(1).variants[0].price,450000);
+ assert.equal(getProduct(999),undefined);
 });
-test('search, category and price sorting compose without changing the catalog', () => {
-  const products = getProducts();
-  assert.deepEqual(selectProducts(products, { category: 'Bouquets', search: 'LILY', sort: 'low' }).map(product => product.id), [5]);
-  const selected = selectProducts(products, { category: 'All', search: '', sort: 'low' });
-  assert.equal(selected[0].price, 750);
-  assert.equal(products[0].id, 1);
-  assert.deepEqual(selectProducts(products, { category: 'All', search: 'missing flower', sort: 'featured' }), []);
+test('adapter selects primary image and lowest variant price; empty variants are supported', () => {
+ const base={id:100,slug:'test',category_code:'bouquets',name_vi:'Hoa',name_en:'Flower',badge_code:null,is_featured:false,description_vi:null,description_en:null};
+ const p=normalizeProduct({...base,images:[{url:'secondary',is_primary:false},{url:'primary',is_primary:true}],variants:[{price:600000},{price:350000}]},[{code:'bouquets',name_en:'Bouquets'}]);
+ assert.equal(p.image,'primary');assert.equal(p.price,350000);assert.equal(p.category,'Bouquets');assert.equal(p.reviews,undefined);
+ assert.equal(normalizeProduct({...base,images:[],variants:[]}).image,'');
 });
-test('adding the same variant increments quantity while different sizes stay separate', () => {
-  let cart = cartReducer([], { type: 'add', item: item(1) });
-  cart = cartReducer(cart, { type: 'add', item: item(1) });
-  cart = cartReducer(cart, { type: 'add', item: item(1, 'Large') });
-  assert.deepEqual(cart.map(line => [line.id, line.qty]), [['1:Medium', 2], ['1:Large', 1]]);
+test('category code, accented search and price sorting compose over DB products', () => {
+ const products=getProducts();assert.deepEqual(selectProducts(products,{category:'bouquets',search:'PASTEL',sort:'low'}).map(p=>p.id),[2]);
+ assert.deepEqual(selectProducts(products,{category:'All',search:'mau don',sort:'featured'}).map(p=>p.id),[1]);
+ assert.deepEqual(selectProducts(products,{category:'All',search:'missing flower',sort:'featured'}),[]);
+ assert.equal(products[0].id,1);
 });
-test('quantity bounds, removal and clear preserve other variants', () => {
-  const initial = [item(1), item(1, 'Large')];
-  assert.equal(cartReducer(initial, { type: 'quantity', id: '1:Medium', delta: -3 })[0].qty, 1);
-  assert.equal(cartReducer(initial, { type: 'quantity', id: '1:Medium', delta: 200 })[0].qty, 99);
-  assert.equal(cartReducer(initial, { type: 'quantity', id: '1:Medium', delta: Number.NaN }), initial);
-  assert.deepEqual(cartReducer(initial, { type: 'remove', id: '1:Medium' }).map(line => line.id), ['1:Large']);
-  assert.deepEqual(cartReducer(initial, { type: 'clear' }), []);
+test('cart merges same variant and keeps sizes separate', () => {
+ let cart=cartReducer([],{type:'add',item:item(1)});cart=cartReducer(cart,{type:'add',item:item(1)});cart=cartReducer(cart,{type:'add',item:item(1,'M')});
+ assert.deepEqual(cart.map(line=>[line.variantId,line.qty]),[[1,2],[2,1]]);
 });
-test('invalid additions do not corrupt totals', () => {
-  const initial = [item(1)];
-  assert.equal(cartReducer(initial, { type: 'add', item: { ...item(4), qty: -1 } }), initial);
-  assert.equal(cartReducer(initial, { type: 'add', item: { ...item(4), price: Number.NaN } }), initial);
+test('cart uses API stock limits, caps 15 lines and rejects invalid additions', () => {
+ let cart=cartReducer([],{type:'add',item:item(1,'L',10)});
+ assert.equal(cartReducer(cart,{type:'quantity',id:cart[0].id,delta:100})[0].qty,10);
+ assert.equal(cartReducer(cart,{type:'quantity',id:cart[0].id,delta:-100})[0].qty,1);
+ assert.equal(cartReducer(cart,{type:'add',item:{...item(2),qty:0}}),cart);
+ for(let id=1;id<=15;id++)cart=cartReducer(cart,{type:'add',item:{...item(1),id:'v'+id,variantId:100+id}});
+ assert.equal(cart.length,15);assert.equal(cartReducer(cart,{type:'add',item:{...item(1),id:'extra'}}),cart);
 });
-test('demo cart totals retain PHP pricing, delivery fees and floored ten percent discount', () => {
-  const cart = [item(1), item(4, 'Large', 2), item(5, 'Small')];
-  assert.deepEqual(calculateCart(cart, 'standard', false, deliveries), { subtotal: 4200, deliveryFee: 150, discount: 0, total: 4350 });
-  assert.equal(calculateCart(cart, 'express', true, deliveries).total, 4080);
-  assert.equal(calculateCart(cart, 'sameday', true, deliveries).total, 4280);
-  assert.equal(calculateCart([{ ...item(1), price: 1001 }], 'standard', true, deliveries).discount, 100);
-  assert.deepEqual(calculateCart([], 'sameday', true, deliveries), { subtotal: 0, deliveryFee: 0, discount: 0, total: 0 });
+test('cart persistence stores only variant IDs/quantities and handles blocked or corrupt storage', () => {
+ const values=new Map();const storage={getItem:key=>values.get(key),setItem:(key,value)=>values.set(key,value)};
+ saveCart([item(1,'M',2)],storage);assert.deepEqual(JSON.parse(values.get(CART_STORAGE_KEY)),{version:1,lines:[{variantId:2,quantity:2}]});
+ assert.deepEqual(readCart(storage),[{variantId:2,quantity:2}]);
+ for(const value of ['broken','null',JSON.stringify({version:0,lines:[]}),JSON.stringify({version:1,lines:[{variantId:1,quantity:21}]})]) {values.set(CART_STORAGE_KEY,value);assert.deepEqual(readCart(storage),[]);}
+ values.set(CART_STORAGE_KEY,JSON.stringify({version:1,lines:[{variantId:1,quantity:1,price:1},{variantId:1,quantity:2}]}));assert.deepEqual(readCart(storage),[{variantId:1,quantity:3}]);
+ assert.deepEqual(readCart({getItem(){throw new Error('blocked');}}),[]);assert.doesNotThrow(()=>saveCart([],{setItem(){throw new Error('blocked');}}));
 });
-test('checkout cannot complete with missing fields or malformed email', () => {
-  const form = { firstName: 'Demo', lastName: 'User', email: 'demo@example.test', phone: '+63 900 000 0000', address: 'Sample address', city: 'Manila' };
-  assert.equal(validateCheckout(form), '');
-  assert.match(validateCheckout({ ...form, address: ' ' }), /complete/);
-  assert.match(validateCheckout({ ...form, email: 'invalid' }), /email/);
+test('quote client sends only IDs, quantities and delivery selections to real Hono pricing', async t => {
+ let body; t.mock.method(globalThis,'fetch',(url, options)=>{body=JSON.parse(options.body);return app.request(String(url),options,{DB:fixture.db});});
+ const result=await requestQuote([item(1,'S',1)],'Thành phố Hà Nội','Phường Hoàn Kiếm','STANDARD');
+ assert.deepEqual(body.items,[{variant_id:1,quantity:1}]);assert.equal(body.price,undefined);assert.equal(result.grand_total,470000);assert.equal(result.delivery_fee,20000);
 });
-test('money remains PHP with numeric amounts at the display boundary', () => {
-  assert.equal(formatMoney(1200), '₱1,200');
-  assert.equal(formatMoney(1001.5), '₱1,001.5');
+test('API wrapper preserves error codes and rejects malformed responses/network errors', async t => {
+ t.mock.method(globalThis,'fetch',async()=>new Response(JSON.stringify({error:{code:'NO_DELIVERY_ZONE',message:'Demo',details:[]}}),{status:422}));
+ await assert.rejects(()=>apiRequest('/test'),e=>e instanceof ApiError&&e.code==='NO_DELIVERY_ZONE'&&e.status===422);
+ t.mock.method(globalThis,'fetch',async()=>new Response('<html>error</html>',{status:500}));await assert.rejects(()=>apiRequest('/test'),e=>e.code==='BAD_RESPONSE');
+ t.mock.method(globalThis,'fetch',async()=>{throw new TypeError('offline');});await assert.rejects(()=>apiRequest('/test'),e=>e.code==='NETWORK');
+});
+test('VND remains VND when switching English/Vietnamese and has no decimal prices', () => {
+ assert.equal(formatVND(450000,'vi').replace(/\s/g,' '),'450.000 ₫');assert.match(formatVND(450000,'en'),/450,000/);assert.match(formatVND(450000,'en'),/₫/);
 });

@@ -20,9 +20,7 @@ export function HomeView(model: HomeModel) {
       <OurStory {...model} />
 
       {/* Testimonials */}
-      <Testimonials {...model} />
 
       {/* CTA Banner */}
-      <CustomOrderBanner {...model} />
     </div>;
 }
