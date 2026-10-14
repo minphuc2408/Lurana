@@ -99,7 +99,7 @@ try {
   if (mode !== 'baseline') {
     if (!i18nOnly) await import('./check-ui-flows.mjs').then(module => module.verify({ navigate, click, input, assert, evaluate, waitFor, send, screenshot, delay, seedScriptIdentifier: seedScript.identifier }));
     else await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: seedScript.identifier });
-    localeChecks = await import('./check-ui-i18n.mjs').then(module => module.verifyI18n({ navigate, click, input, assert, evaluate, send, delay, screenshot }));
+    localeChecks = await import('./check-ui-i18n.mjs').then(module => module.verifyI18n({ navigate, click, input, assert, evaluate, waitFor, send, delay, screenshot }));
   }
   if (checkFonts) {
     await send('DOM.enable');

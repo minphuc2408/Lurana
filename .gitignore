@@ -23,6 +23,13 @@
 !/scripts/codegraph.mjs
 !/scripts/setup-assistant.mjs
 !/vite.config.ts
+!/wrangler.jsonc
+!/tsconfig.worker.json
+!/worker-configuration.d.ts
+!/.dev.vars.example
+!/worker/
+!/worker/index.ts
+!/worker/env.ts
 
 # Reviewed verification tools and tests.
 !/tests/
@@ -30,6 +37,8 @@
 !/scripts/check-ui.mjs
 !/scripts/check-ui-flows.mjs
 !/scripts/check-ui-i18n.mjs
+!/scripts/reset-d1-local.mjs
+!/scripts/smoke.mjs
 !/tests/auth.test.mjs
 !/tests/commerce.test.mjs
 !/tests/design.test.mjs
@@ -37,14 +46,39 @@
 
 # Reviewed backend design documents.
 !/docs/
+!/docs/TECH_STACK.md
+!/docs/PROJECT_STATUS.md
 !/docs/FRONTEND_ENTITIES.md
 !/docs/DATABASE_DESIGN.md
+!/docs/sql/
+!/docs/sql/MVP_SCHEMA.sql
+!/docs/sql/MVP_SEED_DEV.sql
+!/docs/sql/deferred/
+!/docs/sql/deferred/0002_custom_requests.sql
+!/docs/pipeline/
+!/docs/pipeline/README.md
+!/docs/pipeline/API_CONTRACT.md
+!/docs/pipeline/BACKLOG.md
+!/docs/pipeline/MVP_SCHEMA.sql
+!/docs/pipeline/PHASE_0_PREPARE.md
+!/docs/pipeline/PHASE_1_DATABASE.md
+!/docs/pipeline/PHASE_2_API_CATALOG.md
+!/docs/pipeline/PHASE_3_CHECKOUT_ORDERS.md
+!/docs/pipeline/PHASE_4_ADMIN.md
+!/docs/pipeline/PHASE_5_FRONTEND.md
+!/docs/pipeline/PHASE_6_DEPLOY.md
+!/docs/pipeline/verify_schema.reference.py
 
 # Reviewed feature architecture and source files.
 !/tsconfig.json
 !/src/
 !/src/app/
 !/src/app/layouts/
+!/src/app/layouts/components/
+!/src/app/layouts/components/StorefrontFooter.tsx
+!/src/app/layouts/components/ZaloContact.tsx
+!/src/shared/config/
+!/src/shared/config/storefront-footer.ts
 !/src/app/layouts/hooks/
 !/src/features/
 !/src/features/admin/
@@ -308,6 +342,10 @@
 **/Thumbs.db
 **/node_modules/
 /dist/
+/.wrangler/
+**/.dev.vars
+**/.dev.vars.*
+!/.dev.vars.example
 /.npm-cache/
 /.security-review/
 /.codegraph/

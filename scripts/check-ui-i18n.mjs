@@ -1,4 +1,4 @@
-export async function verifyI18n({ navigate, click, input, assert, evaluate, send, delay, screenshot }) {
+export async function verifyI18n({ navigate, click, input, assert, evaluate, waitFor, send, delay, screenshot }) {
   const switchTo = async language => {
     await evaluate(`document.querySelector('[data-language-switcher] button[lang="${language}"]').click()`);
     await delay(120);
@@ -10,6 +10,13 @@ export async function verifyI18n({ navigate, click, input, assert, evaluate, sen
   await navigate('/shop');
   await switchTo('vi');
   await assert('document.body.innerText.includes("Cửa hàng Lunara") && document.body.innerText.includes("Bó mẫu đơn hồng phấn")', 'Vietnamese catalog missing');
+  await assert(`(() => { const footer = document.querySelector('[data-storefront-footer]'); return footer.innerText.includes('CHĂM SÓC KHÁCH HÀNG') && footer.innerText.includes('THEO DÕI') && footer.innerText.includes('SHOP HOA FLOWERCORNER') && footer.innerText.includes('0319117387') && footer.querySelectorAll('a').length === 18 && [...footer.querySelectorAll('a')].every(link => link.href.startsWith('https://') && link.target === '_blank' && link.rel.includes('noopener')); })()`, 'Footer content or external destinations missing');
+  await evaluate("document.querySelector('[data-zalo-contact] summary').click()");
+  await assert(`document.querySelector('[data-zalo-contact]').open && document.querySelector('[data-zalo-contact]').innerText.includes('Thông tin liên hệ Zalo sẽ được cập nhật sớm.') && !document.querySelector('[data-zalo-contact] a')`, 'Unconfigured Zalo must show the pending message without a fake contact');
+  await evaluate("document.querySelector('[data-zalo-contact] summary').click()");
+  await evaluate("window.scrollTo(0, document.querySelector('[data-storefront-footer]').offsetTop - 90)");
+  await screenshot('footer-desktop-vi');
+  await evaluate('window.scrollTo(0, 0)');
   await input('[aria-label="Tìm hoa"]', 'mau don');
   await assert('document.querySelectorAll("article").length === 1', 'Unaccented Vietnamese search failed');
   await evaluate('document.querySelector("article button[aria-label^=Thêm]").click()');
@@ -22,7 +29,7 @@ export async function verifyI18n({ navigate, click, input, assert, evaluate, sen
   await assert(`document.body.innerText.includes('Blush Peony Bouquet') && document.querySelector('a[href="/cart"][aria-label]').getAttribute('aria-label').endsWith('${count}')`, 'Language switching reset cart');
   await switchTo('vi');
   await send('Page.reload');
-  await delay(350);
+  await waitFor('document.readyState === "complete" && document.body.innerText.includes("Giỏ hàng của bạn")');
   await assert('document.documentElement.lang === "vi" && document.body.innerText.includes("Giỏ hàng của bạn")', 'Language preference did not survive reload');
 
   const routes = [
@@ -35,6 +42,7 @@ export async function verifyI18n({ navigate, click, input, assert, evaluate, sen
   ];
   for (const [route, text] of routes) {
     await navigate(route);
+    await waitFor(`document.body.innerText.includes(${JSON.stringify(text)})`);
     await assert(`document.body.innerText.includes(${JSON.stringify(text)})`, `Missing Vietnamese copy on ${route}`);
     await assert('document.querySelector("[data-language-switcher] button[lang=vi]").getAttribute("aria-pressed") === "true"', `Language button unavailable on ${route}`);
   }
@@ -63,20 +71,40 @@ export async function verifyI18n({ navigate, click, input, assert, evaluate, sen
   await assert('document.body.innerText.includes("Bilingual Demo Bouquet")', 'English inventory name was lost');
   await switchTo('vi');
 
-  for (const width of [320, 390, 768, 1024]) {
+  const widths = [320, 390, 640, 768, 1024, 1280, 1440];
+  for (const width of widths) {
     await send('Emulation.setDeviceMetricsOverride', { width, height: 844, deviceScaleFactor: 1, mobile: width < 768 });
-    for (const [route] of routes) {
+    for (const [route, text] of routes) {
       await navigate(route);
+      await waitFor(`document.body.innerText.includes(${JSON.stringify(text)})`);
       const overflow = await evaluate(`(() => [...document.querySelectorAll('body *')].filter(element => { const rect = element.getBoundingClientRect(); return rect.width && rect.right > ${width} + 1 && getComputedStyle(element).position !== 'absolute'; }).slice(-5).map(element => ({tag:element.tagName, class:element.className, text:element.textContent.slice(0,80)})))()`);
       await assert(`document.querySelector('#root').scrollWidth <= ${width}`, `Vietnamese overflow on ${route} at ${width}: ${JSON.stringify(overflow)}`);
       await assert(`(() => { const r = document.querySelector('[data-language-switcher]').getBoundingClientRect(); return r.right <= ${width} && r.left >= 0 && r.top < 100; })()`, `Language switch outside viewport on ${route}`);
+      if (documentRoutesWithFooter(route)) {
+        await assert(`(() => { const widget = document.querySelector('[data-zalo-contact]'); const r = widget.querySelector('summary').getBoundingClientRect(); return getComputedStyle(widget).position === 'fixed' && document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)?.closest('[data-zalo-contact]') === widget; })()`, `Zalo is hidden or covered on ${route} at ${width}`);
+        await assert(`getComputedStyle(document.querySelector('[data-footer-grid]')).gridTemplateColumns.split(' ').length === ${width >= 1024 ? 4 : 2}`, `Footer columns incorrect on ${route} at ${width}`);
+        await assert(`(() => { const r = document.querySelector('[data-zalo-contact] summary').getBoundingClientRect(); const cart = document.querySelector('[class*="fixed bottom-8"]')?.getBoundingClientRect(); return r.left >= 0 && r.right <= ${width} && r.top >= 0 && r.bottom <= 844 && (!cart || r.right <= cart.left || r.bottom <= cart.top); })()`, `Zalo overlaps the cart or viewport on ${route}`);
+      }
     }
     if (width === 390) {
       await navigate('/shop'); await screenshot('i18n-mobile-shop');
+      await evaluate("window.scrollTo(0, document.querySelector('[data-storefront-footer]').offsetTop - 90)");
+      await screenshot('footer-mobile-vi');
+      await evaluate("document.querySelector('[data-zalo-contact] summary').click()");
+      await screenshot('zalo-mobile-pending');
       await navigate('/admin/stock'); await screenshot('i18n-mobile-admin-stock');
     }
   }
+  await navigate('/shop');
+  await evaluate("window.scrollTo(0, document.querySelector('[data-storefront-footer]').offsetTop - 90)");
+  await screenshot('footer-desktop-vi');
   await switchTo('en');
-  console.log('Verified English/Vietnamese routes, preference persistence, shared cart, request state, bilingual inventory and responsive switches at 320/390/768/1024px.');
-  return { routes: routes.length, widths: [320, 390, 768, 1024], bilingualInventory: true, preferencePersistence: true };
+  await navigate('/shop');
+  await assert(`document.querySelector('[data-storefront-footer]').textContent.includes('Customer Care') && document.querySelector('[data-zalo-contact] summary').getAttribute('aria-label') === 'Chat with Lunara on Zalo'`, 'Footer/Zalo English labels missing');
+  console.log('Verified English/Vietnamese routes, footer columns, visible Zalo, shared cart, request state and responsive controls at 320–1440px.');
+  return { routes: routes.length, widths, bilingualInventory: true, preferencePersistence: true, footerColumns: true, zaloVisible: true };
+}
+
+function documentRoutesWithFooter(route) {
+  return !route.startsWith('/admin') && route !== '/login' && route !== '/signup';
 }

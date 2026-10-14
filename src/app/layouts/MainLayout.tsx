@@ -3,6 +3,8 @@ import { useMainLayout } from "./hooks/useMainLayout";
 import { cn } from "@/shared/lib/utils";
 import { Outlet, Link } from "react-router";
 import { ShoppingBag, User, Menu, X, Flower, ChevronDown, LogOut } from "lucide-react";
+import { StorefrontFooter } from "./components/StorefrontFooter";
+import { ZaloContact } from "./components/ZaloContact";
 export function MainLayout() {
   const { t } = useLocale("common");
   const {
@@ -106,40 +108,7 @@ export function MainLayout() {
 
       <Outlet />
 
-      {/* Footer */}
-      <footer className="mt-24 bg-lunara-ink text-[#F5DDD5]">
-        <div className="max-w-7xl mx-auto px-6 py-16 grid grid-cols-1 md:grid-cols-4 gap-10">
-          <div className="md:col-span-2">
-            <div className="flex items-center gap-2 mb-4">
-              <Flower size={20} className="text-lunara-rose-light" />
-              <span className="font-display [font-size:1.6rem] [font-weight:600] [letter-spacing:0.1em] text-[#F5DDD5]">
-                lunara
-              </span>
-            </div>
-            <p className="[font-size:0.88rem] [line-height:1.8] text-lunara-body [max-width:300px]">
-              {t("Crafting nature's most beautiful moments into timeless floral arrangements. Bringing joy, one bloom at a time.")}</p>
-          </div>
-          <div>
-            <h4 className="font-display [font-size:1rem] [letter-spacing:0.15em] [text-transform:uppercase] text-[#F5DDD5] [margin-bottom:16px]">
-              {t("Shop")}</h4>
-            <div className="flex flex-col gap-2">
-              {["Bouquets", "Arrangements", "Dried Flowers", "Gift Sets"].map(item => <a key={item} href="#" className="[text-decoration:none] [font-size:0.85rem] text-lunara-body [letter-spacing:0.05em]">
-                  {t(item)}
-                </a>)}
-            </div>
-          </div>
-          <div>
-            <h4 className="font-display [font-size:1rem] [letter-spacing:0.15em] [text-transform:uppercase] text-[#F5DDD5] [margin-bottom:16px]">
-              {t("Connect")}</h4>
-            <div className="flex flex-col gap-2">
-              {["Instagram", "Facebook", "Pinterest", "Contact Us"].map(item => <a key={item} href="#" className="[text-decoration:none] [font-size:0.85rem] text-lunara-body [letter-spacing:0.05em]">
-                  {t(item)}
-                </a>)}
-            </div>
-          </div>
-        </div>
-        <div className="[border-top:1px_solid_#5A3540] [padding:16px_24px] [text-align:center] [font-size:0.78rem] text-[#8A6070]">
-          {t("© 2026 Lunara Flower Shop. All rights reserved. Made with love & flowers.")}</div>
-      </footer>
+      <StorefrontFooter />
+      <ZaloContact />
     </div>;
 }
