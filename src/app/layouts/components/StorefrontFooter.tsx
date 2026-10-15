@@ -34,7 +34,7 @@ export function StorefrontFooter() {
         </ul>
       </nav>
       <div className="col-span-2 lg:col-span-1 min-w-0">
-        <h4 className={headingClass}>{t('FlowerCorner Flower Shop')}</h4>
+        <h4 className={headingClass}>{t('Lunara Flower Shop')}</h4>
         <address className="not-italic flex flex-col gap-5">
           {storeLocations.map(store => <p key={store.id} className="text-sm leading-7">
             <strong className="block font-semibold">{t(store.label)}:</strong>
@@ -42,8 +42,8 @@ export function StorefrontFooter() {
           </p>)}
         </address>
         <div className="mt-6 pt-5 border-t border-[#5A3540] text-sm leading-7">
-          <p className="font-semibold">CÔNG TY TNHH FLOWER CORNER</p>
-          <p>{t('Tax ID')}: 0319117387</p>
+          <p className="font-semibold">CÔNG TY TNHH LUNARA</p>
+          <p>{t('Tax ID')}: 001</p>
         </div>
       </div>
     </div>

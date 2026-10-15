@@ -36,7 +36,7 @@ Phase 6 giữ **IN PROGRESS**, chưa đánh dấu DONE hoặc sẵn sàng mở b
 | Keyword | Hiện tại | Điền/chốt ở đâu |
 | --- | --- | --- |
 | Zalo | Chưa có link/SĐT public | Cung cấp link Zalo chính thức để nối widget `ZaloContact` |
-| Thông tin shop | Footer đang dùng FlowerCorner | Tên/địa chỉ/map URL: `src/shared/i18n/locales/en/common.json` và `vi/common.json`; links khác: `src/shared/config/storefront-footer.ts`; công ty/MST trong `StorefrontFooter` |
+| Thông tin shop | Footer dùng Lunara/Lurana; địa chỉ/map hiện tại được giữ nguyên; pháp nhân tạm thời là Lunara, MST `001` | Tên/địa chỉ/map URL: `src/shared/i18n/locales/en/common.json` và `vi/common.json`; link ngoài: `src/shared/config/storefront-footer.ts` |
 | Domain | Đã dùng HTTPS `lunara.minphuc2408.workers.dev`, SPA PASS | Custom Domain là tùy chọn, chưa cấu hình |
 | Catalog | UI active đọc seed D1: 4 categories/8 products/24 variants/8 ảnh/4 zones; fixture frontend chỉ còn source legacy/backup | Chủ shop cần tên EN/VI, ảnh, size, giá VND, SKU, tồn thực trước mở bán |
 | Giao hàng | Phí/khu vực mẫu trong seed; config giả định: phụ phí 0/30.000/50.000 VND, cutoff 16:00, chuẩn bị 120 phút, slots 08:00–20:00 | Chỉnh `worker/config.ts`/zones theo tỉnh/phường phục vụ, phí, khung giờ và policy thật trước mở bán |
