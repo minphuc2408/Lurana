@@ -1,6 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "lunara",
+  "account_id": "411a1de267e251745a176dfd37257ea6",
   "main": "./worker/index.ts",
   "compatibility_date": "2026-10-06",
   "assets": {

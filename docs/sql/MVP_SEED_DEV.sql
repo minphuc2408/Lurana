@@ -1,7 +1,8 @@
 -- =============================================================================
 -- Lunara MVP — DỮ LIỆU MẪU (dev/demo). Chạy lại nhiều lần an toàn (INSERT OR IGNORE).
 -- Tương thích canonical duy nhất: migrations/0001_mvp.sql (DDL v2 đã chốt Phase 1).
--- Chỉ chạy local sau npm run db:migrate:local. Seed đã được nghiệm thu chạy lặp ở Phase 1.
+-- Local: sau npm run db:migrate:local. Remote: chỉ bước 6.5 được cho phép, trước dữ liệu thật.
+-- Đã nạp remote ở Phase 6 ngày 15/10/2026; không chạy lại để sửa dữ liệu production.
 -- Ảnh dùng placehold.co làm chỗ giữ chỗ: THAY bằng URL ảnh thật (Cloudinary) trước khi bán thật.
 -- delivery_zones chỉ là VÍ DỤ: THAY bằng khu vực giao thật của shop (xem Phase 1/6).
 -- Giá VND; tồn mẫu: S=20, M=15, L=10.

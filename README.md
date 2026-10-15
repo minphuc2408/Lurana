@@ -7,7 +7,7 @@ Storefront + admin từ thiết kế Flower Shop Figma. **UI: Lunara · GitHub: 
 | Frontend | React/React DOM 18.3.1 · React Router 7.18.4 · Vite 6.4.4 · Tailwind 4.1.12 |
 | Worker | Hono + `@cloudflare/vite-plugin`; Phase 0–3 DONE local, Phase 4 backend đã DONE local (9/9 tiêu chí) |
 | API | Health/catalog/delivery/quote/orders/lookup; auth và quản trị `/api/admin/*` dùng JWT cookie; API lạ → JSON 404, admin thiếu cookie → 401 |
-| D1 | Binding `DB` local; canonical 10 bảng, migration/seed/verifier Phase 1; remote chưa truy cập |
+| D1 | Binding `DB`; canonical 10 bảng; migration/seed remote đã áp 15/10/2026, backup thử mở lại được; chưa có dữ liệu thật |
 | Commerce | Home/Shop/Cart/Delivery/Quote, checkout COD, tra đơn và admin đã nối API local; Phase 5 DONE local (6/6 tiêu chí) |
 | Locale | EN mặc định + VI; catalog/giỏ hiển thị VND; Worker dùng Asia/Ho_Chi_Minh |
 | Build | Frontend `dist/client/` · Worker + Wrangler config `dist/lunara/` |
@@ -51,7 +51,7 @@ npm run check:ui -- http://127.0.0.1:4173
 
 `cf:typegen`: bindings, `--include-runtime=false`; runtime types từ `@cloudflare/workers-types`. `check:ui`: Edge headless trên Windows, chặn ảnh/font ngoài ở chế độ mặc định; evidence local ở `.security-review/`. Chạy audit khi đổi dependency. Chưa có ESLint.
 
-Database chỉ local: migration tạo 10 bảng; seed gồm 4 categories, 8 products, 24 variants, 8 images, 4 zones. `db:verify` kiểm 13 nhóm trên D1 local, dùng database tạm cho phép thử ghi/xóa; xem [output nghiệm thu Phase 1](docs/pipeline/PHASE_1_DATABASE.md). Khu vực/phí, ảnh và giá/tồn seed là dữ liệu mẫu. Không áp `docs/sql/deferred/0002_custom_requests.sql`.
+Database local và remote đã áp migration tạo 10 bảng; seed gồm 4 categories, 8 products, 24 variants, 8 images, 4 zones. `db:verify` kiểm 13 nhóm trên D1 local, dùng database tạm cho phép thử ghi/xóa; xem [output nghiệm thu Phase 1](docs/pipeline/PHASE_1_DATABASE.md). Khu vực/phí, ảnh và giá/tồn seed là dữ liệu mẫu. Không áp `docs/sql/deferred/0002_custom_requests.sql`.
 
 Phase 2 đã có `GET /api/categories`, `GET /api/products`, `GET /api/products/:slug`, `GET /api/delivery/options` và `POST /api/checkout/quote`. Catalog dùng tối đa 3 truy vấn D1; quote đọc giá/tồn từ DB, gộp variant trùng và trả `issues`, luôn chỉ đọc. `shared/` ở root giữ constants/schema Zod dùng chung; frontend catalog/cart/quote đã nối sớm một phần Phase 5. [Contract](docs/pipeline/API_CONTRACT.md) và [nghiệm thu/output Phase 2](docs/pipeline/PHASE_2_API_CATALOG.md).
 
@@ -62,6 +62,8 @@ Phase 4 DONE local (9/9 tiêu chí): đăng nhập bằng SHA-256 + `timingSafeE
 Phase 5 **DONE local (6/6 tiêu chí)**, cập nhật **15/10/2026**: frontend đã nối toàn bộ các API MVP; **136/136 tests**, typecheck, architecture **207 source files**, build và **40/40 smoke local** pass. UI kiểm **17 routes, 0 JS exceptions**; bộ nghiệm thu Phase 5 pass **10/10 kịch bản bắt buộc + 2/2 mở rộng**, snapshot D1 persisted giữ nguyên. [Bảng tiến độ, tiêu chí và bằng chứng Phase 5](docs/pipeline/PHASE_5_FRONTEND.md). Đây là nghiệm thu local, chưa deploy hoặc nghiệm thu remote.
 
 `npm run smoke` giữ 16 nhóm catalog trên URL local được truyền vào, rồi tự tạo HTTP loopback + D1 `persist:false`, `remoteBindings:false` để chạy ca order/admin và đối chiếu tồn/query budget. Admin smoke dùng secret demo riêng trong bộ nhớ, không cần secret thật và không sửa seed persisted hoặc remote. Turnstile verifier đã có khi Worker cấu hình secret, test provider bằng mock; site key/widget/secret thật chưa cấu hình.
+
+**Phase 6 hiện tại:** tests **143/143**, audit **0**, typecheck/architecture/build/dry-run PASS; verifier **13/13**, smoke local **40/40**, UI **17 routes/0 exceptions**, native auth fail-closed **9/9 cấu hình**. `node scripts/smoke.mjs --base-url https://TEN.SUBDOMAIN.workers.dev` mặc định chỉ đọc; ghi cần confirm origin/variant/exclusive window và mật khẩu qua prompt ẩn. Runner có 7 tests local với HTTP/D1 cô lập; chưa chạy trên URL deploy. Migration/seed và backup remote đã kiểm; chưa mở bán. Chủ dự án đã chọn tự deploy/đặt secrets rồi cung cấp URL; agent tiếp tục smoke và nghiệm thu sau bước đó. [Điều kiện tiếp tục Phase 6](docs/pipeline/PHASE_6_DEPLOY.md) · [Runbook](docs/OPERATIONS.md).
 
 **[NGƯỜI]** Trước khi dùng admin với dữ liệu thật tại local, tự đặt `ADMIN_PASSWORD` ≥24 ký tự ngẫu nhiên và `JWT_SECRET` ≥32 ký tự ngẫu nhiên, khác mật khẩu, trong `.dev.vars`; không gửi giá trị qua chat hoặc ghi vào Git/`VITE_*`. Cấu hình secret production thuộc Phase 6. Secret thiếu/trống bị từ chối; demo chỉ phục vụ kiểm thử.
 
@@ -76,11 +78,12 @@ Bạn có thể test `/shop`/`cart` với D1 local: chọn size, thêm giỏ, re
 | Hiện trạng, khoảng trống, đầu vào cần chủ dự án bổ sung | [PROJECT_STATUS.md](docs/PROJECT_STATUS.md) |
 | Routes, component, data ownership, giới hạn demo | [PROJECT_GUIDE.md](PROJECT_GUIDE.md) |
 | Instructions + skill | [AGENTS.md](AGENTS.md) · [lunara-flower-shop](.agents/skills/lunara-flower-shop/SKILL.md) |
-| Phase 0 → deploy | [Pipeline](docs/pipeline/README.md) · [Phase 0](docs/pipeline/PHASE_0_PREPARE.md) |
+| Phase 0 → deploy | [Pipeline](docs/pipeline/README.md) · [Phase 6](docs/pipeline/PHASE_6_DEPLOY.md) |
+| Vận hành, backup/rollback, secrets và smoke/cleanup | [OPERATIONS.md](docs/OPERATIONS.md) |
 | Stack + entity map | [TECH_STACK.md](docs/TECH_STACK.md) · [FRONTEND_ENTITIES.md](docs/FRONTEND_ENTITIES.md) |
 | Database + đối chiếu v1/v2 | [DATABASE_DESIGN.md](docs/DATABASE_DESIGN.md) · [Canonical SQL](migrations/0001_mvp.sql) |
 
-MVP: **Hono/Workers · D1/SQLite · Cloudinary (chưa tích hợp) · Zod · COD khách vãng lai**. Phase 1 chốt nguyên DDL v2 thành `migrations/0001_mvp.sql`, nguồn schema duy nhất; hai file SQL schema cũ chỉ chứa chú thích dẫn về migration. `delivery_zones` trong MVP; `custom_requests` deferred. **Phase 0–5 DONE local; Phase 6 PLANNED.** Customer auth/profile/wishlist, custom request và admin customers/settings/notifications giữ source nhưng ẩn bằng cờ; `VITE_ENABLE_CUSTOMER_AUTH` mặc định false và API-ready gate vẫn false nên không bật lại fixture. Chưa truy cập D1 remote hoặc deploy trong Phase 5.
+MVP: **Hono/Workers · D1/SQLite · Cloudinary (chưa tích hợp) · Zod · COD khách vãng lai**. Phase 1 chốt nguyên DDL v2 thành `migrations/0001_mvp.sql`, nguồn schema duy nhất; hai file SQL schema cũ chỉ chứa chú thích dẫn về migration. `delivery_zones` trong MVP; `custom_requests` deferred. **Phase 0–5 DONE local; Phase 6 IN PROGRESS.** Customer auth/profile/wishlist, custom request và admin customers/settings/notifications giữ source nhưng ẩn bằng cờ; `VITE_ENABLE_CUSTOMER_AUTH` mặc định false và API-ready gate vẫn false nên không bật lại fixture. Phase 6 đã migrate/seed D1 remote và thử backup; chưa deploy/nghiệm thu remote, đặt secrets production hoặc nhập dữ liệu thật. [Bằng chứng và điều kiện tiếp tục](docs/pipeline/PHASE_6_DEPLOY.md) · [Vận hành](docs/OPERATIONS.md).
 
 ## Codex và CodeGraph
 

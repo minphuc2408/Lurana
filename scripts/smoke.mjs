@@ -5,6 +5,13 @@ import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
 import { getPlatformProxy, unstable_splitSqlQuery as splitSqlQuery } from 'wrangler';
 
+// Explicit deployment mode never falls through to the local D1 harness below.
+if (process.argv.slice(2).some(argument => argument.startsWith('--'))) {
+  const { runRemoteCli } = await import('./smoke-remote.mjs');
+  await runRemoteCli(process.argv.slice(2));
+  process.exit(process.exitCode || 0);
+}
+
 const baseUrl = new URL(process.argv[2] || 'http://127.0.0.1:5173');
 if (baseUrl.hostname !== '127.0.0.1' || !['http:', 'https:'].includes(baseUrl.protocol)) {
   throw new Error('Smoke checks require a local server on 127.0.0.1.');
@@ -401,7 +408,7 @@ async function orderSmoke() {
       recipient: { name: 'Smoke recipient', phone: '0911111111', province_name: 'Thành phố Hà Nội', ward_name: 'Phường Hoàn Kiếm', address_line: 'Demo smoke address' },
       delivery: { method_code: 'STANDARD', date: tomorrowDate, time_slot: '08:00-10:00' },
       card: { type: 'GREETING_CARD', message: 'Synthetic local smoke data' },
-      customer_note: 'Local isolated test only', ...overrides,
+      customer_note: 'SMOKE local isolated test only', ...overrides,
     });
     const orderPost = (input, key = randomUUID()) => ({
       ...post(input), headers: { 'content-type': 'application/json', ...(key === null ? {} : { 'Idempotency-Key': key }) },

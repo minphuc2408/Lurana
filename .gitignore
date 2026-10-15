@@ -68,7 +68,9 @@
 !/scripts/reset-d1-local.mjs
 !/scripts/verify-schema.mjs
 !/scripts/smoke.mjs
+!/scripts/smoke-remote.mjs
 !/tests/auth.test.mjs
+!/tests/smoke-remote.test.mjs
 !/tests/commerce.test.mjs
 !/tests/checkout.test.mjs
 !/tests/admin-frontend.test.mjs
@@ -94,6 +96,7 @@
 # Reviewed backend design documents.
 !/docs/
 !/docs/TECH_STACK.md
+!/docs/OPERATIONS.md
 !/docs/PROJECT_STATUS.md
 !/docs/FRONTEND_ENTITIES.md
 !/docs/DATABASE_DESIGN.md

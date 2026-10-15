@@ -12,14 +12,14 @@ Cập nhật **15/10/2026**. Repo **Lurana** · thương hiệu **Lunara**.
 | Phase 3 | **Xong local**: COD, tồn nguyên tử, idempotency, tra đơn và transition service; [output lịch sử](pipeline/PHASE_3_CHECKOUT_ORDERS.md); UI đã nối/nghiệm thu Phase 5 |
 | Phase 4 | **DONE local (9/9 tiêu chí)**: secret/JWT cookie, middleware quyền/Origin và API quản trị; status dùng lại transitionOrder. [Checklist/output](pipeline/PHASE_4_ADMIN.md) |
 | Phase 5 | **DONE local (6/6 tiêu chí)**: giữ catalog/cart/delivery/quote/VND/localStorage; nối COD/gửi/retry/xác nhận/lookup và cookie auth/admin đơn/sản phẩm/tồn/phí/dashboard; [10/10 kịch bản + 2/2 mở rộng](pipeline/PHASE_5_FRONTEND.md#kết-quả-10-kịch-bản--15102026) |
-| Phase 6 | **PLANNED**: chưa deploy/migrate/seed D1 remote hoặc cấu hình production; tài khoản và D1 remote đã được chủ dự án tạo |
+| Phase 6 | **IN PROGRESS (2/7 tiêu chí)**: pre-flight local, migration/seed D1 remote và backup mở offline đã xong; chờ deploy/secrets/URL/dữ liệu thật/nghiệm thu remote. [Bằng chứng và đầu vào](pipeline/PHASE_6_DEPLOY.md) |
 | API | Health/catalog/delivery/quote; POST orders/lookup từ D1; admin login/me/logout/summary/orders/products/variants/delivery-zones; API lạ → JSON 404, admin thiếu cookie → 401 |
 | Frontend | MVP local dùng API thật: `/cart` COD, `/orders/track`, `/admin/login`, dashboard/orders/stock/delivery-zones. EN mặc định/fallback + VI; VND/giờ VN. Customer auth/profile/wishlist/request/settings/customers/notifications giữ source và ẩn bằng cờ/API readiness. [Backup/audit](pipeline/FE_AUDIT.md) |
 | Storefront | Footer tên/địa chỉ/map URL cấu hình JSON EN/VI; Zalo icon tự vẽ góc phải, viền xanh animate width khi hover/focus/click (400ms, reduced motion 200ms); link Zalo thật chờ cấu hình |
 | Cart/auth | Cart localStorage chỉ variantId/quantity; giá/phí từ server. Intent UUID giữ key khi retry cùng payload, không persist contact. AuthProvider `/me/login/logout` với JWT cookie HttpOnly; không session demo. Stock_delta chưa rõ kết quả khóa gửi lại đến GET Recheck thành công |
-| Cloudflare | Chủ dự án báo đã đăng nhập và tạo `lunara-db` remote; Phase 0–5 chỉ local, chưa migrate/seed/deploy hoặc thay đổi remote |
+| Cloudflare | Đã xác minh account và UUID `lunara-db`; pin account_id trong Wrangler; Phase 6 đã migrate `0001`/seed remote, 10 bảng, orders 0, FK sạch; chưa deploy Worker |
 | Build | `dist/client/` + `dist/lunara/`; runtime bindings local qua `remoteBindings: false` |
-| Kiểm chứng | **Hiện tại Phase 5:** typecheck/build PASS, architecture 207 files, tests 136/136, smoke 40/40, UI preview 17 routes/0 exceptions; 10/10 kịch bản và 2/2 nhóm mở rộng pass, D1 persisted logical snapshot không đổi. [Evidence](pipeline/PHASE_5_FRONTEND.md). Các mốc 92 tests Phase 3 và 125 tests Phase 4 là lịch sử; không phải nghiệm thu remote |
+| Kiểm chứng | **Mốc Phase 5:** typecheck/build PASS, architecture 207 files, tests 136/136, smoke 40/40, UI preview 17 routes/0 exceptions; 10/10 kịch bản và 2/2 nhóm mở rộng pass. [Evidence Phase 5](pipeline/PHASE_5_FRONTEND.md). **Phase 6:** 143/143 tests (thêm 7 smoke-remote tests), native workerd fail-closed 9/9 cấu hình, audit 0, dry-run và backup remote integrity/FK PASS; kết quả smoke remote/local mới nằm tại [Phase 6](pipeline/PHASE_6_DEPLOY.md), chưa nghiệm thu deployment |
 | Git | Chỉ source/docs/config được review; secrets, state, audit, build, browser profiles giữ local |
 
 ## Cần chủ shop điền/chốt
@@ -41,11 +41,11 @@ Cập nhật **15/10/2026**. Repo **Lurana** · thương hiệu **Lunara**.
 | Keyword | Việc tiếp theo |
 | --- | --- |
 | Schema — đã chốt Phase 1 | [Canonical duy nhất](../migrations/0001_mvp.sql) dùng nguyên DDL v2; hai đường dẫn schema cũ là comment pointers. [Khác biệt/lý do/giới hạn](DATABASE_DESIGN.md); `custom_requests` chỉ ở deferred, chưa áp dụng |
-| Database — local | `db:migrate:local`, `db:seed:local`, `db:verify`; [nghiệm thu Phase 1](pipeline/PHASE_1_DATABASE.md). Dữ liệu thật và migration remote thuộc các phase sau |
+| Database | Local verifier 13/13; Phase 6 đã áp canonical/seed remote, backup riêng tư mở lại được. Không sửa migration đã áp remote; dữ liệu thật vẫn cần chủ shop cung cấp |
 | API — Phase 2 đã xong | Catalog/phí giao/quote local từ D1; shared schemas/constants ở root `shared/`; endpoint quote luôn chỉ đọc, việc ghi đơn/trừ tồn do API Phase 3 thực hiện |
 | API — Phase 3–4 | COD, trừ/hoàn tồn, idempotency/tra đơn và auth/admin đã có local; [Phase 4](pipeline/PHASE_4_ADMIN.md) DONE local; không thêm bảng/dependency |
 | Frontend — Phase 5 DONE local | Đủ 6/6 tiêu chí và 10/10 kịch bản, không fixture/fetch component; giữ source deferred. Cần nghiệm thu lại trên deployment Phase 6 với dữ liệu/policy thật |
-| Deploy — Phase 6 | Secrets, migrations remote, Worker/domain và smoke môi trường thật; script `deploy` đã có, chưa chạy |
+| Deploy — Phase 6 | Migration/seed/backup remote đã xong. Chủ dự án đã chọn tự deploy/đặt secrets production rồi gửi URL; chờ dữ liệu thật; URL/variant/window để smoke ghi/dọn thử. [Runbook](OPERATIONS.md) đã viết, chờ xác nhận vận hành hằng ngày |
 | Kiểm tra — Phase 5/6 | `db:verify` kiểm schema local; smoke API và Edge/CDP UI Phase 5 dùng D1 persist:false/remoteBindings:false, credentials tổng hợp; snapshot SQL readonly bảo vệ dữ liệu persisted. Bridge Node có shim timingSafeEqual, native workerd auth Phase 4 giữ bằng chứng riêng. CPU cloud, Turnstile thật và remote smoke thuộc Phase 6 |
 | Deferred | Customer auth/profile/wishlist server, wizard hoa riêng, online payment, coupon/reviews/upload ảnh; xem [backlog](pipeline/BACKLOG.md) |
 
