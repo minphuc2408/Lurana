@@ -9,7 +9,7 @@ export function AdminLoginView(model: AdminLoginModel) {
   return <main className="flex min-h-screen items-center justify-center bg-lunara-cream px-5 py-16 font-body text-lunara-ink">
     <div className="w-full max-w-md">
       <Link to="/" className="mb-8 inline-flex items-center gap-2 text-sm text-lunara-body"><ArrowLeft size={16} />{t('Back to Home')}</Link>
-      <div className="mb-8 flex items-center justify-center gap-2"><Flower className="text-lunara-rose-strong" /><span className="font-display text-4xl">Lunara</span></div>
+      <div className="mb-8 flex items-center justify-center gap-2"><Flower className="text-lunara-rose-strong" /><span className="font-display text-4xl">{t('Lunara Shop')}</span></div>
       <section className="rounded-3xl border border-lunara-border bg-white p-7 shadow-sm sm:p-9">
         <h1 className="font-display text-3xl">{t('Admin sign in')}</h1>
         <p className="mb-7 mt-2 text-sm text-lunara-body">{t('Manage your Lunara shop')}</p>

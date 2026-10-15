@@ -83,7 +83,7 @@ Bạn có thể test `/shop`/`cart` với D1 local: chọn size, thêm giỏ, re
 | Stack + entity map | [TECH_STACK.md](docs/TECH_STACK.md) · [FRONTEND_ENTITIES.md](docs/FRONTEND_ENTITIES.md) |
 | Database + đối chiếu v1/v2 | [DATABASE_DESIGN.md](docs/DATABASE_DESIGN.md) · [Canonical SQL](migrations/0001_mvp.sql) |
 
-MVP: **Hono/Workers · D1/SQLite · Cloudinary (chưa tích hợp) · Zod · COD khách vãng lai**. Phase 1 chốt nguyên DDL v2 thành `migrations/0001_mvp.sql`, nguồn schema duy nhất; hai file SQL schema cũ chỉ chứa chú thích dẫn về migration. `delivery_zones` trong MVP; `custom_requests` deferred. **Phase 0–5 DONE local; Phase 6 IN PROGRESS.** Customer auth/profile/wishlist, custom request và admin customers/settings/notifications giữ source nhưng ẩn bằng cờ; `VITE_ENABLE_CUSTOMER_AUTH` mặc định false và API-ready gate vẫn false nên không bật lại fixture. Phase 6 đã deploy, kiểm API live/public browser và dọn thử; dữ liệu mở bán vẫn mẫu, còn chờ xác nhận vận hành quota. [Bằng chứng và điều kiện tiếp tục](docs/pipeline/PHASE_6_DEPLOY.md) · [Vận hành](docs/OPERATIONS.md).
+MVP: **Hono/Workers · D1/SQLite · Cloudinary (signed upload đã code local, chưa nghiệm thu thật) · Zod · COD khách vãng lai**. Phase 1 chốt nguyên DDL v2 thành `migrations/0001_mvp.sql`, nguồn schema duy nhất; hai file SQL schema cũ chỉ chứa chú thích dẫn về migration. `delivery_zones` trong MVP; `custom_requests` deferred. **Phase 0–5 DONE local; Phase 6 IN PROGRESS.** Customer auth/profile/wishlist, custom request và admin customers/settings/notifications giữ source nhưng ẩn bằng cờ; `VITE_ENABLE_CUSTOMER_AUTH` mặc định false và API-ready gate vẫn false nên không bật lại fixture. Phase 6 đã deploy, kiểm API live/public browser và dọn thử; dữ liệu mở bán vẫn mẫu, còn chờ xác nhận vận hành quota. [Bằng chứng và điều kiện tiếp tục](docs/pipeline/PHASE_6_DEPLOY.md) · [Vận hành](docs/OPERATIONS.md).
 
 ## Codex và CodeGraph
 
@@ -100,3 +100,11 @@ Git: allowlist exact paths sau review; source/docs/skill được chia sẻ. `.d
 ## Attribution
 
 Figma gốc: [Flower Shop Website Design](https://www.figma.com/design/0YRitOqUypqP0K0esw8sXL/Flower-Shop-Website-Design--Copy---Community-). Attribution shadcn/ui và Unsplash: [ATTRIBUTIONS.md](ATTRIBUTIONS.md).
+
+Staging: cấu hình local Worker `lunara-staging` / `lunara-staging-db` đã thêm; remote chưa xác minh/migrate/seed/deploy. Xem [quy trình staging](docs/STAGING.md).
+
+Tên hiển thị website từ 15/10/2026 là **Lunara Shop** (tab, header/footer, admin, EN/VI); giữ Worker/D1 và repo GitHub hiện có. Typecheck/build/architecture và 143 tests PASS; kiểm branding EN/VI 320/390/1440px PASS. UI tổng quát dừng ở bước quote chưa chọn khu vực giao; chi tiết deploy tại [Phase 6](docs/pipeline/PHASE_6_DEPLOY.md).
+
+Cập nhật staging 15/10/2026: đã xác minh remote lunara-staging-db / ed391b18-0bcf-41b3-8315-389807ace7f2 và áp 0001_mvp.sql thành công (25 commands). Đã kiểm đủ 10 bảng nghiệp vụ, lịch sử 0001, không còn migration chờ, foreign_key_check rỗng, orders=0. db:verify local cô lập PASS 13/13 nhóm, 46 assertions. Chưa seed, đặt secrets hoặc deploy staging; production không được truy cập/ghi trong lượt sửa này.
+
+Cloudinary 15/10/2026: đã tích hợp local signed direct upload (SHA-256, cookie admin/same-origin, JPEG/PNG/WebP, client 5 MB, prefix local/staging/prod). Typecheck/build/architecture 208 source files PASS; tests 148/148, smoke local 40/40 PASS. Browser mock EN/VI 390px PASS: file sai, thành công/preview, Save URL, thiếu config giữ URL; 0 JS exceptions. Chưa tạo preset/đặt keys/upload thật/deploy tính năng, không ghi D1 remote; Phase 6 vẫn 5/7. Không thêm migration/dependency hoặc tự xóa asset. [Cấu hình Cloudinary](docs/CLOUDINARY.md).

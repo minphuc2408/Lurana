@@ -16,7 +16,7 @@ ChatGPT thông thường không tự đọc file trên máy. Với phiên không
 
 ## Hiện trạng và bản đồ dự án
 
-UI branding là **Lunara**; repository GitHub tên **Lurana**. UI có English/Tiếng Việt, mặc định/fallback English; commerce dùng VND từ D1, giờ Asia/Ho_Chi_Minh. Checkout/tra đơn/admin đã nối API; customer auth/profile/wishlist, custom request và admin customers/settings/notifications giữ source nhưng ẩn. Giao tiếp với chủ dự án bằng tiếng Việt.
+UI branding là **Lunara Shop**; repository GitHub tên **Lurana**. UI có English/Tiếng Việt, mặc định/fallback English; commerce dùng VND từ D1, giờ Asia/Ho_Chi_Minh. Checkout/tra đơn/admin đã nối API; customer auth/profile/wishlist, custom request và admin customers/settings/notifications giữ source nhưng ẩn. Giao tiếp với chủ dự án bằng tiếng Việt.
 
 | Keyword | Hiện trạng |
 | --- | --- |
@@ -36,7 +36,7 @@ UI branding là **Lunara**; repository GitHub tên **Lurana**. UI có English/Ti
 | Phạm vi | Đã có / còn thiếu |
 | --- | --- |
 | Runtime MVP | Hono/Cloudflare Workers · D1/SQLite · Zod · SQL tham số hóa |
-| Media MVP | API catalog trả URL ảnh từ D1; seed dùng placeholder, Cloudinary upload chưa nối |
+| Media MVP | API catalog trả URL ảnh từ D1; signed direct Cloudinary upload trong admin đã tích hợp local; keys/presets/upload thật/deploy chờ owner |
 | Order MVP | Phase 3 COD/server pricing/tồn/idempotency/lookup; Phase 4 admin status gọi lại transitionOrder hoàn tồn một lần, DELIVERED → PAID; Phase 5 form/review/gửi/retry/xác nhận/lookup và admin đã nối |
 | Admin auth | Phase 4 local: SHA-256/timingSafeEqual + HS256 JWT cookie HttpOnly/Strict 12h; kiểm quyền/Origin/JSON ở server; auth khách để sau |
 | Schema | [Canonical duy nhất: 10 bảng](migrations/0001_mvp.sql), nguyên DDL v2 có `delivery_zones`, idempotency và CHECK/unique; `custom_requests` deferred. [Đối chiếu v1/v2](docs/DATABASE_DESIGN.md); hai file schema cũ chỉ dẫn về migration |
@@ -285,3 +285,11 @@ Phase 6 hiện 5/7 tiêu chí: D1 remote migrate/seed/backup, deploy/secrets, AP
 Giữ local: `node_modules`, `dist`, `.codegraph`, `.codex`, `.security-review`, `.env`, keys/logs/cache. Trước commit/push kiểm tra status, file inclusion và `git diff --check`. Commit/push/deploy chỉ khi yêu cầu hiện tại hoặc standing authorization bao gồm hành động đó.
 
 Khi thay route/component/model hoặc ownership, cập nhật mục liên quan ở đây, AGENTS và skill. Báo cáo kiểm chứng thực tế trong bàn giao; không coi số liệu của lượt kiểm tra cũ là bảo đảm cho source mới.
+
+Staging: `env.staging` dùng Worker `lunara-staging`, D1 riêng và secrets riêng; `scripts/staging.mjs` chọn môi trường lúc build và kiểm UUID trước ghi/deploy. Hiện mới cấu hình local, chưa nghiệm thu remote. Xem [STAGING](docs/STAGING.md).
+
+Tên hiển thị website từ 15/10/2026 là **Lunara Shop** (tab, header/footer, admin, EN/VI); giữ Worker/D1 và repo GitHub hiện có. Typecheck/build/architecture và 143 tests PASS; kiểm branding EN/VI 320/390/1440px PASS. UI tổng quát dừng ở bước quote chưa chọn khu vực giao; chi tiết deploy tại [Phase 6](docs/pipeline/PHASE_6_DEPLOY.md).
+
+Cập nhật staging 15/10/2026: đã xác minh remote lunara-staging-db / ed391b18-0bcf-41b3-8315-389807ace7f2 và áp 0001_mvp.sql thành công (25 commands). Đã kiểm đủ 10 bảng nghiệp vụ, lịch sử 0001, không còn migration chờ, foreign_key_check rỗng, orders=0. db:verify local cô lập PASS 13/13 nhóm, 46 assertions. Chưa seed, đặt secrets hoặc deploy staging; production không được truy cập/ghi trong lượt sửa này.
+
+Cloudinary 15/10/2026: đã tích hợp local signed direct upload (SHA-256, cookie admin/same-origin, JPEG/PNG/WebP, client 5 MB, prefix local/staging/prod). Typecheck/build/architecture 208 source files PASS; tests 148/148, smoke local 40/40 PASS. Browser mock EN/VI 390px PASS: file sai, thành công/preview, Save URL, thiếu config giữ URL; 0 JS exceptions. Chưa tạo preset/đặt keys/upload thật/deploy tính năng, không ghi D1 remote; Phase 6 vẫn 5/7. Không thêm migration/dependency hoặc tự xóa asset. [Cấu hình Cloudinary](docs/CLOUDINARY.md).

@@ -37,7 +37,7 @@
   "Facebook": "Facebook",
   "Pinterest": "Pinterest",
   "Contact Us": "Contact Us",
-  "© 2026 Lunara Flower Shop. All rights reserved. Made with love & flowers.": "© 2026 Lunara Flower Shop. All rights reserved. Made with love & flowers.",
+  "© 2026 Lunara Flower Shop. All rights reserved. Made with love & flowers.": "© 2026 Lunara Shop. All rights reserved. Made with love & flowers.",
   "This page could not be loaded": "This page could not be loaded",
   "Please try again or return to the home page.": "Please try again or return to the home page.",
   "Back to Home": "Back to Home",
@@ -194,7 +194,7 @@
   "Yesterday": "Yesterday",
   "Customer Care": "Customer Care",
   "Follow Us": "Follow Us",
-  "Lunara Flower Shop": "Lunara Flower Shop",
+  "Lunara Flower Shop": "Lunara Shop",
   "About Us": "About Us",
   "Shipping Policy": "Shipping Policy",
   "Frequently Asked Questions": "Frequently Asked Questions",
@@ -257,5 +257,9 @@
   "Track order": "Track order",
   "Admin login": "Admin login",
   "Delivery fees": "Delivery fees",
-  "API rate limited": "Too many requests. Please wait and try again."
+  "API rate limited": "Too many requests. Please wait and try again.",
+  "Lunara Shop": "Lunara Shop",
+  "Image upload is not configured. You can paste an image URL.": "Image upload is not configured. You can paste an image URL.",
+  "Choose a JPEG, PNG or WebP image up to 5 MB.": "Choose a JPEG, PNG or WebP image up to 5 MB.",
+  "Image upload was not confirmed. Check Cloudinary before trying again.": "Image upload was not confirmed. Check Cloudinary before trying again."
 }

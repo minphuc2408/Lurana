@@ -42,6 +42,12 @@ Use CodeGraph first to locate code and its dependents when `.codegraph/` exists.
 
 ## Brainstorm and deliver
 
+Staging now has local configuration for Worker `lunara-staging` and separate D1 `lunara-staging-db`; see [staging runbook](../../../docs/STAGING.md). Remote staging resource and canonical 0001 migration are verified (10 business tables, FK clean); seed, secrets and deployment remain pending. Use guarded staging scripts; select Cloudflare environment during build, preserve local `remoteBindings: false`, and keep production acceptance separate.
+
 Ground proposals in the actual missing flow, reusable primitives, and current visual language. State user benefit, dependencies, and what would demonstrate completion. Separate current functionality from suggested work; do not implement unrequested roadmap items.
 
 Verify affected behavior; run the required typecheck/architecture/tests/build checks for runtime changes, local smoke for Worker changes, audit for dependency changes, and sync CodeGraph after code changes. Documentation changes need link/path review. Maintain the guide and Git allowlist when adding shared files. Give the owner a short Vietnamese report with the result, checks performed, and material limitations.
+
+Website display brand is Lunara Shop as requested by the owner on 15/10/2026; preserve technical Worker/D1 names and GitHub repository name.
+
+Cloudinary now has local signed direct upload via POST /api/admin/uploads/sign: cookie admin + same-origin JSON, server-owned SHA-256 params, browser-to-Cloudinary upload, save existing image.url contract. Public cloud/preset/scope are in Wrangler vars, API_KEY/API_SECRET are server config/secrets only. Keys/presets/live upload/deployment remain pending; 5 MB is client/declared metadata validation, not a Worker byte limit. No new DDL, public_id persistence, unsigned preset, SDK or automatic asset deletion. Follow [Cloudinary runbook](../../../docs/CLOUDINARY.md).

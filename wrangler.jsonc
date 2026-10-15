@@ -4,6 +4,11 @@
   "account_id": "411a1de267e251745a176dfd37257ea6",
   "main": "./worker/index.ts",
   "compatibility_date": "2026-10-06",
+  "vars": {
+    "CLOUDINARY_CLOUD_NAME": "yrnqg7ay",
+    "CLOUDINARY_UPLOAD_PRESET": "lunara_products_prod",
+    "CLOUDINARY_SCOPE": "prod"
+  },
   "assets": {
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api/*"]
@@ -15,5 +20,23 @@
       "database_id": "1796e7bf-d230-4bc1-a80a-f4be4d1eccc7",
       "migrations_dir": "migrations"
     }
-  ]
+  ],
+  "env": {
+    "staging": {
+      "name": "lunara-staging",
+      "vars": {
+        "CLOUDINARY_CLOUD_NAME": "yrnqg7ay",
+        "CLOUDINARY_UPLOAD_PRESET": "lunara_products_staging",
+        "CLOUDINARY_SCOPE": "staging"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "lunara-staging-db",
+          "database_id": "ed391b18-0bcf-41b3-8315-389807ace7f2",
+          "migrations_dir": "migrations"
+        }
+      ]
+    }
+  }
 }

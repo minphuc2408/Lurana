@@ -3,7 +3,8 @@ import { useCatalog } from '@/features/shop';
 import { normalizeSearch } from '@/shared/i18n';
 import { ApiError } from '@/shared/api/client';
 import { buildVariantPatch, inputInteger, rebaseVariantDraft, variantDraft } from '../admin-api.adapters';
-import { createAdminProduct, getAdminProducts, patchAdminProduct, patchAdminVariant } from '../admin-api.service';
+import { createAdminProduct, getAdminProducts, patchAdminProduct, patchAdminVariant, requestImageUploadTicket } from '../admin-api.service';
+import { uploadProductImage, validateProductImage } from '../product-image.service';
 import type { AdminProduct, AdminVariant, ProductForm, VariantDraft } from '../admin-api.types';
 
 const emptyProduct = (categoryId = ''): ProductForm => ({ name_en: '', name_vi: '', slug: '', category_id: categoryId, image_url: '', status: 'ACTIVE', is_featured: false,
@@ -26,6 +27,30 @@ export function useAdminApiProducts() {
   const [form, setForm] = useState<ProductForm>(emptyProduct());
   const [formError, setFormError] = useState<unknown>(null);
   const [formPending, setFormPending] = useState(false);
+  const [imagePending, setImagePending] = useState(false);
+  const [imageError, setImageError] = useState<unknown>(null);
+  const [imageUploaded, setImageUploaded] = useState(false);
+  const imageController = useRef<AbortController | null>(null);
+  useEffect(() => () => { imageController.current?.abort(); }, []);
+  const selectImage = async (file?: File) => {
+    if (!file || imageController.current || formInFlight.current) return;
+    const controller = new AbortController();
+    imageController.current = controller;
+    setImagePending(true); setImageError(null); setImageUploaded(false);
+    try {
+      validateProductImage(file);
+      const ticket = await requestImageUploadTicket(file, controller.signal);
+      const url = await uploadProductImage(file, ticket, controller.signal);
+      if (!controller.signal.aborted) {
+        setForm(current => ({ ...current, image_url: url }));
+        setImageUploaded(true);
+      }
+    } catch (cause) { if (!controller.signal.aborted) setImageError(cause); }
+    finally {
+      imageController.current = null;
+      if (!controller.signal.aborted) setImagePending(false);
+    }
+  };
   const saving = useRef(new Set<number>());
   const formInFlight = useRef(false);
   const generation = useRef(0);
@@ -90,16 +115,17 @@ export function useAdminApiProducts() {
     }
     finally { saving.current.delete(variant.id); setSavingIds(current => current.filter(id => id !== variant.id)); }
   };
-  const openCreate = () => { if (saving.current.size > 0) return; setEditing(null); setForm(emptyProduct(String(catalog.categories[0]?.id ?? ''))); setFormError(null); setDialogOpen(true); };
+  const openCreate = () => { if (saving.current.size > 0 || imageController.current) return; setImageError(null); setImageUploaded(false); setEditing(null); setForm(emptyProduct(String(catalog.categories[0]?.id ?? ''))); setFormError(null); setDialogOpen(true); };
   const openEdit = (product: AdminProduct) => {
-    if (saving.current.size > 0) return;
+    if (saving.current.size > 0 || imageController.current) return;
+    setImageError(null); setImageUploaded(false);
     setEditing(product); setForm({ ...emptyProduct(String(product.category_id)), name_en: product.name_en, name_vi: product.name_vi, slug: product.slug,
       image_url: (product.images.find(image => image.is_primary) ?? product.images[0])?.url ?? '', status: product.status, is_featured: product.is_featured });
     setFormError(null); setDialogOpen(true);
   };
   const saveProduct = async (event: FormEvent) => {
     event.preventDefault();
-    if (formInFlight.current) return;
+    if (formInFlight.current || imageController.current) return;
     formInFlight.current = true; setFormPending(true); setFormError(null);
     generation.current++;
     try {
@@ -119,6 +145,7 @@ export function useAdminApiProducts() {
   const filtered = products.filter(product => [product.name_en, product.name_vi, product.slug, ...product.variants.map(variant => variant.sku)].some(value => normalizeSearch(value).includes(normalizeSearch(search))));
   return { products: filtered, loading, error, reload: () => void load(), search, setSearch, drafts, updateDraft, saveVariant,
     savingIds, variantErrors, savedIds, uncertainIds, reconciledIds, recheckVariant, dialogOpen, setDialogOpen, editing, form, setForm, formError, formPending, openCreate, openEdit, saveProduct,
+    imagePending, imageError, imageUploaded, selectImage,
     categories: catalog.categories, categoriesLoading: catalog.loading, categoriesError: catalog.error, retryCategories: catalog.reload };
 }
 export type AdminApiProductsModel = ReturnType<typeof useAdminApiProducts>;

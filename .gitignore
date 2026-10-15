@@ -24,6 +24,7 @@
 !/postcss.config.mjs
 !/scripts/codegraph.mjs
 !/scripts/setup-assistant.mjs
+!/scripts/staging.mjs
 !/vite.config.ts
 !/wrangler.jsonc
 !/tsconfig.worker.json
@@ -58,6 +59,12 @@
 !/shared/schemas.ts
 !/shared/admin-order-schemas.ts
 !/shared/admin-catalog-schemas.ts
+!/shared/admin-upload-schemas.ts
+!/worker/routes/admin-uploads.ts
+!/worker/services/cloudinary.ts
+!/src/features/admin/product-image.service.ts
+!/tests/cloudinary.test.mjs
+!/docs/CLOUDINARY.md
 
 # Reviewed verification tools and tests.
 !/tests/
@@ -99,6 +106,7 @@
 !/docs/
 !/docs/TECH_STACK.md
 !/docs/OPERATIONS.md
+!/docs/STAGING.md
 !/docs/PROJECT_STATUS.md
 !/docs/FRONTEND_ENTITIES.md
 !/docs/DATABASE_DESIGN.md

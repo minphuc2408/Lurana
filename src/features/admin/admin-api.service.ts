@@ -5,6 +5,7 @@ import { adminOrdersQuerySchema, adminOrderStatusSchema, adminOrderNoteSchema } 
 import { adminProductCreateSchema, adminProductPatchSchema, adminVariantPatchSchema, adminDeliveryZoneSchema } from '../../../shared/admin-catalog-schemas';
 import type { ApiOrderStatus } from '@/features/orders';
 import type { AdminOrderDetail, AdminOrderRow, AdminProduct, AdminSummary, AdminVariant, DeliveryZone } from './admin-api.types';
+import { adminImageUploadRequestSchema, adminImageUploadTicketSchema } from '../../../shared/admin-upload-schemas';
 
 function validated<T>(schema: z.ZodType<T>, value: unknown): T {
   const result = schema.safeParse(value);
@@ -31,6 +32,13 @@ export const saveAdminOrderNote = (number: string, note: string) => adminRequest
   method: 'PATCH', body: JSON.stringify(validated(adminOrderNoteSchema, { admin_note: note || null })),
 });
 export const getAdminSummary = (signal?: AbortSignal) => adminRequest<AdminSummary>('/summary', { signal });
+export async function requestImageUploadTicket(file: { type: string; size: number }, signal?: AbortSignal) {
+  const body = validated(adminImageUploadRequestSchema, { mime: file.type, size: file.size });
+  const response = await adminRequest<unknown>('/uploads/sign', { method: 'POST', body: JSON.stringify(body), signal });
+  const result = adminImageUploadTicketSchema.safeParse(response);
+  if (!result.success) throw new ApiError('BAD_RESPONSE', 'Invalid upload configuration.');
+  return result.data;
+}
 export const getAdminProducts = (signal?: AbortSignal) => adminRequest<{ items: AdminProduct[] }>('/products', { signal });
 export const createAdminProduct = (body: unknown) => adminRequest<{ id: number }>('/products', { method: 'POST', body: JSON.stringify(validated(adminProductCreateSchema, body)) });
 export const patchAdminProduct = (id: number, body: unknown) => adminRequest<{ id: number }>(`/products/${id}`, { method: 'PATCH', body: JSON.stringify(validated(adminProductPatchSchema, body)) });

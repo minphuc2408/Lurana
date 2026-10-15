@@ -169,5 +169,10 @@
   "Placed at": "Placed at",
   "Stock update result uncertain": "The update result is uncertain. Reload stock before making another change.",
   "Recheck stock": "Reload stock",
-  "Stock refreshed enter a new adjustment": "Stock refreshed from the server. Check the current stock and enter a new adjustment if needed."
+  "Stock refreshed enter a new adjustment": "Stock refreshed from the server. Check the current stock and enter a new adjustment if needed.",
+  "Upload product image": "Upload product image",
+  "JPEG, PNG or WebP, up to 5 MB. You can also paste an image URL.": "JPEG, PNG or WebP, up to 5 MB. You can also paste an image URL.",
+  "Uploading image…": "Uploading image…",
+  "Image uploaded. Save the product to apply it.": "Image uploaded. Save the product to apply it.",
+  "Product image preview": "Product image preview"
 }

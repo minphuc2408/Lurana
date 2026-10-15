@@ -169,5 +169,10 @@
   "Placed at": "Thời gian đặt",
   "Stock update result uncertain": "Chưa xác định được kết quả cập nhật. Cần tải lại tồn kho trước khi sửa tiếp.",
   "Recheck stock": "Tải lại tồn kho",
-  "Stock refreshed enter a new adjustment": "Đã tải lại tồn từ server. Hãy đối chiếu tồn và nhập điều chỉnh mới nếu cần."
+  "Stock refreshed enter a new adjustment": "Đã tải lại tồn từ server. Hãy đối chiếu tồn và nhập điều chỉnh mới nếu cần.",
+  "Upload product image": "Tải ảnh sản phẩm",
+  "JPEG, PNG or WebP, up to 5 MB. You can also paste an image URL.": "Ảnh JPEG, PNG hoặc WebP, tối đa 5 MB. Bạn cũng có thể dán URL ảnh.",
+  "Uploading image…": "Đang tải ảnh…",
+  "Image uploaded. Save the product to apply it.": "Đã tải ảnh. Lưu sản phẩm để áp dụng ảnh này.",
+  "Product image preview": "Xem trước ảnh sản phẩm"
 }

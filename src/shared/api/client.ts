@@ -35,6 +35,9 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
 }
 export function apiErrorKey(error: unknown): string {
   const code = error instanceof ApiError ? error.code : 'INTERNAL';
+  if (code === 'CLOUDINARY_NOT_CONFIGURED') return 'Image upload is not configured. You can paste an image URL.';
+  if (code === 'INVALID_IMAGE') return 'Choose a JPEG, PNG or WebP image up to 5 MB.';
+  if (code === 'IMAGE_UPLOAD_FAILED') return 'Image upload was not confirmed. Check Cloudinary before trying again.';
   const keys: Record<string, string> = { NETWORK: 'API network error', TIMEOUT: 'API timeout', BAD_RESPONSE: 'API bad response', NO_DELIVERY_ZONE: 'API delivery unavailable', CART_LIMIT: 'API cart limit', VALIDATION_ERROR: 'API validation error', OUT_OF_STOCK: 'API out of stock', VARIANT_UNAVAILABLE: 'API variant unavailable', INVALID_DELIVERY_SLOT: 'API delivery slot', UNAUTHORIZED: 'API unauthorized', INVALID_CREDENTIALS: 'API invalid credentials', FORBIDDEN: 'API forbidden', NOT_FOUND: 'API not found', CONFLICT: 'API conflict', INVALID_TRANSITION: 'API invalid transition' };
   return code === 'RATE_LIMITED' ? 'API rate limited' : keys[code] || 'API request failed';
 }

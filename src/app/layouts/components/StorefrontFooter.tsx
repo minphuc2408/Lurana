@@ -13,7 +13,7 @@ export function StorefrontFooter() {
       <div className="col-span-2 lg:col-span-1 min-w-0">
         <div className="flex items-center gap-2 mb-4">
           <Flower size={20} className="text-lunara-rose-light" />
-          <span className="font-display [font-size:1.6rem] [font-weight:600] [letter-spacing:0.1em] text-[#F5DDD5]">lunara</span>
+          <span className="font-display [font-size:1.6rem] [font-weight:600] [letter-spacing:0.1em] text-[#F5DDD5]">{t('Lunara Shop')}</span>
         </div>
         <p className="[font-size:0.88rem] [line-height:1.8] text-lunara-body [max-width:300px]">
           {t("Crafting nature's most beautiful moments into timeless floral arrangements. Bringing joy, one bloom at a time.")}

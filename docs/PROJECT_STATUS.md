@@ -43,7 +43,7 @@ Phase 6 giữ **IN PROGRESS**, chưa đánh dấu DONE hoặc sẵn sàng mở b
 | Tiền/múi giờ | Active UI VND từ API, Worker Asia/Ho_Chi_Minh; legacy settings ẩn | Giá/khu vực mẫu cần chốt trước mở bán; giữ currency/timezone khi đổi EN/VI |
 | Admin/JWT secrets | Production có ADMIN_PASSWORD/JWT_SECRET; owner nhập password qua prompt ẩn, login HTTPS/session PASS. Không đọc/reuse local password; local tests vẫn dùng demo | **[NGƯỜI]** quản lý ADMIN_PASSWORD ≥24 ký tự ngẫu nhiên và JWT_SECRET ≥32 ký tự ngẫu nhiên, khác nhau, trong `.dev.vars`; production dùng Cloudflare secret Phase 6. Không đưa giá trị vào chat/docs/Git/`VITE_*` |
 | Turnstile | Server verifier Phase 3 đã có, test mock; local UI test không có secret Turnstile | Cấu hình widget/site key/domain/token thật và secret Worker ở Phase 6 |
-| Cloudinary | Chưa tích hợp | MVP dùng URL ảnh; upload/preset có giới hạn là phần sau MVP |
+| Cloudinary | Signed direct admin upload đã code/test local; chưa upload thật/deploy | Owner tạo Signed presets, nhập server keys; [hướng dẫn](CLOUDINARY.md) |
 
 ## Tiến độ kỹ thuật và việc tiếp theo
 
@@ -59,3 +59,11 @@ Phase 6 giữ **IN PROGRESS**, chưa đánh dấu DONE hoặc sẵn sàng mở b
 | Deferred | Customer auth/profile/wishlist server, wizard hoa riêng, online payment, coupon/reviews/upload ảnh; xem [backlog](pipeline/BACKLOG.md) |
 
 Tham chiếu: [handbook](../PROJECT_GUIDE.md) · [stack](TECH_STACK.md) · [pipeline](pipeline/README.md) · [database](DATABASE_DESIGN.md) · [frontend entities](FRONTEND_ENTITIES.md).
+
+Staging: cấu hình local đã thêm theo UUID owner cung cấp; chưa xác minh resource remote, migrate/seed, secrets hoặc deploy. Không thay Phase 6 production. Xem [STAGING](STAGING.md).
+
+Tên hiển thị website từ 15/10/2026 là **Lunara Shop** (tab, header/footer, admin, EN/VI); giữ Worker/D1 và repo GitHub hiện có. Typecheck/build/architecture và 143 tests PASS; kiểm branding EN/VI 320/390/1440px PASS. UI tổng quát dừng ở bước quote chưa chọn khu vực giao; chi tiết deploy tại [Phase 6](pipeline/PHASE_6_DEPLOY.md).
+
+Cập nhật staging 15/10/2026: đã xác minh remote lunara-staging-db / ed391b18-0bcf-41b3-8315-389807ace7f2 và áp 0001_mvp.sql thành công (25 commands). Đã kiểm đủ 10 bảng nghiệp vụ, lịch sử 0001, không còn migration chờ, foreign_key_check rỗng, orders=0. db:verify local cô lập PASS 13/13 nhóm, 46 assertions. Chưa seed, đặt secrets hoặc deploy staging; production không được truy cập/ghi trong lượt sửa này.
+
+Cloudinary 15/10/2026: đã tích hợp local signed direct upload (SHA-256, cookie admin/same-origin, JPEG/PNG/WebP, client 5 MB, prefix local/staging/prod). Typecheck/build/architecture 208 source files PASS; tests 148/148, smoke local 40/40 PASS. Browser mock EN/VI 390px PASS: file sai, thành công/preview, Save URL, thiếu config giữ URL; 0 JS exceptions. Chưa tạo preset/đặt keys/upload thật/deploy tính năng, không ghi D1 remote; Phase 6 vẫn 5/7. Không thêm migration/dependency hoặc tự xóa asset. [Cấu hình Cloudinary](CLOUDINARY.md).

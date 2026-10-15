@@ -3,7 +3,7 @@
 ## Context and communication
 
 - Communicate with the owner in Vietnamese. UI supports English and Vietnamese through react-i18next; keep locale JSON in shared/i18n and preserve English fallback. Product names use name_en/name_vi, with name_vn accepted as a Vietnamese alias. Do not translate customer-entered data or change currency/timezone with locale.
-- This is Lunara, a flower shop storefront and admin UI. The GitHub repository is named `Lurana`; preserve existing UI branding as `Lunara`.
+- This is Lunara, a flower shop storefront and admin UI. The GitHub repository is named `Lurana`; preserve UI branding as `Lunara Shop`.
 - Read the relevant section of `PROJECT_GUIDE.md` for project context. Current code is authoritative when the guide and implementation diverge; update the guide when an architectural or product decision changes.
 - Before declaring a phase complete, synchronize progress across README.md, PROJECT_GUIDE.md, docs/PROJECT_STATUS.md, docs/TECH_STACK.md, affected pipeline/contract/entity/database docs, and these instructions/the repo skill when their context changes. Separate backend completion from frontend integration, local evidence from remote acceptance, and historical outputs from current counts. Do not mark later phases complete from partial preview work.
 - For UI, component, storefront, checkout, admin, or flower shop planning work, use the repo skill at `.agents/skills/lunara-flower-shop/SKILL.md`. Read it directly if the current session has not discovered newly added skills yet.
@@ -56,3 +56,9 @@ The wrapper uses the pinned project dependency, fixes the working directory to t
 - For runtime/style/build changes, run `npm run typecheck`, `npm run check:architecture`, `npm test`, `npm run build`, and verify affected flows. For dependency changes, also run `npm audit`. `npm run check:ui -- http://127.0.0.1:4173` checks a running preview with Edge headless on Windows. Vite build does not replace typecheck; no ESLint script is configured.
 - Test behavior that can regress; documentation-only changes need link/path review, not a new test framework. Sync CodeGraph after code changes.
 - Before commit/push, review `git status`, file inclusion, and `git diff --check`. Commit/push/deploy only when included in the current request or standing authorization; a previous one-time push is not blanket authorization for future pushes.
+
+Staging configuration: env.staging targets lunara-staging / lunara-staging-db (owner-supplied UUID ed391b18-0bcf-41b3-8315-389807ace7f2). scripts/staging.mjs validates target before build/deploy/migrate/seed and selects CLOUDFLARE_ENV at build time. Remote staging is verified and migrated (0001, 10 business tables, FK clean); seed/secrets/deploy remain pending; follow docs/STAGING.md. Preserve local remoteBindings:false and production target; remote writes/deploy still require authorization.
+
+Website display name is Lunara Shop (owner request, 15/10/2026); use the common locale key for active logos. Keep technical Worker/D1 names unchanged.
+
+Cloudinary now has local signed direct upload via POST /api/admin/uploads/sign: cookie admin + same-origin JSON, server-owned SHA-256 params, browser-to-Cloudinary upload, save existing image.url contract. Public cloud/preset/scope are in Wrangler vars, API_KEY/API_SECRET are server config/secrets only. Keys/presets/live upload/deployment remain pending; 5 MB is client/declared metadata validation, not a Worker byte limit. No new DDL, public_id persistence, unsigned preset, SDK or automatic asset deletion. Follow docs/CLOUDINARY.md.

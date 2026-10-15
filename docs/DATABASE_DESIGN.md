@@ -95,3 +95,9 @@ Auth khách/profile/wishlist/wizard làm sau. Cart guest lưu localStorage versi
 Khu vực giao, giá VND, sản phẩm/ảnh/tồn và policy thật vẫn cần chủ shop chốt trước mở bán. Xem [pipeline](pipeline/README.md); Phase 1 không cho phép thay đổi remote hoặc deploy.
 
 [Bằng chứng Phase 5](pipeline/PHASE_5_FRONTEND.md): typecheck/build pass, architecture 207 files, tests 136/136, smoke 40/40; UI 17 routes, 10/10 kịch bản bắt buộc + 2/2 mở rộng và 0 JS exceptions. Các phép ghi UI chạy D1 cô lập; logical snapshot xác nhận D1 persisted không đổi. Không thay migration/seed/canonical DDL, không ghi remote và không dùng nghiệm thu local để đánh dấu Phase 6 hoàn thành.
+
+Staging dùng cùng canonical migrations với local/production nhưng database riêng lunara-staging-db; chưa migrate/seed remote staging. Không đổi DDL hoặc copy đơn khách. Xem [STAGING](STAGING.md).
+
+Cập nhật staging 15/10/2026: đã xác minh remote lunara-staging-db / ed391b18-0bcf-41b3-8315-389807ace7f2 và áp 0001_mvp.sql thành công (25 commands). Đã kiểm đủ 10 bảng nghiệp vụ, lịch sử 0001, không còn migration chờ, foreign_key_check rỗng, orders=0. db:verify local cô lập PASS 13/13 nhóm, 46 assertions. Chưa seed, đặt secrets hoặc deploy staging; production không được truy cập/ghi trong lượt sửa này.
+
+Cloudinary signed upload đã tích hợp local ngày 15/10/2026, không đổi DDL: product_images.url lưu secure_url sau Save product; cloudinary_public_id vẫn nullable/chưa được điền tự động. Chưa tự xóa ảnh cũ hoặc asset chưa gắn sản phẩm. [Chi tiết](CLOUDINARY.md).

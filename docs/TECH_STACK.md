@@ -14,7 +14,7 @@ Chốt hướng MVP ngày **14/10/2026**, cập nhật frontend **15/10/2026**. 
 | API/runtime | Hono + Cloudflare Workers + `@cloudflare/vite-plugin` | Health/catalog/delivery/quote/orders/lookup và auth/admin local; admin status dùng transitionOrder Phase 3 |
 | Validation/truy vấn | Zod + SQL tham số hóa | Root `shared/` giữ schema/constants và `admin-*-schemas.ts`; catalog/admin products/summary ≤3 queries; order 15 dòng success 35 / diagnostic 36, guard retry ≤40 |
 | Database | Cloudflare D1 (SQLite) | Binding `DB`; [migration canonical](../migrations/0001_mvp.sql) có 10 bảng, local verifier 13 nhóm; Phase 6 đã áp `0001`/seed remote và backup thử, chưa dữ liệu thật. `custom_requests` deferred |
-| Media | Cloudinary | Chưa tích hợp; MVP dán URL ảnh, upload/resize/CDN làm sau |
+| Media | Cloudinary | Signed direct admin upload đã code local; vẫn nhận URL ảnh; keys/presets/upload thật/deploy chờ owner |
 | Hạ tầng | Cloudflare DNS/CDN/SSL, Turnstile + rate limit | Worker đã deploy workers.dev/API smoke live PASS; Turnstile orders verifier có điều kiện secret đã kiểm mock, widget/Turnstile secrets thật và rate limit chưa cấu hình |
 | Auth | Web Crypto SHA-256/timingSafeEqual + `hono/jwt` HS256 | Một admin từ secret, cookie HttpOnly/SameSite=Strict 12h; `requireAdmin`/`requireSameOrigin` tại API. AuthProvider gọi me/login/logout, AdminRoute bảo vệ UI; không dependency/bảng auth mới. Auth khách deferred |
 
@@ -29,8 +29,8 @@ Admin cookie `lunara_admin` có `Path=/`, `Max-Age=43200`, `Secure` trên HTTPS;
 ## Luồng MVP và phần triển khai sau
 
 - Storefront đọc catalog/quote, form checkout gửi COD; API Workers/Hono → D1 kiểm dữ liệu, tính giá/phí, ghi COD/tồn nguyên tử và snapshot. UI tra đơn/admin đã nối API Phase 3–4; Phase 5 đã pass kiểm thử tự động và đủ 10 kịch bản UI bắt buộc + 2 mở rộng. Đây là nghiệm thu local, chưa đồng nghĩa chấp nhận môi trường remote.
-- MVP admin dán URL ảnh; upload Cloudinary làm sau. Khi triển khai: Admin → Cloudinary → Workers → D1, upload bằng **Unsigned Upload Preset** có giới hạn định dạng/dung lượng; API chỉ cho admin ghi metadata ảnh. Preset công khai không thay xác thực. Xóa ảnh cần request xác thực phía server. [Cloudinary upload](https://cloudinary.com/documentation/client_side_uploading).
-- Ảnh được giao trực tiếp từ Cloudinary CDN; dùng URL resize + `q_auto,f_auto`. WebP/AVIF phụ thuộc trình duyệt và cấu hình Cloudinary. [Tối ưu ảnh](https://cloudinary.com/documentation/image_optimization).
+- Cloudinary signed upload: admin cookie + same-origin POST /api/admin/uploads/sign → Worker ký SHA-256 params cố định → browser upload trực tiếp Cloudinary → Save product lưu URL vào D1. Không thêm SDK/dependency/migration; API secret chỉ server. Quyết định này thay đề xuất unsigned preset trước đó. Giới hạn 5 MB ở client/metadata, không phải Worker cưỡng chế byte. [Hướng dẫn](CLOUDINARY.md).
+- Ảnh Cloudinary dùng HTTPS delivery URL từ provider; chưa tự gắn q_auto/f_auto/resize, có thể cấu hình incoming transformations trong preset sau khi kiểm thật. Không xóa asset tự động.
 - Order API đã có verifier Siteverify khi cấu hình TURNSTILE_SECRET, fail closed, provider mock-tested. Widget checkout/admin login, site key/secret/domain thật và rate limit chưa triển khai. Wizard/request ngoài MVP. [Turnstile server validation](https://developers.cloudflare.com/turnstile/get-started/server-side-validation/).
 
 Giả định sizing trong pipeline: Workers Free **100.000 requests/ngày, 10 ms CPU/request**, D1 **50 queries/request**. Đây là tham số kế hoạch; kiểm tra tài liệu/hạn mức gói thực tế trước deploy. Không coi lượt kiểm chứng local là xác nhận quota/chi phí cloud. [Giới hạn Workers](https://developers.cloudflare.com/workers/platform/limits/), [giới hạn D1](https://developers.cloudflare.com/d1/platform/limits/).
@@ -54,3 +54,11 @@ Auth khách còn mở: nếu dùng Better Auth, cần đối chiếu schema auth
 Smoke cuối chạy trên preview loopback `127.0.0.1:4175`; kiểm UI Phase 5 dùng D1 cô lập và demo secrets, logical snapshot xác nhận D1 persisted không đổi. UI kiểm đúng kết quả server, retry đơn cùng UUID khi mất phản hồi và chặn gửi lại delta tồn chưa kiểm chứng. Không có phép deploy, ghi D1 remote hoặc xác nhận quota production trong bằng chứng local.
 
 Chi tiết: [database](DATABASE_DESIGN.md), [entity frontend](FRONTEND_ENTITIES.md), [sổ tay dự án](../PROJECT_GUIDE.md).
+
+Staging: Cloudflare env.staging, Worker/D1 riêng; cùng migrations và binding DB. Build chọn CLOUDFLARE_ENV=staging, kiểm config sinh ra trước deploy; chưa nghiệm thu remote. Xem [STAGING](STAGING.md).
+
+Tên hiển thị website từ 15/10/2026 là **Lunara Shop** (tab, header/footer, admin, EN/VI); giữ Worker/D1 và repo GitHub hiện có. Typecheck/build/architecture và 143 tests PASS; kiểm branding EN/VI 320/390/1440px PASS. UI tổng quát dừng ở bước quote chưa chọn khu vực giao; chi tiết deploy tại [Phase 6](pipeline/PHASE_6_DEPLOY.md).
+
+Cập nhật staging 15/10/2026: đã xác minh remote lunara-staging-db / ed391b18-0bcf-41b3-8315-389807ace7f2 và áp 0001_mvp.sql thành công (25 commands). Đã kiểm đủ 10 bảng nghiệp vụ, lịch sử 0001, không còn migration chờ, foreign_key_check rỗng, orders=0. db:verify local cô lập PASS 13/13 nhóm, 46 assertions. Chưa seed, đặt secrets hoặc deploy staging; production không được truy cập/ghi trong lượt sửa này.
+
+Cloudinary 15/10/2026: đã tích hợp local signed direct upload (SHA-256, cookie admin/same-origin, JPEG/PNG/WebP, client 5 MB, prefix local/staging/prod). Typecheck/build/architecture 208 source files PASS; tests 148/148, smoke local 40/40 PASS. Browser mock EN/VI 390px PASS: file sai, thành công/preview, Save URL, thiếu config giữ URL; 0 JS exceptions. Chưa tạo preset/đặt keys/upload thật/deploy tính năng, không ghi D1 remote; Phase 6 vẫn 5/7. Không thêm migration/dependency hoặc tự xóa asset. [Cấu hình Cloudinary](CLOUDINARY.md).

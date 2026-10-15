@@ -204,3 +204,7 @@ Cookie `lunara_admin`: HttpOnly; SameSite=Strict; Path=/; Max-Age=43200; Secure 
 **Phí giao** = (phí khu vực; bằng 0 nếu `subtotal ≥ free_from_amount`) + phụ phí phương thức (`config.ts`). Giá trị phụ phí, giờ chốt, khung giờ trong `config.ts` là **giả định ban đầu**, chủ shop cần chỉnh.
 
 Helper ngày/khung giờ Phase 2 đã được order service Phase 3 sử dụng; quote không kiểm ngày/slot vì body không có các trường này. Giả định config: STANDARD/EXPRESS/SAME_DAY có phụ phí 0/30000/50000; EXPRESS và SAME_DAY dùng cutoff 16:00, chuẩn bị ít nhất 120 phút. Sáu khung 2 giờ từ 08:00 đến 20:00; STANDARD ngày hôm nay không nhận khung đã bắt đầu trong quá khứ. Ngày hợp lệ đến +30 ngày theo Asia/Ho_Chi_Minh, gồm kiểm tra ngày có thật trong lịch.
+
+## Admin image upload — local integration
+
+POST /api/admin/uploads/sign dùng admin cookie, Origin cùng nguồn và JSON ≤1 KB. Input strict: mime (image/jpeg, image/png, image/webp), size (1..5242880). Output data: cloud_name/api_key/signature và params timestamp/public_id/asset_folder/upload_preset/overwrite=false/allowed_formats. Params do server quyết định; SHA-256, Cloudinary validity 1h. 503 CLOUDINARY_NOT_CONFIGURED nếu thiếu keys/config; 400 VALIDATION_ERROR nếu input sai; 401/403 theo middleware hiện có. Không ghi D1; browser upload trực tiếp Cloudinary rồi Save product qua hợp đồng image.url hiện có. Xem [Cloudinary](../CLOUDINARY.md).

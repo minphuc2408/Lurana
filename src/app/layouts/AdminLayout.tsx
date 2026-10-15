@@ -32,9 +32,9 @@ function SidebarContent({
       {/* Logo */}
       <div className={cn("[border-bottom:1px_solid_rgba(255,255,255,0.08)]", collapsed ? "[padding:24px_12px_20px]" : "[padding:24px_20px_20px]")}>
         <div className={cn("flex items-center", collapsed ? "justify-center" : "justify-between")}>
-            <Link to="/" title={t("Lunara")} aria-label={t("Lunara")} className="flex items-center gap-2 [text-decoration:none]">
+            <Link to="/" title={t("Lunara Shop")} aria-label={t("Lunara Shop")} className="flex items-center gap-2 [text-decoration:none]">
               <Flower size={22} className="text-lunara-rose-light" />
-              {!collapsed && <span className="font-display [font-size:1.5rem] text-white [letter-spacing:0.1em]">lunara</span>}
+              {!collapsed && <span className="font-display [font-size:1.5rem] text-white [letter-spacing:0.1em]">{t('Lunara Shop')}</span>}
             </Link>
             {onClose && <button onClick={onClose} className="bg-transparent [border:none] [cursor:pointer] text-lunara-rose-light" aria-label={t("Close")}>
                 <X size={18} />
@@ -130,7 +130,7 @@ export function AdminLayout() {
                 {t(currentNav.label)}
               </h1>
               <p className="[font-size:0.68rem] text-lunara-body [margin-top:1px]">
-                <Link to="/" className="text-lunara-body [text-decoration:none]">Lunara</Link>
+                <Link to="/" className="text-lunara-body [text-decoration:none]">{t('Lunara Shop')}</Link>
                 {" / "}
                 <span className="text-lunara-rose-strong">{t(currentNav.label)}</span>
               </p>
