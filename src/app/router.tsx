@@ -1,16 +1,38 @@
-import { createBrowserRouter } from 'react-router';
+import { createBrowserRouter, Navigate } from 'react-router';
+import { lazy } from 'react';
 import { MainLayout } from './layouts/MainLayout';
+import { AuthLayout } from './layouts/AuthLayout';
+import { AdminLayout } from './layouts/AdminLayout';
+import { AdminRoute } from '@/features/auth';
 import { RouteError } from '@/shared/components/RouteError';
 import HomePage from '@/pages/HomePage';
 import ShopPage from '@/pages/ShopPage';
 import CartPage from '@/pages/CartPage';
+import TrackOrderPage from '@/pages/TrackOrderPage';
+import LoginPage from '@/pages/LoginPage';
 import UnavailablePage from '@/pages/UnavailablePage';
-// Preserve feature source and its temp backup; routes without server APIs stay hidden.
+const AdminDashboardPage = lazy(() => import('@/pages/admin/AdminDashboardPage'));
+const AdminOrdersPage = lazy(() => import('@/pages/admin/AdminOrdersPage'));
+const AdminStockPage = lazy(() => import('@/pages/admin/AdminStockPage'));
+const AdminDeliveryZonesPage = lazy(() => import('@/pages/admin/AdminDeliveryZonesPage'));
+// Deferred features keep their source while routes without real APIs stay hidden.
 export const router = createBrowserRouter([{
   path: '/', Component: MainLayout, errorElement: <RouteError />,
   children: [
     { index: true, Component: HomePage }, { path: 'shop', Component: ShopPage }, { path: 'cart', Component: CartPage },
-    ...['request', 'orders', 'profile', 'login', 'signup', 'admin/*'].map(path => ({ path, Component: UnavailablePage })),
+    { path: 'orders/track', Component: TrackOrderPage },
+    ...['request', 'orders', 'profile', 'login', 'signup'].map(path => ({ path, Component: UnavailablePage })),
+    { path: '*', Component: UnavailablePage },
+  ],
+}, { Component: AuthLayout, errorElement: <RouteError />, children: [{ path: '/admin/login', Component: LoginPage }] }, {
+  path: '/admin', element: <AdminRoute><AdminLayout /></AdminRoute>, errorElement: <RouteError />,
+  children: [
+    { index: true, element: <Navigate to="/admin/dashboard" replace /> },
+    { path: 'dashboard', Component: AdminDashboardPage },
+    { path: 'orders', Component: AdminOrdersPage },
+    { path: 'stock', Component: AdminStockPage },
+    { path: 'products', element: <Navigate to="/admin/stock" replace /> },
+    { path: 'delivery-zones', Component: AdminDeliveryZonesPage },
     { path: '*', Component: UnavailablePage },
   ],
 }]);

@@ -5,6 +5,8 @@ import { navItems } from "./navigation";
 import { Suspense } from "react";
 import { RouteLoading } from "@/shared/components/RouteLoading";
 import { cn } from "@/shared/lib/utils";
+import { apiErrorKey } from '@/shared/api/client';
+import { featureFlags } from '@/shared/config/features';
 import { Outlet, Link, Navigate } from "react-router";
 import { Flower, LogOut, Menu, X, Bell, ArrowLeft, ChevronRight } from "lucide-react";
 function SidebarContent({
@@ -18,7 +20,7 @@ function SidebarContent({
     navigate,
     user,
     logout,
-    handleLogout
+    handleLogout, signingOut, error
   } = useAdminSidebar({
     onClose
   });
@@ -69,18 +71,19 @@ function SidebarContent({
       <div className="[padding:12px_16px_20px] [border-top:1px_solid_rgba(255,255,255,0.06)]">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-lunara-rose-strong [font-size:0.82rem] text-white [font-weight:700]">
-            {user?.name?.charAt(0) ?? "A"}
+            {(user?.name || t('Administrator')).charAt(0)}
           </div>
           <div className="flex-1 min-w-0">
             <div className="[font-size:0.82rem] text-lunara-rose-light [font-weight:500] [overflow:hidden] [text-overflow:ellipsis] [white-space:nowrap]">
-              {user?.name}
+              {user?.name || t('Administrator')}
             </div>
             <div className="[font-size:0.68rem] text-lunara-rose-light [margin-top:1px]">{t("Administrator")}</div>
           </div>
-          <button onClick={handleLogout} title={t("Sign Out")} className="bg-transparent [border:none] [cursor:pointer] text-lunara-rose-light [padding:4px] [flex-shrink:0]" aria-label={t("Sign Out")}>
+          <button data-testid="admin-logout" onClick={handleLogout} disabled={signingOut} title={t("Sign Out")} className="bg-transparent [border:none] [cursor:pointer] text-lunara-rose-light [padding:4px] [flex-shrink:0] disabled:opacity-50" aria-label={t("Sign Out")}>
             <LogOut size={15} />
           </button>
         </div>
+        {Boolean(error) && <p role="alert" className="mt-3 text-sm text-lunara-rose-light">{t(apiErrorKey(error))}</p>}
       </div>
     </div>;
 }
@@ -93,7 +96,7 @@ export function AdminLayout() {
     setSidebarOpen,
     currentNav
   } = useAdminLayout();
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/admin/login" replace />;
   if (user.role !== "admin") return <Navigate to="/" replace />;
   return <div className="flex h-screen overflow-hidden font-body">
       {/* Desktop Sidebar */}
@@ -131,19 +134,19 @@ export function AdminLayout() {
 
           <div className="flex items-center gap-3">
             {/* Notifications */}
-            <button className="relative bg-transparent [border:none] [cursor:pointer] text-lunara-body [padding:6px]" aria-label={t("Notifications")}>
+            {featureFlags.adminNotifications && <button className="relative bg-transparent [border:none] [cursor:pointer] text-lunara-body [padding:6px]" aria-label={t("Notifications")}>
               <Bell size={19} />
               <span className="absolute top-0 right-0 w-4 h-4 rounded-full flex items-center justify-center text-white bg-lunara-rose-strong [font-size:0.55rem] [font-weight:700]">
                 3
               </span>
-            </button>
+            </button>}
 
             {/* User chip */}
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-lunara-blush [border:1px_solid_#F0DDD5]">
               <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 bg-lunara-rose-strong [font-size:0.72rem] text-white [font-weight:700]">
-                {user.name.charAt(0)}
+                {(user.name || t('Administrator')).charAt(0)}
               </div>
-              <span className="[font-size:0.78rem] text-lunara-ink [font-weight:500]">{user.name}</span>
+              <span className="[font-size:0.78rem] text-lunara-ink [font-weight:500]">{user.name || t('Administrator')}</span>
               <span className="px-2 py-0.5 rounded-full bg-lunara-rose-strong text-white [font-size:0.6rem] [letter-spacing:0.08em] [text-transform:uppercase]">
                 {t("admin")}</span>
             </div>

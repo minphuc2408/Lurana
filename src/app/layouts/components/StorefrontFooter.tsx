@@ -1,4 +1,5 @@
 import { Flower } from 'lucide-react';
+import { Link } from 'react-router';
 import { useLocale } from '@/shared/i18n';
 import { customerCareLinks, socialLinks, storeLocations } from '@/shared/config/storefront-footer';
 
@@ -21,6 +22,8 @@ export function StorefrontFooter() {
       <nav aria-label={t('Customer Care')} className="min-w-0">
         <h4 className={headingClass}>{t('Customer Care')}</h4>
         <ul className="flex flex-col gap-2">
+          <li><Link to="/orders/track" className={linkClass}>{t('Track order')}</Link></li>
+          <li><Link to="/admin/login" className={linkClass}>{t('Admin login')}</Link></li>
           {customerCareLinks.map(link => <li key={link.href}><a href={link.href} target="_blank" rel="noopener noreferrer" className={linkClass}>{t(link.label)}</a></li>)}
         </ul>
       </nav>
