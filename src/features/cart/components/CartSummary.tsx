@@ -13,6 +13,6 @@ export function CartSummary(model: QuoteCartModel) {
     <dl className="space-y-3 border-y border-lunara-border py-5">
       {[['Subtotal', model.quote?.subtotal], ['Delivery', model.quote?.delivery_fee], ['Total', model.quote?.grand_total]].map(([label, amount]) => <div key={String(label)} className="flex justify-between gap-4"><dt>{t(String(label))}</dt><dd data-quote-amount={String(label)} className="font-medium text-lunara-rose-strong">{typeof amount === 'number' ? formatVND(amount, language) : '—'}</dd></div>)}
     </dl>
-    <p className="mt-5 text-sm leading-6 text-lunara-body">{t('Quote only notice')}</p>
+    <p className="mt-5 text-sm leading-6 text-lunara-body">{t('Server confirms final total')}</p>
   </section>;
 }
