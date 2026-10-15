@@ -17,6 +17,8 @@
 !/codegraph.json
 !/guidelines/Guidelines.md
 !/index.html
+!/public/
+!/public/favicon.svg
 !/package-lock.json
 !/package.json
 !/postcss.config.mjs
