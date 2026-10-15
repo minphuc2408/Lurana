@@ -31,6 +31,8 @@ Cloudinary chưa đăng ký và không cần để dùng API Phase 2. Catalog hi
 
 Menu còn Home/Shop/Cart. Source legacy được giữ trong repo và backup; AppProviders hiện I18nextProvider → CatalogProvider → CartProvider, không khởi động demo AuthProvider. Lượt preview không thêm API ghi; Phase 3–4 tiếp theo đã thêm COD/tồn/lookup/transition và auth/admin backend, giữ frontend này. Hiện chưa có nút gửi đơn hoặc UI tra đơn/admin thật; báo giá không tạo đơn hoặc giữ tồn.
 
+Chỉnh storefront trước khi kết Phase 4 (15/10/2026): Zalo giữ icon tự vẽ góc phải sau rollback logo widget; viền xanh animate width 60→208px khi hover/focus/click trong 400ms, reduced motion 200ms; bỏ fade/slide riêng của chữ; tên/địa chỉ/map URL footer lấy từ EN/VI `common.json`. Giữ thông báo chờ khi bấm Zalo vì chưa có link thật. Các UI checkout/lookup/admin vẫn chưa nối.
+
 ## Kiểm chứng lịch sử tại mốc nối preview
 
 Số liệu 54 tests/16 smoke và output bên dưới thuộc source tại lượt preview, giữ nguyên làm bằng chứng lịch sử. Mốc Phase 3 có **92/92 tests**, **10/10 ca order**, smoke tổng **27/27** và typecheck/architecture/build pass; [output lịch sử Phase 3](PHASE_3_CHECKOUT_ORDERS.md#bằng-chứng-lệnh--14102026). Số đếm source hiện tại và nghiệm thu auth/admin backend ghi ở [Phase 4](PHASE_4_ADMIN.md). Các kiểm chứng backend mới không thay thế nghiệm thu đủ checkout/admin UI Phase 5.

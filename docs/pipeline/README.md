@@ -60,6 +60,8 @@ Tài liệu dùng chung: [API_CONTRACT](API_CONTRACT.md) • [BACKLOG](BACKLOG.m
 
 **Bước tiếp theo:** hoàn thiện Phase 5 UI checkout/lookup/login/admin → Phase 6 khi được yêu cầu. Các output 53 tests/16 smoke của Phase 2, 54 tests của preview và 92 tests/27 smoke của Phase 3 là bằng chứng lịch sử; số đếm source hiện tại ghi ở Phase 4.
 
+**Chỉnh giao diện trước khi kết Phase 4:** Zalo giữ icon tự vẽ góc phải; animate chiều rộng viền xanh khi hover/focus/click (400ms, reduced motion 200ms); footer tên/địa chỉ/link bản đồ chuyển sang JSON EN/VI. Đây là chỉnh storefront, không nối các UI Phase 5 còn thiếu. [Cấu hình](../../PROJECT_GUIDE.md) · [nghiệm thu](PHASE_4_ADMIN.md).
+
 **Phase 0–5 làm local, không cần tài khoản Cloudflare.** Phase 6 dùng tài khoản/D1 đã được chủ dự án tạo; đăng ký/login/create lại chỉ khi còn thiếu.
 
 **Nếu trễ, cắt theo thứ tự:** (1) trang admin sản phẩm chỉ giữ sửa giá/tồn, (2) bỏ admin sửa phí giao (sửa bằng SQL), (3) bỏ trang tra đơn khách (admin vẫn xem được), (4) bỏ Turnstile. **Không cắt:** tính tiền ở server, trừ tồn nguyên tử, idempotency.

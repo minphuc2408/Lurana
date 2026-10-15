@@ -9,7 +9,7 @@ Chốt hướng MVP ngày **14/10/2026**. Thương hiệu: **Lunara**; repositor
 | Tầng | Công nghệ | Vai trò và trạng thái |
 | --- | --- | --- |
 | Frontend | React 18, TypeScript, React Router 7, Vite 6, Tailwind CSS 4 | Storefront/Admin theo `src/features/*`; đã có |
-| i18n | `i18next` + `react-i18next`, JSON EN/VI | `src/shared/i18n/`; mặc định và fallback English; dữ liệu sản phẩm dùng `name_en/name_vi` |
+| i18n | `i18next` + `react-i18next`, JSON EN/VI | `src/shared/i18n/`; mặc định/fallback English; tên/địa chỉ/map URL footer ở EN/VI `common.json`; dữ liệu sản phẩm dùng `name_en/name_vi` |
 | Browser storage | `localStorage`, `sessionStorage` | Lưu ngôn ngữ và cart guest version 1 (chỉ variantId/quantity); session demo không active, wishlist ẩn |
 | API/runtime | Hono + Cloudflare Workers + `@cloudflare/vite-plugin` | Health/catalog/delivery/quote/orders/lookup và auth/admin local; admin status dùng transitionOrder Phase 3 |
 | Validation/truy vấn | Zod + SQL tham số hóa | Root `shared/` giữ schema/constants và `admin-*-schemas.ts`; catalog/admin products/summary ≤3 queries; order 15 dòng success 35 / diagnostic 36, guard retry ≤40 |

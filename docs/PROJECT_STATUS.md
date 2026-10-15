@@ -1,6 +1,6 @@
 # Lunara — Trạng thái & mục cần điền
 
-Cập nhật **14/10/2026**. Repo **Lurana** · thương hiệu **Lunara**.
+Cập nhật **15/10/2026**. Repo **Lurana** · thương hiệu **Lunara**.
 
 ## Hiện trạng
 
@@ -15,7 +15,7 @@ Cập nhật **14/10/2026**. Repo **Lurana** · thương hiệu **Lunara**.
 | Phase 6 | **PLANNED**: chưa deploy/migrate/seed D1 remote hoặc cấu hình production; tài khoản và D1 remote đã được chủ dự án tạo |
 | API | Health/catalog/delivery/quote; POST orders/lookup từ D1; admin login/me/logout/summary/orders/products/variants/delivery-zones; API lạ → JSON 404, admin thiếu cookie → 401 |
 | Frontend | Phase 5 PARTIAL: Home/Shop/Cart/Delivery/Quote VND, EN/VI; UI gửi/tra đơn chưa nối dù API Phase 3 đã có; auth/admin và features ngoài preview tạm ẩn. [Backup/audit](pipeline/FE_AUDIT.md) |
-| Storefront | Footer song ngữ; link/địa chỉ FlowerCorner đã cung cấp; Zalo chờ cấu hình |
+| Storefront | Footer tên/địa chỉ/map URL cấu hình JSON EN/VI; Zalo icon tự vẽ góc phải, viền xanh animate width khi hover/focus/click (400ms, reduced motion 200ms); link Zalo thật chờ cấu hình |
 | Cart/auth | Cart localStorage chỉ variantId/quantity, giá/phí từ quote; AuthProvider demo không active; server admin dùng JWT cookie, UI login/admin chưa nối |
 | Cloudflare | Chủ dự án báo đã đăng nhập và tạo `lunara-db` remote còn trống; Phase 0–4 chỉ dùng local, chưa kiểm tra hoặc thay đổi remote |
 | Build | `dist/client/` + `dist/lunara/`; runtime bindings local qua `remoteBindings: false` |
@@ -27,12 +27,12 @@ Cập nhật **14/10/2026**. Repo **Lurana** · thương hiệu **Lunara**.
 | Keyword | Hiện tại | Điền/chốt ở đâu |
 | --- | --- | --- |
 | Zalo | Chưa có link/SĐT public | Cung cấp link Zalo chính thức để nối widget `ZaloContact` |
-| Thông tin shop | Footer đang dùng FlowerCorner | Xác nhận link, địa chỉ, công ty/MST cho Lunara; cấu hình `src/shared/config/storefront-footer.ts`, phần công ty trong `StorefrontFooter` |
+| Thông tin shop | Footer đang dùng FlowerCorner | Tên/địa chỉ/map URL: `src/shared/i18n/locales/en/common.json` và `vi/common.json`; links khác: `src/shared/config/storefront-footer.ts`; công ty/MST trong `StorefrontFooter` |
 | Domain | Chưa cấu hình deploy/domain | Domain public hoặc dùng `*.workers.dev` ở Phase 6 |
 | Catalog | UI active đọc seed D1: 4 categories/8 products/24 variants/8 ảnh/4 zones; fixture frontend chỉ còn source legacy/backup | Chủ shop cần tên EN/VI, ảnh, size, giá VND, SKU, tồn thực trước mở bán |
 | Giao hàng | Phí/khu vực mẫu trong seed; config giả định: phụ phí 0/30.000/50.000 VND, cutoff 16:00, chuẩn bị 120 phút, slots 08:00–20:00 | Chỉnh `worker/config.ts`/zones theo tỉnh/phường phục vụ, phí, khung giờ và policy thật trước mở bán |
 | Tiền/múi giờ | Active UI VND từ API, Worker Asia/Ho_Chi_Minh; legacy settings ẩn | Giá/khu vực mẫu cần chốt trước mở bán; giữ currency/timezone khi đổi EN/VI |
-| Admin/JWT secrets | Auth đã triển khai; test/smoke dùng secret demo tổng hợp, chưa đặt secret thật | **[NGƯỜI]** tự đặt ADMIN_PASSWORD ≥24 ký tự ngẫu nhiên và JWT_SECRET ≥32 ký tự ngẫu nhiên, khác nhau, trong `.dev.vars` trước khi dùng admin thật ở local; production dùng Cloudflare secret Phase 6. Không đưa giá trị vào chat/docs/Git/`VITE_*` |
+| Admin/JWT secrets | Chủ dự án đã cấu hình secret local riêng, đạt điều kiện độ dài/khác nhau; chưa thử đăng nhập bằng secret thật. Tests/smoke dùng demo | **[NGƯỜI]** quản lý ADMIN_PASSWORD ≥24 ký tự ngẫu nhiên và JWT_SECRET ≥32 ký tự ngẫu nhiên, khác nhau, trong `.dev.vars`; production dùng Cloudflare secret Phase 6. Không đưa giá trị vào chat/docs/Git/`VITE_*` |
 | Turnstile | Server verifier Phase 3 đã có, test mock | Site key public ở frontend; secret phía Worker; còn cấu hình domain/token thật ở Phase 5–6 |
 | Cloudinary | Chưa tích hợp | MVP dùng URL ảnh; upload/preset có giới hạn là phần sau MVP |
 

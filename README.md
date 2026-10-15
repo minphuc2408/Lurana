@@ -15,6 +15,8 @@ Storefront + admin từ thiết kế Flower Shop Figma. **UI: Lunara · GitHub: 
 
 Health xác nhận Worker phản hồi, chưa kiểm tra DB. Giỏ bắt đầu rỗng, lưu variant ID/số lượng trong localStorage; giá và phí được báo lại từ server. Backend đặt đơn COD/tra đơn Phase 3 và auth/admin Phase 4 đã có local; UI checkout/tra đơn/admin còn thuộc Phase 5.
 
+Footer: cấu hình tên cửa hàng, địa chỉ và link bản đồ trong `src/shared/i18n/locales/en/common.json` và `vi/common.json` (khóa `Main Store`/`HCMC Store`/`Hanoi Branch`, hậu tố `address`/`map URL`). Zalo ở góc phải dùng icon tự vẽ; viền xanh mở rộng 60→208px khi hover/focus/bấm mở bằng transition width 400ms (reduced motion 200ms), chữ không có hiệu ứng riêng. Link Zalo thật vẫn chờ chủ shop cung cấp.
+
 ## Chạy local
 
 ```bash

@@ -105,4 +105,12 @@ Final sync: Modified: 2; index up to date; files=234
 | Delivery | phí admin20000→23000, quote kế tiếp23000; default zone mới17000; deactivate→NO_DELIVERY_ZONE, dòng vẫn còn |
 | Privacy/integrity | mọi JSON smoke quét credentials/JWT/secret/SQL/stack; FK sạch; không tồn âm; persisted snapshot không đổi |
 
-Đây là nghiệm thu backend local. Chưa nối admin UI, chưa đặt secret thật, chưa cấu hình rate limit/Turnstile login và chưa deploy/nghiệm thu remote. Không băm mật khẩu nặng; 10ms CPU là giới hạn thiết kế, chưa đo/khẳng định CPU trên cloud. Secret thật là việc [NGƯỜI] trước dùng thật; không cần đặt để hoàn tất các tiêu chí local trên.
+Đây là nghiệm thu backend local. Chưa nối admin UI, chưa cấu hình rate limit/Turnstile login và chưa deploy/nghiệm thu remote. Sau nghiệm thu backend, chủ dự án đã cấu hình secret local riêng và đã kiểm điều kiện độ dài/khác nhau; chưa thử đăng nhập bằng secret thật, không lưu giá trị trong tài liệu/Git. Không băm mật khẩu nặng; 10ms CPU là giới hạn thiết kế, chưa đo/khẳng định CPU trên cloud. Secrets thật do [NGƯỜI] quản lý; tests/smoke vẫn dùng demo riêng và không cần secret thật để đạt các tiêu chí local trên.
+
+### Chỉnh storefront trước khi kết Phase 4 — 15/10/2026
+
+- Zalo giữ icon tự vẽ sau rollback logo widget theo yêu cầu; cố định bên phải, mặc định icon. Viền xanh summary animate trực tiếp chiều rộng 60→208px khi hover/focus/bấm mở trong 400ms (reduced motion 200ms), thu ngược khi đóng/rời nút; bỏ fade/slide riêng của chữ. Popup chờ link thật căn phải, giữ keyboard/touch access.
+- Footer tên cửa hàng/địa chỉ/map URL chuyển sang `src/shared/i18n/locales/en/common.json` và `vi/common.json`; config TS chỉ giữ ID/thứ tự/khóa locale. English fallback và ba URL bản đồ giữ theo yêu cầu chủ dự án.
+- Typecheck/architecture/build pass; suite 125/125 pass. UI preview mặc định 15 routes/0 exceptions; kiểm riêng icon tự vẽ, hover/focus/click/góc phải/popup và nội dung JSON EN/VI ở 320/390/768/1024/1440px; đo chiều rộng viền giữa transition mở và đóng, xác nhận 60→giữa→208px, cả normal và reduced motion (20 trường hợp). Evidence screenshot giữ local trong `.security-review/`.
+- Hai test D1 Phase 2/3 được giới hạn `envFiles` về `.dev.vars.example` để không nạp ambient secret thật; focused 10/10 pass, giữ `persist:false`/`remoteBindings:false`.
+- Phase 4 giữ DONE local 9/9; Phase 5 PARTIAL, Phase 6 PLANNED.
