@@ -33,6 +33,7 @@ for (const file of sourceFiles) {
     if (ts.isJsxAttribute(node) && node.name.text === 'style' && /^(features|pages|app\/layouts)\//.test(relative)) errors.push(`${relative}: inline page/component style`);
     if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
       const name = node.expression.text;
+      if (name === 'fetch' && (/^pages\//.test(relative) || /^features\/[^/]+\/components\//.test(relative))) errors.push(`${relative}: move API calls to a feature service`);
       if (relative.startsWith('pages/') && /^(useState|useReducer|useEffect|useContext)$/.test(name)) errors.push(`${relative}: move state/effects to a feature hook`);
       if (/^features\/[^/]+\/components\//.test(relative) && /^(useState|useReducer|useEffect|useContext)$/.test(name)) errors.push(`${relative}: presentation owns state/effects`);
     }

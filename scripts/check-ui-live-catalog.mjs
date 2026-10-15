@@ -10,7 +10,7 @@ export async function verifyLiveCatalog({ navigate, input, assert, evaluate, wai
   await evaluate("localStorage.removeItem('lunara.cart.v1'); localStorage.setItem('lunara_language','en')");
   await reload("document.querySelectorAll('[data-product-id]').length === 8");
   await assert("!document.body.innerText.includes('₱') && !document.body.innerText.includes('Red Rose Romance')", 'Legacy catalog/currency is visible');
-  await assert("!document.querySelector('a[href=\"/login\"]') && !document.querySelector('a[href=\"/profile\"]') && !document.querySelector('a[href=\"/request\"]')", 'Unavailable feature remains in navigation');
+  await assert("!document.querySelector('a[href=\"/signup\"]') && !document.querySelector('a[href=\"/profile\"]') && !document.querySelector('a[href=\"/request\"]')", 'Unavailable feature remains in navigation');
   const prices = await evaluate("fetch('/api/products',{cache:'no-store'}).then(r=>r.json()).then(b=>b.data.items.map(p=>({id:p.id,price:p.variants.find(v=>v.size_code==='M').price,variant:p.variants.find(v=>v.size_code==='M').id})))");
   const peony = prices.find(item => item.id === 1);
   await evaluate(`(() => { const select=document.querySelector('[data-product-id="1"] select');select.value='${peony.variant}';select.dispatchEvent(new Event('change',{bubbles:true})); })()`);
@@ -21,7 +21,7 @@ export async function verifyLiveCatalog({ navigate, input, assert, evaluate, wai
   await assert("!localStorage.getItem('lunara.cart.v1').includes('price')", 'Storage contains client prices');
   await evaluate("document.querySelector('a[href=\"/cart\"]').click()");
   await waitFor("document.querySelector('[data-quote-amount=Total]')?.innerText.includes('670')");
-  await assert("!document.querySelector('input[aria-label=\"Coupon code\"]') && !document.body.innerText.includes('Place Order')", 'Unsupported checkout controls visible');
+  await assert("!document.querySelector('input[aria-label=\"Coupon code\"]')", 'Unsupported coupon control visible');
   await reload("document.querySelector('[data-quote-amount=Total]')?.innerText.includes('670') && document.querySelector('input[list=\"delivery-wards\"]')");
   await input('input[list="delivery-wards"]', 'Phường thử chưa có dòng riêng');
   await waitFor("document.querySelector('[data-quote-amount=Total]')?.innerText.includes('685')");
@@ -41,7 +41,7 @@ export async function verifyLiveCatalog({ navigate, input, assert, evaluate, wai
     await assert(`document.documentElement.scrollWidth <= ${width} + 1`, 'Shop overflow at width ' + width);
   }
   await screenshot('d1-shop-responsive');
-  for (const route of ['/request','/orders','/profile','/login','/signup','/admin','/admin/stock','/admin/orders']) {
+  for (const route of ['/request','/orders','/profile','/signup']) {
     await navigate(route); await assert("Boolean(document.querySelector('[data-feature-unavailable]'))", 'Fixture route still active: ' + route);
   }
   // A failed API must show retry/error UI rather than falling back to fixtures.
@@ -55,5 +55,5 @@ export async function verifyLiveCatalog({ navigate, input, assert, evaluate, wai
   await assert("!document.body.innerText.includes('Red Rose Romance')", 'Retry falls back to old demo');
   await evaluate("document.querySelector('[data-language-switcher] button[lang=en]').click()");
   await evaluate("localStorage.removeItem('lunara.cart.v1')");
-  return { mode: 'D1 catalog/quote', products: 8, variants: 24, cartPersistence: true, wardFallback: true, surcharge: true, locales: ['en','vi'], widths: [320,390,768,1024], hiddenRoutes: 8, apiFailureRetry: true };
+  return { mode: 'D1 catalog/quote', products: 8, variants: 24, cartPersistence: true, wardFallback: true, surcharge: true, locales: ['en','vi'], widths: [320,390,768,1024], hiddenRoutes: 4, apiFailureRetry: true };
 }

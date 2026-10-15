@@ -22,7 +22,8 @@
     "deploy": "npm run build && wrangler deploy",
     "test": "node --test tests/*.test.mjs",
     "check:architecture": "node scripts/check-architecture.mjs",
-    "check:ui": "node scripts/check-ui.mjs"
+    "check:ui": "node scripts/check-ui.mjs",
+    "check:ui:phase5": "node scripts/check-ui-phase5.mjs"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",

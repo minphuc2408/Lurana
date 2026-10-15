@@ -87,8 +87,7 @@ try {
   await send('Page.enable');
   await send('Runtime.enable');
   await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });
-  const seedScript = await send('Page.addScriptToEvaluateOnNewDocument', { source: `if(location.hostname === '127.0.0.1') sessionStorage.setItem('lunara_user', JSON.stringify({name:'Demo Administrator',email:'demo@example.test',role:'admin'}));` });
-  const routes = ['/', '/shop', '/cart', '/request', '/orders', '/profile', '/login', '/signup', '/admin', '/admin/dashboard', '/admin/stock', '/admin/orders', '/admin/customers', '/admin/requests', '/admin/settings'];
+  const routes = ['/', '/shop', '/cart', '/orders/track', '/request', '/orders', '/profile', '/login', '/signup', '/admin', '/admin/dashboard', '/admin/stock', '/admin/orders', '/admin/delivery-zones', '/admin/customers', '/admin/requests', '/admin/settings'];
   const results = [];
   for (const route of i18nOnly ? [] : routes) {
     await navigate(route);
@@ -97,13 +96,11 @@ try {
   }
   let localeChecks;
   const typographyChecks = [];
+  await navigate('/shop');
   const liveCatalog = await evaluate("Boolean(document.querySelector('[data-d1-storefront]'))");
   if (liveCatalog) {
-    await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: seedScript.identifier });
     localeChecks = await import('./check-ui-live-catalog.mjs').then(module => module.verifyLiveCatalog({ navigate, click, input, assert, evaluate, waitFor, send, screenshot, delay }));
   } else if (mode !== 'baseline') {
-    if (!i18nOnly) await import('./check-ui-flows.mjs').then(module => module.verify({ navigate, click, input, assert, evaluate, waitFor, send, screenshot, delay, seedScriptIdentifier: seedScript.identifier }));
-    else await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: seedScript.identifier });
     localeChecks = await import('./check-ui-i18n.mjs').then(module => module.verifyI18n({ navigate, click, input, assert, evaluate, waitFor, send, delay, screenshot }));
   }
   if (checkFonts) {
