@@ -2,15 +2,10 @@ import { useLocale } from "@/shared/i18n";
 import { cn } from "@/shared/lib/utils";
 import { colorClass } from "@/shared/lib/color-classes";
 import { Link } from "react-router";
-import { Eye, EyeOff } from "lucide-react";
 import type { SignupModel } from "../hooks/useSignup";
 export function SignupForm(model: SignupModel) {
   const { t } = useLocale("auth");
   const {
-    showPass,
-    setShowPass,
-    showConfirm,
-    setShowConfirm,
     form,
     setForm,
     setSubmitted,
@@ -52,15 +47,11 @@ export function SignupForm(model: SignupModel) {
 
             <div>
               <label className="[display:block] [font-size:0.75rem] text-lunara-body [letter-spacing:0.1em] [text-transform:uppercase] [margin-bottom:6px]" htmlFor={"signupform-4"}>{t("Password")}</label>
-              <div className="relative">
-                <input type={showPass ? "text" : "password"} placeholder={t("Minimum 8 characters")} value={form.password} onChange={e => setForm({
+              <div>
+                <input type="password" placeholder={t("Minimum 8 characters")} value={form.password} onChange={e => setForm({
             ...form,
             password: e.target.value
-          })} className="w-full rounded-xl px-4 py-3 pr-12 [border:1px_solid_#F0DDD5] [font-size:0.88rem] text-lunara-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lunara-ink bg-lunara-surface" id={"signupform-4"} />
-                <button onClick={() => setShowPass(!showPass)} className="[position:absolute] [right:14px] [top:50%] [transform:translateY(-50%)] bg-transparent [border:none] [cursor:pointer] text-lunara-body">
-                  {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
+          })} className="w-full rounded-xl px-4 py-3 [border:1px_solid_#F0DDD5] [font-size:0.88rem] text-lunara-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lunara-ink bg-lunara-surface" id={"signupform-4"} />
               {form.password && <div className="flex items-center gap-2 mt-2">
                   <div className="flex gap-1 flex-1">
                     {[1, 2, 3, 4].map(i => <div key={i} className={cn("h-1 flex-1 rounded-full transition-all", i <= strength ? colorClass(strengthColors[strength], "backgroundColor") : "bg-lunara-border")} />)}
@@ -68,19 +59,17 @@ export function SignupForm(model: SignupModel) {
                   <span className={cn("[font-size:0.72rem]", colorClass(strengthColors[strength], "color"))}>{t(strengthLabels[strength])}</span>
                 </div>}
             </div>
+            </div>
 
             <div>
               <label className="[display:block] [font-size:0.75rem] text-lunara-body [letter-spacing:0.1em] [text-transform:uppercase] [margin-bottom:6px]" htmlFor={"signupform-5"}>{t("Confirm Password")}</label>
-              <div className="relative">
-                <input type={showConfirm ? "text" : "password"} placeholder={t("Repeat your password")} value={form.confirm} onChange={e => setForm({
+              <div>
+                <input type="password" placeholder={t("Repeat your password")} value={form.confirm} onChange={e => setForm({
             ...form,
             confirm: e.target.value
-          })} className={cn("w-full rounded-xl px-4 py-3 pr-12 [font-size:0.88rem] text-lunara-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lunara-ink bg-lunara-surface", form.confirm && form.confirm !== form.password ? "[border:1px_solid_#E8453C]" : "[border:1px_solid_#F0DDD5]")} id={"signupform-5"} />
-                <button onClick={() => setShowConfirm(!showConfirm)} className="[position:absolute] [right:14px] [top:50%] [transform:translateY(-50%)] bg-transparent [border:none] [cursor:pointer] text-lunara-body">
-                  {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
+          })} className={cn("w-full rounded-xl px-4 py-3 [font-size:0.88rem] text-lunara-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lunara-ink bg-lunara-surface", form.confirm && form.confirm !== form.password ? "[border:1px_solid_#E8453C]" : "[border:1px_solid_#F0DDD5]")} id={"signupform-5"} />
               {form.confirm && form.confirm !== form.password && <p className="[font-size:0.75rem] text-[#B42318] [margin-top:4px]">{t("Passwords don't match")}</p>}
+            </div>
             </div>
 
             <label className="flex items-start gap-2 cursor-pointer">

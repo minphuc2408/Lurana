@@ -5,8 +5,6 @@ export function useSignup() {
   const {
     bgImage
   } = getSignupDemoData();
-  const [showPass, setShowPass] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -20,10 +18,6 @@ export function useSignup() {
   const strengthLabels = ["", "Weak", "Fair", "Good", "Strong"];
   const strengthColors = ["", "#E8453C", "#F5A623", "#7A9E7E", "#3D9970"];
   return {
-    showPass,
-    setShowPass,
-    showConfirm,
-    setShowConfirm,
     form,
     setForm,
     submitted,

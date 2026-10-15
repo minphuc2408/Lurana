@@ -49,7 +49,7 @@ html[lang='vi'] {
 
 @layer base {
   :where(a, button, input, select, textarea):focus-visible {
-    outline: 2px solid var(--lunara-rose-strong);
-    outline-offset: 3px;
+    outline: 2px solid var(--lunara-rose-light);
+    outline-offset: 1px;
   }
 }

@@ -4,7 +4,7 @@ import { apiErrorKey } from '@/shared/api/client';
 import type { QuoteCartModel } from '../hooks/useQuoteCart';
 export function CartSummary(model: QuoteCartModel) {
   const { t, language } = useLocale("cart");
-  return <section className="h-fit rounded-2xl border border-lunara-border bg-white p-6 lg:sticky lg:top-24" aria-label={t('Order Summary')}>
+  return <section className="h-fit rounded-2xl border border-lunara-border bg-white p-6" aria-label={t('Order Summary')}>
     <h2 className="mb-5 font-display text-2xl text-lunara-ink">{t('Order Summary')}</h2>
     {model.quoteLoading && <p role="status">{t('Updating quote')}</p>}
     {Boolean(model.quoteError) && <div role="alert" className="mb-4 text-lunara-ink">{t(apiErrorKey(model.quoteError))}<button onClick={model.retry} className="mt-3 rounded-full bg-lunara-rose-strong px-5 py-2 text-white">{t('Retry')}</button></div>}

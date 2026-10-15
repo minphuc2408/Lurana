@@ -1,13 +1,10 @@
 import { useLocale } from "@/shared/i18n";
 import { cn } from "@/shared/lib/utils";
 import { Link } from "react-router";
-import { Eye, EyeOff } from "lucide-react";
 import type { LoginModel } from "../hooks/useLogin";
 export function LoginForm(model: LoginModel) {
   const { t } = useLocale("auth");
   const {
-    showPass,
-    setShowPass,
     email,
     setEmail,
     password,
@@ -36,12 +33,7 @@ export function LoginForm(model: LoginModel) {
             <div>
               <label className="[display:block] [font-size:0.78rem] text-lunara-body [letter-spacing:0.1em] [text-transform:uppercase] [margin-bottom:8px]" htmlFor={"loginform-2"}>
                 {t("Password")}</label>
-              <div className="relative">
-                <input type={showPass ? "text" : "password"} placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} className="w-full rounded-xl px-4 py-3 pr-12 [border:1px_solid_#F0DDD5] [font-size:0.88rem] text-lunara-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lunara-ink bg-lunara-surface" id={"loginform-2"} />
-                <button type="button" onClick={() => setShowPass(!showPass)} className="[position:absolute] [right:14px] [top:50%] [transform:translateY(-50%)] bg-transparent [border:none] [cursor:pointer] text-lunara-body">
-                  {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
+              <input type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} className="w-full rounded-xl px-4 py-3 [border:1px_solid_#F0DDD5] [font-size:0.88rem] text-lunara-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lunara-ink bg-lunara-surface" id={"loginform-2"} />
             </div>
 
             {/* Error */}

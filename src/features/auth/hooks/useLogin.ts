@@ -10,7 +10,6 @@ export function useLogin() {
     login
   } = useAuth();
   const navigate = useNavigate();
-  const [showPass, setShowPass] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
@@ -39,8 +38,6 @@ export function useLogin() {
     }
   };
   return {
-    showPass,
-    setShowPass,
     email,
     setEmail,
     password,

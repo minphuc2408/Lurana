@@ -6,7 +6,6 @@ export function useAdminLogin() {
   const auth = useAuth();
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorKey, setErrorKey] = useState('');
   const inFlight = useRef(false);
@@ -22,6 +21,6 @@ export function useAdminLogin() {
       else setErrorKey(result.error);
     } finally { inFlight.current = false; setSubmitting(false); }
   };
-  return { password, setPassword, showPassword, setShowPassword, submitting, errorKey, submit };
+  return { password, setPassword, submitting, errorKey, submit };
 }
 export type AdminLoginModel = ReturnType<typeof useAdminLogin>;

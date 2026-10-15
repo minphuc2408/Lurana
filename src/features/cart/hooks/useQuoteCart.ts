@@ -15,8 +15,6 @@ export function useQuoteCart() {
     const controller = new AbortController(); let active = true; setOptionsError(null);
     getDeliveryOptions(controller.signal).then(data => {
       if (!active) return; setOptions(data);
-      setProvince(previous => previous || data.provinces[0]?.province_name || '');
-      setWard(previous => previous || data.provinces[0]?.wards[0]?.ward_name || '');
     }).catch(error => { if (active) { setOptions(null); setOptionsError(error); } });
     return () => { active = false; controller.abort(); };
   }, [version]);
@@ -34,7 +32,7 @@ export function useQuoteCart() {
     const line = quote?.lines.find(line => line.variant_id === item.variantId);
     return line ? { ...item, name: line.name_en, name_en: line.name_en, name_vi: line.name_vi, price: line.unit_price, image: line.image_url || '' } : item;
   });
-  const changeProvince = (value: string) => { setProvince(value); setWard(options?.provinces.find(item => item.province_name === value)?.wards[0]?.ward_name || ''); };
+  const changeProvince = (value: string) => { setProvince(value); };
   return { ...cart, items: displayItems, quote, quoteError, options, optionsError, province, setProvince: changeProvince, ward, setWard, method, setMethod,
     catalogLoading: catalog.loading || (!catalog.error && cart.loading), catalogError: catalog.error, reloadCatalog: catalog.reload,
     quoteLoading: Boolean(cart.items.length && province && ward.trim() && options && !quote && !quoteError),
