@@ -1,10 +1,10 @@
 # Pipeline Lunara MVP — hiện trạng và kế hoạch
 
-Cập nhật: **14/10/2026**. Tech stack giữ nguyên như [TECH_STACK.md](../TECH_STACK.md): React 18 + Vite 6 + React Router 7 + Tailwind 4 (đã có) • Hono + Cloudflare Workers • Zod • Cloudflare D1 • Cloudinary • Turnstile.
+Cập nhật: **15/10/2026**. Tech stack giữ nguyên như [TECH_STACK.md](../TECH_STACK.md): React 18 + Vite 6 + React Router 7 + Tailwind 4 (đã có) • Hono + Cloudflare Workers • Zod • Cloudflare D1 • Cloudinary • Turnstile.
 
-Pipeline mô tả đích MVP và các phase tiếp theo; nó không tự cho phép thực hiện tất cả phase. Phase 0–3 đã xong local; Phase 4 backend auth/admin đã DONE local (9/9 tiêu chí). Chủ dự án đã yêu cầu nối sớm phần Phase 5: Home/Shop/Cart/Delivery/Quote dùng D1/VND/localStorage; UI gửi/tra đơn/login/admin chưa nối dù API Phase 3–4 đã có, features ngoài preview vẫn ẩn. Chủ dự án đã đăng ký Cloudflare, đăng nhập Wrangler và tạo D1 remote `lunara-db` còn trống ngoài lượt Phase 0; không cần làm lại các bước đó.
+Pipeline mô tả đích MVP và các phase tiếp theo; nó không tự cho phép thực hiện tất cả phase. **Phase 0–5 đã xong local**. Phase 5 nối đủ Checkout COD, gửi/retry/xác nhận, tra đơn và admin từ API Phase 3–4, giữ catalog/variant cart/localStorage/delivery/quote/VND cùng English default/fallback. Source deferred còn giữ và ẩn bằng cờ/API readiness. Chủ dự án đã đăng ký Cloudflare, đăng nhập Wrangler và tạo D1 remote `lunara-db`; chưa migrate/seed/deploy remote, không cần làm lại các bước chuẩn bị tài khoản.
 
-**Trạng thái:** Phase 0 DONE (6/6 tiêu chí) · Phase 1 DONE (5/5 tiêu chí, D1 local) · Phase 2 DONE (8/8 tiêu chí, API local) · Phase 3 DONE (5/5 tiêu chí, local) · Phase 4 DONE local (9/9 tiêu chí) · Phase 5 PARTIAL (D1 preview theo yêu cầu) · Phase 6 PLANNED. [Hiện trạng / gaps / đầu vào chủ shop](../PROJECT_STATUS.md). Lịch 2 ngày và gói Free là ước lượng kế hoạch, không phải cam kết thời gian/chi phí.
+**Trạng thái:** Phase 0 DONE (6/6 tiêu chí) · Phase 1 DONE (5/5 tiêu chí, D1 local) · Phase 2 DONE (8/8 tiêu chí, API local) · Phase 3 DONE (5/5 tiêu chí, local) · Phase 4 DONE local (9/9 tiêu chí) · Phase 5 DONE local (6/6 tiêu chí) · Phase 6 PLANNED. [Hiện trạng / gaps / đầu vào chủ shop](../PROJECT_STATUS.md). Lịch 2 ngày và gói Free là ước lượng kế hoạch, không phải cam kết thời gian/chi phí.
 
 ## 1. Mục tiêu MVP
 
@@ -24,7 +24,7 @@ Khách vào web, xem hoa, thêm giỏ, **đặt hàng COD** (không cần tài k
 | Chủ đề | Quyết định |
 | --- | --- |
 | Thanh toán | Chỉ COD. `payment_status` UNPAID → PAID khi giao xong |
-| Tiền / múi giờ | VND (số nguyên) / Asia/Ho_Chi_Minh; backend và UI preview active đã áp dụng. PHP/₱ chỉ còn source legacy ẩn |
+| Tiền / múi giờ | VND (số nguyên) / Asia/Ho_Chi_Minh; toàn UI MVP dùng formatter chung. EN mặc định/fallback, đổi locale không đổi currency/timezone/dữ liệu khách; PHP/₱ chỉ còn source legacy ẩn |
 | Địa chỉ | `province_name` + `ward_name` + `address_line`, không có quận/huyện |
 | Tồn kho | Theo từng variant (size): `product_variants.stock_quantity`, trừ khi đặt, hoàn khi hủy |
 | Phí giao | Bảng `delivery_zones` (khớp phường, không có thì mặc định tỉnh) + phụ phí theo phương thức (config) |
@@ -43,7 +43,7 @@ Khách vào web, xem hoa, thêm giỏ, **đặt hàng COD** (không cần tài k
 | 2 | [PHASE_2_API_CATALOG](PHASE_2_API_CATALOG.md) | DONE | 2,5 giờ | Catalog ≤3 queries; phí giao/quote; tại mốc Phase 2: 53 tests + smoke 16/16 |
 | 3 | [PHASE_3_CHECKOUT_ORDERS](PHASE_3_CHECKOUT_ORDERS.md) | DONE local | 3 giờ | COD/tồn/idempotency/lookup/transition; tại mốc Phase 3: 92 tests, smoke 27/27, budget ≤40 |
 | 4 | [PHASE_4_ADMIN](PHASE_4_ADMIN.md) | DONE local (9/9 tiêu chí) | 2 giờ | Secret/JWT cookie + quyền/Origin; summary/orders/products/variants/delivery-zones; không bảng/dependency mới |
-| 5 | [PHASE_5_FRONTEND](PHASE_5_FRONTEND.md) | PARTIAL | 4,5 giờ | Catalog/cart/delivery/quote/VND/localStorage đã nối; UI gửi/tra đơn/login/admin chưa nối API Phase 3–4 |
+| 5 | [PHASE_5_FRONTEND](PHASE_5_FRONTEND.md) | DONE local (6/6 tiêu chí) | 4,5 giờ (ước lượng ban đầu) | Checkout/lookup/auth/admin thật; 136 tests, 40 smoke, 10/10 UI + 2/2 mở rộng, 0 exceptions |
 | 6 | [PHASE_6_DEPLOY](PHASE_6_DEPLOY.md) | PLANNED | 1,5 giờ | Deploy + remote smoke + dữ liệu thật |
 
 Tài liệu dùng chung: [API_CONTRACT](API_CONTRACT.md) • [BACKLOG](BACKLOG.md) • SQL: [migration canonical](../../migrations/0001_mvp.sql), [dev seed](../sql/MVP_SEED_DEV.sql).
@@ -56,15 +56,17 @@ Tài liệu dùng chung: [API_CONTRACT](API_CONTRACT.md) • [BACKLOG](BACKLOG.m
 
 **Phase 3 local đã nghiệm thu:** 5/5 tiêu chí; API COD/lookup và service transitionOrder, trừ tồn/CHECK rollback, UUID idempotency/replay và hoàn tồn một lần. Test D1 thật cô lập kiểm race mua món cuối, cùng key và hủy đồng thời. `npm test` 92/92, smoke 10/10 ca order + 16 nhóm catalog + đối chiếu tồn = 27/27. Giỏ 15 dòng success 35 statements, CHECK/unique diagnostic 36; retry tính nguyên failed batch và dừng trước khi vượt 40. Turnstile server verifier mock-tested; widget/production setup chưa có. [Output](PHASE_3_CHECKOUT_ORDERS.md#bằng-chứng-lệnh--14102026). DDL/dependency/frontend/remote giữ nguyên trong lượt Phase 3.
 
-**Phase 4 DONE local (9/9 tiêu chí):** secret/JWT cookie và middleware quyền/Origin, summary/orders/products/variants/delivery-zones; status tái sử dụng transitionOrder, stock_delta nguyên tử, product batch, phí giao có hiệu lực ở quote mới. Source hiện tại **125/125 tests, 40/40 smoke dev/preview (12/12 nhóm admin)**, typecheck/architecture/build/UI pass; auth native workerd đã kiểm local. Không thêm dependency/bảng/DDL, chưa nối UI, đo CPU cloud hoặc thay đổi remote. Smoke admin dùng secret demo riêng và D1 cô lập. [Checklist/output](PHASE_4_ADMIN.md). **[NGƯỜI]** tự đặt secret thật trong `.dev.vars` trước khi dùng admin local với dữ liệu thật; production ở Phase 6, agent không đặt secret thật.
+**Phase 4 DONE local (9/9 tiêu chí):** secret/JWT cookie và middleware quyền/Origin, summary/orders/products/variants/delivery-zones; status tái sử dụng transitionOrder, stock_delta nguyên tử, product batch, phí giao có hiệu lực ở quote mới. **Tại mốc backend Phase 4:** 125/125 tests, 40/40 smoke dev/preview (12/12 nhóm admin), typecheck/architecture/build/UI preview pass; auth native workerd đã kiểm local. Mốc đó chưa nối UI admin; Phase 5 phía dưới đã hoàn tất phần này. Không thêm dependency/bảng/DDL hoặc thay đổi remote; chưa đo CPU cloud. Smoke admin dùng secret demo riêng và D1 cô lập. [Checklist/output lịch sử](PHASE_4_ADMIN.md). **[NGƯỜI]** quản lý secret thật trong `.dev.vars` và production Phase 6; agent chỉ dùng credentials tổng hợp để test.
 
-**Bước tiếp theo:** hoàn thiện Phase 5 UI checkout/lookup/login/admin → Phase 6 khi được yêu cầu. Các output 53 tests/16 smoke của Phase 2, 54 tests của preview và 92 tests/27 smoke của Phase 3 là bằng chứng lịch sử; số đếm source hiện tại ghi ở Phase 4.
+**Phase 5 DONE local (6/6 tiêu chí):** đã thực hiện 5.0 → 5.16, không thay phần catalog/cart/storage/quote đã có. UI COD/lookup, cookie auth và admin đơn/sản phẩm/tồn/phí/dashboard đã nối thật. Intent UUID giữ key khi retry cùng nội dung, chặn bấm đúp; lost response sau commit không tạo đơn trùng. Ghi tồn chưa rõ kết quả khóa Save đến GET Recheck, tránh cộng/trừ delta lần nữa. **Hiện tại: 136/136 tests, architecture 207 files, 40/40 smoke, UI preview 17 routes/0 exceptions và Phase 5 10/10 kịch bản + 2/2 nhóm mở rộng PASS.** [Kết quả 10 kịch bản](PHASE_5_FRONTEND.md#kết-quả-10-kịch-bản--15102026) · [audit/backup](FE_AUDIT.md). UI test dùng Edge/CDP, D1 workerd cô lập và credentials tổng hợp; snapshot SQL readonly xác nhận D1 persisted không đổi. Bridge Node dùng shim timingSafeEqual; local evidence không thay native/remote acceptance.
+
+**Bước tiếp theo:** Phase 6 khi được yêu cầu: production secrets, dữ liệu/khu vực/policy thật, Turnstile, migration/deploy và smoke remote. Các output Phase 2/preview/3/4 là bằng chứng lịch sử, không phải số đếm current hoặc nghiệm thu deploy.
 
 **Chỉnh giao diện trước khi kết Phase 4:** Zalo giữ icon tự vẽ góc phải; animate chiều rộng viền xanh khi hover/focus/click (400ms, reduced motion 200ms); footer tên/địa chỉ/link bản đồ chuyển sang JSON EN/VI. Đây là chỉnh storefront, không nối các UI Phase 5 còn thiếu. [Cấu hình](../../PROJECT_GUIDE.md) · [nghiệm thu](PHASE_4_ADMIN.md).
 
 **Phase 0–5 làm local, không cần tài khoản Cloudflare.** Phase 6 dùng tài khoản/D1 đã được chủ dự án tạo; đăng ký/login/create lại chỉ khi còn thiếu.
 
-**Nếu trễ, cắt theo thứ tự:** (1) trang admin sản phẩm chỉ giữ sửa giá/tồn, (2) bỏ admin sửa phí giao (sửa bằng SQL), (3) bỏ trang tra đơn khách (admin vẫn xem được), (4) bỏ Turnstile. **Không cắt:** tính tiền ở server, trừ tồn nguyên tử, idempotency.
+**Phạm vi đã nghiệm thu:** không cắt tra đơn, quản lý phí giao hoặc form tạo sản phẩm; các mục này đã có ở Phase 5. Turnstile thật và vận hành remote vẫn thuộc Phase 6. Tính tiền server, tồn nguyên tử và idempotency luôn là yêu cầu bắt buộc.
 
 ## 4. Cách dùng với `/goal`
 

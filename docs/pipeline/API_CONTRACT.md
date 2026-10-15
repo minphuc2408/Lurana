@@ -2,7 +2,7 @@
 
 Base path: `/api` (cùng origin với frontend). JSON UTF-8. Đây là hợp đồng giữa Worker và frontend; thay đổi phải sửa file này trước.
 
-**Trạng thái:** Phase 2–4 đã triển khai local: health, catalog, delivery/options, checkout/quote, đặt đơn COD, tra đơn và auth/API admin. Admin status dùng lại `transitionOrder`; không có route hủy đơn khách. Frontend Home/Shop/Cart/Delivery/Quote giữ preview; UI gửi/tra đơn và admin thuộc Phase 5. Route API lạ trả `NOT_FOUND` JSON 404 (message `Không tìm thấy API.`); boundary admin kiểm cookie trước khi trả 404. [Hiện trạng](../PROJECT_STATUS.md) · [nghiệm thu Phase 4](PHASE_4_ADMIN.md).
+**Trạng thái (15/10/2026):** Phase 2–4 API và Phase 5 frontend DONE local: health, catalog, delivery/options, checkout/quote, đặt đơn COD, tra đơn và auth/API admin. Admin status dùng lại `transitionOrder`; không có route hủy đơn khách. Frontend đã nối checkout form/review/gửi/retry/xác nhận trong `/cart`, public `/orders/track`, cookie login và dashboard/orders/products/stock/delivery admin. Không đổi hợp đồng Worker/DDL khi nối Phase 5. Route API lạ trả `NOT_FOUND` JSON 404 (message `Không tìm thấy API.`); boundary admin kiểm cookie trước khi trả 404. [Hiện trạng](../PROJECT_STATUS.md) · [nghiệm thu backend Phase 4](PHASE_4_ADMIN.md) · [nghiệm thu frontend Phase 5](PHASE_5_FRONTEND.md). Phase 6 remote vẫn PLANNED.
 
 ## Quy ước chung
 
@@ -12,6 +12,8 @@ Base path: `/api` (cùng origin với frontend). JSON UTF-8. Đây là hợp đ�
 - **Tên sản phẩm:** luôn trả cả `name_vi` và `name_en`; frontend chọn theo locale.
 - Không bao giờ trả `password_hash`, secret, stack trace, SQL.
 - API dùng `Content-Type: application/json; charset=utf-8`, security headers và `X-Request-Id`. GET catalog thành công (categories/products/detail/delivery options) dùng `Cache-Control: public, max-age=30`; health, request ghi/admin và mọi lỗi dùng `no-store`. Lỗi `INTERNAL` chỉ có mã tham chiếu trong `error.details.request_id`; log chỉ ghi `request_id`/`error_name`, không dump message/stack/request/credential.
+- Frontend services dùng API client chung qua hooks; component không gọi fetch. Client phân biệt HTTP/envelope lỗi và NETWORK/TIMEOUT/BAD_RESPONSE, map mã lỗi/field sang locale EN/VI; English là mặc định/fallback. Currency luôn VND và timezone luôn Asia/Ho_Chi_Minh, không đổi theo locale.
+- Chỉ cart version/variantId/quantity và preference locale được lưu bền ở frontend. Sender/recipient/SĐT/địa chỉ/đơn/password/JWT/idempotency intent không lưu localStorage/sessionStorage; customer-auth fixture source không active.
 
 ## Mã lỗi
 
@@ -104,6 +106,7 @@ Header **bắt buộc:** `Idempotency-Key: <uuid v4>`. Body:
   turnstile_token?: string }           // bắt buộc khi Worker có TURNSTILE_SECRET
 ```
 - **201** `data: OrderSummary` (đơn mới) • **200** cùng `OrderSummary` + `replayed: true` khi trùng `Idempotency-Key`.
+- Frontend tạo UUID v4 cho mỗi payload đặt đơn, khóa submit khi pending và giữ nguyên key khi retry cùng payload sau lỗi. Sửa payload tạo intent/key mới; không gửi giá/tổng/phí để quyết định thanh toán. Confirmation hiển thị mã/tổng/COD từ OrderSummary nhận được, không dùng giá snapshot giỏ hay mã giả. Intent chỉ ở memory; reload không tự tạo lại intent cũ.
 - Replay dùng envelope `{ data: { ...OrderSummary, replayed: true } }`; UUID v4 được chuẩn hóa chữ thường. Sau validate/Turnstile, replay chỉ đọc một statement, không tính lại giá/ngày giao hay ghi tồn. Key xác định đơn đã tạo, kể cả body hợp lệ gửi lại thay đổi.
 - Server **bỏ qua** mọi giá/tổng/phí từ client; tính lại từ DB.
 - Giỏ 15 dòng dùng 35 statements; failed batch được tính nguyên khối, thêm một diagnostic read thành 36. Trùng mã đơn thử tối đa ba batch, nhưng dừng `CONFLICT` 409 trước retry có thể vượt 40 statements (không có đơn/tồn được ghi bởi batch thất bại).
@@ -133,7 +136,7 @@ Body `{ phone }`. Khách chỉ hủy được khi `PENDING`. Cùng cơ chế ho�
 
 ## Admin (cookie `lunara_admin`, HttpOnly)
 
-**Đã triển khai local — Phase 4.** Auth/server middleware bảo vệ API; UI admin vẫn ẩn và chưa nối cookie/API, thuộc Phase 5. Không dùng auth fixture/sessionStorage để cấp quyền backend.
+**Backend Phase 4 và UI Phase 5 đã triển khai/nghiệm thu local.** AuthProvider tải `/api/admin/me`, login/logout qua cùng API client với credentials same-origin; AdminRoute chờ loading, có error/retry và guest redirect `/admin/login`. 401 từ request admin xóa state session UI. Cookie vẫn do server cấp/xóa; frontend không giữ credentials/JWT/session trong storage. Không dùng auth fixture/sessionStorage để cấp quyền backend.
 
 Mọi route dưới `/api/admin` và `/api/admin/*` (trừ đúng `POST /api/admin/login`) yêu cầu cookie hợp lệ, kể cả route lạ và logout. Request ghi (`POST/PATCH/PUT/DELETE`), bao gồm login/logout, phải có `Content-Type: application/json` (chấp nhận charset) và `Origin` bằng origin đầy đủ của URL request: scheme/host/port. Thiếu/sai Origin → `FORBIDDEN` 403; thiếu/sai Content-Type → `VALIDATION_ERROR` 400. Thiếu cookie được trả 401 trước validate Origin/body.
 
@@ -165,6 +168,7 @@ Cookie `lunara_admin`: HttpOnly; SameSite=Strict; Path=/; Max-Age=43200; Secure 
 - Product create (201): `{category_id,slug,name_vi,name_en,description_vi?,description_en?,badge_code?,is_featured?,status?,image:{url,alt_vi?,alt_en?},variants:[{sku,size_code,price,compare_at_price?,stock_quantity?,low_stock_threshold?,is_active?}]}`. 1–5 variants, size/SKU không trùng; create atomic một batch. Price/stock/threshold là safe integer không âm; compare_at_price nullable và ≥ price. Slug lowercase chữ/số/gạch ngang, image URL HTTP(S). Name trim1–200; descriptions nullable ≤5000; image alt nullable ≤200.
 - Products GET trả `{items}` mọi trạng thái với id/slug/category_code/category_id/tên/mô tả/badge/featured/status/archived_at/images/variants; variants có stock_quantity/low_stock_threshold/is_active và giá chính xác. Dùng 3 truy vấn, không truy vấn từng sản phẩm. Product PATCH chỉ tên/mô tả/badge/featured/status/image; ARCHIVED ghi archived_at, rời ARCHIVED xóa mốc; ảnh chính cập nhật atomic, giữ 1 ảnh chính. POST/PATCH trả `{id}`.
 - Variant PATCH trả variant với id/product_id/sku/size_code/price/compare_at_price/stock_quantity/low_stock_threshold/is_active. stock_delta được cộng nguyên tử và ưu tiên khi có cả stock_quantity; stock_quantity tuyệt đối chỉ dùng khi không có delta. Không ghi đè price/compare_at_price/stock từ snapshot cũ khi client không sửa field đó. CHECK tồn âm → VALIDATION_ERROR400 "Tồn kho không thể âm"; phép cộng vượt safe integer cũng bị từ chối. compare_at_price được kiểm trước ghi và CHECK bảo vệ race. Không nhận SKU/size/product_id ở PATCH.
+- `stock_delta` không có idempotency key. Frontend xử lý lỗi ghi chưa biết kết quả (NETWORK/TIMEOUT/BAD_RESPONSE/INTERNAL) bằng cách xóa delta vừa nhập, khóa dòng và yêu cầu GET tải tồn hiện tại thành công trước lần chỉnh tiếp; không retry delta tự động. Người vận hành kiểm lại tồn rồi nhập delta mới để tránh cộng/trừ hai lần khi request trước có thể đã commit.
 - Delivery zones GET `{items}` gồm id/province_name/ward_name/fee/free_from_amount/eta_minutes/is_active. POST (201)/PUT full body `{province_name,ward_name?,fee,free_from_amount?,eta_minutes?,is_active?}`; ward_name mặc định `''` là mặc định tỉnh, fee/free_from_amount safe integer không âm, eta_minutes nullable hoặc nguyên dương. Trùng tỉnh/phường → CONFLICT409. POST/PUT trả zone cùng projection GET. Soft-delete is_active=false giữ dòng nhưng quote bỏ qua; quote đọc DB ngay ở request kế tiếp.
 - Object schemas bỏ field ngoài contract. PATCH rỗng sau strip → VALIDATION_ERROR400. Không tạo bảng mới, không thêm dependency. Mọi giá trị input bind; chỉ ghép SQL fragments/column names do server chọn.
 

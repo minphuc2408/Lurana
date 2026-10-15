@@ -1,6 +1,6 @@
 # Backlog sau MVP và rủi ro đã biết
 
-**Trạng thái backlog:** PLANNED · Phase 0–3 DONE local, backend Phase 4 đã DONE local (9/9 tiêu chí), Phase 5 PARTIAL, Phase 6 PLANNED; MVP chưa chạy thật. [Hiện trạng](../PROJECT_STATUS.md). Bảng dưới mô tả việc sau MVP/giảm thiểu dự kiến; không xác nhận các controls đã có. Quota/giá/cloud policy cần kiểm tra lại trước deploy.
+**Trạng thái backlog (15/10/2026):** PLANNED · Phase 0–5 DONE local: backend Phase 4 đạt 9/9 và frontend Phase 5 đạt 6/6 tiêu chí, 10/10 kịch bản bắt buộc +2/2 mở rộng. Phase 6 PLANNED; MVP chưa deploy/nghiệm thu remote. [Hiện trạng](../PROJECT_STATUS.md) · [Bằng chứng frontend](PHASE_5_FRONTEND.md). Bảng dưới mô tả việc sau MVP/giảm thiểu dự kiến; không xác nhận các controls đã có. Quota/giá/cloud policy cần kiểm tra lại trước deploy.
 
 ## Ưu tiên cao (tuần đầu sau khi mở bán)
 
@@ -17,13 +17,13 @@
 | Hạng mục | Ghi chú |
 | --- | --- |
 | Đặt hoa theo yêu cầu (wizard) | Áp `docs/sql/deferred/0002_custom_requests.sql` làm migration `0002`; thêm API công khai + admin; gộp `AdminRequests` với dữ liệu thật; cân nhắc bảng ảnh tham khảo |
-| Đăng ký/đăng nhập khách | `users`/`user_addresses` đã nằm trong canonical 10 bảng và migrate local Phase 1, nhưng chưa có customer auth/profile API; chưa có bảng `wishlist`. Chọn auth/provider sau, đối chiếu schema riêng và CPU/quota thật trước triển khai |
+| Đăng ký/đăng nhập khách | `users`/`user_addresses` đã nằm trong canonical 10 bảng và migrate local Phase 1, nhưng chưa có customer auth/profile API; chưa có bảng `wishlist`. Source customer giữ ẩn bằng cờ; `VITE_ENABLE_CUSTOMER_AUTH` mặc định false và customer API-ready gate false ngăn bật fixture. Admin cookie auth đã nối thật ở Phase 5. Chọn customer auth/provider sau, đối chiếu schema riêng và CPU/quota thật trước triển khai |
 | Lọc theo dịp / loại hoa | Thêm `occasions`, `flower_types`, `product_occasions`, `product_flower_types` (đề xuất ở thiết kế trước); dùng chung với wizard |
 | Coupon thật | Bảng/rules `coupons` chưa có; `orders.coupon_code`/`discount_total` đã migrate local. Phase 3 không nhận coupon client, discount_total luôn 0; coupon thật làm sau MVP |
 | Sổ cái tồn kho | `inventory_movements` (restock/sale/cancel/adjust) để đối soát; hiện chỉ có `stock_quantity` |
 | Ảnh duyệt trước khi giao / ảnh giao | `order_media` + R2 hoặc Cloudinary; kiểm tra chi phí/phương thức thanh toán/hạn mức trước khi chọn provider |
 | Review/rating | Bảng `reviews` có kiểm duyệt; hiển thị trung bình tính từ review được duyệt |
-| Dashboard nâng cao | Phase 4 đã có summary đơn theo trạng thái/đơn hôm nay VN/tồn thấp; doanh thu ngày/tuần và sản phẩm bán chạy làm sau, cẩn thận hạn mức đọc hàng D1 |
+| Dashboard nâng cao | Phase 4 có API và Phase 5 có UI summary đơn theo trạng thái/đơn hôm nay VN/tồn thấp; doanh thu ngày/tuần và sản phẩm bán chạy làm sau, cẩn thận hạn mức đọc hàng D1 |
 
 ## Ưu tiên thấp / khi quy mô lớn
 
@@ -46,7 +46,7 @@
 | Giá trị nghiệp vụ trong `worker/config.ts` chỉ là giả định (phụ phí, giờ chốt, khung giờ) | Cao nếu quên | Chủ shop rà soát ở Phase 6.10 trước khi mở bán |
 | `delivery_zones` seed chỉ là ví dụ | Cao nếu quên | Nhập khu vực thật, tắt dòng ví dụ (Phase 6.10) |
 | Ảnh seed dùng dịch vụ placeholder bên thứ ba | Thấp | Thay bằng ảnh thật trước khi bán |
-| Hoa tươi làm theo đơn nhưng tồn kho theo số lượng | Trung bình | Dùng tồn như "số suất nhận mỗi size"; chỉnh bằng `stock_delta` hằng ngày; cân nhắc sức chứa theo ngày ở giai đoạn sau |
+| Hoa tươi làm theo đơn nhưng tồn kho theo số lượng | Trung bình | Dùng tồn như "số suất nhận mỗi size"; chỉnh bằng `stock_delta` hằng ngày; khi ghi mất phản hồi, UI xóa delta/khóa dòng và yêu cầu GET tải tồn trước lần chỉnh tiếp. Không tự retry delta; cân nhắc sức chứa theo ngày ở giai đoạn sau |
 | Không có thông báo đơn mới | Cao | Làm hạng mục "Thông báo đơn mới" ngay sau MVP |
 | Lộ dữ liệu khách qua file backup | Trung bình | Không commit; lưu riêng tư; mã hóa ổ lưu trữ |
-| Sai khác tên tỉnh/phường giữa danh sách giao và địa chỉ khách nhập | Trung bình | Preview chọn tỉnh/ward DB và cho nhập ward khác để dùng mặc định tỉnh; server khớp ward trước, fallback tỉnh sau. Khi nối form Phase 5 giữ đúng contract; rà soát dữ liệu hành chính định kỳ |
+| Sai khác tên tỉnh/phường giữa danh sách giao và địa chỉ khách nhập | Trung bình | Form Phase 5 chọn tỉnh/ward DB và cho nhập ward khác để dùng mặc định tỉnh; server khớp ward trước, fallback tỉnh sau. Rà soát dữ liệu hành chính định kỳ và nhập khu vực thật trước mở bán |

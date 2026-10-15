@@ -2,7 +2,7 @@
 
 **Mục tiêu:** khung Hono chuẩn (lỗi, validate, middleware), các API đọc: danh mục, sản phẩm, tùy chọn giao hàng, báo giá giỏ. Hợp đồng: [API_CONTRACT.md](API_CONTRACT.md).
 
-**Trạng thái:** DONE · 8/8 tiêu chí local, **14/10/2026**. Đây là phạm vi/nghiệm thu catalog/quote tại mốc Phase 2, chưa bao gồm order/admin. Hiện Phase 3 COD/tồn/idempotency/lookup/transition đã DONE local ([output lịch sử](PHASE_3_CHECKOUT_ORDERS.md#bằng-chứng-lệnh--14102026)); [Phase 4 auth/admin](PHASE_4_ADMIN.md) đã DONE local 9/9 tiêu chí, source hiện tại có 125 tests và 40 nhóm smoke. Preview Home/Shop/Cart/Delivery/Quote đã nối D1: [FE_AUDIT](FE_AUDIT.md). UI checkout/lookup/login/admin vẫn thuộc Phase 5 PARTIAL. [Tiến độ chung](README.md).
+**Trạng thái:** DONE · 8/8 tiêu chí local, **14/10/2026**. Đây là phạm vi/nghiệm thu catalog/quote tại mốc Phase 2, chưa bao gồm order/admin. Phase 3 COD/tồn/idempotency/lookup/transition và [Phase 4 auth/admin](PHASE_4_ADMIN.md) đã DONE local; 125 tests/40 smoke là số liệu lịch sử tại mốc backend Phase 4. **Phase 5 đã DONE local (6/6 tiêu chí)**, nối đủ UI checkout/lookup/login/admin: [nghiệm thu hiện tại](PHASE_5_FRONTEND.md) · [FE_AUDIT/backup](FE_AUDIT.md). Các output Phase 2 bên dưới giữ nguyên làm bằng chứng lịch sử. Phase 6 vẫn PLANNED. [Tiến độ chung](README.md).
 
 ## Việc cần làm
 

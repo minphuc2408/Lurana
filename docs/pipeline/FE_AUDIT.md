@@ -1,4 +1,45 @@
-# Frontend D1 preview — 14/10/2026
+# Frontend Phase 5 — audit 15/10/2026
+
+## Kiểm kê 5.0 trước khi nối phần còn lại
+
+Đã đọc bảng tiến độ 5.0–5.16, API_CONTRACT, FRONTEND_ENTITIES và project guide trước khi sửa. Bảng dưới ghi kiểm kê lúc bắt đầu; kết quả nghiệm thu cuối ở phần kế tiếp. Giữ backup preview bên dưới, không phục hồi fixture.
+
+| Phần | Quyết định triển khai / khoảng trống |
+| --- | --- |
+| 5.1–5.5 | Giữ English default/fallback, VND/Asia/Ho_Chi_Minh, apiRequest/ApiError, catalog adapter/provider, variant cart/localStorage và quote. Bổ sung lifecycle UUID cho ý định đặt đơn, dùng lại key khi retry cùng nội dung |
+| 5.6–5.8 | Nối sender/recipient, tỉnh/phường, ngày/slot, thiệp/note, COD; gửi/retry/xác nhận và lookup API Phase 3. Không dùng coupon/thẻ/ví/demo reference |
+| 5.9–5.12 | Backend Phase 4 đã DONE local: nối cookie /me/login/logout, guard, orders/detail/status/note, products/variant stock_delta, delivery-zones và summary/10 đơn mới nhất |
+| 5.13–5.16 | Giữ source tính năng deferred nhưng ẩn menu/routes, bổ sung EN/VI và trạng thái chờ/lỗi/rỗng/retry. Chỉ nghiệm thu sau checks và đủ 10 kịch bản UI |
+
+CodeGraph đã khảo sát router/providers/cart/auth và dependency. Quét `rg -n -e "₱" -e "PHP" -e "Asia/Manila" -e "toLocaleString" -e "name_vn" src`: PHP/₱/Asia/Manila ở source legacy inventory/orders/admin/profile/custom-order và JSON legacy; các màn MVP mới phải dùng formatter VND và API. `name_vn` là alias tương thích được giữ. Component không gọi fetch trực tiếp; service đi qua client hiện hữu. Không đổi package pin/DDL, không dùng secret thật hoặc D1 remote cho kiểm thử.
+
+## Kết quả Phase 5 — DONE local, 15/10/2026
+
+Đã thực hiện 5.0 → 5.16, đủ **6/6 tiêu chí** trong [PHASE_5_FRONTEND](PHASE_5_FRONTEND.md). Đây là nghiệm thu toàn UI local sau backend Phase 3–4; không suy ra từ preview cũ hoặc coi là remote acceptance. Phase 6 vẫn PLANNED.
+
+| Luồng hiện tại | Nguồn/hành vi đã kiểm |
+| --- | --- |
+| Catalog/cart/delivery/quote | Giữ provider/adapter D1, variant identity, `lunara.cart.v1` chỉ ID/số lượng, Zod và quote server; không fixture fallback |
+| Checkout `/cart` | Sender/recipient/tỉnh/phường/đường, method/date/slot/card/note, COD; details → review → response server rồi confirmation/xóa giỏ |
+| Intent/retry | UUID v4 tạo khi review, payload không đổi giữ key kể cả mất response sau commit; payload đổi tạo key mới; ref khóa bấm đúp; lỗi giữ giỏ/form |
+| Lookup `/orders/track` | Mã + SĐT trong POST body; snapshots/totals/timeline API; abort/version guard khi đổi input; không để kết quả cũ khi tra sai |
+| Auth/admin | AuthProvider `/me/login/logout`, cookie thật, guard `/admin/*`; login ở `/admin/login`; không đọc session demo |
+| Orders | Bộ lọc/status/date/search/paging, detail/internal note, đúng transitions, dialog hủy; PAID/hoàn tồn từ server |
+| Products/stock | Product×variant giá/compare/tồn/ngưỡng/active, tạo S/M/L + URL ảnh, chỉ dirty fields và atomic stock_delta; ghi chưa rõ kết quả reset delta/khóa gửi lại đến GET Recheck thành công |
+| Fees/dashboard | Phí giao thêm/sửa/tắt; summary API + 10 đơn mới nhất; không chart/KPI fixture |
+| Locale/deferred | EN mặc định/fallback, VI đầy đủ; VND/giờ VN và dữ liệu khách không đổi theo locale. Customer auth/profile/wishlist/request/settings/customers/notifications giữ source và ẩn bằng cờ/API readiness |
+
+Required checks: **typecheck PASS; architecture 207 files PASS; tests 136/136; build client + Worker PASS; smoke 40/40** trên preview mới `127.0.0.1:4175`. `check:ui`: **17 routes, 0 exceptions**, catalog/cart/storage/quote/EN-VI/responsive/error-retry. `check:ui:phase5`: **10/10 kịch bản bắt buộc + 2/2 nhóm mở rộng PASS**, 0 exceptions. [Bảng đầy đủ 10 kết quả và lệnh](PHASE_5_FRONTEND.md#kết-quả-10-kịch-bản--15102026).
+
+Edge/CDP thực thi checklist thao tác trình duyệt với frontend đã build + current Worker source và D1 workerd `persist:false`, `remoteBindings:false`; admin dùng credentials tổng hợp. Test xác minh số order/stock thật sau bấm đúp, mất response sau commit và stock_delta chưa rõ kết quả; CRUD product/zones/dashboard đối chiếu D1. Snapshot SQL readonly của schema/bảng persisted giữ nguyên; WAL/cache/observability không dùng làm chỉ báo thay đổi dữ liệu. Bridge Node dùng shim timingSafeEqual, bằng chứng native workerd auth Phase 4 giữ riêng. Không đo CPU cloud/Turnstile thật, không đổi DDL/dependency/lockfile hoặc D1 remote.
+
+Evidence local/ignored: `.security-review/phase5-ui-results.json` (15/10/2026 14:34 giờ VN), `phase5-*.png`, `phase5-tests.txt`, `phase5-build.txt`, `phase5-smoke.txt`, `phase5-preview-ui.txt`. Scan **74 file runtime active sạch**; **40 hits legacy** của toàn src ghi riêng theo file/dòng, gồm fixture và khóa JSON deferred được giữ. Fetch duy nhất trong frontend ở shared API client; checker kiến trúc chặn fetch trong component/page.
+
+## Bằng chứng preview lịch sử
+
+> Các mục dưới đây lưu mốc preview 14/10 và checkpoint giữa lượt triển khai, không mô tả tiến độ hoặc routes hiện tại. Kết quả toàn Phase 5 nằm ở phần trên.
+
+Checkpoint lượt hoàn thiện: **5.1–5.8 đã triển khai**. `apiRequest` thêm timeout 20 giây và mapping lỗi; helper intent UUID v4 giữ key theo payload; formatter ngày cố định Asia/Ho_Chi_Minh. Checkout COD dùng cùng cart/quote, giữ form khi lỗi và chỉ xóa giỏ sau response thành công. Tra đơn `/orders/track` có guard response cũ khi đổi mã/SĐT. Targeted checkout/commerce **14/14 pass** tại checkpoint này. Bước 5.9 auth cookie đã nối, đang tiếp admin; 5.10–5.16 còn triển khai/kiểm chứng. Số liệu này không phải nghiệm thu toàn Phase 5.
 
 Chủ dự án yêu cầu sao lưu frontend/ảnh demo, rồi dùng D1 local để kiểm tra. Đã nối Home/Shop/Cart/Delivery/Quote, tạm ẩn features ngoài preview. Đây là phần đầu Phase 5, thực hiện trước Phase 3; toàn Phase 5 vẫn PARTIAL. **Phase 3 backend đã DONE local; backend Phase 4 auth/admin đã DONE local (9/9 tiêu chí)**, nhưng UI gửi/tra đơn/login/admin chưa nối. [Tiến độ hiện tại](README.md) · [nghiệm thu Phase 4](PHASE_4_ADMIN.md).
 
@@ -16,7 +57,7 @@ Thư mục: `temp/fe-demo-2026-10-14-1791974270315/`, giữ local/ignored, khôn
 
 Cloudinary chưa đăng ký và không cần để dùng API Phase 2. Catalog hiện lấy `product_images.image_url` từ D1, seed vẫn là placeholder. Ảnh hero/story là nội dung trang trí sẵn có; ảnh sản phẩm, tên, size, giá và khả dụng tồn lấy từ DB. Chưa thay seed/DDL/remote.
 
-## Dữ liệu đang hiển thị
+## Dữ liệu hiển thị tại mốc preview
 
 | Luồng | Nguồn hiện tại / hành vi |
 | --- | --- |

@@ -14,9 +14,9 @@
 | Catalog/quote Phase 2 đã nghiệm thu | 8/8 tiêu chí, 53 test pass, dev/preview smoke 16/16; [output](PHASE_2_API_CATALOG.md#bằng-chứng-lệnh--14102026) |
 | Service dùng lại | `priceCart(db, items, province, ward, methodCode)` trả totals + issues; `phoneSchema`/`normalizePhone`, `validateDeliverySlot`, `todayInVN`, `toIso`, AppError và validator đã có |
 | D1/query budget | Giỏ tối đa 15 dòng; replay 1 + pricing 2 + batch 32 = 35 statements cho luồng tạo đơn bình thường. Phải đếm thực tế và giữ các nhánh retry/error trong giới hạn 40 |
-| Config/policy | Dùng giả định Phase 2 cho test local; trước mở bán chủ shop cần chốt khu vực/phí/cutoff/slot thật. UI preview đã dùng VND; admin backend đã triển khai Phase 4 local, UI thuộc Phase 5 |
+| Config/policy | Dùng giả định Phase 2 cho test local; trước mở bán chủ shop cần chốt khu vực/phí/cutoff/slot thật. UI dùng VND/giờ VN; admin backend Phase 4 và frontend Phase 5 đã nghiệm thu local |
 | Turnstile | Verifier đã triển khai ở Phase 3: có `TURNSTILE_SECRET` thì xác minh token; local thiếu secret được bỏ qua. Nhánh provider đã kiểm bằng mock; cấu hình widget/secrets thật còn lại |
-| Phạm vi hoàn tất / tiếp theo | Schema order/lookup, UUID v4/mã đơn, create/lookup/transition services, routes và 10 ca smoke đã xong. Phase 4 đã triển khai route admin status gọi lại transitionOrder; tiếp theo UI còn lại Phase 5. Không có route hủy đơn khách |
+| Phạm vi hoàn tất / tiếp theo | Schema order/lookup, UUID v4/mã đơn, create/lookup/transition services, routes và 10 ca smoke đã xong. Phase 4 admin status gọi lại transitionOrder; Phase 5 checkout/retry/xác nhận/lookup/admin UI DONE local (15/10/2026). Tiếp theo Phase 6 deploy khi được yêu cầu. Không có route hủy đơn khách |
 
 Smoke hiện giữ các ca catalog read-only trên URL positional local; ca ghi/chỉnh tồn Phase 3 tự dùng HTTP loopback + workerd D1 `persist:false`, `remoteBindings:false`. Không reset/xóa seed đang dùng trên 5173/4173 và không truy cập remote.
 
@@ -122,7 +122,7 @@ Không có `variant_id` (variant đã bị xóa cứng) thì bỏ qua dòng đó
 
 ## Bằng chứng lệnh — 14/10/2026
 
-Output bên dưới giữ nguyên tại mốc Phase 3 (**92 tests, 27 nhóm smoke**). Source hiện tại đã có Phase 4 auth/admin; số đếm và bằng chứng mới ở [PHASE_4_ADMIN.md](PHASE_4_ADMIN.md), không dùng output lịch sử này làm số đếm hiện tại.
+Output bên dưới giữ nguyên tại mốc Phase 3 (**92 tests, 27 nhóm smoke**). Mốc backend tiếp theo ở [PHASE_4_ADMIN.md](PHASE_4_ADMIN.md); source hiện tại đã hoàn tất frontend Phase 5 local, **136 tests, 40 smoke groups và 10/10+2/2 UI scenarios**, xem [PHASE_5_FRONTEND.md](PHASE_5_FRONTEND.md). Không dùng output lịch sử này làm số đếm hiện tại.
 
 Output trích từ source cuối; các lệnh kiểm tra exit 0. `[exit 0]` là chú thích kết quả.
 

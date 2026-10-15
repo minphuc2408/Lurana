@@ -8,12 +8,12 @@ Storefront + admin từ thiết kế Flower Shop Figma. **UI: Lunara · GitHub: 
 | Worker | Hono + `@cloudflare/vite-plugin`; Phase 0–3 DONE local, Phase 4 backend đã DONE local (9/9 tiêu chí) |
 | API | Health/catalog/delivery/quote/orders/lookup; auth và quản trị `/api/admin/*` dùng JWT cookie; API lạ → JSON 404, admin thiếu cookie → 401 |
 | D1 | Binding `DB` local; canonical 10 bảng, migration/seed/verifier Phase 1; remote chưa truy cập |
-| Commerce | Home/Shop/Cart/Delivery/Quote dùng D1 local; UI gửi/tra đơn chưa nối; auth/admin và các tính năng ngoài preview tạm ẩn |
+| Commerce | Home/Shop/Cart/Delivery/Quote, checkout COD, tra đơn và admin đã nối API local; Phase 5 DONE local (6/6 tiêu chí) |
 | Locale | EN mặc định + VI; catalog/giỏ hiển thị VND; Worker dùng Asia/Ho_Chi_Minh |
 | Build | Frontend `dist/client/` · Worker + Wrangler config `dist/lunara/` |
 | Môi trường đã dùng | Node 24.11.1 · npm 11.6.3; Wrangler hiện yêu cầu Node ≥22 |
 
-Health xác nhận Worker phản hồi, chưa kiểm tra DB. Giỏ bắt đầu rỗng, lưu variant ID/số lượng trong localStorage; giá và phí được báo lại từ server. Backend đặt đơn COD/tra đơn Phase 3 và auth/admin Phase 4 đã có local; UI checkout/tra đơn/admin còn thuộc Phase 5.
+Health xác nhận Worker phản hồi, chưa kiểm tra DB. Giỏ bắt đầu rỗng, lưu variant ID/số lượng trong localStorage; giá và phí được báo lại từ server. Checkout COD trong `/cart` có form, duyệt đơn, gửi/retry và xác nhận mã đơn từ API Phase 3; `/orders/track` tra đơn bằng mã + SĐT. Admin đăng nhập tại `/admin/login`, quản lý đơn, sản phẩm/tồn, phí giao và dashboard tóm tắt qua API Phase 4. Phase 5 đã nghiệm thu đầy đủ local; deployment remote thuộc Phase 6.
 
 Footer: cấu hình tên cửa hàng, địa chỉ và link bản đồ trong `src/shared/i18n/locales/en/common.json` và `vi/common.json` (khóa `Main Store`/`HCMC Store`/`Hanoi Branch`, hậu tố `address`/`map URL`). Zalo ở góc phải dùng icon tự vẽ; viền xanh mở rộng 60→208px khi hover/focus/bấm mở bằng transition width 400ms (reduced motion 200ms), chữ không có hiệu ứng riêng. Link Zalo thật vẫn chờ chủ shop cung cấp.
 
@@ -57,7 +57,9 @@ Phase 2 đã có `GET /api/categories`, `GET /api/products`, `GET /api/products/
 
 Phase 3 hoàn tất local: API đặt đơn COD có UUID v4 `Idempotency-Key`, server tự tính tiền/phí, batch trừ tồn không điều kiện + CHECK rollback; API tra đơn bằng mã + SĐT; `transitionOrder` hoàn tồn một lần và đánh dấu COD PAID khi DELIVERED. Giỏ 15 dòng: success 35 statements, nhánh CHECK/unique diagnostic 36, retry được chặn trong giới hạn 40. Tại mốc Phase 3: `npm test` 92/92, smoke 10/10 ca order và tổng 27/27; typecheck/architecture/build pass. [Output lịch sử Phase 3](docs/pipeline/PHASE_3_CHECKOUT_ORDERS.md#bằng-chứng-lệnh--14102026).
 
-Phase 4 DONE local (9/9 tiêu chí): đăng nhập bằng SHA-256 + `timingSafeEqual`, JWT HS256 trong cookie HttpOnly/SameSite=Strict 12 giờ, `requireAdmin`/`requireSameOrigin`, API summary/orders/products/variants/delivery-zones. Chuyển trạng thái gọi lại `transitionOrder`; chỉnh tồn ưu tiên `stock_delta` nguyên tử. Không thêm bảng hoặc dependency; không băm mật khẩu nặng trong Worker. Source hiện tại: **125/125 tests, 40/40 smoke trên dev và preview**, typecheck/architecture (178 files)/build/UI pass; 12/12 nhóm admin. Native workerd auth đã kiểm local, chưa đo CPU 10 ms trên cloud. [Checklist/output Phase 4](docs/pipeline/PHASE_4_ADMIN.md).
+Phase 4 DONE local (9/9 tiêu chí): đăng nhập bằng SHA-256 + `timingSafeEqual`, JWT HS256 trong cookie HttpOnly/SameSite=Strict 12 giờ, `requireAdmin`/`requireSameOrigin`, API summary/orders/products/variants/delivery-zones. Chuyển trạng thái gọi lại `transitionOrder`; chỉnh tồn ưu tiên `stock_delta` nguyên tử. Không thêm bảng hoặc dependency; không băm mật khẩu nặng trong Worker. **125/125 tests và 178 source files là mốc lịch sử Phase 4**; native workerd auth đã kiểm local, chưa đo CPU 10 ms trên cloud. [Checklist/output Phase 4](docs/pipeline/PHASE_4_ADMIN.md).
+
+Phase 5 **DONE local (6/6 tiêu chí)**, cập nhật **15/10/2026**: frontend đã nối toàn bộ các API MVP; **136/136 tests**, typecheck, architecture **207 source files**, build và **40/40 smoke local** pass. UI kiểm **17 routes, 0 JS exceptions**; bộ nghiệm thu Phase 5 pass **10/10 kịch bản bắt buộc + 2/2 mở rộng**, snapshot D1 persisted giữ nguyên. [Bảng tiến độ, tiêu chí và bằng chứng Phase 5](docs/pipeline/PHASE_5_FRONTEND.md). Đây là nghiệm thu local, chưa deploy hoặc nghiệm thu remote.
 
 `npm run smoke` giữ 16 nhóm catalog trên URL local được truyền vào, rồi tự tạo HTTP loopback + D1 `persist:false`, `remoteBindings:false` để chạy ca order/admin và đối chiếu tồn/query budget. Admin smoke dùng secret demo riêng trong bộ nhớ, không cần secret thật và không sửa seed persisted hoặc remote. Turnstile verifier đã có khi Worker cấu hình secret, test provider bằng mock; site key/widget/secret thật chưa cấu hình.
 
@@ -65,7 +67,7 @@ Phase 4 DONE local (9/9 tiêu chí): đăng nhập bằng SHA-256 + `timingSafeE
 
 `worker/config.ts` chứa giả định để chủ shop chỉnh: phụ phí Standard/Express/Same-day lần lượt 0/30.000/50.000 VND, giờ chốt 16:00, chuẩn bị tối thiểu 120 phút, khung giờ 08:00–20:00. Giới hạn API: 15 dòng giỏ, 20 sản phẩm mỗi variant sau gộp, ngày giao tối đa +30 ngày theo Asia/Ho_Chi_Minh.
 
-Bạn có thể test ngay `/shop`/`cart` trên 5173 với D1 local: chọn size, thêm giỏ, reload và đổi khu vực/phương thức để nhận báo giá VND. UI hiện chỉ báo giá; nút gửi đơn và trang tra đơn chưa nối API Phase 3. [Backup và kiểm kê frontend](docs/pipeline/FE_AUDIT.md) · [test API catalog/quote](docs/pipeline/PHASE_2_API_CATALOG.md#test-thủ-công-trên-host-5173). Phần còn lại là hoàn thiện [Phase 5 UI checkout/lookup/admin](docs/pipeline/PHASE_5_FRONTEND.md), rồi Phase 6 khi được yêu cầu.
+Bạn có thể test `/shop`/`cart` với D1 local: chọn size, thêm giỏ, reload, đổi khu vực/phương thức để nhận báo giá VND, điền form và duyệt đơn COD. Mỗi payload được gắn UUID v4; retry payload không đổi giữ nguyên key, xác nhận chỉ xuất hiện khi API trả mã đơn và tổng tiền thật. Form/đơn/SĐT/địa chỉ không lưu vào browser storage. Admin dùng cookie server, không dùng tài khoản fixture hoặc sessionStorage. Khi một lần chỉnh tồn mất phản hồi, UI xóa delta đã nhập, khóa dòng và yêu cầu tải lại tồn từ API trước lần chỉnh tiếp; không tự gửi lại delta chưa biết đã được áp dụng hay chưa. [Backup và kiểm kê frontend](docs/pipeline/FE_AUDIT.md) · [Nghiệm thu Phase 5](docs/pipeline/PHASE_5_FRONTEND.md).
 
 ## Tài liệu và phần tiếp theo
 
@@ -78,7 +80,7 @@ Bạn có thể test ngay `/shop`/`cart` trên 5173 với D1 local: chọn size,
 | Stack + entity map | [TECH_STACK.md](docs/TECH_STACK.md) · [FRONTEND_ENTITIES.md](docs/FRONTEND_ENTITIES.md) |
 | Database + đối chiếu v1/v2 | [DATABASE_DESIGN.md](docs/DATABASE_DESIGN.md) · [Canonical SQL](migrations/0001_mvp.sql) |
 
-MVP: **Hono/Workers · D1/SQLite · Cloudinary (chưa tích hợp) · Zod · COD khách vãng lai**. Phase 1 chốt nguyên DDL v2 thành `migrations/0001_mvp.sql`, nguồn schema duy nhất; hai file SQL schema cũ chỉ chứa chú thích dẫn về migration. `delivery_zones` trong MVP; `custom_requests` deferred. **Phase 0–3 DONE local; Phase 4 DONE local (9/9 tiêu chí); Phase 5 PARTIAL; Phase 6 PLANNED.** VND và cart localStorage đã có ở preview; phần còn lại là UI gửi/tra đơn/admin. Wishlist server ngoài MVP; Phase 0–4 chưa truy cập D1 remote hoặc deploy.
+MVP: **Hono/Workers · D1/SQLite · Cloudinary (chưa tích hợp) · Zod · COD khách vãng lai**. Phase 1 chốt nguyên DDL v2 thành `migrations/0001_mvp.sql`, nguồn schema duy nhất; hai file SQL schema cũ chỉ chứa chú thích dẫn về migration. `delivery_zones` trong MVP; `custom_requests` deferred. **Phase 0–5 DONE local; Phase 6 PLANNED.** Customer auth/profile/wishlist, custom request và admin customers/settings/notifications giữ source nhưng ẩn bằng cờ; `VITE_ENABLE_CUSTOMER_AUTH` mặc định false và API-ready gate vẫn false nên không bật lại fixture. Chưa truy cập D1 remote hoặc deploy trong Phase 5.
 
 ## Codex và CodeGraph
 

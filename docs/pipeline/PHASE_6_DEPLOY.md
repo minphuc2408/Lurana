@@ -4,7 +4,7 @@
 
 **Trạng thái:** PLANNED · chưa deploy/migrate/seed remote/secrets production. [Hiện trạng / đầu vào](../PROJECT_STATUS.md). Tài khoản, login Wrangler và D1 `lunara-db` đã được chủ dự án tạo; không làm lại. Smoke hiện **local-only**, chưa hỗ trợ remote/`--base-url`.
 
-**Đầu vào hiện tại:** Phase 0–3 DONE local, backend Phase 4 đã DONE local (9/9 tiêu chí), Phase 5 PARTIAL; chưa đủ cổng mở bán. Smoke Phase 3–4 chạy order/admin bằng source Hono + HTTP loopback + workerd D1 cô lập và secret demo, không kiểm deployment remote hoặc đặt secret thật. Auth thiếu/trống secret bị từ chối; cookie HttpOnly/SameSite=Strict và Secure trên HTTPS, ghi cần Origin đúng/JSON. **[NGƯỜI]** cần tự đặt ADMIN_PASSWORD/JWT_SECRET thật cho local trước real use, production ở 6.7. Verifier Turnstile đã có nhưng widget/domain/site key/secret thật và rate limit chưa có. Chỉ thêm chế độ remote khi thực hiện Phase 6 có authorization; giữ nguyên isolation và guard local của bộ test hiện tại. CPU 10 ms là ràng buộc thiết kế chưa được đo/xác nhận trên cloud.
+**Đầu vào hiện tại (15/10/2026):** Phase 0–5 DONE local; backend Phase 4 đạt 9/9 tiêu chí, frontend Phase 5 đạt 6/6 tiêu chí cùng 10/10 kịch bản bắt buộc +2/2 mở rộng. Checkout COD/retry/xác nhận, public lookup, cookie login và admin orders/products/stock/delivery/summary đã nối; EN mặc định/fallback, VND/giờ VN giữ nguyên. Typecheck/architecture (207 source files)/136 tests/build, 40/40 smoke local và UI 17 routes/0 exceptions pass; persisted D1 snapshot không đổi. [Bằng chứng Phase 5](PHASE_5_FRONTEND.md). Đây chưa phải nghiệm thu remote hoặc đủ cổng mở bán. Test ghi chạy HTTP loopback + workerd D1 cô lập/secret demo, không kiểm deployment remote hoặc đặt secret thật. Auth thiếu/trống secret bị từ chối; cookie HttpOnly/SameSite=Strict và Secure trên HTTPS, ghi cần Origin đúng/JSON. **[NGƯỜI]** quản lý ADMIN_PASSWORD/JWT_SECRET thật cho local và production ở 6.7. Verifier Turnstile đã có nhưng widget/domain/site key/secret thật và rate limit chưa có. Chỉ thêm chế độ remote khi thực hiện Phase 6 có authorization; giữ nguyên isolation và guard local của bộ test hiện tại. CPU 10 ms là ràng buộc thiết kế chưa được đo/xác nhận trên cloud.
 
 ## Việc cần làm
 
@@ -43,6 +43,8 @@
 **Đổi mật khẩu admin:** `npx wrangler secret put ADMIN_PASSWORD`; đổi `JWT_SECRET` để **thu hồi mọi phiên** đang đăng nhập.
 
 **Thêm khu vực giao:** trang admin → Phí giao (hoặc `INSERT INTO delivery_zones ...`).
+
+**Chỉnh tồn khi mất phản hồi:** UI admin dùng stock_delta. Nếu báo lỗi chưa biết kết quả ghi, delta đã nhập được xóa và dòng bị khóa; bấm tải lại để GET tồn hiện tại thành công, đối chiếu tồn thực tế rồi nhập delta mới. Không tự lặp delta cũ vì request trước có thể đã được áp dụng. Luồng này đã kiểm local Phase 5; vẫn cần kiểm lại trên deployment remote.
 
 ## Tiêu chí nghiệm thu
 
