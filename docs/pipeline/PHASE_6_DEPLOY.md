@@ -2,28 +2,28 @@
 
 **Mục tiêu:** MVP chạy thật trên `https://<tên>.<subdomain>.workers.dev` với D1 remote; dự kiến dùng gói Free, kiểm tra quota/chi phí trước deploy. Các bước **[NGƯỜI]** cần đầu vào/authorization của chủ dự án.
 
-**Trạng thái:** IN PROGRESS · **2/7 tiêu chí hoàn tất** (migration remote, backup thử). Ngày **15/10/2026** đã kiểm pre-flight, áp migration/seed D1 remote và mở lại backup offline. Chưa deploy, đặt secrets production, chạy smoke trên URL thật hoặc nhập dữ liệu thật. [Hiện trạng / đầu vào](../PROJECT_STATUS.md) · [Runbook vận hành](../OPERATIONS.md). Không làm lại đăng ký/login/create D1. Smoke local giữ isolation; `--base-url` là nhánh remote riêng, mặc định chỉ đọc.
+**Trạng thái:** IN PROGRESS · **5/7 tiêu chí hoàn tất**. Deployment: **[lunara.minphuc2408.workers.dev](https://lunara.minphuc2408.workers.dev)**. Ngày **15/10/2026**, chủ dự án đã deploy/đặt secrets; smoke API Production **7/7 PASS**, 10/10 kết quả chức năng MVP đã kiểm bằng API live + browser public. Đã dọn 3 đơn SMOKE, orders/items/history = 0; tồn variant 1 = 20, cả 24 variant khớp trước thử, FK sạch. Còn dữ liệu mở bán thật và xác nhận người vận hành đã nắm cách xem quota. [Hiện trạng](../PROJECT_STATUS.md) · [Runbook](../OPERATIONS.md). Smoke local giữ isolation; `--base-url` là nhánh remote riêng, mặc định chỉ đọc.
 
-**Đầu vào hiện tại (15/10/2026):** Phase 0–5 DONE local; backend Phase 4 đạt 9/9 tiêu chí, frontend Phase 5 đạt 6/6 tiêu chí cùng 10/10 kịch bản bắt buộc +2/2 mở rộng. Checkout COD/retry/xác nhận, public lookup, cookie login và admin orders/products/stock/delivery/summary đã nối; EN mặc định/fallback, VND/giờ VN giữ nguyên. Typecheck/architecture (207 source files)/136 tests/build, 40/40 smoke local và UI 17 routes/0 exceptions pass; persisted D1 snapshot không đổi. [Bằng chứng Phase 5](PHASE_5_FRONTEND.md). Đây chưa phải nghiệm thu remote hoặc đủ cổng mở bán. Test ghi chạy HTTP loopback + workerd D1 cô lập/secret demo, không kiểm deployment remote hoặc đặt secret thật. Auth thiếu/trống secret bị từ chối; cookie HttpOnly/SameSite=Strict và Secure trên HTTPS, ghi cần Origin đúng/JSON. **[NGƯỜI]** quản lý ADMIN_PASSWORD/JWT_SECRET thật cho local và production ở 6.7. Verifier Turnstile đã có nhưng widget/domain/site key/secret thật và rate limit chưa có. Chỉ thêm chế độ remote khi thực hiện Phase 6 có authorization; giữ nguyên isolation và guard local của bộ test hiện tại. CPU 10 ms là ràng buộc thiết kế chưa được đo/xác nhận trên cloud.
+**Đầu vào lịch sử tại mốc Phase 5 (15/10/2026):** Phase 0–5 DONE local; backend Phase 4 đạt 9/9 tiêu chí, frontend Phase 5 đạt 6/6 tiêu chí cùng 10/10 kịch bản bắt buộc +2/2 mở rộng. Khi đó tests 136/136, architecture 207 source files, smoke local 40/40 và UI 17 routes/0 exceptions. [Bằng chứng Phase 5](PHASE_5_FRONTEND.md) không thay nghiệm thu remote phía dưới. Hiện local tests là 143/143; verifier Turnstile orders đã có nhưng widget/site key/hostname và login verifier chưa tích hợp. CPU 10 ms chưa được đo từ dashboard cloud; smoke thành công không thay số đo CPU. Chủ dự án quản lý secrets; credential smoke Production chỉ nhập ở prompt ẩn, không đọc hoặc sử dụng mật khẩu local từ `.dev.vars`.
 
 ## Việc cần làm
 
 | # | Ai | Việc |
 | --- | --- | --- |
-| 6.0 | AGENT — DONE local | Typecheck/architecture/build/dry-run PASS; tests **143/143**, audit **0**; verifier **13/13**, smoke local **40/40**, UI **17 routes/0 exceptions**. Default reset bị khóa Windows; migrate/seed fresh state cô lập đã pass (xem bằng chứng). Auth fail-closed native **9/9**; đã thêm remote mode và **7 tests** local, mọi đơn smoke có note `SMOKE`. Chưa chạy smoke trên deployment |
+| 6.0 | AGENT — DONE local | Typecheck/architecture/build/dry-run PASS; tests **143/143**, audit **0**; verifier **13/13**, smoke local **40/40**, UI **17 routes/0 exceptions**. Default reset bị khóa Windows; migrate/seed fresh state cô lập đã pass (xem bằng chứng). Auth fail-closed native **9/9**; remote runner có **7 tests** local; bằng chứng Production tách ở 6.8 |
 | 6.1 | NGƯỜI — đã làm | Tài khoản Cloudflare đã có; kiểm tra 2FA khi chuẩn bị production. Quota/thẻ/chi phí phải đối chiếu gói lúc deploy |
 | 6.2 | NGƯỜI — đã làm | Wrangler login/whoami đã thành công; không đăng nhập lại trong Phase 0 hoặc lúc rà tài liệu |
 | 6.3 | NGƯỜI→AGENT — DONE | `whoami` đã đối chiếu account đang đăng nhập; `d1 info` xác nhận đúng tên/UUID và 0 bảng trước migrate. `account_id` được pin trong Wrangler; không create lại |
 | 6.4 | AGENT — DONE | `npx wrangler d1 migrations apply lunara-db --remote` đã áp `0001_mvp.sql`; list không còn migration chờ, SELECT `d1_migrations` có `0001_mvp.sql`, đủ 10 bảng nghiệp vụ (không đếm bảng nội bộ) |
 | 6.5 | AGENT — DONE | Đã nạp đúng `docs/sql/MVP_SEED_DEV.sql`: 4 categories/8 products/24 variants/8 images/4 zones, 0 orders, FK check rỗng. Đây là dữ liệu mẫu; không chạy lại seed sau khi nhập dữ liệu thật |
-| 6.6 | NGƯỜI | **Deploy lần đầu:** `npm run deploy`. Có thể được hỏi chọn subdomain `workers.dev` (chọn tên không lộ thông tin cá nhân) |
-| 6.7 | NGƯỜI | **Đặt secret:** `npx wrangler secret put ADMIN_PASSWORD` và `npx wrangler secret put JWT_SECRET` (giá trị ngẫu nhiên dài; xem Phase 4). Sau đó đăng nhập admin thử |
-| 6.8 | AGENT — chờ URL/secrets | `node scripts/smoke.mjs --base-url https://<url>` chỉ đọc. Full API smoke cần thêm `--allow-remote-writes --confirm-origin https://<url> --variant-id <id> --exclusive-test-window`, mật khẩu qua prompt ẩn. Chạy riêng 10 kịch bản gồm UI trong [README](README.md#8-định-nghĩa-mvp-xong); xem [runbook](../OPERATIONS.md#3-smoke-trên-deployment-và-cleanup) |
-| 6.9 | AGENT | **Dọn dữ liệu thử:** `DELETE FROM orders WHERE customer_note LIKE 'SMOKE%';` (xóa dây chuyền items/history) và đặt lại tồn các variant về giá trị thật (hoặc nhập tồn thật ở 6.10). Kiểm tra `SELECT COUNT(*) FROM orders` |
+| 6.6 | NGƯỜI — DONE | Chủ dự án tự deploy; HTTPS URL thật và SPA `/shop`, `/orders/track` đã kiểm qua API/browser |
+| 6.7 | NGƯỜI — DONE | Cloudflare có ADMIN_PASSWORD/JWT_SECRET; owner nhập Production password tại prompt terminal ẩn. Login/session và cookie HTTPS HttpOnly/Strict/Secure PASS; không dùng password local, không ghi credential vào file/log/source |
+| 6.8 | AGENT — DONE | User duyệt đúng origin và **variant 1 BPB-S**, cửa sổ không giao dịch khách/chỉnh tồn đồng thời. Smoke Production **7/7**, 10/10 kết quả MVP qua API live + public browser. Checkout/admin nghiệp vụ kiểm qua API; không gọi là nghiệm thu đầy đủ checkout/admin UI remote |
+| 6.9 | AGENT — DONE | Đã xác minh cả 3 SMOKE orders thuộc run hiện tại, chỉ variant 1, cả 24 tồn khớp baseline; chạy đúng `DELETE FROM orders WHERE customer_note LIKE 'SMOKE%';`. Sau dọn orders/items/history = 0, variant 1 tồn 20, FK sạch; không cộng tồn lại sau DELETE |
 | 6.10 | NGƯỜI | **Dữ liệu thật:** (a) qua admin → Phí giao: nhập khu vực giao thật, phí, ngưỡng miễn phí; tắt (`is_active = 0`) dòng ví dụ. (b) Sản phẩm: tạo sản phẩm thật (ảnh = URL, vd. tải ảnh lên Cloudinary dashboard rồi dán URL); **ẩn** (`HIDDEN`) sản phẩm mẫu thay vì xóa. (c) Chỉnh `worker/config.ts` (phụ phí, giờ chốt, khung giờ) rồi deploy lại |
 | 6.11 | NGƯỜI (tùy chọn) | **Turnstile:** tạo widget ở dashboard (khóa site + secret), đặt `VITE_TURNSTILE_SITE_KEY` lúc build và `npx wrangler secret put TURNSTILE_SECRET`; gắn widget vào checkout và form đăng nhập admin; giới hạn hostname cho widget |
 | 6.12 | NGƯỜI (tùy chọn) | **Tên miền riêng:** domain có thể có phí; chi phí hạ tầng/provider phụ thuộc quota/gói khi deploy. Gắn Custom Domain cho Worker rồi kiểm tra cookie admin và `Origin` trên domain mới |
-| 6.13 | NGƯỜI | **Theo dõi hạn mức:** xem dashboard Workers/D1 theo quota gói thực tế; đặt nhắc việc lặp lại khi vận hành |
+| 6.13 | NGƯỜI — chờ xác nhận | Đã hướng dẫn ngắn Workers & Pages → lunara → Metrics và D1 → lunara-db → Metrics/Row Metrics; owner yêu cầu hướng dẫn, chưa xác nhận đã nắm cách xem. Xem mục 8 OPERATIONS; không tự tạo nhắc lịch |
 | 6.14 | AGENT — DONE tài liệu | Đã viết [docs/OPERATIONS.md](../OPERATIONS.md): backup/mở offline, rollback, hạn mức, đổi secrets, phí giao/tồn và smoke/cleanup. Chủ dự án còn cần xác nhận quy trình theo dõi hằng ngày |
 
 ## Vận hành (nội dung cho `OPERATIONS.md`)
@@ -48,13 +48,13 @@
 
 ## Tiêu chí nghiệm thu
 
-- [ ] URL `workers.dev` truy cập được; tải lại ở `/shop`, `/orders/track` vẫn hiển thị app (SPA fallback).
+- [x] URL `workers.dev` truy cập được; tải lại ở `/shop`, `/orders/track` vẫn hiển thị app (SPA fallback).
 - [x] D1 remote: `migrations list` không còn migration chờ, SELECT `d1_migrations` có `0001_mvp.sql`; 10 bảng nghiệp vụ tồn tại.
-- [ ] 10 kịch bản "MVP xong" pass **trên bản deploy**; smoke remote pass.
-- [ ] Secret production chỉ nằm phía server/Cloudflare; Git không có giá trị thật (demo placeholders được phép); thiếu/trống secret thì không đăng nhập được.
-- [ ] Dữ liệu thử đã dọn; khu vực giao, sản phẩm, tồn kho là dữ liệu thật; sản phẩm mẫu đã ẩn.
+- [x] 10 kịch bản "MVP xong" pass **trên bản deploy** bằng API live + public browser; smoke remote 7/7 pass (xem phạm vi bên dưới).
+- [x] Secrets Production do owner đặt phía server/Cloudflare và nhập vào prompt ẩn cho smoke; không ghi giá trị vào Git/source/log. Auth thiếu/trống secret fail-closed đã kiểm native workerd local; không xóa secrets Production để test.
+- [ ] Dữ liệu mở bán thật: **cleanup đã xong**, nhưng khu vực/phí giao, sản phẩm/ảnh/giá và tồn thực chưa được chủ shop cung cấp/chốt; sản phẩm mẫu chưa ẩn, vùng ví dụ chưa tắt.
 - [x] Đã xuất một bản backup thử và mở lại được (không commit).
-- [ ] `docs/OPERATIONS.md` đã có; người vận hành biết xem hạn mức hằng ngày.
+- [ ] Vận hành: **OPERATIONS và hướng dẫn hai bước xem quota đã có**; còn chờ chủ dự án xác nhận đã nắm cách xem hạn mức Workers/D1 hằng ngày.
 
 ## Bằng chứng thực thi — 15/10/2026
 
@@ -64,12 +64,31 @@
 - Rà Git/client/Worker upload không có giá trị ADMIN_PASSWORD/JWT_SECRET thật. Cloudflare Vite tạo bản `.dev.vars` local trong `dist/lunara/` ignored để preview; không nằm trong assets `dist/client/` hoặc bundle upload, không phải secrets production đã đặt.
 - D1 remote UUID `1796e7bf-d230-4bc1-a80a-f4be4d1eccc7`: `0001_mvp.sql` áp 25 commands, seed áp 48 queries. SELECT sau ghi xác nhận counts `4/8/24/8/4`, orders `0`, `PRAGMA foreign_key_check` `[]`. DDL canonical không thay đổi; deferred/0002 không áp dụng.
 - Backup remote: `.security-review/phase6-remote-initial-20261015.sql` (ignored), mở vào SQLite in-memory: integrity `ok`, FK `[]`, counts khớp remote. Không restore lên remote; không chia sẻ signed download URL do Wrangler in ra.
-- Chưa có đơn SMOKE remote: chưa cần chạy DELETE. Seed mẫu vẫn ACTIVE và vùng phí ví dụ vẫn active; tiêu chí dữ liệu thật chưa đạt. Không dùng local API/Edge tests hoặc backup để suy ra acceptance deployment/CPU cloud.
+- Các bằng chứng migrate/seed/backup trên là mốc ban đầu. Lượt Production phía dưới cập nhật trạng thái deploy/smoke/cleanup; seed mẫu vẫn ACTIVE và vùng phí ví dụ vẫn active, nên tiêu chí dữ liệu thật chưa đạt.
+
+### Production smoke và browser — 15/10/2026
+
+- Origin duy nhất `https://lunara.minphuc2408.workers.dev`, variant duy nhất **1 / BPB-S**. Owner xác nhận website chưa mở bán, không có đơn khách hoặc sửa tồn đồng thời. Owner tự nhập Production password trong cửa sổ terminal có prompt ẩn; không đọc/reuse `.dev.vars`, không truyền password trong args, không lưu credential/cookie vào evidence.
+- Run `d2e606fe-d499-41fd-84d0-ab55e44f2b4d`, khoảng **17:39–17:40 giờ Việt Nam**: API **7/7 PASS**. Tạo đúng 3 đơn `SMOKE`: 1 DELIVERED/PAID, 2 CANCELLED/UNPAID với stock_released = 1. Race phải trả đúng 201 và 409/OUT_OF_STOCK; replay không tạo thêm đơn hoặc trừ tồn.
+- Đối chiếu D1 trước cleanup: đúng 3 đơn thuộc run này, mọi item chỉ variant 1; **cả 24 variant khớp tồn trước thử**, variant 1 = 20, FK `[]`. Chạy đúng DELETE được duyệt ở 6.9; sau dọn **orders = items = history = SMOKE orders = 0**, tồn 24 variant vẫn khớp, FK `[]`. DELETE không tự hoàn tồn và không cần cộng bù thêm.
+- Browser thật trên deployment: Home/Shop/Cart EN/VI và VND; chỉ Add variant 1, qty 1; giỏ giữ variant/qty sau hard reload; đổi locale giữ tổng quote server; `/orders/track` hard reload/form EN/VI; navigation deferred ẩn, **0 JS exceptions**. Browser chỉ GET public và POST quote chỉ đọc; không gửi admin/order mutations hoặc nhập credential. Lookup, COD và admin transitions được kiểm bằng API live.
+- Evidence riêng tư ignored: `.security-review/phase6-live-20261015-01/` (result/log đã lọc và snapshots/reconciliation); `.security-review/phase6-public-cart-track-1792060890541.json` (Cart/track PASS); `.security-review/phase6-deployed-public-1792060819630.json` (Home/Shop; Cart assertion đầu chạy trước quote-ready, đã kiểm lại PASS). Không đưa evidence, browser profiles hay backup vào Git.
+
+| # MVP | Kết quả trên deployment | Bằng chứng |
+| --- | --- | --- |
+| 1 | PASS catalog/detail và giá VND | API + Home/Shop EN/VI browser |
+| 2 | PASS Add/reload giỏ variant 1, qty 1 | Cart browser, storage chỉ IDs/qty |
+| 3 | PASS COD, mã đơn/tổng server, trừ tồn 1 | API live + đối chiếu D1 |
+| 4 | PASS mua món cuối song song: 201 + 409 OUT_OF_STOCK | API live |
+| 5 | PASS cùng Idempotency-Key trả cùng đơn, không trừ thêm tồn | API live/order count |
+| 6 | PASS bỏ qua giá/phí/tổng client giả | API live/snapshot đơn |
+| 7 | PASS phí phường/mặc định tỉnh/NO_DELIVERY_ZONE | API live với zones hiện có |
+| 8 | PASS lookup sender/recipient đúng; SĐT sai 404 | API live; browser chỉ kiểm form/reload |
+| 9 | PASS login HTTPS, transition hợp lệ, PAID, hủy hoàn đúng một lần | API live; không tuyên bố admin UI remote đã test đủ |
+| 10 | PASS VND, không ₱/fixture frontend ở luồng kiểm | Browser public + API thật; **D1 seed vẫn là mẫu**, tách tiêu chí dữ liệu thật |
 
 ## Đầu vào cần để tiếp tục
 
-1. **Deploy 6.6 và secrets 6.7:** chủ dự án đã chọn tự deploy và đặt secrets trong phiên 15/10/2026; chạy `npm run deploy`, tự nhập ADMIN_PASSWORD (≥24 ký tự ngẫu nhiên) và JWT_SECRET khác nhau (≥32) bằng `wrangler secret put`, rồi cung cấp URL HTTPS. Không gửi secret thật qua chat; hiện không có quyền agent deploy thay. Các bước [NGƯỜI] ở pipeline là ranh giới hiện tại.
-2. **Smoke ghi/dọn thử:** chỉ định variant ID được thử và cửa sổ không có giao dịch khách. Nhập mật khẩu admin vào prompt ẩn của script. Smoke không xóa SQL; agent chỉ dọn bằng `DELETE FROM orders WHERE customer_note LIKE 'SMOKE%';` sau khi đối chiếu/hoàn tồn đúng các variant liên quan.
-3. **Dữ liệu thật 6.10:** catalog/ảnh/giá/SKU/tồn và khu vực/phí/ngưỡng miễn phí; chốt phụ phí/cutoff/slots. Chủ shop nhập qua admin hoặc cung cấp bộ dữ liệu đã duyệt; không suy đoán từ seed. Ẩn sản phẩm mẫu, tắt vùng ví dụ sau khi có dữ liệu thay thế.
-4. **Tùy chọn:** dùng workers.dev không cần domain riêng. Nếu chọn Turnstile, cung cấp site key công khai/hostname; tích hợp widget checkout + đường token và login verifier trước khi đặt TURNSTILE_SECRET. Chỉ verifier orders hiện có; bật secret ngay sẽ chặn checkout chưa có token. Không tự đăng ký widget/domain hoặc quyết định chi phí.
-5. **Vận hành:** chủ dự án xác nhận đã biết kiểm dashboard hạn mức hằng ngày theo [OPERATIONS](../OPERATIONS.md); chưa tạo nhắc lịch tự động.
+1. **Dữ liệu thật 6.10:** catalog/ảnh/giá/SKU/tồn và khu vực/phí/ngưỡng miễn phí; chốt phụ phí/cutoff/slots. Chủ shop nhập qua admin hoặc cung cấp bộ dữ liệu đã duyệt; không suy đoán từ seed. Ẩn sản phẩm mẫu, tắt vùng ví dụ sau khi có dữ liệu thay thế. Sau thay dữ liệu cần kiểm lại catalog/quote, không chạy lại seed để ghi đè.
+2. **Vận hành:** đã hướng dẫn ngắn mục 8 [OPERATIONS](../OPERATIONS.md); owner cần xác nhận đã nắm cách kiểm dashboard Workers/D1 hằng ngày. Yêu cầu hướng dẫn chưa được tính là xác nhận tiêu chí; chưa tạo nhắc lịch tự động.
+3. **Tùy chọn:** dùng workers.dev không cần domain riêng. Nếu chọn Turnstile, cung cấp site key công khai/hostname; tích hợp widget checkout + đường token và login verifier trước khi đặt TURNSTILE_SECRET. Chỉ verifier orders hiện có; bật secret ngay sẽ chặn checkout chưa có token. Không tự đăng ký widget/domain hoặc quyết định chi phí.

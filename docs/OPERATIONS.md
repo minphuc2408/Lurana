@@ -180,7 +180,12 @@ Admin → **Kho** (`/admin/stock`): GET tồn hiện tại, đối chiếu tồn
 
 ## 8. Kiểm hạn mức hằng ngày và sự cố
 
-Chủ shop mở dashboard mỗi ngày: Workers & Pages → `lunara` → Metrics (request, lỗi, CPU); D1 → `lunara-db` → Metrics/Row Metrics (rows read/written, dung lượng). Ghi tổng hợp không chứa PII; kiểm quota **toàn account**, không chỉ Worker/DB này. Chọn ngưỡng cảnh báo nội bộ theo traffic thực tế; việc tạo nhắc lịch do chủ dự án quyết định, runbook này không tạo lịch tự động.
+Chủ shop mở Cloudflare dashboard mỗi ngày và làm hai bước:
+
+1. **Workers & Pages → `lunara` → Metrics**: xem Requests, Errors và CPU Time; chọn khoảng thời gian cần kiểm tra, đối chiếu số request với quota ngày trong bảng dưới. [Cloudflare Workers metrics](https://developers.cloudflare.com/workers/observability/metrics-and-analytics/).
+2. **D1 → `lunara-db` → Metrics → Row Metrics**: xem Rows read/Rows written; kiểm thêm Storage/dung lượng database và đối chiếu quota ngày/dung lượng. [Cloudflare D1 metrics](https://developers.cloudflare.com/d1/observability/metrics-analytics/), [D1 pricing](https://developers.cloudflare.com/d1/platform/pricing/).
+
+Ghi tổng hợp không chứa PII; kiểm quota **toàn account**, không chỉ Worker/DB này. Chọn ngưỡng cảnh báo nội bộ theo traffic thực tế; việc tạo nhắc lịch do chủ dự án quyết định, runbook này không tạo lịch tự động. Hướng dẫn ngắn đã được cung cấp ngày 15/10/2026; **chưa có xác nhận chủ dự án đã biết cách theo dõi**, nên phần bàn giao này vẫn chờ xác nhận.
 
 Thông số đối chiếu tài liệu Cloudflare ngày **15/10/2026**; trước vận hành phải xác nhận gói/giá thực tế trong account:
 
@@ -208,5 +213,7 @@ Domain riêng là tùy chọn. Chủ dự án cung cấp domain và đồng ý c
 ## 10. Nhật ký nghiệm thu và bàn giao
 
 Giữ trong [Phase 6](pipeline/PHASE_6_DEPLOY.md) các bằng chứng **đã thực thi**: ngày giờ, target, migration applied, số smoke pass, 10 ca MVP trên deployment, cleanup/tồn, backup remote mở offline, dữ liệu thật và owner xác nhận cách xem quota mỗi ngày. Không ghi URL giả hoặc tick mục đang chờ owner.
+
+Đợt kiểm ngày **15/10/2026**: API smoke trên `https://lunara.minphuc2408.workers.dev`, chỉ variant `1` trong cửa sổ độc quyền được owner cho phép, đạt **7/7 nhóm**. Owner nhập mật khẩu production qua terminal ẩn, chỉ giữ trong bộ nhớ runner; không đọc/dùng `.dev.vars` hoặc mật khẩu local. Đây là bằng chứng API live, không phải xác nhận checkout/admin UI đã kiểm remote hay dữ liệu mở bán đã hoàn tất.
 
 Đầu vào cần owner cung cấp/xác nhận trước bước phụ thuộc: đúng account/database và quyền ghi; quyền deploy đầu tiên/URL; secrets thật do owner nhập; variant/cửa sổ thử độc quyền; sản phẩm/tồn/khu vực/phí/chính sách thật; lựa chọn Turnstile/domain; người kiểm hạn mức hằng ngày. Các mục tùy chọn không tự chặn deploy cơ bản, nhưng lựa chọn bật chúng cần tích hợp/kiểm thử tương ứng.

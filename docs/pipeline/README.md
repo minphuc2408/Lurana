@@ -2,9 +2,9 @@
 
 Cập nhật: **15/10/2026**. Tech stack giữ nguyên như [TECH_STACK.md](../TECH_STACK.md): React 18 + Vite 6 + React Router 7 + Tailwind 4 (đã có) • Hono + Cloudflare Workers • Zod • Cloudflare D1 • Cloudinary • Turnstile.
 
-Pipeline mô tả đích MVP và các phase tiếp theo; nó không tự cho phép thực hiện tất cả phase. **Phase 0–5 đã xong local**. Phase 5 nối đủ Checkout COD, gửi/retry/xác nhận, tra đơn và admin từ API Phase 3–4, giữ catalog/variant cart/localStorage/delivery/quote/VND cùng English default/fallback. Source deferred còn giữ và ẩn bằng cờ/API readiness. Chủ dự án đã đăng ký Cloudflare, đăng nhập Wrangler và tạo D1 remote `lunara-db`; Phase 6 đã migrate/seed remote và mở backup thử, chưa deploy; không làm lại các bước chuẩn bị tài khoản.
+Pipeline mô tả đích MVP và các phase tiếp theo; nó không tự cho phép thực hiện tất cả phase. **Phase 0–5 đã xong local**. Phase 5 nối đủ Checkout COD, gửi/retry/xác nhận, tra đơn và admin từ API Phase 3–4, giữ catalog/variant cart/localStorage/delivery/quote/VND cùng English default/fallback. Source deferred còn giữ và ẩn bằng cờ/API readiness. Chủ dự án đã đăng ký Cloudflare, đăng nhập Wrangler và tạo D1 remote `lunara-db`; Phase 6 đã migrate/seed/backup, deploy và smoke API live/public browser rồi cleanup; không làm lại các bước chuẩn bị tài khoản.
 
-**Trạng thái:** Phase 0 DONE (6/6 tiêu chí) · Phase 1 DONE (5/5 tiêu chí, D1 local) · Phase 2 DONE (8/8 tiêu chí, API local) · Phase 3 DONE (5/5 tiêu chí, local) · Phase 4 DONE local (9/9 tiêu chí) · Phase 5 DONE local (6/6 tiêu chí) · **Phase 6 IN PROGRESS (2/7 tiêu chí): D1 remote đã migrate/seed, backup mở lại được; chờ deploy/secrets/dữ liệu thật và nghiệm thu URL**. [Hiện trạng / gaps / đầu vào chủ shop](../PROJECT_STATUS.md). Lịch 2 ngày và gói Free là ước lượng kế hoạch, không phải cam kết thời gian/chi phí.
+**Trạng thái:** Phase 0 DONE (6/6 tiêu chí) · Phase 1 DONE (5/5 tiêu chí, D1 local) · Phase 2 DONE (8/8 tiêu chí, API local) · Phase 3 DONE (5/5 tiêu chí, local) · Phase 4 DONE local (9/9 tiêu chí) · Phase 5 DONE local (6/6 tiêu chí) · **Phase 6 IN PROGRESS (5/7 tiêu chí): deploy/secrets và API live 7/7 + public browser/10 kết quả MVP PASS; cleanup xong, còn dữ liệu thật và xác nhận quota**. [Hiện trạng / gaps / đầu vào chủ shop](../PROJECT_STATUS.md). Lịch 2 ngày và gói Free là ước lượng kế hoạch, không phải cam kết thời gian/chi phí.
 
 ## 1. Mục tiêu MVP
 
@@ -44,7 +44,7 @@ Khách vào web, xem hoa, thêm giỏ, **đặt hàng COD** (không cần tài k
 | 3 | [PHASE_3_CHECKOUT_ORDERS](PHASE_3_CHECKOUT_ORDERS.md) | DONE local | 3 giờ | COD/tồn/idempotency/lookup/transition; tại mốc Phase 3: 92 tests, smoke 27/27, budget ≤40 |
 | 4 | [PHASE_4_ADMIN](PHASE_4_ADMIN.md) | DONE local (9/9 tiêu chí) | 2 giờ | Secret/JWT cookie + quyền/Origin; summary/orders/products/variants/delivery-zones; không bảng/dependency mới |
 | 5 | [PHASE_5_FRONTEND](PHASE_5_FRONTEND.md) | DONE local (6/6 tiêu chí) | 4,5 giờ (ước lượng ban đầu) | Checkout/lookup/auth/admin thật; 136 tests, 40 smoke, 10/10 UI + 2/2 mở rộng, 0 exceptions |
-| 6 | [PHASE_6_DEPLOY](PHASE_6_DEPLOY.md) | IN PROGRESS (2/7) | 1,5 giờ (ước lượng ban đầu) | Migrate/seed/backup remote đã xong; chờ deploy + smoke URL + dữ liệu thật |
+| 6 | [PHASE_6_DEPLOY](PHASE_6_DEPLOY.md) | IN PROGRESS (5/7) | 1,5 giờ (ước lượng ban đầu) | Migrate/seed/backup + deploy/API live/public browser/cleanup đã PASS; chờ dữ liệu thật/xác nhận quota |
 
 Tài liệu dùng chung: [API_CONTRACT](API_CONTRACT.md) • [BACKLOG](BACKLOG.md) • SQL: [migration canonical](../../migrations/0001_mvp.sql), [dev seed](../sql/MVP_SEED_DEV.sql).
 
@@ -60,7 +60,7 @@ Tài liệu dùng chung: [API_CONTRACT](API_CONTRACT.md) • [BACKLOG](BACKLOG.m
 
 **Phase 5 DONE local (6/6 tiêu chí):** đã thực hiện 5.0 → 5.16, không thay phần catalog/cart/storage/quote đã có. UI COD/lookup, cookie auth và admin đơn/sản phẩm/tồn/phí/dashboard đã nối thật. Intent UUID giữ key khi retry cùng nội dung, chặn bấm đúp; lost response sau commit không tạo đơn trùng. Ghi tồn chưa rõ kết quả khóa Save đến GET Recheck, tránh cộng/trừ delta lần nữa. **Tại mốc Phase 5: 136/136 tests, architecture 207 files, 40/40 smoke, UI preview 17 routes/0 exceptions và Phase 5 10/10 kịch bản + 2/2 nhóm mở rộng PASS.** [Kết quả 10 kịch bản](PHASE_5_FRONTEND.md#kết-quả-10-kịch-bản--15102026) · [audit/backup](FE_AUDIT.md). UI test dùng Edge/CDP, D1 workerd cô lập và credentials tổng hợp; snapshot SQL readonly xác nhận D1 persisted không đổi. Bridge Node dùng shim timingSafeEqual; local evidence không thay native/remote acceptance.
 
-**Phase 6 đang thực hiện theo yêu cầu:** migration/seed remote và backup thử đã xong ngày 15/10/2026; smoke có nhánh `--base-url` mặc định chỉ đọc, ghi cần origin/variant/window tường minh. Bước phụ thuộc còn lại: deploy/secrets production, URL để nghiệm thu API/UI, dữ liệu/khu vực/policy thật và vận hành. [Bằng chứng/đầu vào](PHASE_6_DEPLOY.md) · [OPERATIONS](../OPERATIONS.md). Các output Phase 2/preview/3/4/5 là bằng chứng từng mốc, không phải nghiệm thu deploy.
+**Phase 6 hiện 5/7 tiêu chí:** owner đã deploy/đặt secrets; API Production 7/7 + browser public EN/VI/VND/cart reload PASS, 10/10 kết quả MVP (phân biệt API với checkout/admin UI). Đã dọn 3 SMOKE orders, orders/items/history = 0; variant 1 tồn 20/cả 24 variant khớp baseline/FK sạch. Còn dữ liệu/khu vực/policy thật và owner xác nhận đã nắm cách xem quota; không suy ra DONE từ smoke. [Bằng chứng/đầu vào](PHASE_6_DEPLOY.md) · [OPERATIONS](../OPERATIONS.md). Các output Phase 2/preview/3/4/5 là bằng chứng từng mốc, không phải nghiệm thu deploy.
 
 **Chỉnh giao diện trước khi kết Phase 4:** Zalo giữ icon tự vẽ góc phải; animate chiều rộng viền xanh khi hover/focus/click (400ms, reduced motion 200ms); footer tên/địa chỉ/link bản đồ chuyển sang JSON EN/VI. Đây là chỉnh storefront, không nối các UI Phase 5 còn thiếu. [Cấu hình](../../PROJECT_GUIDE.md) · [nghiệm thu](PHASE_4_ADMIN.md).
 

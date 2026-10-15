@@ -1,6 +1,6 @@
 # Database MVP — Cloudflare D1
 
-**Cập nhật:** 15/10/2026 · **Runtime:** D1/SQLite · **Phase 0–3:** DONE local · **Phase 4:** DONE local (9/9 tiêu chí) · **Phase 5:** DONE local (6/6 tiêu chí) · **Phase 6:** IN PROGRESS (D1 remote migrate/seed/backup đã kiểm; chờ deploy/dữ liệu thật/remote acceptance). [Bằng chứng Phase 1](pipeline/PHASE_1_DATABASE.md) · [Phase 2](pipeline/PHASE_2_API_CATALOG.md) · [Phase 3](pipeline/PHASE_3_CHECKOUT_ORDERS.md) · [Phase 4](pipeline/PHASE_4_ADMIN.md) · [Phase 5](pipeline/PHASE_5_FRONTEND.md) · [Hiện trạng](PROJECT_STATUS.md) · [Stack](TECH_STACK.md) · [Entity frontend](FRONTEND_ENTITIES.md).
+**Cập nhật:** 15/10/2026 · **Runtime:** D1/SQLite · **Phase 0–3:** DONE local · **Phase 4:** DONE local (9/9 tiêu chí) · **Phase 5:** DONE local (6/6 tiêu chí) · **Phase 6:** IN PROGRESS (5/7 tiêu chí; deploy/API live + browser/cleanup PASS, còn dữ liệu thật và xác nhận quota). [Bằng chứng Phase 1](pipeline/PHASE_1_DATABASE.md) · [Phase 2](pipeline/PHASE_2_API_CATALOG.md) · [Phase 3](pipeline/PHASE_3_CHECKOUT_ORDERS.md) · [Phase 4](pipeline/PHASE_4_ADMIN.md) · [Phase 5](pipeline/PHASE_5_FRONTEND.md) · [Hiện trạng](PROJECT_STATUS.md) · [Stack](TECH_STACK.md) · [Entity frontend](FRONTEND_ENTITIES.md).
 
 | Phạm vi | Trạng thái |
 | --- | --- |
@@ -89,7 +89,7 @@ Auth khách/profile/wishlist/wizard làm sau. Cart guest lưu localStorage versi
 | 2–3 — DONE local | Catalog/quote → COD/idempotency/tồn/lookup và transition hoàn tồn một lần |
 | 4 — DONE local (9/9 tiêu chí) | API auth/admin dùng lại transitionOrder; không DDL mới, không thêm bảng/dependency. [Checklist/output](pipeline/PHASE_4_ADMIN.md) |
 | 5 — DONE local (6/6 tiêu chí) | Catalog/cart/quote/localStorage/VND được giữ; checkout COD/lookup và cookie admin/đơn/sản phẩm/tồn/phí giao/summary dùng API thật. Không thay canonical 10 bảng; nghiệm thu frontend 10/10 kịch bản bắt buộc + 2/2 mở rộng tách khỏi bằng chứng backend Phase 3–4 |
-| 6 — IN PROGRESS | Ngày 15/10/2026 đã áp `0001_mvp.sql`/seed lên D1 remote đúng UUID trong Wrangler, đủ 10 bảng/0 đơn/FK sạch; export backup mở lại SQLite integrity ok. Chờ deploy/secrets/dữ liệu thật/nghiệm thu URL; không sửa migration đã áp remote. [Bằng chứng](pipeline/PHASE_6_DEPLOY.md) · [Vận hành](OPERATIONS.md) |
+| 6 — IN PROGRESS | Ngày 15/10/2026 đã áp `0001_mvp.sql`/seed lên D1 remote đúng UUID trong Wrangler, đủ 10 bảng/0 đơn/FK sạch; export backup mở lại SQLite integrity ok. Đã deploy/API live 7/7 + public browser, cleanup 3 SMOKE: orders/items/history = 0, variant 1 tồn 20, cả 24 variant khớp baseline/FK sạch. Chờ dữ liệu thật và xác nhận quota; không sửa migration đã áp remote. [Bằng chứng](pipeline/PHASE_6_DEPLOY.md) · [Vận hành](OPERATIONS.md) |
 | Sau MVP | Wizard, auth khách/profile/wishlist, upload ảnh, reviews/coupon |
 
 Khu vực giao, giá VND, sản phẩm/ảnh/tồn và policy thật vẫn cần chủ shop chốt trước mở bán. Xem [pipeline](pipeline/README.md); Phase 1 không cho phép thay đổi remote hoặc deploy.
