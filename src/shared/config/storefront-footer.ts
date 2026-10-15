@@ -21,7 +21,8 @@ export const socialLinks = [
 ];
 
 export const storeLocations = [
-  { label: 'Main Store', address: '142 Nguyễn Văn Cừ, Phường Cầu Ông Lãnh, TP.HCM', href: 'https://goo.gl/maps/qiFtVyQi725jyLVT9' },
-  { label: 'HCMC Store', address: '225/3 Nguyễn Đình Chiểu, Phường Bàn Cờ, TP.HCM', href: 'https://goo.gl/maps/iWYo2zvPormh4Goz9' },
-  { label: 'Hanoi Branch', address: '34B Lý Nam Đế, Hoàn Kiếm, Hà Nội', href: 'https://g.page/flowercornerhanoi' },
+  // Editable labels, addresses and map URLs live in EN/VI common.json.
+  { id: 'main', label: 'Main Store', addressKey: 'Main Store address', mapUrlKey: 'Main Store map URL' },
+  { id: 'hcmc', label: 'HCMC Store', addressKey: 'HCMC Store address', mapUrlKey: 'HCMC Store map URL' },
+  { id: 'hanoi', label: 'Hanoi Branch', addressKey: 'Hanoi Branch address', mapUrlKey: 'Hanoi Branch map URL' },
 ];

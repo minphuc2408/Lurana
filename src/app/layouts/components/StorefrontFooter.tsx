@@ -33,9 +33,9 @@ export function StorefrontFooter() {
       <div className="col-span-2 lg:col-span-1 min-w-0">
         <h4 className={headingClass}>{t('FlowerCorner Flower Shop')}</h4>
         <address className="not-italic flex flex-col gap-5">
-          {storeLocations.map(store => <p key={store.href} className="text-sm leading-7">
+          {storeLocations.map(store => <p key={store.id} className="text-sm leading-7">
             <strong className="block font-semibold">{t(store.label)}:</strong>
-            <a href={store.href} target="_blank" rel="noopener noreferrer" className={linkClass}>{store.address}</a>
+            <a href={t(store.mapUrlKey)} target="_blank" rel="noopener noreferrer" className={linkClass}>{t(store.addressKey)}</a>
           </p>)}
         </address>
         <div className="mt-6 pt-5 border-t border-[#5A3540] text-sm leading-7">
