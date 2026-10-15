@@ -83,7 +83,8 @@ async function history(db, number) {
 }
 
 test('Phase 3 orders run on isolated real workerd D1: rollback, concurrency, transitions and query budget', async t => {
-  const platform = await getPlatformProxy({ configPath: fileURLToPath(new URL('../wrangler.jsonc', import.meta.url)), persist: false, remoteBindings: false });
+  const platform = await getPlatformProxy({ configPath: fileURLToPath(new URL('../wrangler.jsonc', import.meta.url)), persist: false, remoteBindings: false,
+    envFiles: [fileURLToPath(new URL('../.dev.vars.example', import.meta.url))] });
   try {
     const db = platform.env.DB;
     for (const file of ['../migrations/0001_mvp.sql', '../docs/sql/MVP_SEED_DEV.sql']) {
