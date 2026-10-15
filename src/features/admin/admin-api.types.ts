@@ -19,7 +19,7 @@ export interface DeliveryZone {
 }
 export interface VariantDraft { price: string; compare_at_price: string; low_stock_threshold: string; stock_delta: string; is_active: boolean; }
 export interface ProductForm {
-  name_en: string; name_vi: string; slug: string; category_id: string; image_url: string;
+  name_en: string; name_vi: string; category_id: string; image_url: string;
   status: AdminProduct['status']; is_featured: boolean;
   variants: { size_code: 'S' | 'M' | 'L'; sku: string; price: string; stock_quantity: string; low_stock_threshold: string }[];
 }

@@ -2,12 +2,12 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { useCatalog } from '@/features/shop';
 import { normalizeSearch } from '@/shared/i18n';
 import { ApiError } from '@/shared/api/client';
-import { buildVariantPatch, inputInteger, rebaseVariantDraft, variantDraft } from '../admin-api.adapters';
+import { buildProductSlug, buildVariantPatch, inputInteger, rebaseVariantDraft, variantDraft } from '../admin-api.adapters';
 import { createAdminProduct, getAdminProducts, patchAdminProduct, patchAdminVariant, requestImageUploadTicket } from '../admin-api.service';
 import { uploadProductImage, validateProductImage } from '../product-image.service';
 import type { AdminProduct, AdminVariant, ProductForm, VariantDraft } from '../admin-api.types';
 
-const emptyProduct = (categoryId = ''): ProductForm => ({ name_en: '', name_vi: '', slug: '', category_id: categoryId, image_url: '', status: 'ACTIVE', is_featured: false,
+const emptyProduct = (categoryId = ''): ProductForm => ({ name_en: '', name_vi: '', category_id: categoryId, image_url: '', status: 'ACTIVE', is_featured: false,
   variants: (['S', 'M', 'L'] as const).map(size_code => ({ size_code, sku: '', price: '', stock_quantity: '0', low_stock_threshold: '5' })) });
 
 export function useAdminApiProducts() {
@@ -43,6 +43,7 @@ export function useAdminApiProducts() {
       const url = await uploadProductImage(file, ticket, controller.signal);
       if (!controller.signal.aborted) {
         setForm(current => ({ ...current, image_url: url }));
+        setFormError(null);
         setImageUploaded(true);
       }
     } catch (cause) { if (!controller.signal.aborted) setImageError(cause); }
@@ -53,6 +54,7 @@ export function useAdminApiProducts() {
   };
   const saving = useRef(new Set<number>());
   const formInFlight = useRef(false);
+  const productSlug = useRef<string | null>(null);
   const generation = useRef(0);
   const productsRef = useRef(products);
   productsRef.current = products;
@@ -115,17 +117,18 @@ export function useAdminApiProducts() {
     }
     finally { saving.current.delete(variant.id); setSavingIds(current => current.filter(id => id !== variant.id)); }
   };
-  const openCreate = () => { if (saving.current.size > 0 || imageController.current) return; setImageError(null); setImageUploaded(false); setEditing(null); setForm(emptyProduct(String(catalog.categories[0]?.id ?? ''))); setFormError(null); setDialogOpen(true); };
+  const openCreate = () => { if (saving.current.size > 0 || imageController.current) return; productSlug.current = null; setImageError(null); setImageUploaded(false); setEditing(null); setForm(emptyProduct(String(catalog.categories[0]?.id ?? ''))); setFormError(null); setDialogOpen(true); };
   const openEdit = (product: AdminProduct) => {
     if (saving.current.size > 0 || imageController.current) return;
     setImageError(null); setImageUploaded(false);
-    setEditing(product); setForm({ ...emptyProduct(String(product.category_id)), name_en: product.name_en, name_vi: product.name_vi, slug: product.slug,
+    setEditing(product); setForm({ ...emptyProduct(String(product.category_id)), name_en: product.name_en, name_vi: product.name_vi,
       image_url: (product.images.find(image => image.is_primary) ?? product.images[0])?.url ?? '', status: product.status, is_featured: product.is_featured });
     setFormError(null); setDialogOpen(true);
   };
   const saveProduct = async (event: FormEvent) => {
     event.preventDefault();
     if (formInFlight.current || imageController.current) return;
+    if (!form.image_url.trim()) { setFormError(new ApiError('IMAGE_REQUIRED', 'Upload a product image before saving.')); return; }
     formInFlight.current = true; setFormPending(true); setFormError(null);
     generation.current++;
     try {
@@ -135,7 +138,7 @@ export function useAdminApiProducts() {
         const oldImage = (editing.images.find(image => image.is_primary) ?? editing.images[0])?.url ?? '';
         if (form.image_url !== oldImage) patch.image = { url: form.image_url };
         if (Object.keys(patch).length > 0) await patchAdminProduct(editing.id, patch);
-      } else await createAdminProduct({ name_en: form.name_en, name_vi: form.name_vi, slug: form.slug, category_id: inputInteger(form.category_id),
+      } else await createAdminProduct({ name_en: form.name_en, name_vi: form.name_vi, slug: productSlug.current ??= buildProductSlug(form.name_en || form.name_vi), category_id: inputInteger(form.category_id),
         status: form.status, is_featured: form.is_featured, image: { url: form.image_url },
         variants: form.variants.map(variant => ({ ...variant, price: inputInteger(variant.price), stock_quantity: inputInteger(variant.stock_quantity), low_stock_threshold: inputInteger(variant.low_stock_threshold) })) });
       await load(undefined, true); catalog.reload(); setDialogOpen(false);

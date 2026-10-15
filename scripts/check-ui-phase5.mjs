@@ -485,7 +485,9 @@ async function verifyAdminCrud({ first, today }) {
   // Form field selectors are deliberately semantic and remain the same in EN/VI.
   await navigate('/admin/stock'); await waitFor("Boolean(document.querySelector('[data-testid=admin-products]'))");
   await click('[data-testid=product-create]');
-  for (const [name, value] of Object.entries({ name_en: 'Phase Five Test Bouquet', name_vi: 'Bó hoa kiểm Phase Five', slug: 'phase-five-test-bouquet', image_url: 'https://images.example.test/phase5.jpg' })) await input(`[data-testid=product-form] [name="${name}"]`, value);
+  await evaluate("document.querySelector('[data-testid=product-form] details').open = true");
+  assert.equal(await evaluate("Boolean(document.querySelector('[data-testid=product-form] [name=slug]'))"), false);
+  for (const [name, value] of Object.entries({ name_en: 'Phase Five Test Bouquet', name_vi: 'Bó hoa kiểm Phase Five', image_url: 'https://images.example.test/phase5.jpg' })) await input(`[data-testid=product-form] [name="${name}"]`, value);
   await input('[data-testid=product-form] [name=category_id]', 1);
   for (const [index, size] of ['S', 'M', 'L'].entries()) {
     await input(`[data-testid=product-form] [name="sku-${size}"]`, `P5-TEST-${size}`);
@@ -494,7 +496,8 @@ async function verifyAdminCrud({ first, today }) {
   }
   await click('[data-testid=product-form-save]');
   await waitFor("document.body.innerText.includes('Phase Five Test Bouquet')");
-  const product = await first('SELECT id FROM products WHERE slug = ?', ['phase-five-test-bouquet']); assert.ok(product);
+  const product = await first('SELECT id, slug FROM products WHERE name_en = ?', ['Phase Five Test Bouquet']); assert.ok(product);
+  assert.match(product.slug, /^phase-five-test-bouquet-[a-f0-9-]{36}$/);
   assert.equal((await first('SELECT COUNT(*) AS n FROM product_variants WHERE product_id = ?', [product.id])).n, 3);
   const variant = await first('SELECT id FROM product_variants WHERE product_id = ? AND size_code = ?', [product.id, 'S']);
   await input(`[data-variant-id="${variant.id}"] [name=price]`, 110000);

@@ -208,3 +208,5 @@ Helper ngày/khung giờ Phase 2 đã được order service Phase 3 sử dụng
 ## Admin image upload — local integration
 
 POST /api/admin/uploads/sign dùng admin cookie, Origin cùng nguồn và JSON ≤1 KB. Input strict: mime (image/jpeg, image/png, image/webp), size (1..5242880). Output data: cloud_name/api_key/signature và params timestamp/public_id/asset_folder/upload_preset/overwrite=false/allowed_formats. Params do server quyết định; SHA-256, Cloudinary validity 1h. 503 CLOUDINARY_NOT_CONFIGURED nếu thiếu keys/config; 400 VALIDATION_ERROR nếu input sai; 401/403 theo middleware hiện có. Không ghi D1; browser upload trực tiếp Cloudinary rồi Save product qua hợp đồng image.url hiện có. Xem [Cloudinary](../CLOUDINARY.md).
+
+UI tạo sản phẩm tự sinh slug từ tên + UUID và tiếp tục gửi slug theo adminProductCreateSchema; API vẫn yêu cầu slug, không đổi schema/route. UUID giảm trùng tên, không phải idempotency key cho tạo sản phẩm; không tự retry request tạo.

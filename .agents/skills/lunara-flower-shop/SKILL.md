@@ -51,3 +51,7 @@ Verify affected behavior; run the required typecheck/architecture/tests/build ch
 Website display brand is Lunara Shop as requested by the owner on 15/10/2026; preserve technical Worker/D1 names and GitHub repository name.
 
 Cloudinary now has local signed direct upload via POST /api/admin/uploads/sign: cookie admin + same-origin JSON, server-owned SHA-256 params, browser-to-Cloudinary upload, save existing image.url contract. Public cloud/preset/scope are in Wrangler vars, API_KEY/API_SECRET are server config/secrets only. Keys/presets/live upload/deployment remain pending; 5 MB is client/declared metadata validation, not a Worker byte limit. No new DDL, public_id persistence, unsigned preset, SDK or automatic asset deletion. Follow [Cloudinary runbook](../../../docs/CLOUDINARY.md).
+
+Staging D1 now has the four owner-approved demo categories only; products/variants/orders/delivery_zones remained zero at verification on 15/10/2026. Do not run the full seed when only categories are needed. Create-product UI explains missing categories and offers catalog reload; stock zero is valid. See docs/STAGING.md; no new deployment in this fix.
+
+Admin product form defaults to file upload; manual image URL is under collapsed optional details. No manual slug input: client generates normalized name + UUID v4 (<=200 chars), retains it per create draft, preserves existing product slugs on edits. API still requires slug and D1 uniqueness; no schema change or product-create idempotency added. This UI change is local, not deployed.

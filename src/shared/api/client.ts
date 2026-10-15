@@ -35,6 +35,7 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
 }
 export function apiErrorKey(error: unknown): string {
   const code = error instanceof ApiError ? error.code : 'INTERNAL';
+  if (code === 'IMAGE_REQUIRED') return 'Upload a product image before saving.';
   if (code === 'CLOUDINARY_NOT_CONFIGURED') return 'Image upload is not configured. You can paste an image URL.';
   if (code === 'INVALID_IMAGE') return 'Choose a JPEG, PNG or WebP image up to 5 MB.';
   if (code === 'IMAGE_UPLOAD_FAILED') return 'Image upload was not confirmed. Check Cloudinary before trying again.';

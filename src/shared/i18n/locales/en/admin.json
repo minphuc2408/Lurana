@@ -174,5 +174,9 @@
   "JPEG, PNG or WebP, up to 5 MB. You can also paste an image URL.": "JPEG, PNG or WebP, up to 5 MB. You can also paste an image URL.",
   "Uploading image…": "Uploading image…",
   "Image uploaded. Save the product to apply it.": "Image uploaded. Save the product to apply it.",
-  "Product image preview": "Product image preview"
+  "Product image preview": "Product image preview",
+  "No categories yet. Add at least one category before creating a product, then reload categories.": "No categories yet. Add at least one category before creating a product, then reload categories.",
+  "Reload categories": "Reload categories",
+  "Create a product with three sizes and upload an image": "Create a product with three sizes and upload an image",
+  "Use an existing image URL instead": "Use an existing image URL instead"
 }

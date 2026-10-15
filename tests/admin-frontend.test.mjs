@@ -1,6 +1,25 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { allowedAdminTransitions, buildVariantPatch, rebaseVariantDraft, variantDraft } from '../src/features/admin/admin-api.adapters.ts';
+import { allowedAdminTransitions, buildProductSlug, buildVariantPatch, rebaseVariantDraft, variantDraft } from '../src/features/admin/admin-api.adapters.ts';
+
+test('automatic product slugs normalize Vietnamese, punctuation and long or non-Latin names', () => {
+  const id = '00000000-0000-4000-8000-000000000001';
+  assert.equal(buildProductSlug(' Bó Đỗ Quyên & Hoa Hồng! ', id), `bo-do-quyen-hoa-hong-${id}`);
+  assert.equal(buildProductSlug('🌸', id), `product-${id}`);
+  assert.equal(buildProductSlug('', id), `product-${id}`);
+  for (const name of ['A'.repeat(300), 'Bó hoa - '.repeat(40), '花']) {
+    const slug = buildProductSlug(name, id);
+    assert.ok(slug.length <= 200);
+    assert.match(slug, /^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+  }
+});
+
+test('products with the same name receive separate automatic slugs', () => {
+  const first = buildProductSlug('Rose Bouquet');
+  const second = buildProductSlug('Rose Bouquet');
+  assert.notEqual(first, second);
+  assert.match(first, /^rose-bouquet-[a-f0-9-]{36}$/);
+});
 import { patchAdminVariant } from '../worker/services/admin-catalog.ts';
 import { createTestDb } from './helpers/worker.mjs';
 

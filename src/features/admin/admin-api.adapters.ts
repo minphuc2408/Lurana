@@ -26,6 +26,11 @@ export function inputInteger(value: string, negative = false): number {
   if (!(negative ? /^-?\d+$/ : /^\d+$/).test(value) || !Number.isSafeInteger(Number(value))) throw new ApiError('VALIDATION_ERROR', 'Invalid number.');
   return Number(value);
 }
+export function buildProductSlug(name: string, identity = crypto.randomUUID()): string {
+  const base = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd')
+    .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'product';
+  return `${base.slice(0, 163).replace(/-+$/g, '')}-${identity}`;
+}
 /** Never resend a stale stock count or unchanged price fields with a delta. */
 export function buildVariantPatch(variant: AdminVariant, draft: VariantDraft): AdminVariantPatchInput {
   const patch: AdminVariantPatchInput = {};

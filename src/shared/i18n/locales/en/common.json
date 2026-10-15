@@ -261,5 +261,6 @@
   "Lunara Shop": "Lunara Shop",
   "Image upload is not configured. You can paste an image URL.": "Image upload is not configured. You can paste an image URL.",
   "Choose a JPEG, PNG or WebP image up to 5 MB.": "Choose a JPEG, PNG or WebP image up to 5 MB.",
-  "Image upload was not confirmed. Check Cloudinary before trying again.": "Image upload was not confirmed. Check Cloudinary before trying again."
+  "Image upload was not confirmed. Check Cloudinary before trying again.": "Image upload was not confirmed. Check Cloudinary before trying again.",
+  "Upload a product image before saving.": "Upload a product image before saving."
 }

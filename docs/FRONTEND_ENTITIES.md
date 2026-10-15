@@ -61,3 +61,5 @@ Xem [DATABASE_DESIGN.md](DATABASE_DESIGN.md) để tra canonical và giới hạ
 [Nghiệm thu Phase 5](pipeline/PHASE_5_FRONTEND.md): typecheck/build pass, architecture 207 source files, tests 136/136, smoke 40/40; UI 17 routes và 10/10 kịch bản bắt buộc + 2/2 mở rộng, không có JS exception. Phép ghi nghiệm thu dùng D1 cô lập và đối chiếu logical snapshot xác nhận D1 persisted không đổi. Kết quả này là bằng chứng local, không thay nghiệm thu remote hoặc dữ liệu/policy thật trước mở bán ở Phase 6.
 
 Cloudinary upload local: ProductForm.image_url tiếp tục là URL; AdminImageUploadTicket trong shared/admin-upload-schemas.ts chỉ giữ trong bộ nhớ. Hook quản lý imagePending/error/uploaded, chặn lưu/đóng trong upload và abort khi unmount. Chưa lưu public_id riêng hoặc thay AdminProduct DTO. [Chi tiết](CLOUDINARY.md).
+
+ProductForm bỏ slug; useAdminApiProducts giữ slug tạo tự động trong ref cho từng draft. Image URL được thu gọn; file upload là cách nhập chính. AdminProduct.slug và hợp đồng image.url không đổi.
