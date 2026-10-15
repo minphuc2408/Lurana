@@ -1,4 +1,13 @@
 {
+  "API timeout": "The request timed out. Your details are preserved; try again.",
+  "API bad response": "The server returned an invalid response. Please try again.",
+  "API delivery slot": "That delivery date or time is unavailable. Choose another date or time.",
+  "API unauthorized": "Your admin session has expired. Sign in again.",
+  "API invalid credentials": "The admin password is incorrect or sign-in is unavailable.",
+  "API forbidden": "This request could not be authorized. Please try again.",
+  "API not found": "The requested record could not be found.",
+  "API conflict": "This record conflicts with existing data. Check it and try again.",
+  "API invalid transition": "The order status has changed or this step is unavailable. Refresh and try again.",
   "Close": "Close",
   "Admin Panel": "Admin Panel",
   "Main Menu": "Main Menu",
@@ -211,7 +220,7 @@
   "API request failed": "Could not load data. Please try again.",
   "API delivery unavailable": "Delivery is unavailable for this area.",
   "API cart limit": "The cart has reached its item or stock limit.",
-  "API validation error": "Please check the delivery details.",
+  "API validation error": "Please check the information you entered.",
   "API out of stock": "There is not enough stock.",
   "API variant unavailable": "This item is no longer available.",
   "Loading catalog": "Loading flowers…",
@@ -225,7 +234,7 @@
   "Hot": "Hot",
   "Live cart quote": "Choose your delivery area to get an up-to-date quote.",
   "Updating quote": "Updating quote…",
-  "Quote only notice": "You can preview prices and delivery fees here. Ordering will be available when the order service is ready.",
+  "Quote only notice": "This quote does not reserve stock. Prices and availability are checked again when you place your order.",
   "Stock issue {{name}} {{available}}": "{{name}}: only {{available}} available. Please reduce the quantity.",
   "Unavailable item {{name}}": "{{name}} is no longer available.",
   "Loading delivery options": "Loading delivery options…",
@@ -242,5 +251,9 @@
   "From {{price}}": "From {{price}}",
   "Select delivery for quote": "Select a province and enter a ward to get a quote.",
   "No delivery areas": "No delivery areas are available.",
-  "Cart": "Cart"
+  "Cart": "Cart",
+  "Track order": "Track order",
+  "Admin login": "Admin login",
+  "Delivery fees": "Delivery fees",
+  "API rate limited": "Too many requests. Please wait and try again."
 }

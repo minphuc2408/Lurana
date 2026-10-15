@@ -1,4 +1,13 @@
 {
+  "API timeout": "Yêu cầu quá thời gian chờ. Thông tin vẫn được giữ; hãy thử lại.",
+  "API bad response": "Hệ thống trả về dữ liệu không hợp lệ. Vui lòng thử lại.",
+  "API delivery slot": "Ngày hoặc khung giờ giao không còn phù hợp. Vui lòng chọn lại.",
+  "API unauthorized": "Phiên quản trị đã hết hạn. Vui lòng đăng nhập lại.",
+  "API invalid credentials": "Mật khẩu quản trị không đúng hoặc chưa thể đăng nhập.",
+  "API forbidden": "Không thể xác minh yêu cầu này. Vui lòng thử lại.",
+  "API not found": "Không tìm thấy dữ liệu yêu cầu.",
+  "API conflict": "Thông tin bị trùng hoặc xung đột. Kiểm tra và thử lại.",
+  "API invalid transition": "Trạng thái đơn đã thay đổi hoặc bước này không hợp lệ. Tải lại và thử lại.",
   "Close": "Đóng",
   "Admin Panel": "Trang quản trị",
   "Main Menu": "Menu chính",
@@ -211,7 +220,7 @@
   "API request failed": "Không tải được dữ liệu. Vui lòng thử lại.",
   "API delivery unavailable": "Chưa hỗ trợ giao hàng đến khu vực này.",
   "API cart limit": "Giỏ hàng đã đạt giới hạn số dòng, số lượng hoặc tồn kho.",
-  "API validation error": "Vui lòng kiểm tra thông tin giao hàng.",
+  "API validation error": "Vui lòng kiểm tra thông tin đã nhập.",
   "API out of stock": "Không đủ tồn kho.",
   "API variant unavailable": "Sản phẩm này không còn bán.",
   "Loading catalog": "Đang tải hoa…",
@@ -225,7 +234,7 @@
   "Hot": "Nổi bật",
   "Live cart quote": "Chọn khu vực giao hàng để nhận báo giá mới nhất.",
   "Updating quote": "Đang cập nhật báo giá…",
-  "Quote only notice": "Bạn có thể xem giá và phí giao tại đây. Chức năng đặt đơn sẽ mở khi dịch vụ đơn hàng hoàn tất.",
+  "Quote only notice": "Báo giá chưa giữ hàng. Giá và tình trạng còn hàng sẽ được kiểm tra lại khi bạn đặt đơn.",
   "Stock issue {{name}} {{available}}": "{{name}}: chỉ còn {{available}} sản phẩm. Vui lòng giảm số lượng.",
   "Unavailable item {{name}}": "{{name}} không còn bán.",
   "Loading delivery options": "Đang tải tùy chọn giao hàng…",
@@ -242,5 +251,9 @@
   "From {{price}}": "Từ {{price}}",
   "Select delivery for quote": "Chọn tỉnh và nhập phường để nhận báo giá.",
   "No delivery areas": "Chưa có khu vực giao hàng.",
-  "Cart": "Giỏ hàng"
+  "Cart": "Giỏ hàng",
+  "Track order": "Tra đơn",
+  "Admin login": "Đăng nhập quản trị",
+  "Delivery fees": "Phí giao hàng",
+  "API rate limited": "Quá nhiều yêu cầu. Vui lòng đợi rồi thử lại."
 }
