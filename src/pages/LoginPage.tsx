@@ -1,5 +1,5 @@
-import { LoginView, useLogin } from "@/features/auth";
+import { AdminLoginView, useAdminLogin } from "@/features/auth";
 export default function LoginPage() {
-  const model = useLogin();
-  return <LoginView {...model} />;
+  const model = useAdminLogin();
+  return <AdminLoginView {...model} />;
 }

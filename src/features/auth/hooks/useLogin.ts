@@ -16,7 +16,7 @@ export function useLogin() {
   const [remember, setRemember] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const handleSignIn = (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     if (!email.trim() || !password.trim()) {
@@ -24,7 +24,7 @@ export function useLogin() {
       return;
     }
     setLoading(true);
-    const result = login(email.trim(), password);
+    const result = await login(email.trim(), password);
     setLoading(false);
     if (!result.success) {
       setError(result.error || "Invalid credentials.");
