@@ -8,12 +8,15 @@ export function useAdminLayout() {
   } = useAuth();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const currentNav = navItems.find(n => location.pathname === n.path || n.path !== "/admin/dashboard" && location.pathname.startsWith(n.path)) ?? navItems[0];
   return {
     user,
     location,
     sidebarOpen,
     setSidebarOpen,
+    sidebarCollapsed,
+    setSidebarCollapsed,
     currentNav
   };
 }

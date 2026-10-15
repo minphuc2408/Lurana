@@ -8,7 +8,7 @@ import type { AdminApiDashboardModel } from '../hooks/useAdminApiDashboard';
 export function AdminApiDashboardView(model: AdminApiDashboardModel) {
   const { t, language } = useLocale("admin");
   return <div data-testid="admin-dashboard" className="space-y-6 p-4 font-body text-lunara-ink sm:p-6">
-    <div className="flex flex-wrap items-center justify-between gap-3"><h1 className="font-display text-3xl">{t('Dashboard summary')}</h1><button onClick={model.reload} disabled={model.loading} className={adminSecondaryClass}>{t('Refresh')}</button></div>
+    <button onClick={model.reload} disabled={model.loading} className={`${adminSecondaryClass} fixed right-6 bottom-6 z-30 shadow-lg`}>{t('Refresh')}</button>
     <AdminApiState loading={model.loading} error={model.error} onRetry={model.reload} />
     {!model.loading && model.error == null && model.summary && <>
       <div className="grid gap-4 sm:grid-cols-2"><section className="rounded-2xl border border-lunara-border bg-white p-5"><h2 className="text-sm text-lunara-body">{t('Orders today Vietnam time')}</h2><p data-testid="today-orders" className="mt-2 font-display text-4xl">{model.summary.today_orders}</p></section><section className="rounded-2xl border border-lunara-border bg-white p-5"><h2 className="text-sm text-lunara-body">{t('Variants at or below stock threshold')}</h2><p data-testid="low-stock-count" className="mt-2 font-display text-4xl">{model.summary.low_stock_count}</p><Link to="/admin/stock" className="mt-2 inline-block text-sm text-lunara-rose-strong underline">{t('Manage Stock')}</Link></section></div>

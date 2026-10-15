@@ -9,7 +9,6 @@ import type { AdminApiOrdersModel } from '../hooks/useAdminApiOrders';
 export function AdminApiOrdersView(model: AdminApiOrdersModel) {
   const { t, language } = useLocale("admin");
   return <div data-testid="admin-orders" className="space-y-6 p-4 font-body text-lunara-ink sm:p-6">
-    <h1 className="font-display text-3xl">{t('Manage orders')}</h1>
     <form onSubmit={model.submitFilters} className="grid gap-3 rounded-2xl border border-lunara-border bg-white p-4 sm:grid-cols-2 lg:grid-cols-4">
       <label className="text-sm">{t('Status')}<select name="status" className={`${adminInputClass} mt-1`} value={model.filters.status} onChange={event => model.setFilters({ ...model.filters, status: event.target.value })}><option value="">{t('All')}</option>{ORDER_STATUSES.map(status => <option key={status} value={status}>{t(`Status ${status}`)}</option>)}</select></label>
       <label className="text-sm">{t('Delivery date')}<input name="date" type="date" className={`${adminInputClass} mt-1`} value={model.filters.date} onChange={event => model.setFilters({ ...model.filters, date: event.target.value })} /></label>

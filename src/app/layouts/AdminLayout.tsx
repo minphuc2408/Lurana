@@ -8,11 +8,15 @@ import { cn } from "@/shared/lib/utils";
 import { apiErrorKey } from '@/shared/api/client';
 import { featureFlags } from '@/shared/config/features';
 import { Outlet, Link, Navigate } from "react-router";
-import { Flower, LogOut, Menu, X, Bell, ArrowLeft, ChevronRight } from "lucide-react";
+import { Flower, LogOut, Menu, X, Bell, ArrowLeft, ChevronRight, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 function SidebarContent({
-  onClose
+  onClose,
+  collapsed = false,
+  onToggle
 }: {
   onClose?: () => void;
+  collapsed?: boolean;
+  onToggle?: () => void;
 }) {
   const { t, language } = useLocale("common");
   const {
@@ -26,33 +30,32 @@ function SidebarContent({
   });
   return <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="[padding:24px_20px_20px] [border-bottom:1px_solid_rgba(255,255,255,0.08)]">
-        <div className="flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 [text-decoration:none]">
-            <Flower size={22} className="text-lunara-rose-light" />
-            <span className="font-display [font-size:1.5rem] text-white [letter-spacing:0.1em]">
-              lunara
-            </span>
-          </Link>
-          {onClose && <button onClick={onClose} className="bg-transparent [border:none] [cursor:pointer] text-lunara-rose-light" aria-label={t("Close")}>
-              <X size={18} />
+      <div className={cn("[border-bottom:1px_solid_rgba(255,255,255,0.08)]", collapsed ? "[padding:24px_12px_20px]" : "[padding:24px_20px_20px]")}>
+        <div className={cn("flex items-center", collapsed ? "justify-center" : "justify-between")}>
+            <Link to="/" title={t("Lunara")} aria-label={t("Lunara")} className="flex items-center gap-2 [text-decoration:none]">
+              <Flower size={22} className="text-lunara-rose-light" />
+              {!collapsed && <span className="font-display [font-size:1.5rem] text-white [letter-spacing:0.1em]">lunara</span>}
+            </Link>
+            {onClose && <button onClick={onClose} className="bg-transparent [border:none] [cursor:pointer] text-lunara-rose-light" aria-label={t("Close")}>
+                <X size={18} />
+            </button>}
+            {!onClose && onToggle && <button type="button" onClick={onToggle} className="bg-transparent [border:none] [cursor:pointer] text-lunara-rose-light" aria-label={t(collapsed ? "Expand menu" : "Collapse menu")} title={t(collapsed ? "Expand menu" : "Collapse menu")}>
+              {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
             </button>}
         </div>
-        <span className="[font-size:0.62rem] text-lunara-rose-light [text-transform:uppercase] [letter-spacing:0.18em] [padding-left:30px] [display:block] [margin-top:2px]">
-          {t("Admin Panel")}</span>
+        {!collapsed && <span className="[font-size:0.62rem] text-lunara-rose-light [text-transform:uppercase] [letter-spacing:0.18em] [padding-left:30px] [display:block] [margin-top:2px]">{t("Admin Panel")}</span>}
       </div>
 
       {/* Nav */}
-      <nav className="[padding:16px_12px] [flex:1] [overflow-y:auto]">
-        <p className="[font-size:0.62rem] text-lunara-rose-light [letter-spacing:0.18em] [text-transform:uppercase] [padding:0_12px_10px]">
-          {t("Main Menu")}</p>
+      <nav className={cn("[flex:1] [overflow-y:auto]", collapsed ? "[padding:16px_8px]" : "[padding:16px_12px]")}>
+        {!collapsed && <p className="[font-size:0.62rem] text-lunara-rose-light [letter-spacing:0.18em] [text-transform:uppercase] [padding:0_12px_10px]">{t("Main Menu")}</p>}
         {navItems.map(item => {
         const active = location.pathname === item.path || item.path !== "/admin/dashboard" && location.pathname.startsWith(item.path);
         const Icon = item.icon;
-        return <Link key={item.path} to={item.path} onClick={onClose} className={cn("flex items-center gap-3 px-3 py-2.5 rounded-xl mb-0.5 [text-decoration:none] [transition:all_0.15s]", active ? "bg-[rgba(193,123,138,0.18)]" : "bg-transparent", active ? "text-[#E8B0BC]" : "text-lunara-rose-light", active ? "[border-left:3px_solid_#C17B8A]" : "[border-left:3px_solid_transparent]")}>
+        return <Link key={item.path} to={item.path} onClick={onClose} title={collapsed ? t(item.label) : undefined} aria-label={collapsed ? t(item.label) : undefined} className={cn("flex items-center rounded-xl mb-0.5 [text-decoration:none] [transition:all_0.15s]", collapsed ? "justify-center px-3 py-2.5" : "gap-3 px-3 py-2.5", active ? "bg-[rgba(193,123,138,0.18)]" : "bg-transparent", active ? "text-[#E8B0BC]" : "text-lunara-rose-light", active ? "[border-left:3px_solid_#C17B8A]" : "[border-left:3px_solid_transparent]")}>
               <Icon size={17} />
-              <span className="[font-size:0.85rem] [letter-spacing:0.04em] [flex:1]">{t(item.label)}</span>
-              {active && <ChevronRight size={13} className="[opacity:0.5]" />}
+              {!collapsed && <span className="[font-size:0.85rem] [letter-spacing:0.04em] [flex:1]">{t(item.label)}</span>}
+              {!collapsed && active && <ChevronRight size={13} className="[opacity:0.5]" />}
             </Link>;
       })}
       </nav>
@@ -61,24 +64,24 @@ function SidebarContent({
       <div className="[margin:0_12px] [height:1px] bg-[rgba(255,255,255,0.06)]" />
 
       {/* Back to Store */}
-      <div className="[padding:12px]">
-        <Link to="/" onClick={onClose} className="flex items-center gap-2 px-3 py-2.5 rounded-xl [text-decoration:none] text-lunara-rose-light [font-size:0.82rem] [transition:color_0.15s]">
+      <div className={cn(collapsed ? "[padding:12px_8px]" : "[padding:12px]")}>
+        <Link to="/" onClick={onClose} title={t("Back to Store")} aria-label={t("Back to Store")} className={cn("flex items-center rounded-xl [text-decoration:none] text-lunara-rose-light [font-size:0.82rem] [transition:color_0.15s]", collapsed ? "justify-center px-3 py-2.5" : "gap-2 px-3 py-2.5")}>
           <ArrowLeft size={15} />
-          {t("Back to Store")}</Link>
+          {!collapsed && t("Back to Store")}</Link>
       </div>
 
       {/* User Footer */}
-      <div className="[padding:12px_16px_20px] [border-top:1px_solid_rgba(255,255,255,0.06)]">
-        <div className="flex items-center gap-3">
+      <div className={cn("[border-top:1px_solid_rgba(255,255,255,0.06)]", collapsed ? "[padding:12px_8px_20px]" : "[padding:12px_16px_20px]")}>
+        <div className={cn("flex items-center", collapsed ? "justify-center gap-2" : "gap-3")}>
           <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-lunara-rose-strong [font-size:0.82rem] text-white [font-weight:700]">
             {(user?.name || t('Administrator')).charAt(0)}
           </div>
-          <div className="flex-1 min-w-0">
+          {!collapsed && <div className="flex-1 min-w-0">
             <div className="[font-size:0.82rem] text-lunara-rose-light [font-weight:500] [overflow:hidden] [text-overflow:ellipsis] [white-space:nowrap]">
               {user?.name || t('Administrator')}
             </div>
             <div className="[font-size:0.68rem] text-lunara-rose-light [margin-top:1px]">{t("Administrator")}</div>
-          </div>
+          </div>}
           <button data-testid="admin-logout" onClick={handleLogout} disabled={signingOut} title={t("Sign Out")} className="bg-transparent [border:none] [cursor:pointer] text-lunara-rose-light [padding:4px] [flex-shrink:0] disabled:opacity-50" aria-label={t("Sign Out")}>
             <LogOut size={15} />
           </button>
@@ -93,6 +96,8 @@ export function AdminLayout() {
     user,
     location,
     sidebarOpen,
+    sidebarCollapsed,
+    setSidebarCollapsed,
     setSidebarOpen,
     currentNav
   } = useAdminLayout();
@@ -100,8 +105,8 @@ export function AdminLayout() {
   if (user.role !== "admin") return <Navigate to="/" replace />;
   return <div className="flex h-screen overflow-hidden font-body">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col flex-shrink-0 [width:240px] bg-lunara-sidebar">
-        <SidebarContent />
+      <aside className={cn("hidden md:flex flex-col flex-shrink-0 bg-lunara-sidebar transition-[width] duration-200", sidebarCollapsed ? "[width:72px]" : "[width:240px]")}>
+        <SidebarContent collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(collapsed => !collapsed)} />
       </aside>
 
       {/* Mobile Sidebar Overlay */}
@@ -120,7 +125,7 @@ export function AdminLayout() {
             <button onClick={() => setSidebarOpen(true)} className="md:hidden bg-transparent [border:none] [cursor:pointer] text-lunara-body [padding:4px]" aria-label={t("Open menu")}>
               <Menu size={22} />
             </button>
-            <div>
+            <div className="hidden sm:block">
               <h1 className="font-display truncate [font-size:1.25rem] text-lunara-ink [font-weight:600] [line-height:1.2]">
                 {t(currentNav.label)}
               </h1>
