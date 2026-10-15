@@ -1,5 +1,5 @@
-import { AdminOrdersView, useAdminOrders } from "@/features/orders";
+import { AdminApiOrdersView, useAdminApiOrders } from "@/features/admin";
 export default function AdminOrdersPage() {
-  const model = useAdminOrders();
-  return <AdminOrdersView {...model} />;
+  const model = useAdminApiOrders();
+  return <AdminApiOrdersView {...model} />;
 }

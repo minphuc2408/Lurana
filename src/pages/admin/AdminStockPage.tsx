@@ -1,5 +1,5 @@
-import { InventoryView, useInventory } from "@/features/inventory";
+import { AdminApiProductsView, useAdminApiProducts } from "@/features/admin";
 export default function AdminStockPage() {
-  const model = useInventory();
-  return <InventoryView {...model} />;
+  const model = useAdminApiProducts();
+  return <AdminApiProductsView {...model} />;
 }
