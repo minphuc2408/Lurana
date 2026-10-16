@@ -1,6 +1,9 @@
 # Backlog sau MVP và rủi ro đã biết
 
-**Trạng thái backlog (15/10/2026):** PLANNED · Phase 0–5 DONE local: backend Phase 4 đạt 9/9 và frontend Phase 5 đạt 6/6 tiêu chí, 10/10 kịch bản bắt buộc +2/2 mở rộng. Phase 6 PLANNED; MVP chưa deploy/nghiệm thu remote. [Hiện trạng](../PROJECT_STATUS.md) · [Bằng chứng frontend](PHASE_5_FRONTEND.md). Bảng dưới mô tả việc sau MVP/giảm thiểu dự kiến; không xác nhận các controls đã có. Quota/giá/cloud policy cần kiểm tra lại trước deploy.
+> Rà soát 16/10/2026: [hiện trạng chuẩn](../PROJECT_STATUS.md), [contract hiện tại](API_CONTRACT.md). Phase 0–5 DONE local, Phase 6 IN PROGRESS5/7. Local170 tests/215 source files/40 smoke; staging đã deploy bản mới13:31 ngày 16/10, production vẫn bản 15/10. Output/checklist ghi ngày cũ bên dưới là lịch sử, không phải trạng thái cloud hiện tại.
+
+
+**Trạng thái backlog (16/10/2026):** PLANNED · Phase 0–5 DONE local: backend Phase 4 đạt 9/9 và frontend Phase 5 đạt 6/6 tiêu chí, 10/10 kịch bản bắt buộc +2/2 mở rộng. Phase 6 IN PROGRESS5/7; production đã deploy và kiểm API/public browser, chưa đủ điều kiện mở bán. [Hiện trạng](../PROJECT_STATUS.md) · [Bằng chứng frontend](PHASE_5_FRONTEND.md). Bảng dưới tách phần đã có trong code khỏi phần còn thiếu; mức deploy của từng control xem PROJECT_STATUS. Quota/giá/cloud policy cần kiểm tra lại trước deploy.
 
 ## Ưu tiên cao (tuần đầu sau khi mở bán)
 
@@ -11,7 +14,7 @@ B2/B3 cập nhật local 15/10/2026 bên dưới chưa deploy. Phase 6 hiện IN
 | **Thông báo đơn mới cho chủ shop** | MVP dự kiến chỉ có admin nên dễ bỏ sót đơn. Worker gọi webhook trong `ctx.waitUntil()` sau khi tạo đơn; lỗi gửi không làm hỏng đơn. Chọn provider và kiểm tra quota/chi phí khi triển khai |
 | Trạng thái `DELIVERY_FAILED` riêng | B3 đã xử lý local bằng IN_TRANSIT → CANCELLED, bắt buộc lý do, restock mặc định false/opt-in true; không cần migration. Trạng thái riêng/thống kê nâng cao vẫn deferred |
 | Trang chính sách | Quyền riêng tư (thu thập tên/SĐT/địa chỉ), đổi/trả hoa tươi, liên hệ. Là yêu cầu vận hành, không phải code |
-| Upload ảnh từ admin | Cloudinary Unsigned Upload Preset **giới hạn định dạng/dung lượng/thư mục**; lưu `image_url` + `cloudinary_public_id`. Xóa ảnh phải ký request ở Worker (secret không để ở trình duyệt) |
+| Upload ảnh từ admin | Signed direct upload đã code và có staging deployment/config/secrets names; Save product chỉ lưu image.url, chưa lưu public_id hay tự xóa asset. Còn nghiệm thu preset/upload thật, cấu hình production, gallery/cleanup nếu có nhu cầu. Không dùng unsigned preset; [hướng dẫn](../CLOUDINARY.md) |
 | Chống bot và vận hành COD | B2 local đã có Turnstile checkout/lookup/login, rate-limit bindings, 3 PENDING/SĐT và Cron TTL 24 giờ, chạy mỗi giờ trong cấu hình local. Owner cấu hình khóa/deploy; Cron đã chốt 24 giờ/mỗi giờ; WAF/custom domain và bảo vệ các route admin mở rộng còn chờ nhu cầu. [Hướng dẫn](../BOT_PROTECTION.md) |
 
 ## Ưu tiên trung bình
@@ -35,9 +38,9 @@ B2/B3 cập nhật local 15/10/2026 bên dưới chưa deploy. Phase 6 hiện IN
 - Nhiều chi nhánh (`stores`, `orders.store_id`).
 - Tìm kiếm không dấu bằng FTS5; phân trang catalog khi vượt 100 sản phẩm.
 - Nguyên liệu/công thức/nhà cung cấp (`materials`, `product_recipe_items`, `suppliers`).
-- SEO: SPA khó lập chỉ mục tốt; cân nhắc prerender/SSR cho trang sản phẩm, sitemap, meta/Open Graph.
+- SEO: metadata Home/Shop, robots/sitemap/OG và staging noindex đã có. Còn trang chi tiết sản phẩm và prerender/SSR nội dung catalog, ảnh/font tối ưu theo đo đạc; không làm lại phần metadata đã triển khai.
 - CI/CD: GitHub Actions hoặc Workers Builds với API token phân quyền tối thiểu.
-- Giám sát lỗi/log; đưa dữ liệu sang PostgreSQL (Supabase/Neon) nếu cần truy vấn phức tạp.
+- Observability/log D1 allowlist đã có trong code; mở rộng cảnh báo/truy vấn lỗi khi cần, đưa dữ liệu sang PostgreSQL (Supabase/Neon) nếu cần truy vấn phức tạp.
 
 ## Rủi ro đã biết
 

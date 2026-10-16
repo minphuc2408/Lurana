@@ -1,15 +1,15 @@
 # Database MVP — Cloudflare D1
 
-B2/B3 local, chưa deploy (15/10/2026): **không đổi DDL/migration**. COUNT tối đa 3 PENDING/SĐT người đặt chuẩn hóa nằm trong INSERT/batch; nhánh vượt hạn mức kích hoạt NOT NULL sẵn có của sender_phone để rollback, không tăng số statements. `stock_released` giữ đúng nghĩa: true khi đã cộng lại tồn, false cả khi CANCELLED không hoàn tồn; trạng thái terminal ngăn hủy/hoàn lặp. Cron 24 giờ/mỗi giờ dùng một D1 batch nguyên tử gồm 3 statements: ghi SYSTEM history, cộng SUM quantity của các variant còn tồn tại, rồi chuyển CANCELLED/stock_released=1. Cả ba lọc status PENDING, stock_released=0 và ngày đặt quá hạn ngay trong giao dịch, tránh hoàn tồn lặp hoặc hủy đơn đã xác nhận. RateLimit bindings không tạo bảng đếm D1. [Chi tiết](BOT_PROTECTION.md).
+B2/B3 trong source hiện tại (staging deploy16/10, production còn bản cũ): **không đổi DDL/migration**. COUNT tối đa 3 PENDING/SĐT người đặt chuẩn hóa nằm trong INSERT/batch; nhánh vượt hạn mức kích hoạt NOT NULL sẵn có của sender_phone để rollback, không tăng số statements. `stock_released` giữ đúng nghĩa: true khi đã cộng lại tồn, false cả khi CANCELLED không hoàn tồn; trạng thái terminal ngăn hủy/hoàn lặp. Cron 24 giờ/mỗi giờ dùng một D1 batch nguyên tử gồm 3 statements: ghi SYSTEM history, cộng SUM quantity của các variant còn tồn tại, rồi chuyển CANCELLED/stock_released=1. Cả ba lọc status PENDING, stock_released=0 và ngày đặt quá hạn ngay trong giao dịch, tránh hoàn tồn lặp hoặc hủy đơn đã xác nhận. RateLimit bindings không tạo bảng đếm D1. [Chi tiết](BOT_PROTECTION.md).
 
-**Cập nhật:** 15/10/2026 · **Runtime:** D1/SQLite · **Phase 0–3:** DONE local · **Phase 4:** DONE local (9/9 tiêu chí) · **Phase 5:** DONE local (6/6 tiêu chí) · **Phase 6:** IN PROGRESS (5/7 tiêu chí; deploy/API live + browser/cleanup PASS, còn dữ liệu thật và xác nhận quota). [Bằng chứng Phase 1](pipeline/PHASE_1_DATABASE.md) · [Phase 2](pipeline/PHASE_2_API_CATALOG.md) · [Phase 3](pipeline/PHASE_3_CHECKOUT_ORDERS.md) · [Phase 4](pipeline/PHASE_4_ADMIN.md) · [Phase 5](pipeline/PHASE_5_FRONTEND.md) · [Hiện trạng](PROJECT_STATUS.md) · [Stack](TECH_STACK.md) · [Entity frontend](FRONTEND_ENTITIES.md).
+**Cập nhật:** 16/10/2026 · **Runtime:** D1/SQLite · **Phase 0–3:** DONE local · **Phase 4:** DONE local (9/9 tiêu chí) · **Phase 5:** DONE local (6/6 tiêu chí) · **Phase 6:** IN PROGRESS (5/7 tiêu chí; deploy/API live + browser/cleanup PASS, còn dữ liệu thật và xác nhận quota). [Bằng chứng Phase 1](pipeline/PHASE_1_DATABASE.md) · [Phase 2](pipeline/PHASE_2_API_CATALOG.md) · [Phase 3](pipeline/PHASE_3_CHECKOUT_ORDERS.md) · [Phase 4](pipeline/PHASE_4_ADMIN.md) · [Phase 5](pipeline/PHASE_5_FRONTEND.md) · [Hiện trạng](PROJECT_STATUS.md) · [Stack](TECH_STACK.md) · [Entity frontend](FRONTEND_ENTITIES.md).
 
 | Phạm vi | Trạng thái |
 | --- | --- |
 | Schema chuẩn | [`migrations/0001_mvp.sql`](../migrations/0001_mvp.sql), DDL v2 đã thống nhất theo đúng 10 bảng Phase 1 |
 | D1 local | Migration `0001_mvp.sql`; seed và `npm run db:verify`; output nghiệm thu ở [Phase 1](pipeline/PHASE_1_DATABASE.md) |
 | API D1 local | Catalog/admin products/summary ≤3 statements; quote read-only; order API trừ/hoàn tồn, lookup; admin orders/products/variants/zones đã có. Giỏ 15 dòng 35/36 statements, retry guard ≤40; test ghi dùng DB cô lập, DDL Phase 1 giữ nguyên |
-| D1 remote | Chủ dự án đã tạo `lunara-db`; Phase 0–5 không truy cập hoặc thay đổi remote |
+| D1 remote | Production và staging đã áp0001 ngày 15/10; DB riêng. Snapshot public16/10 và giới hạn kiểm chứng ở [PROJECT_STATUS](PROJECT_STATUS.md); lượt rà tài liệu không ghi D1 |
 | Frontend | Catalog/cart/delivery/quote VND/localStorage được giữ; checkout COD/xác nhận/tra đơn và cookie admin/đơn/sản phẩm/tồn/phí giao/summary đã nối API Phase 3–4, Phase 5 DONE local; source deferred giữ và ẩn |
 
 ## Một nguồn schema chuẩn
@@ -92,15 +92,15 @@ Auth khách/profile/wishlist/wizard làm sau. Cart guest lưu localStorage versi
 | 4 — DONE local (9/9 tiêu chí) | API auth/admin dùng lại transitionOrder; không DDL mới, không thêm bảng/dependency. [Checklist/output](pipeline/PHASE_4_ADMIN.md) |
 | 5 — DONE local (6/6 tiêu chí) | Catalog/cart/quote/localStorage/VND được giữ; checkout COD/lookup và cookie admin/đơn/sản phẩm/tồn/phí giao/summary dùng API thật. Không thay canonical 10 bảng; nghiệm thu frontend 10/10 kịch bản bắt buộc + 2/2 mở rộng tách khỏi bằng chứng backend Phase 3–4 |
 | 6 — IN PROGRESS | Ngày 15/10/2026 đã áp `0001_mvp.sql`/seed lên D1 remote đúng UUID trong Wrangler, đủ 10 bảng/0 đơn/FK sạch; export backup mở lại SQLite integrity ok. Đã deploy/API live 7/7 + public browser, cleanup 3 SMOKE: orders/items/history = 0, variant 1 tồn 20, cả 24 variant khớp baseline/FK sạch. Chờ dữ liệu thật và xác nhận quota; không sửa migration đã áp remote. [Bằng chứng](pipeline/PHASE_6_DEPLOY.md) · [Vận hành](OPERATIONS.md) |
-| Sau MVP | Wizard, auth khách/profile/wishlist, upload ảnh, reviews/coupon |
+| Sau MVP | Wizard, auth khách/profile/wishlist, reviews/coupon, ledger. Signed upload đã có code/staging deployment, còn nghiệm thu thật |
 
 Khu vực giao, giá VND, sản phẩm/ảnh/tồn và policy thật vẫn cần chủ shop chốt trước mở bán. Xem [pipeline](pipeline/README.md); Phase 1 không cho phép thay đổi remote hoặc deploy.
 
 [Bằng chứng Phase 5](pipeline/PHASE_5_FRONTEND.md): typecheck/build pass, architecture 207 files, tests 136/136, smoke 40/40; UI 17 routes, 10/10 kịch bản bắt buộc + 2/2 mở rộng và 0 JS exceptions. Các phép ghi UI chạy D1 cô lập; logical snapshot xác nhận D1 persisted không đổi. Không thay migration/seed/canonical DDL, không ghi remote và không dùng nghiệm thu local để đánh dấu Phase 6 hoàn thành.
 
-Staging dùng cùng canonical migrations với local/production nhưng database riêng lunara-staging-db; chưa migrate/seed remote staging. Không đổi DDL hoặc copy đơn khách. Xem [STAGING](STAGING.md).
+Staging dùng cùng canonical migration0001 với database riêng lunara-staging-db; đã migrate15/10. Chỉ thêm categories lúc khởi tạo, không full seed; snapshot 16/10 thấy1 sản phẩm active và chưa có tỉnh giao. Không đổi DDL hoặc copy đơn khách. Xem [STAGING](STAGING.md).
 
-Cập nhật staging 15/10/2026: đã xác minh remote lunara-staging-db / ed391b18-0bcf-41b3-8315-389807ace7f2 và áp 0001_mvp.sql thành công (25 commands). Đã kiểm đủ 10 bảng nghiệp vụ, lịch sử 0001, không còn migration chờ, foreign_key_check rỗng, orders=0. db:verify local cô lập PASS 13/13 nhóm, 46 assertions. Chưa seed, đặt secrets hoặc deploy staging; production không được truy cập/ghi trong lượt sửa này.
+Lịch sử staging 15/10/2026: đã xác minh remote lunara-staging-db / ed391b18-0bcf-41b3-8315-389807ace7f2 và áp 0001_mvp.sql thành công (25 commands). Đã kiểm đủ 10 bảng nghiệp vụ, lịch sử 0001, không còn migration chờ, foreign_key_check rỗng, orders=0. db:verify local cô lập PASS 13/13 nhóm, 46 assertions. Chưa seed, đặt secrets hoặc deploy staging; production không được truy cập/ghi trong lượt sửa này.
 
 Cloudinary signed upload đã tích hợp local ngày 15/10/2026, không đổi DDL: product_images.url lưu secure_url sau Save product; cloudinary_public_id vẫn nullable/chưa được điền tự động. Chưa tự xóa ảnh cũ hoặc asset chưa gắn sản phẩm. [Chi tiết](CLOUDINARY.md).
 

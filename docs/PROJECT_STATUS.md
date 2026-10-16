@@ -1,80 +1,65 @@
-# Lunara — Trạng thái & mục cần điền
+# Lunara Shop — trạng thái hiện tại
 
-Cập nhật **15/10/2026**. Repo **Lurana** · thương hiệu **Lunara**.
+Cập nhật **16/10/2026**, giờ Việt Nam. Repo GitHub: **Lurana**. Code đã push tới `1fecd26`; lượt rà soát tài liệu này chỉ đọc remote, không deploy, thay secrets hoặc ghi D1.
 
-## Hiện trạng
+## Code và kiểm chứng local
 
-**Hiện tại M1–M9:** 166/166 tests, architecture 215 files, typecheck/build và 40/40 smoke PASS. Preview xác nhận static headers, Google Fonts/ảnh/SDK Turnstile thật với test key; 0 CSP violations/JS exceptions. Public site key đã cấu hình, secret/hostname/deploy chờ owner. Chưa thay đổi remote; Phase 6 giữ 5/7. [Phạm vi, cấu hình và giới hạn](HARDENING.md).
+**Phase 0–5 DONE local; Phase 6 IN PROGRESS, 5/7 tiêu chí.** Còn dữ liệu mở bán thật và xác nhận người vận hành đã nắm cách kiểm quota. Không nâng mức nghiệm thu chỉ từ deploy staging hoặc kiểm tra public.
 
-**Mốc B2/B3 local (15/10/2026):** Turnstile UI + server cho checkout/lookup/login; rate-limit bindings; 3 PENDING/SĐT người đặt; hủy IN_TRANSIT có lý do và restock opt-in; Cron đã cấu hình 24 giờ/mỗi giờ, xử lý mọi PENDING quá hạn bằng batch nguyên tử 3 statements. **160/160 tests PASS**, source frontend 211 files. Chưa deploy/configure cloud cho thay đổi này; Phase 6 vẫn 5/7. [Việc owner cần cấu hình](BOT_PROTECTION.md).
-
-| Keyword | Trạng thái |
+| Phần | Trạng thái |
 | --- | --- |
-| Phase 0 | **Xong**: React/Vite + Hono Worker cùng origin; health JSON; D1 local |
-| Phase 1 | Database local: canonical 10 bảng, migration `0001_mvp.sql`, seed và `db:verify` 13 nhóm; [checklist/output nghiệm thu](pipeline/PHASE_1_DATABASE.md) |
-| Phase 2 | **Xong local**: khung Hono/Zod/middleware/lỗi; catalog, delivery options, quote; [checklist/output nghiệm thu](pipeline/PHASE_2_API_CATALOG.md) |
-| Phase 3 | **Xong local**: COD, tồn nguyên tử, idempotency, tra đơn và transition service; [output lịch sử](pipeline/PHASE_3_CHECKOUT_ORDERS.md); UI đã nối/nghiệm thu Phase 5 |
-| Phase 4 | **DONE local (9/9 tiêu chí)**: secret/JWT cookie, middleware quyền/Origin và API quản trị; status dùng lại transitionOrder. [Checklist/output](pipeline/PHASE_4_ADMIN.md) |
-| Phase 5 | **DONE local (6/6 tiêu chí)**: giữ catalog/cart/delivery/quote/VND/localStorage; nối COD/gửi/retry/xác nhận/lookup và cookie auth/admin đơn/sản phẩm/tồn/phí/dashboard; [10/10 kịch bản + 2/2 mở rộng](pipeline/PHASE_5_FRONTEND.md#kết-quả-10-kịch-bản--15102026) |
-| Phase 6 | **IN PROGRESS (5/7 tiêu chí)**: deploy/secrets, migration/seed/backup, API Production 7/7 + public browser/10 kết quả MVP PASS và cleanup xong; chờ dữ liệu thật, xác nhận đã nắm cách xem quota. [Bằng chứng và đầu vào](pipeline/PHASE_6_DEPLOY.md) |
-| API | Health/catalog/delivery/quote; POST orders/lookup từ D1; admin login/me/logout/summary/orders/products/variants/delivery-zones; API lạ → JSON 404, admin thiếu cookie → 401 |
-| Frontend | MVP local dùng API thật: `/cart` COD, `/orders/track`, `/admin/login`, dashboard/orders/stock/delivery-zones. EN/VI theo preference → browser, English fallback; VND/giờ VN. Customer auth/profile/wishlist/request/settings/customers/notifications giữ source và ẩn bằng cờ/API readiness. [Backup/audit](pipeline/FE_AUDIT.md) |
-| Storefront | Footer tên/địa chỉ/map URL cấu hình JSON EN/VI; Zalo icon tự vẽ góc phải, viền xanh animate width khi hover/focus/click (400ms, reduced motion 200ms); link Zalo thật chờ cấu hình |
-| Cart/auth | Cart localStorage chỉ variantId/quantity; giá/phí từ server. Intent UUID giữ key khi retry cùng payload, không persist contact. AuthProvider `/me/login/logout` với JWT cookie HttpOnly; không session demo. Stock_delta chưa rõ kết quả khóa gửi lại đến GET Recheck thành công |
-| Cloudflare | Đã xác minh account và UUID `lunara-db`; pin account_id trong Wrangler; Phase 6 đã migrate `0001`/seed remote, 10 bảng; đã deploy [lunara.minphuc2408.workers.dev](https://lunara.minphuc2408.workers.dev), smoke/cleanup xong, orders 0, variant 1 tồn 20, 24 variant khớp baseline/FK sạch |
-| Build | `dist/client/` + `dist/lunara/`; runtime bindings local qua `remoteBindings: false` |
-| Kiểm chứng | **Mốc Phase 5:** typecheck/build PASS, architecture 207 files, tests 136/136, smoke 40/40, UI preview 17 routes/0 exceptions; 10/10 kịch bản và 2/2 nhóm mở rộng pass. [Evidence Phase 5](pipeline/PHASE_5_FRONTEND.md). **Phase 6:** 143/143 tests (thêm 7 smoke-remote tests), native workerd fail-closed 9/9 cấu hình, audit 0, dry-run và backup remote integrity/FK PASS; API live 7/7 và public browser EN/VI/VND/cart reload PASS, 0 JS exceptions; 10/10 kết quả MVP, tách API khỏi UI checkout/admin chưa test đủ remote; xem [Phase 6](pipeline/PHASE_6_DEPLOY.md) |
-| Git | Chỉ source/docs/config được review; secrets, state, audit, build, browser profiles giữ local |
+| Storefront | Catalog/cart/delivery/quote VND, checkout COD form → review → API confirmation, retry cùng UUID, public lookup tại `/orders/track` |
+| Admin | Cookie auth, dashboard, đơn/ghi chú/trạng thái, sản phẩm/variants/tồn `stock_delta`, khu vực/phí giao; không dùng fixtures để giả vận hành |
+| Bảo vệ | Turnstile fail-closed checkout/lookup/login; thiếu secret503, bypass chỉ opt-in server+loopback; rate limit 6 request/phút/IP/route cho orders/login, 60 cho lookup/quote/catalog; cap 3 PENDING/SĐT người đặt |
+| Hủy và tồn | IN_TRANSIT → CANCELLED cần lý do; restock mặc định false. Trước IN_TRANSIT mặc định hoàn tồn. CANCELLED luôn terminal |
+| Hết hạn | TTL 24 giờ, Cron `0 * * * *`; một batch D1 3 statements hủy toàn bộ PENDING quá hạn/stock_released=0, history SYSTEM và hoàn tồn một lần |
+| Hardening | Chuẩn bị mọi đơn giao hôm nay ≥120 phút; summary 30 ngày, tra đơn mặc định 90/tối đa 366 ngày; URL ảnh HTTPS Cloudinary/Unsplash; log D1 allowlist |
+| Frontend | CSP/static headers, Zod jitless, preference → browser EN/VI → English fallback; metadata Home/Shop, canonical/OG/robots/sitemap |
+| Build | Production đọc `.env.production`; staging script chọn `CLOUDFLARE_ENV=staging` + Vite `--mode staging`, đọc `.env.staging` và luôn noindex |
+| Storage | Chỉ locale và cart variantId/quantity lưu bền; contact/order intent/token/JWT không lưu browser storage |
+| Deferred | Customer auth/profile/orders/wishlist, custom requests, admin customers/settings/notifications giữ source nhưng ẩn; customer API-ready gate vẫn false |
 
-## Cần chủ shop điền/chốt
+**Bằng chứng local gần nhất, 16/10/2026:** typecheck PASS; architecture **215 source files**; **170/170 tests PASS**; build và dry-run prod/staging PASS. Bundle từng môi trường chỉ có Site key tương ứng, đúng Worker/D1/canonical/noindex. Smoke **40/40 PASS**, persisted D1 giữ nguyên; smoke chỉ chấp nhận redirect Shop tới chính xác `/shop/` cùng origin.
 
-**Cổng kết Phase 6 — còn 2/7 tiêu chí:**
+Bằng chứng browser đầy đủ tại mốc Phase 5: 17 routes/0 exceptions, 10/10 MVP +2/2 mở rộng. Sau hardening, UI/provider mock 10/10 MVP + CRUD/B3/widget và native preview CSP/SDK test-key đã pass; nhóm responsive rộng còn lỗi `/shop` 320px và chưa được nghiệm thu lại toàn bộ. Không đồng nhất test-key/mock với widget thật hoặc CPU/quota cloud.
 
-| Tiêu chí còn thiếu | Phần đã xong | Đầu vào cần để kết |
+Local16/10 bổ sung fail-closed Turnstile: Thiếu/rỗng/whitespace TURNSTILE_SECRET trả503 TURNSTILE_NOT_CONFIGURED trước D1/auth/Siteverify. Chỉ bypass khi cờ server TURNSTILE_ALLOW_LOCAL_BYPASS=true và hostname chính xác localhost/127.0.0.1/[::1]; mặc định local cũng đóng. Có secret thì luôn xác minh token, kể cả bật cờ. Không khai báo cờ trong Wrangler prod/staging, không nhận cờ từ body/header/client. Harness test cô lập tự bật rõ ràng; không đọc ambient .dev.vars. Bản sửa16/10 hiện local/chưa deploy. Native workerd3cấu hình PASS; 22phản hồi header live đã kiểm riêng HTML/assets/API. [Chi tiết](HARDENING.md#turnstile-fail-closed-và-header-live-16102026).
+
+## Snapshot remote chỉ đọc — 16/10/2026
+
+| Hạng mục | Production | Staging |
 | --- | --- | --- |
-| Dữ liệu mở bán thật | Đã dọn 3 đơn SMOKE, đối chiếu tồn và FK; không còn đơn thử | Chủ shop cung cấp/nhập catalog, ảnh, giá/SKU/tồn và khu vực/phí/policy thật; ẩn sản phẩm mẫu, tắt vùng ví dụ rồi kiểm lại catalog/quote |
-| Người vận hành nắm cách xem hạn mức | Đã viết OPERATIONS và hướng dẫn Workers/D1 Metrics | Chủ dự án xem được các chỉ số và xác nhận đã nắm cách kiểm hằng ngày; yêu cầu hướng dẫn trước đó chưa phải xác nhận hoàn tất |
+| URL | [Production](https://lunara.minphuc2408.workers.dev) | [Staging](https://lunara-staging.minphuc2408.workers.dev) |
+| Worker / D1 | `lunara` / `lunara-db` | `lunara-staging` / `lunara-staging-db` |
+| Version active | `26d0811c-f2f0-4f7f-a0fa-7cb175035d06` | `e984d962-076f-492c-b2e3-c5cac5f52ec3` |
+| Deploy, giờ Việt Nam | 15/10/2026 19:52 | 16/10/2026 13:31 |
+| Public catalog | 4 categories, 8 sản phẩm active, 2 tỉnh giao | 4 categories, 1 sản phẩm active, 0 tỉnh giao |
+| ADMIN_PASSWORD / JWT_SECRET | Có tên secrets | Có tên secrets |
+| Cloudinary | Chưa có vars/secrets tương ứng trong version live | Có cloud/preset/scope và tên CLOUDINARY_API_KEY/API_SECRET |
+| TURNSTILE_SECRET | Chưa có | Chưa có |
+| Public Site key trong bundle | Chưa có bộ key mới | Đúng key staging, không chứa key production |
+| CSP / SEO mới | Chưa có CSP; robots.txt trả SPA HTML | Có CSP, X-Robots-Tag noindex; robots.txt Disallow toàn site |
+| RateLimit / TTL | Chưa có bindings/biến mới | Có hai bindings và TTL=24; có scheduled handler |
 
-Phase 6 giữ **IN PROGRESS**, chưa đánh dấu DONE hoặc sẵn sàng mở bán. Turnstile và domain riêng là tùy chọn, không thay thế hai tiêu chí trên.
+Snapshot dựa trên deployment/version metadata, tên secrets và HTTP public. Không đọc giá trị secrets, không đăng nhập admin, không upload/đặt đơn/ghi dữ liệu. Có tên Cloudinary secrets chưa chứng minh preset/credentials hợp lệ hoặc upload thành công. Scheduled handler/bindings chưa chứng minh Cron đã thực chạy hay restock trên cloud.
 
-| Keyword | Hiện tại | Điền/chốt ở đâu |
-| --- | --- | --- |
-| Zalo | Chưa có link/SĐT public | Cung cấp link Zalo chính thức để nối widget `ZaloContact` |
-| Thông tin shop | Footer dùng Lunara/Lurana; địa chỉ/map hiện tại được giữ nguyên; pháp nhân tạm thời là Lunara, MST `001` | Tên/địa chỉ/map URL: `src/shared/i18n/locales/en/common.json` và `vi/common.json`; link ngoài: `src/shared/config/storefront-footer.ts` |
-| Domain | Đã dùng HTTPS `lunara.minphuc2408.workers.dev`, SPA PASS | Custom Domain là tùy chọn, chưa cấu hình |
-| Catalog | UI active đọc seed D1: 4 categories/8 products/24 variants/8 ảnh/4 zones; fixture frontend chỉ còn source legacy/backup | Chủ shop cần tên EN/VI, ảnh, size, giá VND, SKU, tồn thực trước mở bán |
-| Giao hàng | Phí/khu vực mẫu trong seed; config giả định: phụ phí 0/30.000/50.000 VND, cutoff 16:00, chuẩn bị 120 phút, slots 08:00–20:00 | Chỉnh `worker/config.ts`/zones theo tỉnh/phường phục vụ, phí, khung giờ và policy thật trước mở bán |
-| Tiền/múi giờ | Active UI VND từ API, Worker Asia/Ho_Chi_Minh; legacy settings ẩn | Giá/khu vực mẫu cần chốt trước mở bán; giữ currency/timezone khi đổi EN/VI |
-| Admin/JWT secrets | Production có ADMIN_PASSWORD/JWT_SECRET; owner nhập password qua prompt ẩn, login HTTPS/session PASS. Không đọc/reuse local password; local tests vẫn dùng demo | **[NGƯỜI]** quản lý ADMIN_PASSWORD ≥24 ký tự ngẫu nhiên và JWT_SECRET ≥32 ký tự ngẫu nhiên, khác nhau, trong `.dev.vars`; production dùng Cloudflare secret Phase 6. Không đưa giá trị vào chat/docs/Git/`VITE_*` |
-| Turnstile | Checkout/lookup/login đã tích hợp; public key owner cấu hình .env.production; SDK thật với test key và provider mock PASS local | Owner kiểm hostname widget, nhập secret Worker và deploy/nghiệm thu production; không cần custom domain |
-| Cloudinary | Signed direct admin upload đã code/test local; chưa upload thật/deploy | Owner tạo Signed presets, nhập server keys; [hướng dẫn](CLOUDINARY.md) |
+Migration 0001 đã được xác minh trên cả hai D1 ngày 15/10. Counts đơn/tồn/FK sau cleanup production và counts staging=0 trước đây là **snapshot lịch sử**, không phải counts hiện tại; lượt này không truy vấn dữ liệu đơn riêng tư. Không chạy lại seed để đồng bộ hai môi trường.
 
-## Tiến độ kỹ thuật và việc tiếp theo
+## Việc còn cần chủ shop
 
-| Keyword | Việc tiếp theo |
+| Việc | Nơi thực hiện |
 | --- | --- |
-| Schema — đã chốt Phase 1 | [Canonical duy nhất](../migrations/0001_mvp.sql) dùng nguyên DDL v2; hai đường dẫn schema cũ là comment pointers. [Khác biệt/lý do/giới hạn](DATABASE_DESIGN.md); `custom_requests` chỉ ở deferred, chưa áp dụng |
-| Database | Local verifier 13/13; Phase 6 đã áp canonical/seed remote, backup riêng tư mở lại được. Không sửa migration đã áp remote; dữ liệu thật vẫn cần chủ shop cung cấp |
-| API — Phase 2 đã xong | Catalog/phí giao/quote local từ D1; shared schemas/constants ở root `shared/`; endpoint quote luôn chỉ đọc, việc ghi đơn/trừ tồn do API Phase 3 thực hiện |
-| API — Phase 3–4 | COD, trừ/hoàn tồn, idempotency/tra đơn và auth/admin đã có local; [Phase 4](pipeline/PHASE_4_ADMIN.md) DONE local; không thêm bảng/dependency |
-| Frontend — Phase 5 DONE local | Đủ 6/6 tiêu chí và 10/10 kịch bản, không fixture/fetch component; giữ source deferred. Cần nghiệm thu lại trên deployment Phase 6 với dữ liệu/policy thật |
-| Deploy — Phase 6 | Deployment/secrets và API smoke/public browser đã PASS; cleanup 3 SMOKE xong, stock/FK đối chiếu đúng. Còn dữ liệu mở bán thật. [Runbook](OPERATIONS.md) đã thêm 2 bước xem quota theo yêu cầu, chờ owner xác nhận đã nắm |
-| Kiểm tra — Phase 5/6 | `db:verify` kiểm schema local; smoke API và Edge/CDP UI Phase 5 dùng D1 persist:false/remoteBindings:false, credentials tổng hợp; snapshot SQL readonly bảo vệ dữ liệu persisted. Bridge Node có shim timingSafeEqual, native workerd auth Phase 4 giữ bằng chứng riêng. CPU cloud, Turnstile thật và remote smoke thuộc Phase 6 |
-| Deferred | Customer auth/profile/wishlist server, wizard hoa riêng, online payment, coupon/reviews/upload ảnh; xem [backlog](pipeline/BACKLOG.md) |
+| Dữ liệu mở bán thật | Catalog/ảnh/giá/SKU/tồn, khu vực/phí/khung giờ thật; ẩn hàng mẫu, tắt vùng ví dụ và kiểm quote |
+| Bàn giao quota | Xác nhận xem được Workers Requests/Errors/CPU và D1 Rows read/written/storage; [OPERATIONS](OPERATIONS.md) |
+| Turnstile | Hai widget/hostname riêng; đúng Site key + secret cùng cặp; deploy UI mới rồi nhập TURNSTILE_SECRET từng Worker và kiểm ba form |
+| Production mới | Deploy code mới và thêm Cloudinary secrets nếu cần upload; không sao chép dữ liệu thử staging |
+| Staging checkout | Chưa có delivery zones nên chưa nghiệm thu checkout; thêm dữ liệu thử chỉ khi được phép |
+| Upload/Cron/bot protection thật | Nghiệm thu trên đúng môi trường và cửa sổ test được cho phép; chưa có bằng chứng đầy đủ |
+| Thông tin shop | Chốt địa chỉ/map/pháp nhân/MST, link Zalo và policy; nội dung placeholder không phải dữ liệu pháp lý thật |
+| Domain/WAF | Tùy chọn; quyết định riêng về hạ tầng/chi phí |
 
-Tham chiếu: [handbook](../PROJECT_GUIDE.md) · [stack](TECH_STACK.md) · [pipeline](pipeline/README.md) · [database](DATABASE_DESIGN.md) · [frontend entities](FRONTEND_ENTITIES.md).
+## Tài liệu chuẩn
 
-Staging: cấu hình local đã thêm theo UUID owner cung cấp; chưa xác minh resource remote, migrate/seed, secrets hoặc deploy. Không thay Phase 6 production. Xem [STAGING](STAGING.md).
+[Kiến trúc](../PROJECT_GUIDE.md) · [Stack](TECH_STACK.md) · [API contract](pipeline/API_CONTRACT.md) · [Database](DATABASE_DESIGN.md) · [Entity](FRONTEND_ENTITIES.md) · [Staging](STAGING.md) · [Cloudinary](CLOUDINARY.md) · [Turnstile/COD](BOT_PROTECTION.md) · [Hardening](HARDENING.md) · [Phase 6](pipeline/PHASE_6_DEPLOY.md) · [Rà soát tài liệu](DOCUMENTATION_AUDIT.md).
 
-Tên hiển thị website từ 15/10/2026 là **Lunara Shop** (tab, header/footer, admin, EN/VI); giữ Worker/D1 và repo GitHub hiện có. Typecheck/build/architecture và 143 tests PASS; kiểm branding EN/VI 320/390/1440px PASS. UI tổng quát dừng ở bước quote chưa chọn khu vực giao; chi tiết deploy tại [Phase 6](pipeline/PHASE_6_DEPLOY.md).
-
-Cập nhật staging 15/10/2026: đã xác minh remote lunara-staging-db / ed391b18-0bcf-41b3-8315-389807ace7f2 và áp 0001_mvp.sql thành công (25 commands). Đã kiểm đủ 10 bảng nghiệp vụ, lịch sử 0001, không còn migration chờ, foreign_key_check rỗng, orders=0. db:verify local cô lập PASS 13/13 nhóm, 46 assertions. Chưa seed, đặt secrets hoặc deploy staging; production không được truy cập/ghi trong lượt sửa này.
-
-Cloudinary 15/10/2026: đã tích hợp local signed direct upload (SHA-256, cookie admin/same-origin, JPEG/PNG/WebP, client 5 MB, prefix local/staging/prod). Typecheck/build/architecture 208 source files PASS; tests 148/148, smoke local 40/40 PASS. Browser mock EN/VI 390px PASS: file sai, thành công/preview, Save URL, thiếu config giữ URL; 0 JS exceptions. Chưa tạo preset/đặt keys/upload thật/deploy tính năng, không ghi D1 remote; Phase 6 vẫn 5/7. Không thêm migration/dependency hoặc tự xóa asset. [Cấu hình Cloudinary](CLOUDINARY.md).
-
-Staging categories fix — 15/10/2026: API public ban đầu categories=[] và products=[]; nút Save product khóa vì thiếu danh mục, không phải vì tồn 0. Owner chọn thêm đúng 4 danh mục mẫu từ canonical seed, giữ sản phẩm trống. Đã INSERT OR IGNORE chỉ categories vào lunara-staging-db (UUID ed391b18-0bcf-41b3-8315-389807ace7f2). D1/API xác nhận categories=4, products=variants=orders=delivery_zones=0, FK sạch; production không truy cập/ghi. UI local thêm giải thích thiếu danh mục + Reload categories EN/VI; chưa deploy thay đổi thông báo này. Typecheck/architecture 208 files/tests 148/build PASS; db:verify 13/13, 46 assertions. Browser mock EN/VI 390px xác nhận khóa khi trống, reload mở khóa, submit tồn 0; backend in-memory lưu đủ 3 variant tồn 0. Chưa tạo đơn/sản phẩm test remote hoặc nạp toàn bộ seed; staging thiếu delivery zones nên checkout chưa được nghiệm thu.
-
-Form sản phẩm 15/10/2026: chọn/upload ảnh là mặc định; Image URL nằm trong tùy chọn phụ thu gọn. Không còn ô nhập slug; khi tạo, client sinh slug từ tên EN (fallback VI), bỏ dấu/ký tự đặc biệt + UUID v4, tối đa 200 ký tự; giữ slug đã sinh trong draft khi thử lưu lại, không đổi slug sản phẩm cũ. Chưa chọn ảnh hiển thị lỗi EN/VI; upload thành công xóa lỗi cũ. Backend contract/DDL không đổi, slug vẫn được API yêu cầu và unique DB kiểm tra. Typecheck/architecture/build, 150 tests và browser mock form EN/VI 390px PASS; không upload thật/ghi remote/deploy trong lượt này. Verifier Phase 5 tổng quát dừng ở ca 3 do chờ tổng quote trước khi chọn khu vực (2/10, 0/2 mở rộng, persisted D1 không đổi); không coi là suite UI PASS.
-
-
-Turnstile theo môi trường (16/10/2026, cấu hình local, chưa deploy trong lượt này): `.env.production` dùng Site key production, `.env.staging` dùng Site key staging và origin staging/noindex. `npm run deploy:staging` tự chọn `CLOUDFLARE_ENV=staging` + Vite `--mode staging`; `npm run deploy` dùng production như trước. Không cần đặt Site key bằng lệnh bổ sung. `TURNSTILE_SECRET` cần nhập một lần riêng cho từng Worker, đúng cặp widget; không lưu secret trong source. Biến môi trường terminal và `.env.local`/file override có thể ghi đè cấu hình Vite. Không đổi DDL/binding/logic Worker; chưa thay đổi remote hoặc mức hoàn thành Phase 6.
+Các output 53/92/125/136/143/148/150/158/160 tests trong pipeline là kết quả tại mốc cũ. Giữ nguyên bằng chứng, dùng **170 tests / 215 files / 40 smoke** cho code hiện tại.

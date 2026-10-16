@@ -1,6 +1,6 @@
 # Sổ tay dự án Lunara Flower Shop
 
-Tham chiếu cho chủ dự án và Codex về kiến trúc, giao diện, component và giới hạn demo. Quy tắc làm việc ở [AGENTS.md](AGENTS.md); workflow UI/nghiệp vụ ở [.agents/skills/lunara-flower-shop/SKILL.md](.agents/skills/lunara-flower-shop/SKILL.md). Cập nhật kiến trúc: **15/10/2026**. Code hiện tại là nguồn quyết định khi tài liệu khác với implementation.
+Tham chiếu cho chủ dự án và Codex về kiến trúc, giao diện, component và giới hạn demo. Quy tắc làm việc ở [AGENTS.md](AGENTS.md); workflow UI/nghiệp vụ ở [.agents/skills/lunara-flower-shop/SKILL.md](.agents/skills/lunara-flower-shop/SKILL.md). Cập nhật tài liệu: **16/10/2026**. Code hiện tại là nguồn quyết định khi tài liệu khác với implementation.
 
 ## Cách sử dụng với Codex
 
@@ -15,6 +15,8 @@ Kết quả cần: [hành vi có thể kiểm chứng].
 ChatGPT thông thường không tự đọc file trên máy. Với phiên không có workspace, đính kèm sổ tay và instructions. Các đề xuất trong roadmap không tự cho phép triển khai, commit hoặc publish.
 
 ## Hiện trạng và bản đồ dự án
+
+Nguồn trạng thái hiện hành: [PROJECT_STATUS](docs/PROJECT_STATUS.md). Local170 tests/215 source files/40 smoke, typecheck và build/dry-run hai môi trường PASS. Snapshot 16/10: production vẫn bản 15/10; staging đã deploy 13:31 với hardening/key staging/RateLimit/TTL 24h, chưa có TURNSTILE_SECRET. Có bindings/secrets name không thay nghiệm thu thật; Phase 6 giữ5/7. Các đoạn cuối sổ tay ghi ngày 15/10 là lịch sử.
 
 UI branding là **Lunara Shop**; repository GitHub tên **Lurana**. UI có English/Tiếng Việt, mặc định/fallback English; commerce dùng VND từ D1, giờ Asia/Ho_Chi_Minh. Checkout/tra đơn/admin đã nối API; customer auth/profile/wishlist, custom request và admin customers/settings/notifications giữ source nhưng ẩn. Giao tiếp với chủ dự án bằng tiếng Việt.
 
@@ -36,7 +38,7 @@ UI branding là **Lunara Shop**; repository GitHub tên **Lurana**. UI có Engli
 | Phạm vi | Đã có / còn thiếu |
 | --- | --- |
 | Runtime MVP | Hono/Cloudflare Workers · D1/SQLite · Zod · SQL tham số hóa |
-| Media MVP | API catalog trả URL ảnh từ D1; signed direct Cloudinary upload trong admin đã tích hợp local; keys/presets/upload thật/deploy chờ owner |
+| Media MVP | API catalog trả URL ảnh từ D1; signed direct Cloudinary upload trong admin đã tích hợp local; staging đã có cấu hình/secret names và deployment; production thiếu Cloudinary config/secrets, upload thật/preset validity chưa nghiệm thu |
 | Order MVP | Phase 3 COD/server pricing/tồn/idempotency/lookup; Phase 4 admin status gọi lại transitionOrder hoàn tồn một lần, DELIVERED → PAID; Phase 5 form/review/gửi/retry/xác nhận/lookup và admin đã nối |
 | Admin auth | Phase 4 local: SHA-256/timingSafeEqual + HS256 JWT cookie HttpOnly/Strict 12h; kiểm quyền/Origin/JSON ở server; auth khách để sau |
 | Schema | [Canonical duy nhất: 10 bảng](migrations/0001_mvp.sql), nguyên DDL v2 có `delivery_zones`, idempotency và CHECK/unique; `custom_requests` deferred. [Đối chiếu v1/v2](docs/DATABASE_DESIGN.md); hai file schema cũ chỉ dẫn về migration |
@@ -44,7 +46,7 @@ UI branding là **Lunara Shop**; repository GitHub tên **Lurana**. UI có Engli
 | Cloudflare remote | Phase 6 đã xác minh account/UUID và pin account_id, áp `0001`/seed remote, backup mở offline PASS; 10 bảng/0 đơn/FK sạch; đã deploy, API Production 7/7 + public browser PASS và dọn SMOKE; chưa có dữ liệu thật |
 | Persistence | CartProvider + localStorage version 1, chỉ variantId/quantity; wishlist tạm ẩn |
 | Thị trường | UI active VND/tỉnh-phường từ API; legacy PHP/settings ẩn. Quote lấy giá/phí DB |
-| Vận hành | Worker đã deploy workers.dev, API live/cleanup PASS; đã có OPERATIONS. Còn dữ liệu thật, xác nhận đã nắm quota; Turnstile thật, custom domain, rate limit/email/payment provider chưa cấu hình |
+| Vận hành | Worker đã deploy workers.dev, API live/cleanup PASS; đã có OPERATIONS. Còn dữ liệu thật, xác nhận đã nắm quota; Turnstile secret thật còn thiếu ở cả hai Worker; staging có RateLimit bindings, production chưa có; custom domain/WAF/email/payment provider chưa cấu hình |
 
 ```text
 src/
@@ -53,23 +55,23 @@ src/
 │   ├── App.tsx
 │   ├── providers.tsx           # I18nextProvider + AuthProvider + CatalogProvider + CartProvider
 │   ├── router.tsx              # route tree duy nhất
-│   └── layouts/                # MainLayout, AdminLayout, AuthLayout, app hooks
+│   └── layouts/                # MainLayout, AdminLayout, AuthLayout, MetadataLayout, app hooks
 ├── pages/                      # page mỏng: ghép view và feature hooks
 │   └── admin/                  # các page admin được lazy-load
 ├── features/
 │   ├── auth/                   # cookie admin session/login; customer fixture source ẩn
 │   ├── shop/                   # canonical catalog, search/filter/sort
 │   ├── cart/                   # variant cart/quote + checkout COD/review/confirmation
-│   ├── orders/                 # tra đơn API + admin list/detail/status/note; history fixture ẩn
+│   ├── orders/                 # public lookup API + snapshot/timeline; customer history fixture ẩn
 │   ├── custom-order/           # wizard và quản trị request mẫu
 │   ├── landing/                # hero, featured, story, testimonials
 │   ├── profile/                # profile, wishlist, account sections
-│   ├── inventory/              # admin product/variant API, delta stock + GET recheck
-│   └── admin/                  # summary/delivery API; customers/settings fixture ẩn
+│   ├── inventory/              # source inventory legacy ẩn; active admin stock thuộc features/admin
+│   └── admin/                  # order/product/variant/summary/delivery API; fixture quản trị deferred ẩn
 ├── shared/
 │   ├── ui/                     # button, input, dialog
-│   ├── components/             # ImageWithFallback, route feedback
-│   ├── hooks/                  # useIsMobile
+│   ├── components/             # ImageWithFallback, route feedback, TurnstileChallenge
+│   ├── hooks/                  # useIsMobile, useTurnstile
 │   ├── lib/                    # cn, formatMoney, finite color classes
 │   └── i18n/                   # config/hooks/switch + JSON en/vi theo feature
 └── styles/                     # fonts, Tailwind entry, global theme/brand
@@ -82,7 +84,7 @@ src/
 | Orders | `worker/routes/orders.ts`: POST orders/lookup; `worker/services/orders.ts`: create/lookup/transition, 35 statements cho 15 dòng và guard retry ≤40; admin status tái sử dụng transitionOrder |
 | Admin | `worker/lib/auth.ts` + `worker/routes/admin-*.ts`: login/me/logout, summary/orders/products/variants/delivery-zones; middleware requireAdmin/requireSameOrigin trước API quản trị |
 | Services | `worker/services/catalog.ts`: tối đa 3 truy vấn; `delivery.ts`: phường rồi mặc định tỉnh; `pricing.ts`: một truy vấn variants `IN`, gộp giỏ và báo issues, chỉ đọc |
-| Validation/lỗi | Root `shared/constants.ts`, `shared/schemas.ts` và `shared/admin-*-schemas.ts`; `worker/lib/validate.ts`, `errors.ts`; INTERNAL chỉ trả request_id, log chỉ request_id/error_name |
+| Validation/lỗi | Root `shared/constants.ts`, `shared/schemas.ts` và `shared/admin-*-schemas.ts`; `worker/lib/validate.ts`, `errors.ts`; INTERNAL chỉ trả request_id, log request_id/error_name và diagnostic D1/SQLite/constraint/target thuộc allowlist, không raw message/SQL/binds |
 | Middleware | Secure headers, X-Request-Id, IP/route rate-limit bindings trước D1/Siteverify; GET catalog thành công cache public 30 giây; API khác/lỗi no-store |
 | Config | `worker/config.ts`: VND, Asia/Ho_Chi_Minh; phụ phí 0/30.000/50.000, cutoff 16:00, chuẩn bị 120 phút và slot 08:00–20:00 là giả định chủ shop cần chỉnh |
 | Typecheck | `tsconfig.worker.json`: `worker/`, root `shared/` và declaration; tách globals frontend |
@@ -113,9 +115,9 @@ Routes dưới đây cùng dùng một router. Các trang MVP đã nối API; c�
 | `/orders/track` | `TrackOrderPage` | Mã đơn + SĐT gửi lookup; snapshot items/tổng, giao hàng và timeline từ API |
 | `/admin/login` | `LoginPage` | Mật khẩu admin → API cookie, kiểm `/me`, redirect dashboard; lỗi và retry EN/VI |
 | `/admin` | Redirect | Chuyển tới `/admin/dashboard` |
-| `/admin/dashboard` | `AdminDashboardPage` | Summary đơn theo trạng thái/đơn hôm nay giờ VN/tồn thấp và 10 đơn mới nhất từ API; không dùng chart/revenue mẫu |
+| `/admin/dashboard` | `AdminDashboardPage` | Summary trạng thái30 ngày/đơn hôm nay giờ VN/tồn thấp chỉ variant đang bán và 10 đơn mới nhất từ API; không dùng chart/revenue mẫu |
 | `/admin/stock`, `/admin/products` | `AdminStockPage` / redirect | Danh sách sản phẩm/variants mọi trạng thái, tạo/sửa/ẩn/archived, giá/threshold/active và stock_delta; products redirect về stock |
-| `/admin/orders` | `AdminOrdersPage` | Lọc status/ngày giao/search, pagination, detail/timeline, chuyển status hợp lệ và note qua API |
+| `/admin/orders` | `AdminOrdersPage` | Lọc status/ngày giao/ngày đặt (mặc định90/tối đa366 ngày)/search2–100 ký tự, pagination, detail/timeline, chuyển status hợp lệ và note qua API |
 | `/admin/delivery-zones` | `AdminDeliveryZonesPage` | Danh sách/tạo/sửa/tắt khu vực và phí/ngưỡng miễn phí; quote đọc phí mới |
 | `/request`, `/orders`, `/profile`, `/login`, `/signup` | `UnavailablePage` | Custom request/customer auth/profile/wishlist/history deferred; source legacy giữ lại |
 | `/admin/customers`, `/admin/requests`, `/admin/settings` | `UnavailablePage` | Chưa có API MVP; source legacy và notifications giữ ẩn |
@@ -132,7 +134,7 @@ Checkout giữ sender/recipient/ngày/slot/thiệp/note trong memory; validate b
 
 ### Auth admin, tồn kho và các feature deferred
 
-B2/B3 (15/10/2026), **local, chưa deploy**: Turnstile widget ở review checkout/lookup/admin login; VITE_TURNSTILE_SITE_KEY lúc build + TURNSTILE_SECRET Worker, kiểm đúng action/hostname và reset token mỗi request. Token không đổi fingerprint/UUID đơn. Rate-limit bindings 6/phút/IP/route cho order/login, 60 cho lookup/quote/catalog; staging namespace riêng, không dùng D1 đếm. INSERT tạo đơn giới hạn 3 PENDING/SĐT người đặt chuẩn hóa, atomic với batch, giữ 35/36 statements. IN_TRANSIT → CANCELLED bắt buộc lý do, mặc định không hoàn tồn; admin có checkbox restock. Trước IN_TRANSIT giữ mặc định hoàn tồn. Cron đã chốt TTL 24 giờ và lịch 0 * * * * cho production/staging; batch 3 statements hủy mọi PENDING quá hạn, hoàn tồn và ghi SYSTEM nguyên tử. Chưa deploy cấu hình này; đơn đã xác nhận không bị ảnh hưởng. [Cấu hình, giới hạn và quy trình gọi/Zalo xác nhận](docs/BOT_PROTECTION.md).
+B2/B3 trong code hiện tại (snapshot remote16/10 ở PROJECT_STATUS): Turnstile widget ở review checkout/lookup/admin login; VITE_TURNSTILE_SITE_KEY lúc build + TURNSTILE_SECRET Worker, kiểm đúng action/hostname và reset token mỗi request. Token không đổi fingerprint/UUID đơn. Rate-limit bindings 6/phút/IP/route cho order/login, 60 cho lookup/quote/catalog; staging namespace riêng, không dùng D1 đếm. INSERT tạo đơn giới hạn 3 PENDING/SĐT người đặt chuẩn hóa, atomic với batch, giữ 35/36 statements. IN_TRANSIT → CANCELLED bắt buộc lý do, mặc định không hoàn tồn; admin có checkbox restock. Trước IN_TRANSIT giữ mặc định hoàn tồn. Cron đã chốt TTL 24 giờ và lịch 0 * * * * cho production/staging; batch 3 statements hủy mọi PENDING quá hạn, hoàn tồn và ghi SYSTEM nguyên tử. Staging có TTL/bindings/scheduled handler trong version mới, production chưa có; chưa kiểm thực thi Cron cloud. Đơn đã xác nhận không bị ảnh hưởng. [Cấu hình, giới hạn và quy trình gọi/Zalo xác nhận](docs/BOT_PROTECTION.md).
 
 AuthProvider tải `/api/admin/me` để biết session server; login/logout gọi API bằng same-origin cookie. Không lưu password/JWT/session vào browser storage. 401 từ API quản trị xóa state admin và đưa về login; lỗi mạng có retry thay vì coi là logout thành công. Các response `/me` cũ được bỏ khi login/logout làm đổi session. Source fixtures và `lunara_user` legacy được giữ nhưng không active, không cấp quyền backend.
 
@@ -203,6 +205,8 @@ Các domain component nằm trong feature tương ứng: Shop cards/filter/grid;
 
 ## Tiêu chuẩn khi phát triển
 
+Turnstile fail-closed16/10: Thiếu/rỗng/whitespace TURNSTILE_SECRET trả503 TURNSTILE_NOT_CONFIGURED trước D1/auth/Siteverify. Chỉ bypass khi cờ server TURNSTILE_ALLOW_LOCAL_BYPASS=true và hostname chính xác localhost/127.0.0.1/[::1]; mặc định local cũng đóng. Có secret thì luôn xác minh token, kể cả bật cờ. Không khai báo cờ trong Wrangler prod/staging, không nhận cờ từ body/header/client. Harness test cô lập tự bật rõ ràng; không đọc ambient .dev.vars. Bản sửa16/10 hiện local/chưa deploy. Missing secret khác token sai:503 TURNSTILE_NOT_CONFIGURED so với403 FORBIDDEN. HTML/static _headers và API secureHeaders phải kiểm độc lập trên deployment; không giả định _headers bảo vệ response từ Worker.
+
 Giữ route boundaries, public API của feature, catalog/cart source chung và URL cũ. Tách state/actions sang hook/service; fixture vào `data/`; presentation nhận props. Không thêm UI stack, backend giả hoặc feature roadmap ngoài yêu cầu.
 
 Giá numeric, currency VND và timezone Asia/Ho_Chi_Minh đã được chủ dự án chốt; preview active dùng giá/phí D1. PHP/Asia/Manila chỉ còn ở source legacy ẩn. Delivery cutoff/phí/khu vực thật vẫn cần chủ shop chốt trước mở bán. Không mô tả demo success thành account/order/email/payment bền vững; COD chỉ PAID khi transition sang DELIVERED.
@@ -236,7 +240,7 @@ npm run check:ui:phase5
 
 Dev `http://127.0.0.1:5173`, preview `http://127.0.0.1:4173`; Vite có thể chọn port kế nếu bận (nghiệm thu cuối dùng preview 4175). Build frontend ở `dist/client/`, Worker và Wrangler config sinh tự động ở `dist/lunara/`. Browser test dùng **Edge headless trên Windows** và Node 24; `check:ui` kiểm 17 routes cùng EN/VI và layout 320/390/768/1024px. `check:ui:phase5` kiểm checkout/lookup/admin bằng HTTP loopback + workerd D1 cô lập/secret synthetic, 10 kịch bản bắt buộc và 2 mở rộng. Snapshot D1 persisted trước/sau giữ nguyên. Mạng ngoài bị chặn mặc định; test không chứng minh ảnh/font remote tải được. Bằng chứng/screenshot/profile browser nằm trong `.security-review/`, không vào Git.
 
-`typecheck` kiểm frontend và `tsconfig.worker.json`; `check:architecture` kiểm chiều import/public API, presentation state và inline styles. Bằng chứng tại mốc Phase 5 **15/10/2026**: **136/136 tests**, architecture **207 source files**, typecheck/build pass; smoke local **40/40** = 16 nhóm catalog + 10 ca order + đối chiếu tồn/query budget + 12 nhóm admin + kiểm snapshot persisted. UI kiểm **17 routes, 0 JS exceptions**; Phase 5 đạt **6/6 tiêu chí**, **10/10 kịch bản bắt buộc +2/2 mở rộng**, persisted D1 logical snapshot không đổi. Test ghi dùng workerd D1 `persist:false`, `remoteBindings:false` và secret demo riêng; không dùng ambient secrets. Guard local 127.0.0.1 giữ nguyên; nhánh deployment --base-url HTTPS mặc định chỉ đọc, ghi cần --allow-remote-writes/--confirm-origin/--variant-id/--exclusive-test-window và credential stdin ẩn. Smoke API Production đã 7/7, public browser EN/VI/VND/cart reload PASS; kết quả 10/10 MVP tách phạm vi API/public UI trong Phase 6. Credential do owner nhập prompt ẩn, không đọc/reuse password local. [Output tại mốc Phase 5](docs/pipeline/PHASE_5_FRONTEND.md); kết quả hiện tại **143/143 tests** cùng bằng chứng Phase 6 tại [PHASE_6_DEPLOY](docs/pipeline/PHASE_6_DEPLOY.md); **125 tests/178 files của Phase 4 và 92 tests/27 smoke của Phase 3 là lịch sử**. cf:typegen sinh binding types với --include-runtime=false; các npm script migrate/seed local dùng --local; lệnh remote chỉ theo phạm vi được duyệt ở Phase 6; db:verify kiểm 13 nhóm D1 local/cô lập. db:reset:local xóa local, deploy cần yêu cầu riêng; chưa có ESLint, build không thay typecheck.
+`typecheck` kiểm frontend và `tsconfig.worker.json`; `check:architecture` kiểm chiều import/public API, presentation state và inline styles. Bằng chứng tại mốc Phase 5 **15/10/2026**: **136/136 tests**, architecture **207 source files**, typecheck/build pass; smoke local **40/40** = 16 nhóm catalog + 10 ca order + đối chiếu tồn/query budget + 12 nhóm admin + kiểm snapshot persisted. UI kiểm **17 routes, 0 JS exceptions**; Phase 5 đạt **6/6 tiêu chí**, **10/10 kịch bản bắt buộc +2/2 mở rộng**, persisted D1 logical snapshot không đổi. Test ghi dùng workerd D1 `persist:false`, `remoteBindings:false` và secret demo riêng; không dùng ambient secrets. Guard local 127.0.0.1 giữ nguyên; nhánh deployment --base-url HTTPS mặc định chỉ đọc, ghi cần --allow-remote-writes/--confirm-origin/--variant-id/--exclusive-test-window và credential stdin ẩn. Smoke API Production đã 7/7, public browser EN/VI/VND/cart reload PASS; kết quả 10/10 MVP tách phạm vi API/public UI trong Phase 6. Credential do owner nhập prompt ẩn, không đọc/reuse password local. [Output tại mốc Phase 5](docs/pipeline/PHASE_5_FRONTEND.md); kết quả hiện tại **170/170 tests**, architecture 215 files, smoke 40/40 cùng bằng chứng Phase 6 tại [PHASE_6_DEPLOY](docs/pipeline/PHASE_6_DEPLOY.md); **125 tests/178 files của Phase 4 và 92 tests/27 smoke của Phase 3 là lịch sử**. cf:typegen sinh binding types với --include-runtime=false; các npm script migrate/seed local dùng --local; lệnh remote chỉ theo phạm vi được duyệt ở Phase 6; db:verify kiểm 13 nhóm D1 local/cô lập. db:reset:local xóa local, deploy cần yêu cầu riêng; chưa có ESLint, build không thay typecheck.
 
 Trên Windows, Vite/CodeGraph đang chạy có thể khóa native binaries trong `node_modules`, làm `npm ci` báo EPERM. Dừng đúng process của workspace trước khi cài, rồi khởi động lại server; không bật dependency scripts để xử lý lỗi.
 
@@ -270,7 +274,7 @@ Setup tạo `.codex/config.toml` local cho CodeGraph STDIO và OpenAI Docs MCP, 
 | Checkout COD production | Form/gửi/retry/xác nhận/tra đơn đã nghiệm thu local; cấu hình production và remote acceptance thuộc Phase 6 |
 | Inventory nâng cao | Order trừ tồn/admin hủy hoàn một lần/UI stock_delta đã có; sổ cái tồn và capacity theo ngày là backlog |
 | Reviews và payment online | Làm sau MVP khi có chính sách/provider phù hợp |
-| SEO/performance | Admin đã lazy-load; còn metadata, ảnh/font tối ưu và rendering strategy |
+| SEO/performance | Admin lazy-load và metadata Home/Shop/robots/sitemap/OG đã có; còn product detail/prerender nội dung và ảnh/font tối ưu theo đo đạc |
 
 Backend/media đã chọn; auth admin secret + JWT cookie/API Phase 4 và checkout/lookup/login/admin frontend Phase 5 đã nghiệm thu local. EN mặc định/fallback, VND/giờ VN và cart persistence giữ nguyên. Máy trạng thái/hoàn tồn Phase 3 được admin API dùng lại; policy vận hành, delivery cutoff/phí/khu vực/secret production thật vẫn cần chủ shop chốt. Auth khách, multi-store, subscription, loyalty hay chatbot ngoài MVP. Chỉ hỏi quyết định thực sự ảnh hưởng task đang được yêu cầu.
 
@@ -282,13 +286,19 @@ Phase 6 hiện 5/7 tiêu chí: D1 remote migrate/seed/backup, deploy/secrets, AP
 
 ## File chia sẻ và cách duy trì
 
+Public widget keys riêng trong `.env.production`/`.env.staging`; staging dùng CLOUDFLARE_ENV=staging + Vite --mode staging, origin staging/noindex riêng. Deploy bằng hai npm scripts hiện có, không truyền key; TURNSTILE_SECRET nhập một lần riêng từng Worker sau UI mới.
+
 `.gitignore` là default-deny allowlist: source, manifest/lockfile, docs, verification scripts/tests và skill được xét duyệt có exact paths và parent exceptions. Không dùng `git add -f`. Nó không quét secrets hoặc thay branch protection.
 
 Giữ local: `node_modules`, `dist`, `.codegraph`, `.codex`, `.security-review`, `.env`, keys/logs/cache. Trước commit/push kiểm tra status, file inclusion và `git diff --check`. Commit/push/deploy chỉ khi yêu cầu hiện tại hoặc standing authorization bao gồm hành động đó.
 
 Khi thay route/component/model hoặc ownership, cập nhật mục liên quan ở đây, AGENTS và skill. Báo cáo kiểm chứng thực tế trong bàn giao; không coi số liệu của lượt kiểm tra cũ là bảo đảm cho source mới.
 
-Staging: `env.staging` dùng Worker `lunara-staging`, D1 riêng và secrets riêng; `scripts/staging.mjs` chọn môi trường lúc build và kiểm UUID trước ghi/deploy. Hiện mới cấu hình local, chưa nghiệm thu remote. Xem [STAGING](docs/STAGING.md).
+Staging: `env.staging` dùng Worker `lunara-staging`, D1 riêng và secrets riêng; `scripts/staging.mjs` chọn môi trường lúc build và kiểm UUID trước ghi/deploy. Staging đã migrate và deploy 16/10; checkout/provider/Cron thực chạy chưa nghiệm thu remote. Xem [STAGING](docs/STAGING.md).
+
+## Lịch sử thay đổi sau Phase 5
+
+Các mốc dưới đây là evidence tại ngày ghi; snapshot hiện tại ở PROJECT_STATUS.
 
 Tên hiển thị website từ 15/10/2026 là **Lunara Shop** (tab, header/footer, admin, EN/VI); giữ Worker/D1 và repo GitHub hiện có. Typecheck/build/architecture và 143 tests PASS; kiểm branding EN/VI 320/390/1440px PASS. UI tổng quát dừng ở bước quote chưa chọn khu vực giao; chi tiết deploy tại [Phase 6](docs/pipeline/PHASE_6_DEPLOY.md).
 
@@ -301,6 +311,3 @@ Staging categories fix — 15/10/2026: API public ban đầu categories=[] và p
 Form sản phẩm 15/10/2026: chọn/upload ảnh là mặc định; Image URL nằm trong tùy chọn phụ thu gọn. Không còn ô nhập slug; khi tạo, client sinh slug từ tên EN (fallback VI), bỏ dấu/ký tự đặc biệt + UUID v4, tối đa 200 ký tự; giữ slug đã sinh trong draft khi thử lưu lại, không đổi slug sản phẩm cũ. Chưa chọn ảnh hiển thị lỗi EN/VI; upload thành công xóa lỗi cũ. Backend contract/DDL không đổi, slug vẫn được API yêu cầu và unique DB kiểm tra. Typecheck/architecture/build, 150 tests và browser mock form EN/VI 390px PASS; không upload thật/ghi remote/deploy trong lượt này. Verifier Phase 5 tổng quát dừng ở ca 3 do chờ tổng quote trước khi chọn khu vực (2/10, 0/2 mở rộng, persisted D1 không đổi); không coi là suite UI PASS.
 
 M1–M9 (15/10/2026) đã sửa local, chưa deploy: mọi đơn hôm nay chuẩn bị ≥120 phút; low-stock chỉ hàng đang bán; CSP/static headers; browser locale và metadata/robots/sitemap/OG; log D1 theo allowlist, observability 10%; summary 30 ngày, tra đơn mặc định90/tối đa366 ngày với index sẵn có; URL ảnh HTTPS Cloudinary/Unsplash. Public Turnstile key owner đã cấu hình .env.production; secret/hostname/deploy còn chờ owner. Không thêm dependency/DDL, Phase 6 giữ 5/7. [Chi tiết và bằng chứng](docs/HARDENING.md). Metadata tĩnh Home/Shop không phải prerender catalog; frontend chưa có trang sản phẩm riêng. Staging luôn noindex; khi đổi domain cập nhật VITE_SITE_URL và hostname widget.
-
-
-Turnstile theo môi trường (16/10/2026, cấu hình local, chưa deploy trong lượt này): `.env.production` dùng Site key production, `.env.staging` dùng Site key staging và origin staging/noindex. `npm run deploy:staging` tự chọn `CLOUDFLARE_ENV=staging` + Vite `--mode staging`; `npm run deploy` dùng production như trước. Không cần đặt Site key bằng lệnh bổ sung. `TURNSTILE_SECRET` cần nhập một lần riêng cho từng Worker, đúng cặp widget; không lưu secret trong source. Biến môi trường terminal và `.env.local`/file override có thể ghi đè cấu hình Vite. Không đổi DDL/binding/logic Worker; chưa thay đổi remote hoặc mức hoàn thành Phase 6.

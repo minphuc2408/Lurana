@@ -1,8 +1,11 @@
 # Pipeline Lunara MVP — hiện trạng và kế hoạch
 
-B2/B3 (15/10/2026) đã triển khai **local, chưa deploy**: Turnstile checkout/lookup/login, rate-limit bindings, cap PENDING, xử lý khách từ chối nhận và Cron 24 giờ/mỗi giờ đã chốt trong cấu hình local. Phase 6 vẫn 5/7; cấu hình cloud và hạn mức WAF Free xem [runbook](../BOT_PROTECTION.md).
+> Rà soát 16/10/2026: [hiện trạng chuẩn](../PROJECT_STATUS.md), [contract hiện tại](API_CONTRACT.md). Phase 0–5 DONE local, Phase 6 IN PROGRESS5/7. Local170 tests/215 source files/40 smoke; staging đã deploy bản mới13:31 ngày 16/10, production vẫn bản 15/10. Output/checklist ghi ngày cũ bên dưới là lịch sử, không phải trạng thái cloud hiện tại.
 
-Cập nhật: **15/10/2026**. Tech stack giữ nguyên như [TECH_STACK.md](../TECH_STACK.md): React 18 + Vite 6 + React Router 7 + Tailwind 4 (đã có) • Hono + Cloudflare Workers • Zod • Cloudflare D1 • Cloudinary • Turnstile.
+
+B2/B3 đã có trong source; staging deploy 16/10, production chưa cập nhật: Turnstile checkout/lookup/login, rate-limit bindings, cap PENDING, xử lý khách từ chối nhận và Cron 24 giờ/mỗi giờ đã chốt trong cấu hình local. Phase 6 vẫn 5/7; cấu hình cloud và hạn mức WAF Free xem [runbook](../BOT_PROTECTION.md).
+
+Cập nhật: **16/10/2026**. Tech stack giữ nguyên như [TECH_STACK.md](../TECH_STACK.md): React 18 + Vite 6 + React Router 7 + Tailwind 4 (đã có) • Hono + Cloudflare Workers • Zod • Cloudflare D1 • Cloudinary • Turnstile.
 
 Pipeline mô tả đích MVP và các phase tiếp theo; nó không tự cho phép thực hiện tất cả phase. **Phase 0–5 đã xong local**. Phase 5 nối đủ Checkout COD, gửi/retry/xác nhận, tra đơn và admin từ API Phase 3–4, giữ catalog/variant cart/localStorage/delivery/quote/VND cùng English default/fallback. Source deferred còn giữ và ẩn bằng cờ/API readiness. Chủ dự án đã đăng ký Cloudflare, đăng nhập Wrangler và tạo D1 remote `lunara-db`; Phase 6 đã migrate/seed/backup, deploy và smoke API live/public browser rồi cleanup; không làm lại các bước chuẩn bị tài khoản.
 
@@ -28,12 +31,12 @@ Khách vào web, xem hoa, thêm giỏ, **đặt hàng COD** (không cần tài k
 | Thanh toán | Chỉ COD. `payment_status` UNPAID → PAID khi giao xong |
 | Tiền / múi giờ | VND (số nguyên) / Asia/Ho_Chi_Minh; toàn UI MVP dùng formatter chung. EN mặc định/fallback, đổi locale không đổi currency/timezone/dữ liệu khách; PHP/₱ chỉ còn source legacy ẩn |
 | Địa chỉ | `province_name` + `ward_name` + `address_line`, không có quận/huyện |
-| Tồn kho | Theo từng variant (size): `product_variants.stock_quantity`, trừ khi đặt, hoàn khi hủy |
+| Tồn kho | Theo từng variant (size): `product_variants.stock_quantity`, trừ khi đặt; early cancel mặc định hoàn, IN_TRANSIT cancel cần lý do/restock mặc định false |
 | Phí giao | Bảng `delivery_zones` (khớp phường, không có thì mặc định tỉnh) + phụ phí theo phương thức (config) |
 | Auth admin | Phase 4 local: một mật khẩu dài ngẫu nhiên trong secret, SHA-256/timingSafeEqual + JWT HS256 cookie HttpOnly/SameSite=Strict 12h; requireAdmin/requireSameOrigin; không bcrypt/argon2 hoặc bảng mới |
 | Auth khách | Bảng `users` dựng sẵn, chưa dùng. Better Auth/Auth khác làm sau |
-| Backend | Cùng repo, **một Worker** vừa phát file tĩnh vừa chạy `/api/*` (cùng origin, không CORS) |
-| Ảnh | Seed bằng URL; Cloudinary upload làm sau |
+| Backend | Cùng source, mỗi môi trường có một Worker phục vụ static assets và `/api/*` cùng origin; prod/staging tách Worker/D1/secrets |
+| Ảnh | Signed direct Cloudinary upload đã code/staging deploy; production config và provider acceptance còn chờ, lưu image.url |
 | Cart | `localStorage` có version; server không tin giá/tồn từ client |
 
 ## 3. Các phase
@@ -50,13 +53,13 @@ Khách vào web, xem hoa, thêm giỏ, **đặt hàng COD** (không cần tài k
 
 Tài liệu dùng chung: [API_CONTRACT](API_CONTRACT.md) • [BACKLOG](BACKLOG.md) • SQL: [migration canonical](../../migrations/0001_mvp.sql), [dev seed](../sql/MVP_SEED_DEV.sql).
 
-**Schema đã thống nhất ở Phase 1:** dùng nguyên DDL v2 cho 10 bảng, có `delivery_zones`, idempotency và các ràng buộc; `custom_requests` deferred. [`migrations/0001_mvp.sql`](../../migrations/0001_mvp.sql) là nguồn DDL duy nhất; hai file `MVP_SCHEMA.sql` cũ chỉ dẫn về migration. [Đối chiếu v1/v2 và lý do](../DATABASE_DESIGN.md). Seed và migration đã áp D1 local; `npm run db:verify` pass 13/13 nhóm trên binding D1 local, dùng database cô lập cho ca ghi/xóa thử. Verifier Python tham chiếu cũ đã được thay bằng script Node này, không còn suite tự áp deferred/0002. [Output nghiệm thu](PHASE_1_DATABASE.md#bằng-chứng-lệnh--14102026). Không truy cập D1 remote.
+**Schema đã thống nhất ở Phase 1:** dùng nguyên DDL v2 cho 10 bảng, có `delivery_zones`, idempotency và các ràng buộc; `custom_requests` deferred. [`migrations/0001_mvp.sql`](../../migrations/0001_mvp.sql) là nguồn DDL duy nhất; hai file `MVP_SCHEMA.sql` cũ chỉ dẫn về migration. [Đối chiếu v1/v2 và lý do](../DATABASE_DESIGN.md). Seed và migration đã áp D1 local; `npm run db:verify` pass 13/13 nhóm trên binding D1 local, dùng database cô lập cho ca ghi/xóa thử. Verifier Python tham chiếu cũ đã được thay bằng script Node này, không còn suite tự áp deferred/0002. [Output nghiệm thu](PHASE_1_DATABASE.md#bằng-chứng-lệnh--14102026). Đây là phạm vi Phase 1 local lịch sử; Phase 6 sau đó đã áp0001 trên hai D1 remote.
 
 **Lịch 2 ngày:** Ngày 1 = Phase 0 → 3 (+ bắt đầu 4). Ngày 2 = Phase 4 → 6.
 
 **Phase 2 local đã nghiệm thu:** khung Hono/Zod, catalog 4 danh mục/8 sản phẩm, DTO an toàn, phí giao và quote lấy giá DB. Các ca HIDDEN/giới hạn/lỗi kiểm trên SQLite bộ nhớ và binding workerd D1 `persist: false`; smoke chỉ đọc DB local đã seed. [Checklist/output](PHASE_2_API_CATALOG.md#bằng-chứng-lệnh--14102026). Không đổi DDL, dependency, frontend, D1 remote hoặc triển khai đặt đơn/admin.
 
-**Phase 3 local đã nghiệm thu:** 5/5 tiêu chí; API COD/lookup và service transitionOrder, trừ tồn/CHECK rollback, UUID idempotency/replay và hoàn tồn một lần. Test D1 thật cô lập kiểm race mua món cuối, cùng key và hủy đồng thời. `npm test` 92/92, smoke 10/10 ca order + 16 nhóm catalog + đối chiếu tồn = 27/27. Giỏ 15 dòng success 35 statements, CHECK/unique diagnostic 36; retry tính nguyên failed batch và dừng trước khi vượt 40. Turnstile server verifier mock-tested; widget/production setup chưa có. [Output](PHASE_3_CHECKOUT_ORDERS.md#bằng-chứng-lệnh--14102026). DDL/dependency/frontend/remote giữ nguyên trong lượt Phase 3.
+**Phase 3 local đã nghiệm thu:** 5/5 tiêu chí; API COD/lookup và service transitionOrder, trừ tồn/CHECK rollback, UUID idempotency/replay và hoàn tồn một lần. Test D1 thật cô lập kiểm race mua món cuối, cùng key và hủy đồng thời. `npm test` 92/92, smoke 10/10 ca order + 16 nhóm catalog + đối chiếu tồn = 27/27. Giỏ 15 dòng success 35 statements, CHECK/unique diagnostic 36; retry tính nguyên failed batch và dừng trước khi vượt 40. Tại mốc Phase 3 mới có verifier/mock; code hiện có widget3 form, hai Site keys riêng; staging đã deploy nhưng cả hai thiếu TURNSTILE_SECRET. [Output](PHASE_3_CHECKOUT_ORDERS.md#bằng-chứng-lệnh--14102026). DDL/dependency/frontend/remote giữ nguyên trong lượt Phase 3.
 
 **Phase 4 DONE local (9/9 tiêu chí):** secret/JWT cookie và middleware quyền/Origin, summary/orders/products/variants/delivery-zones; status tái sử dụng transitionOrder, stock_delta nguyên tử, product batch, phí giao có hiệu lực ở quote mới. **Tại mốc backend Phase 4:** 125/125 tests, 40/40 smoke dev/preview (12/12 nhóm admin), typecheck/architecture/build/UI preview pass; auth native workerd đã kiểm local. Mốc đó chưa nối UI admin; Phase 5 phía dưới đã hoàn tất phần này. Không thêm dependency/bảng/DDL hoặc thay đổi remote; chưa đo CPU cloud. Smoke admin dùng secret demo riêng và D1 cô lập. [Checklist/output lịch sử](PHASE_4_ADMIN.md). **[NGƯỜI]** quản lý secret thật trong `.dev.vars` và production Phase 6; agent chỉ dùng credentials tổng hợp để test.
 
@@ -130,4 +133,4 @@ Tất cả kịch bản sau pass trên bản **đã deploy**:
 9. Admin đăng nhập, đổi trạng thái đúng thứ tự; giao xong → `PAID`; hủy → tồn hoàn đúng một lần.
 10. Không còn ký hiệu ₱ hay dữ liệu fixture ở các luồng trên.
 
-M1–M9 (15/10/2026) đã sửa local, chưa deploy: mọi đơn hôm nay chuẩn bị ≥120 phút; low-stock chỉ hàng đang bán; CSP/static headers; browser locale và metadata/robots/sitemap/OG; log D1 theo allowlist, observability 10%; summary 30 ngày, tra đơn mặc định90/tối đa366 ngày với index sẵn có; URL ảnh HTTPS Cloudinary/Unsplash. Public Turnstile key owner đã cấu hình .env.production; secret/hostname/deploy còn chờ owner. Không thêm dependency/DDL, Phase 6 giữ 5/7. 166/166 tests, smoke40/40 và preview CSP/SDK test-key PASS; [chi tiết](../HARDENING.md).
+M1–M9 (15/10/2026) đã sửa local, chưa deploy: mọi đơn hôm nay chuẩn bị ≥120 phút; low-stock chỉ hàng đang bán; CSP/static headers; browser locale và metadata/robots/sitemap/OG; log D1 theo allowlist, observability 10%; summary 30 ngày, tra đơn mặc định90/tối đa366 ngày với index sẵn có; URL ảnh HTTPS Cloudinary/Unsplash. Public Turnstile key owner đã cấu hình .env.production; secret/hostname/deploy còn chờ owner. Không thêm dependency/DDL, Phase 6 giữ 5/7. 166/166 tests, smoke 40/40 và preview CSP/SDK test-key PASS; [chi tiết](../HARDENING.md).

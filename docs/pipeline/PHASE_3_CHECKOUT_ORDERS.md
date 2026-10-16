@@ -1,5 +1,8 @@
 # Phase 3 — Đặt hàng COD, tồn kho, idempotency, tra đơn
 
+> Rà soát 16/10/2026: [hiện trạng chuẩn](../PROJECT_STATUS.md), [contract hiện tại](API_CONTRACT.md). Phase 0–5 DONE local, Phase 6 IN PROGRESS5/7. Local170 tests/215 source files/40 smoke; staging đã deploy bản mới13:31 ngày 16/10, production vẫn bản 15/10. Output/checklist ghi ngày cũ bên dưới là lịch sử, không phải trạng thái cloud hiện tại.
+
+
 B2/B3 sau nghiệm thu Phase 3 (15/10/2026, local/chưa deploy): cap 3 PENDING/SĐT người đặt ngay trong INSERT atomic, giữ 35/36 statements; Turnstile checkout/lookup đúng action/hostname, token mới độc lập UUID đơn; IN_TRANSIT → CANCELLED có lý do/restock mặc định false và scheduled expiry 24 giờ/mỗi giờ trong cấu hình local. [Contract hiện tại](API_CONTRACT.md) · [Cấu hình/evidence B2/B3](../BOT_PROTECTION.md). Các output và tiêu chí Phase 3 bên dưới giữ làm lịch sử.
 
 **Mục tiêu:** `POST /api/orders` đúng, an toàn và không bán quá tồn; tra đơn cho khách; dịch vụ chuyển trạng thái đơn (dùng lại ở Phase 4). Hợp đồng: [API_CONTRACT.md](API_CONTRACT.md). Đây là phase **quan trọng nhất**; không cắt.
@@ -17,8 +20,8 @@ B2/B3 sau nghiệm thu Phase 3 (15/10/2026, local/chưa deploy): cap 3 PENDING/S
 | Service dùng lại | `priceCart(db, items, province, ward, methodCode)` trả totals + issues; `phoneSchema`/`normalizePhone`, `validateDeliverySlot`, `todayInVN`, `toIso`, AppError và validator đã có |
 | D1/query budget | Giỏ tối đa 15 dòng; replay 1 + pricing 2 + batch 32 = 35 statements cho luồng tạo đơn bình thường. Phải đếm thực tế và giữ các nhánh retry/error trong giới hạn 40 |
 | Config/policy | Dùng giả định Phase 2 cho test local; trước mở bán chủ shop cần chốt khu vực/phí/cutoff/slot thật. UI dùng VND/giờ VN; admin backend Phase 4 và frontend Phase 5 đã nghiệm thu local |
-| Turnstile | Verifier đã triển khai ở Phase 3: có `TURNSTILE_SECRET` thì xác minh token; local thiếu secret được bỏ qua. Nhánh provider đã kiểm bằng mock; cấu hình widget/secrets thật còn lại |
-| Phạm vi hoàn tất / tiếp theo | Schema order/lookup, UUID v4/mã đơn, create/lookup/transition services, routes và 10 ca smoke đã xong. Phase 4 admin status gọi lại transitionOrder; Phase 5 checkout/retry/xác nhận/lookup/admin UI DONE local (15/10/2026). Tiếp theo Phase 6 deploy khi được yêu cầu. Không có route hủy đơn khách |
+| Turnstile | Verifier đã triển khai ở Phase 3: có `TURNSTILE_SECRET` thì xác minh token; local thiếu secret được bỏ qua. Nhánh provider đã kiểm bằng mock; cấu hình widget3 form và hai Site keys đã có; cả hai Worker vẫn thiếu TURNSTILE_SECRET |
+| Phạm vi hoàn tất / tiếp theo | Schema order/lookup, UUID v4/mã đơn, create/lookup/transition services, routes và 10 ca smoke đã xong. Phase 4 admin status gọi lại transitionOrder; Phase 5 checkout/retry/xác nhận/lookup/admin UI DONE local (15/10/2026). Phase 6 production đã deploy bản trước, staging đã deploy bản mới16/10; nghiệm thu thật/policy/quota còn theo PROJECT_STATUS. Không có route hủy đơn khách |
 
 Smoke hiện giữ các ca catalog read-only trên URL positional local; ca ghi/chỉnh tồn Phase 3 tự dùng HTTP loopback + workerd D1 `persist:false`, `remoteBindings:false`. Không reset/xóa seed đang dùng trên 5173/4173 và không truy cập remote.
 

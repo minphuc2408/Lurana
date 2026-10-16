@@ -1,8 +1,11 @@
 # Phase 2 — API nền và catalog
 
+> Rà soát 16/10/2026: [hiện trạng chuẩn](../PROJECT_STATUS.md), [contract hiện tại](API_CONTRACT.md). Phase 0–5 DONE local, Phase 6 IN PROGRESS5/7. Local170 tests/215 source files/40 smoke; staging đã deploy bản mới13:31 ngày 16/10, production vẫn bản 15/10. Output/checklist ghi ngày cũ bên dưới là lịch sử, không phải trạng thái cloud hiện tại.
+
+
 **Mục tiêu:** khung Hono chuẩn (lỗi, validate, middleware), các API đọc: danh mục, sản phẩm, tùy chọn giao hàng, báo giá giỏ. Hợp đồng: [API_CONTRACT.md](API_CONTRACT.md).
 
-**Trạng thái:** DONE · 8/8 tiêu chí local, **14/10/2026**. Đây là phạm vi/nghiệm thu catalog/quote tại mốc Phase 2, chưa bao gồm order/admin. Phase 3 COD/tồn/idempotency/lookup/transition và [Phase 4 auth/admin](PHASE_4_ADMIN.md) đã DONE local; 125 tests/40 smoke là số liệu lịch sử tại mốc backend Phase 4. **Phase 5 đã DONE local (6/6 tiêu chí)**, nối đủ UI checkout/lookup/login/admin: [nghiệm thu hiện tại](PHASE_5_FRONTEND.md) · [FE_AUDIT/backup](FE_AUDIT.md). Các output Phase 2 bên dưới giữ nguyên làm bằng chứng lịch sử. Phase 6 vẫn PLANNED. [Tiến độ chung](README.md).
+**Trạng thái:** DONE · 8/8 tiêu chí local, **14/10/2026**. Đây là phạm vi/nghiệm thu catalog/quote tại mốc Phase 2, chưa bao gồm order/admin. Phase 3 COD/tồn/idempotency/lookup/transition và [Phase 4 auth/admin](PHASE_4_ADMIN.md) đã DONE local; 125 tests/40 smoke là số liệu lịch sử tại mốc backend Phase 4. **Phase 5 đã DONE local (6/6 tiêu chí)**, nối đủ UI checkout/lookup/login/admin: [nghiệm thu hiện tại](PHASE_5_FRONTEND.md) · [FE_AUDIT/backup](FE_AUDIT.md). Các output Phase 2 bên dưới giữ nguyên làm bằng chứng lịch sử. Phase 6 hiện IN PROGRESS5/7; xem PROJECT_STATUS. [Tiến độ chung](README.md).
 
 ## Việc cần làm
 
@@ -10,11 +13,11 @@
 | --- | --- | --- |
 | 2.1 | AGENT | Tạo `shared/constants.ts`: `TIME_SLOTS`, `DELIVERY_METHOD_CODES`, `SIZE_CODES`, `ORDER_STATUSES`, giới hạn giỏ. Dùng chung cho FE và Worker |
 | 2.2 | AGENT | Tạo `worker/config.ts` (giá trị **giả định**, ghi chú để chủ shop chỉnh): phụ phí `STANDARD 0 / EXPRESS 30000 / SAME_DAY 50000`, giờ chốt same-day `16:00`, thời gian chuẩn bị tối thiểu `120` phút, `MAX_CART_LINES 15`, `MAX_QTY_PER_LINE 20`, `MAX_ADVANCE_DAYS 30`, múi giờ `Asia/Ho_Chi_Minh` |
-| 2.3 | AGENT | `worker/lib/errors.ts`: lớp `AppError(code, status, message, details?)` + `app.onError` trả JSON đúng contract; lỗi lạ → `INTERNAL` kèm `request_id`. Phase 4 thu gọn log chỉ request_id/error_name để không lộ SQL/input/secret |
+| 2.3 | AGENT | `worker/lib/errors.ts`: lớp `AppError(code, status, message, details?)` + `app.onError` trả JSON đúng contract; lỗi lạ → `INTERNAL` kèm `request_id`. Log hiện giữ request_id/error_name và diagnostic D1/SQLite/constraint/target allowlist, không raw SQL/input/secret |
 | 2.4 | AGENT | `worker/lib/validate.ts`: bọc `zod` + hook của Hono trả `VALIDATION_ERROR`. Schema nằm trong `shared/schemas.ts` để FE dùng lại cho form |
 | 2.5 | AGENT | Middleware: `secureHeaders()`, `request_id`, `Cache-Control: no-store` cho mọi `/api/*` ghi/admin; `public, max-age=30` cho GET catalog |
 | 2.6 | AGENT | `GET /api/categories` |
-| 2.7 | AGENT | `GET /api/products` và `GET /api/products/:slug`: **đúng 3 truy vấn** (products → variants `IN (...)` → images `IN (...)`), ghép trong bộ nhớ. Chỉ sản phẩm `ACTIVE`, category active, variant active. Tính `in_stock`, `low_stock`, `max_quantity = min(stock, 20)` |
+| 2.7 | AGENT | `GET /api/products` và `GET /api/products/:slug`: **tối đa3 truy vấn** (products → variants `IN (...)` → images `IN (...)`), ghép trong bộ nhớ. Chỉ sản phẩm `ACTIVE`, category active, variant active. Tính `in_stock`, `low_stock`, `max_quantity = min(stock, 20)` |
 | 2.8 | AGENT | `worker/services/delivery.ts`: `resolveFee(db, province, ward, subtotal, methodCode)` — tra `(province, ward)` rồi `(province, '')`, áp `free_from_amount`, cộng phụ phí phương thức; ném `NO_DELIVERY_ZONE` nếu không có |
 | 2.9 | AGENT | `GET /api/delivery/options` (gom `delivery_zones` đang hoạt động theo tỉnh) |
 | 2.10 | AGENT | `worker/services/pricing.ts`: `priceCart(db, items, ...)` gộp variant trùng, kiểm tra giới hạn, đọc variants bằng **một** truy vấn `IN`, trả dòng + `issues`; dùng chung cho quote và đặt đơn (Phase 3) |
@@ -157,4 +160,4 @@ Phase 2 smoke: 16/16 PASS, 0 FAIL at http://127.0.0.1:4173.
 
 Stress HTTP độc lập trên preview: 25 cặp POST `/api/orders` body `{}` → GET `/api/admin/products` đều 404 JSON UTF-8/no-store; 25 cặp POST quote `text/plain` → GET health đều 400 `VALIDATION_ERROR` rồi 200 JSON UTF-8. Tổng 100 request không gặp 500/fetch failed. Đây là kiểm tra hồi quy lỗi socket do payload không đọc, không triển khai các API đặt đơn/admin.
 
-Rollup bỏ chú thích PURE trong dependency Zod; Node báo SQLite experimental. Các thông báo này không làm thất bại kiểm tra. Không đổi dependency nên không cần chạy lại audit. Bằng chứng Phase 2 ở trên ghi trước lượt nối FE. Hiện preview Home/Shop/Cart dùng D1/VND/localStorage; vẫn chỉ báo giá, chưa checkout thật. Nghiệm thu này không deploy hoặc truy cập D1 remote. Commit/push chỉ thực hiện theo yêu cầu của chủ dự án.
+Rollup bỏ chú thích PURE trong dependency Zod; Node báo SQLite experimental. Các thông báo này không làm thất bại kiểm tra. Không đổi dependency nên không cần chạy lại audit. Bằng chứng Phase 2 ở trên ghi trước lượt nối FE. Tại mốc preview này Home/Shop/Cart mới dùng D1/VND/localStorage và chỉ báo giá; Phase 5 sau đó đã nối COD/lookup/admin đầy đủ. Nghiệm thu này không deploy hoặc truy cập D1 remote. Commit/push chỉ thực hiện theo yêu cầu của chủ dự án.

@@ -1,6 +1,6 @@
 # Cloudinary cho Lunara Shop
 
-Cloud name owner cung cấp qua ảnh dashboard: `yrnqg7ay`, chế độ **Dynamic folders**. Tích hợp local gồm signed direct upload trong form tạo/sửa sản phẩm. Chưa đặt API keys, tạo preset, upload thật hoặc deploy tính năng; kiểm thử mock không phải nghiệm thu tài khoản Cloudinary.
+Cloud name owner cung cấp qua ảnh dashboard: `yrnqg7ay`, chế độ **Dynamic folders**. Tích hợp local gồm signed direct upload trong form tạo/sửa sản phẩm. Snapshot chỉ đọc16/10: staging đã deploy và có cloud/preset/scope cùng tên secrets CLOUDINARY_API_KEY/API_SECRET; production chưa có cấu hình/secrets Cloudinary trong version live. Chưa xác minh giá trị keys/preset hoặc upload thật; kiểm thử mock không phải nghiệm thu provider. [Hiện trạng](PROJECT_STATUS.md).
 
 ## 1. Có thể dùng thủ công ngay
 
@@ -30,7 +30,7 @@ npx wrangler secret put CLOUDINARY_API_KEY --env staging --config wrangler.jsonc
 npx wrangler secret put CLOUDINARY_API_SECRET --env staging --config wrangler.jsonc
 ```
 
-Nếu Worker staging chưa tồn tại và Wrangler hỏi tạo mới, kiểm đúng `lunara-staging`. Staging cần ADMIN_PASSWORD/JWT_SECRET riêng theo [STAGING](STAGING.md). D1 staging đã migrate; để có category/sản phẩm test, cần seed staging nếu còn trống, chỉ chạy khi owner cho phép.
+Nếu Worker staging chưa tồn tại và Wrangler hỏi tạo mới, kiểm đúng `lunara-staging`. Staging cần ADMIN_PASSWORD/JWT_SECRET riêng theo [STAGING](STAGING.md). D1 staging đã migrate, đã có4 categories và1 sản phẩm active khi kiểm16/10; không chạy full seed. Thêm dữ liệu thử theo nhu cầu cụ thể chỉ khi owner cho phép.
 
 Sau nghiệm thu staging, production dùng top-level config. Xóa CLOUDFLARE_ENV khỏi terminal trước thao tác production nếu đã đặt:
 
@@ -78,7 +78,9 @@ D1 tiếp tục lưu URL qua API sản phẩm hiện có; không đổi schema/m
 
 Tham khảo chính thức: [credentials](https://cloudinary.com/documentation/how_to_integrate_cloudinary), [upload presets](https://cloudinary.com/documentation/upload_presets), [signed client uploads](https://cloudinary.com/documentation/client_side_uploading), [signature algorithm/validity](https://cloudinary.com/documentation/authentication_signatures).
 
-## Bằng chứng local 15/10/2026
+## Bằng chứng lịch sử — local 15/10/2026
+
+Những câu chưa deploy/chưa đặt keys dưới đây mô tả đúng thời điểm kiểm cũ. Trạng thái cloud hiện tại ở đầu tài liệu; không dùng mốc cũ làm trạng thái staging hôm nay.
 
 Cloudinary 15/10/2026: đã tích hợp local signed direct upload (SHA-256, cookie admin/same-origin, JPEG/PNG/WebP, client 5 MB, prefix local/staging/prod). Typecheck/build/architecture 208 source files PASS; tests 148/148, smoke local 40/40 PASS. Browser mock EN/VI 390px PASS: file sai, thành công/preview, Save URL, thiếu config giữ URL; 0 JS exceptions. Chưa tạo preset/đặt keys/upload thật/deploy tính năng, không ghi D1 remote; Phase 6 vẫn 5/7. Không thêm migration/dependency hoặc tự xóa asset. Evidence ignored tại .security-review/cloudinary-ui.mjs và verification-cloudinary-upload-*.png; provider/API quản trị được mock ở browser, không xem đây là upload thật.
 

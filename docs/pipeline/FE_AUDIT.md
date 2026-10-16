@@ -1,5 +1,8 @@
 # Frontend Phase 5 — audit 15/10/2026
 
+> Rà soát 16/10/2026: [hiện trạng chuẩn](../PROJECT_STATUS.md), [contract hiện tại](API_CONTRACT.md). Phase 0–5 DONE local, Phase 6 IN PROGRESS5/7. Local170 tests/215 source files/40 smoke; staging đã deploy bản mới13:31 ngày 16/10, production vẫn bản 15/10. Output/checklist ghi ngày cũ bên dưới là lịch sử, không phải trạng thái cloud hiện tại.
+
+
 B2/B3 sau mốc nghiệm thu (15/10/2026, local/chưa deploy): checkout/lookup/login dùng shared Turnstile; token chỉ ở memory, ngoài fingerprint/UUID và được lấy mới mỗi lần gửi/thử lại. Không thêm PII/credentials vào storage. Hộp hủy IN_TRANSIT yêu cầu lý do, mặc định không hoàn tồn; lỗi/thử lại hiển thị ngay trong dialog. [Cấu hình và evidence hiện tại](../BOT_PROTECTION.md); các output Phase 5 dưới đây là lịch sử.
 
 ## Kiểm kê 5.0 trước khi nối phần còn lại
@@ -17,7 +20,7 @@ CodeGraph đã khảo sát router/providers/cart/auth và dependency. Quét `rg 
 
 ## Kết quả Phase 5 — DONE local, 15/10/2026
 
-Đã thực hiện 5.0 → 5.16, đủ **6/6 tiêu chí** trong [PHASE_5_FRONTEND](PHASE_5_FRONTEND.md). Đây là nghiệm thu toàn UI local sau backend Phase 3–4; không suy ra từ preview cũ hoặc coi là remote acceptance. Phase 6 vẫn PLANNED.
+Đã thực hiện 5.0 → 5.16, đủ **6/6 tiêu chí** trong [PHASE_5_FRONTEND](PHASE_5_FRONTEND.md). Đây là nghiệm thu toàn UI local sau backend Phase 3–4; không suy ra từ preview cũ hoặc coi là remote acceptance. Phase 6 hiện IN PROGRESS5/7; xem PROJECT_STATUS.
 
 | Luồng hiện tại | Nguồn/hành vi đã kiểm |
 | --- | --- |
@@ -43,7 +46,7 @@ Evidence local/ignored: `.security-review/phase5-ui-results.json` (15/10/2026 14
 
 Checkpoint lượt hoàn thiện: **5.1–5.8 đã triển khai**. `apiRequest` thêm timeout 20 giây và mapping lỗi; helper intent UUID v4 giữ key theo payload; formatter ngày cố định Asia/Ho_Chi_Minh. Checkout COD dùng cùng cart/quote, giữ form khi lỗi và chỉ xóa giỏ sau response thành công. Tra đơn `/orders/track` có guard response cũ khi đổi mã/SĐT. Targeted checkout/commerce **14/14 pass** tại checkpoint này. Bước 5.9 auth cookie đã nối, đang tiếp admin; 5.10–5.16 còn triển khai/kiểm chứng. Số liệu này không phải nghiệm thu toàn Phase 5.
 
-Chủ dự án yêu cầu sao lưu frontend/ảnh demo, rồi dùng D1 local để kiểm tra. Đã nối Home/Shop/Cart/Delivery/Quote, tạm ẩn features ngoài preview. Đây là phần đầu Phase 5, thực hiện trước Phase 3; toàn Phase 5 vẫn PARTIAL. **Phase 3 backend đã DONE local; backend Phase 4 auth/admin đã DONE local (9/9 tiêu chí)**, nhưng UI gửi/tra đơn/login/admin chưa nối. [Tiến độ hiện tại](README.md) · [nghiệm thu Phase 4](PHASE_4_ADMIN.md).
+Chủ dự án yêu cầu sao lưu frontend/ảnh demo, rồi dùng D1 local để kiểm tra. Đã nối Home/Shop/Cart/Delivery/Quote, tạm ẩn features ngoài preview. Đây là phần đầu Phase 5, thực hiện trước Phase 3; tại thời điểm preview đó Phase 5 còn PARTIAL; Phase 5 hiện đã DONE local. **Phase 3 backend đã DONE local; backend Phase 4 auth/admin đã DONE local (9/9 tiêu chí)**, nhưng UI gửi/tra đơn/login/admin chưa nối. [Tiến độ hiện tại](README.md) · [nghiệm thu Phase 4](PHASE_4_ADMIN.md).
 
 ## Backup local trước khi sửa
 
@@ -72,7 +75,7 @@ Cloudinary chưa đăng ký và không cần để dùng API Phase 2. Catalog hi
 | API lỗi | Loading/error/empty/retry, thông điệp i18n theo mã lỗi; không fallback về sản phẩm/giá frontend demo |
 | Features ngoài preview | Login/signup/profile/orders/custom request/admin/wishlist/reviews/coupon/đặt đơn bị ẩn. API tạo/lookup đơn Phase 3 và auth/admin Phase 4 đã có local, UI chưa nối; customer/profile/request APIs chưa có. URL cũ hiện sắp ra mắt, không render fixture hoặc giả thành công |
 
-Menu còn Home/Shop/Cart. Source legacy được giữ trong repo và backup; AppProviders hiện I18nextProvider → CatalogProvider → CartProvider, không khởi động demo AuthProvider. Lượt preview không thêm API ghi; Phase 3–4 tiếp theo đã thêm COD/tồn/lookup/transition và auth/admin backend, giữ frontend này. Hiện chưa có nút gửi đơn hoặc UI tra đơn/admin thật; báo giá không tạo đơn hoặc giữ tồn.
+Menu còn Home/Shop/Cart. Source legacy được giữ trong repo và backup; AppProviders tại mốc preview là I18nextProvider → CatalogProvider → CartProvider, không khởi động demo AuthProvider. Lượt preview không thêm API ghi; Phase 3–4 tiếp theo đã thêm COD/tồn/lookup/transition và auth/admin backend, giữ frontend này. Tại mốc preview này chưa có nút gửi đơn hoặc UI tra đơn/admin thật; báo giá không tạo đơn hoặc giữ tồn.
 
 Chỉnh storefront trước khi kết Phase 4 (15/10/2026): Zalo giữ icon tự vẽ góc phải sau rollback logo widget; viền xanh animate width 60→208px khi hover/focus/click trong 400ms, reduced motion 200ms; bỏ fade/slide riêng của chữ; tên/địa chỉ/map URL footer lấy từ EN/VI `common.json`. Giữ thông báo chờ khi bấm Zalo vì chưa có link thật. Các UI checkout/lookup/admin vẫn chưa nối.
 

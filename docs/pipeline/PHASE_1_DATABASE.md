@@ -1,8 +1,11 @@
 # Phase 1 — Database D1 (local): migration, seed, kiểm tra
 
+> Rà soát 16/10/2026: [hiện trạng chuẩn](../PROJECT_STATUS.md), [contract hiện tại](API_CONTRACT.md). Phase 0–5 DONE local, Phase 6 IN PROGRESS5/7. Local170 tests/215 source files/40 smoke; staging đã deploy bản mới13:31 ngày 16/10, production vẫn bản 15/10. Output/checklist ghi ngày cũ bên dưới là lịch sử, không phải trạng thái cloud hiện tại.
+
+
 **Mục tiêu:** schema MVP áp lên D1 **local**, có dữ liệu mẫu, kiểm tra ràng buộc. Chưa đụng D1 remote.
 
-**Trạng thái:** DONE · 5/5 tiêu chí, nghiệm thu D1 local ngày **14/10/2026**. [Hiện trạng](../PROJECT_STATUS.md). Không truy cập D1 remote, không áp deferred/0002, không commit/push.
+**Trạng thái:** DONE · 5/5 tiêu chí, nghiệm thu D1 local ngày **14/10/2026**. [Hiện trạng](../PROJECT_STATUS.md). Phạm vi nghiệm thu14/10 chỉ dùng D1 local; current Phase 6 đã migrate cả hai D1 remote. Không áp deferred/0002 hoặc sửa migration0001 đã áp remote.
 
 **Quyết định trước migration:** đã đối chiếu v1 và v2, chốt nguyên DDL v2 theo phạm vi 10 bảng và seed hiện có. [Bảng khác biệt và lý do](../DATABASE_DESIGN.md#đối-chiếu-canonical-v1--v2-đã-chốt). [`migrations/0001_mvp.sql`](../../migrations/0001_mvp.sql) là nguồn DDL duy nhất; hai file schema trong docs chỉ chứa chú thích dẫn về migration. Sau khi chốt không phát hiện lỗi schema qua test, nên **không sửa DDL**. SHA-256 khi nghiệm thu: `9ee756750b15b50f902e17db41a3ef75a2c0e5437c9eb56b7a9253a83c9aa4e0`.
 

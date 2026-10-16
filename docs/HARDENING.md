@@ -1,6 +1,6 @@
-# B2/B3 và M1–M9 — bản sửa local 15/10/2026
+# B2/B3 và M1–M9 — cấu hình và giới hạn hiện tại
 
-**Chưa deploy hoặc thay đổi secrets/D1/domain trên Cloudflare.** Phase 6 vẫn IN PROGRESS (5/7). Không thêm dependency, bảng hoặc migration. [Chống bot và COD](BOT_PROTECTION.md) ghi chi tiết B2/B3 và Cron.
+**Cập nhật 16/10/2026:** code đã push; staging đã deploy 13:31 với CSP/SEO/key staging/RateLimit/TTL 24h và scheduled handler. Production vẫn version15/10; cả hai chưa có TURNSTILE_SECRET. Lượt rà tài liệu chỉ đọc remote; không deploy/ghi D1. Phase 6 vẫn IN PROGRESS (5/7). [Snapshot chi tiết](PROJECT_STATUS.md). Không thêm dependency, bảng hoặc migration. [Chống bot và COD](BOT_PROTECTION.md) ghi chi tiết B2/B3 và Cron.
 
 ## Hành vi hiện tại
 
@@ -20,15 +20,17 @@ SEO hiện tạo **metadata tĩnh**, không prerender nội dung React/catalog. 
 
 ## Cấu hình đã làm và phần owner phải nhập
 
-- `.env.production` chứa site key **công khai owner đã cung cấp**, origin `https://lunara.minphuc2408.workers.dev` và indexable=true. Không chứa secret. Build bình thường tự đọc file này; `.env.local` hoặc env build có thể override. Không cần gửi lại site key.
+- `.env.production` chứa site key **công khai owner đã cung cấp**, origin `https://lunara.minphuc2408.workers.dev` và indexable=true. `.env.staging` chứa key staging riêng, origin staging và indexable=false. Không chứa secret. Build bình thường tự đọc file này; `.env.local` hoặc env build có thể override. Không cần gửi lại site key.
 - Owner mở widget tương ứng trong Cloudflare Turnstile, kiểm hostname `lunara.minphuc2408.workers.dev` được cho phép; widget staging riêng cho phép `lunara-staging.minphuc2408.workers.dev`. Không đặt scheme/path trong hostname. Staging tự dùng widget/key riêng từ `.env.staging` qua Vite `--mode staging`.
 - **Chỉ secret cần nhập riêng:** Workers & Pages → lunara → Settings → Variables and Secrets → thêm secret `TURNSTILE_SECRET` của widget. Hoặc chạy `npx.cmd wrangler secret put TURNSTILE_SECRET`; staging thêm `--env staging`. Không gửi secret qua chat, không đặt trong VITE_* hoặc source. Không bật secret trên deployment UI cũ; deploy UI/verifier cùng cặp khóa trong một lần triển khai được phép.
-- Cron `0 * * * *`, TTL 24 giờ, RateLimit bindings, observability và static headers đã khai báo trong repo; đi cùng deploy, không cần tạo Cron bằng tay. Chưa thực hiện deploy ở lượt này. Sau deploy phải nghiệm thu thật cả checkout/lookup/admin login trên hostname được phép.
+- Cron `0 * * * *`, TTL 24h, RateLimit bindings, observability và static headers đã khai báo cho cả hai môi trường. Staging live đã có TTL/bindings/handler và headers mới; production chưa có. Chưa kiểm Cron thực chạy/quota cloud, không tự gọi handler để thử trong lượt tài liệu. Sau deploy phải nghiệm thu thật cả checkout/lookup/admin login trên hostname được phép.
 - Khi đổi domain, sửa VITE_SITE_URL rồi build lại canonical/OG/sitemap và cập nhật hostname Turnstile. Bật WAF zone cần custom domain theo [BOT_PROTECTION](BOT_PROTECTION.md); đây là tùy chọn hạ tầng, không phải yêu cầu của widget.
 
-Theo [Workers Logs](https://developers.cloudflare.com/workers/observability/logs/workers-logs/), kiểm ngày 15/10/2026: Free có 200.000 log events/ngày, giữ 3 ngày; chính sách giá thay đổi từ 01/12/2026, cần kiểm lại trước mốc đó. Mẫu 10% không phải cam kết quota tuyệt đối. [Workers limits](https://developers.cloudflare.com/workers/platform/limits/) và [Static Assets billing](https://developers.cloudflare.com/workers/static-assets/billing-and-limitations/) giải thích giới hạn request; xem [OPERATIONS](OPERATIONS.md) để theo dõi hằng ngày.
+Theo [Workers Logs](https://developers.cloudflare.com/workers/observability/logs/workers-logs/), đối chiếu lại ngày 16/10/2026: Free có 200.000 log events/ngày, giữ 3 ngày; chính sách giá thay đổi từ 01/12/2026, cần kiểm lại trước mốc đó. Mẫu 10% không phải cam kết quota tuyệt đối. [Workers limits](https://developers.cloudflare.com/workers/platform/limits/) và [Static Assets billing](https://developers.cloudflare.com/workers/static-assets/billing-and-limitations/) giải thích giới hạn request; xem [OPERATIONS](OPERATIONS.md) để theo dõi hằng ngày.
 
 ## Bằng chứng local
+
+Kiểm gần nhất 16/10: typecheck/architecture 215/tests 166, build/dry-run hai môi trường PASS; bundle mỗi bản chỉ chứa key tương ứng và đúng canonical/noindex; smoke 40/40, persisted D1 giữ nguyên. Các nhóm UI/test-key phía dưới là evidence tại mốc hardening15/10, không phải nghiệm thu challenge production.
 
 - 166/166 tests PASS: min chuẩn bị, low-stock visibility, hai dạng UTC/mốc nửa đêm VN và lịch sử, EXPLAIN QUERY PLAN dùng idx_orders_placed_at thay vì SCAN orders, giới hạn tìm kiếm, URL ảnh, chẩn đoán không PII, ngôn ngữ và SEO. Typecheck/build production/staging và architecture PASS.
 - Smoke 40/40 PASS; phép ghi dùng workerd D1 persist:false/remoteBindings:false và secret tổng hợp; snapshot persisted giữ nguyên.
@@ -37,6 +39,27 @@ Theo [Workers Logs](https://developers.cloudflare.com/workers/observability/logs
 - Build staging kiểm đúng target, HTML/header noindex, robots Disallow toàn site. Sau kiểm bằng test key, build cuối khôi phục key công khai owner cung cấp. Các file evidence/browser profiles ở `.security-review/` bị ignore; không ghi credentials hoặc token.
 
 
-Turnstile theo môi trường (16/10/2026, cấu hình local, chưa deploy trong lượt này): `.env.production` dùng Site key production, `.env.staging` dùng Site key staging và origin staging/noindex. `npm run deploy:staging` tự chọn `CLOUDFLARE_ENV=staging` + Vite `--mode staging`; `npm run deploy` dùng production như trước. Không cần đặt Site key bằng lệnh bổ sung. `TURNSTILE_SECRET` cần nhập một lần riêng cho từng Worker, đúng cặp widget; không lưu secret trong source. Biến môi trường terminal và `.env.local`/file override có thể ghi đè cấu hình Vite. Không đổi DDL/binding/logic Worker; chưa thay đổi remote hoặc mức hoàn thành Phase 6.
-
 Smoke local 16/10/2026: static metadata Shop có thể redirect `/shop` → `/shop/`; smoke chỉ chấp nhận đích chính xác cùng origin này rồi xác minh HTML 200. Các request API vẫn từ chối redirect.
+
+
+## Turnstile fail-closed và header live —16/10/2026
+
+Thiếu/rỗng/whitespace TURNSTILE_SECRET trả503 TURNSTILE_NOT_CONFIGURED trước D1/auth/Siteverify. Chỉ bypass khi cờ server TURNSTILE_ALLOW_LOCAL_BYPASS=true và hostname chính xác localhost/127.0.0.1/[::1]; mặc định local cũng đóng. Có secret thì luôn xác minh token, kể cả bật cờ. Không khai báo cờ trong Wrangler prod/staging, không nhận cờ từ body/header/client. Harness test cô lập tự bật rõ ràng; không đọc ambient .dev.vars. Bản sửa16/10 hiện local/chưa deploy.
+
+Unit/integration kiểm cả3route, secret undefined/rỗng/whitespace, remote cố bật flag, body/X-Forwarded-Host giả loopback, không D1/cookie/provider call khi cấu hình sai, configured-secret vẫn cần token. Native workerd với synthetic bindings kiểm503 mặc định,200 chỉ khi loopback opt-in,403 khi có secret nhưng thiếu token. Frontend ánh xạ lỗi cấu hình sang thông báo xác minh hiện có EN/VI.
+
+**Bằng chứng mới:** typecheck/architecture215,170/170 tests, build/dry-run2env và smoke40/40 PASS; persisted D1 giữ nguyên. UI checker tổng quát vẫn dừng ở phép đợi tổng quote670 trước chọn khu vực (giới hạn script đã biết), không tuyên bố full browser suite PASS. Không có dependency/DDL/deploy/secret change.
+
+### Header kiểm độc lập trên live
+
+22 phản hồi GET public: mỗi môi trường6HTML routes,1JS asset và4API responses (health/catalog200, guest admin401, unknown404). Hai lỗi mạng tạm thời đã kiểm lại thành công; evidence chỉ giữ header allowlist trong .security-review/security-headers-live-20261016.json (ignored). Không gửi credentials, không POST hoặc ghi remote.
+
+| Nhóm | Production | Staging |
+| --- | --- | --- |
+| HTML/static assets | Chưa có CSP/nosniff/X-Frame-Options/Referrer-Policy/Permissions-Policy trong các phản hồi đã kiểm | Có CSP, nosniff, DENY, strict-origin-when-cross-origin, Permissions-Policy camera/microphone/geolocation=(); noindex |
+| API200/401/404 | nosniff, SAMEORIGIN, no-referrer, HSTS max-age15552000/includeSubDomains; health/errors/admin no-store | Cùng bộ secureHeaders API; catalog200 có public max-age30 |
+| CSP/Permissions-Policy ở API | Không có trong cấu hình secureHeaders hiện tại | Không có trong cấu hình secureHeaders hiện tại |
+
+Đây là hai bộ policy có phạm vi khác nhau. API trả JSON, không suy ra thiếu secureHeaders chỉ vì không có CSP của HTML. _headers không áp vào phản hồi do Worker tạo; nếu bổ sung HTML/SSR trong Worker phải đặt header trực tiếp trên Response. [Cloudflare Static Assets headers](https://developers.cloudflare.com/workers/static-assets/headers/).
+
+Production cần deploy static headers mới. Lượt này không thay deployment hoặc tuyên bố headers đã được sửa trên production. Staging private routes có X-Robots-Tag lặp noindex do các rule chồng nhau; không thay đổi ý nghĩa noindex, chưa sửa ngoài phạm vi.

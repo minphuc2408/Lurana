@@ -1,6 +1,6 @@
 # Vận hành Lunara trên Cloudflare
 
-Cập nhật **15/10/2026**. Runbook cho một Worker `lunara` và D1 `lunara-db`; trạng thái nghiệm thu và bằng chứng thực thi nằm tại [Phase 6](pipeline/PHASE_6_DEPLOY.md). Có runbook hoặc chạy tốt local không đồng nghĩa deployment đã nghiệm thu. Chỉ mở bán sau khi đủ toàn bộ tiêu chí Phase 6, gồm dữ liệu thật và kiểm thử trên URL đã deploy.
+Cập nhật **16/10/2026**. Runbook production `lunara`/`lunara-db`; staging riêng `lunara-staging`/`lunara-staging-db` theo [STAGING](STAGING.md); trạng thái nghiệm thu và bằng chứng thực thi nằm tại [Phase 6](pipeline/PHASE_6_DEPLOY.md). Có runbook hoặc chạy tốt local không đồng nghĩa deployment đã nghiệm thu. Chỉ mở bán sau khi đủ toàn bộ tiêu chí Phase 6, gồm dữ liệu thật và kiểm thử trên URL đã deploy.
 
 ## 1. Đúng môi trường và quyền thao tác
 
@@ -11,6 +11,8 @@ Các lệnh `--remote` trong runbook này nhắm database production; staging d�
 Giữ dev/preview trên `127.0.0.1`, `remoteBindings: false`; `npm run db:reset:local` chỉ dùng local. `/api/health` kiểm tra Worker còn chạy; catalog/quote và truy vấn bảng mới kiểm chứng D1 sẵn sàng.
 
 ## 2. Migration, deploy và dữ liệu mở bán
+
+Current16/10: hai D1 đã migrate0001; staging đã có dữ liệu thử. Không chạy lại full seed/migration đã áp chỉ để đồng bộ môi trường. Các lệnh khởi tạo dưới đây dùng khi đã có authorization và đúng nhu cầu; snapshot hiện tại ở PROJECT_STATUS.
 
 Đầu tiên đối chiếu account/database, quota và quyền áp dụng migration. Các lệnh sau là kế hoạch có điều kiện; kiểm tra từng kết quả trước bước kế tiếp:
 
@@ -176,7 +178,7 @@ npx wrangler secret list
 
 Admin → **Phí giao** (`/admin/delivery-zones`) → tạo/sửa khu vực: tỉnh/thành, phường/xã, phí VND, ngưỡng miễn phí, ETA và active. `ward_name` rỗng là mặc định tỉnh; dòng phường active khớp sẽ ưu tiên. Không có cả dòng phường và mặc định tỉnh active thì checkout báo `NO_DELIVERY_ZONE`. Tắt dòng ví dụ, kiểm quote mới ở ba trường hợp (phường riêng/mặc định/ngoài vùng), rồi owner xác nhận phí thật. Dùng form admin đã có để tạo khu vực; không tự thêm SQL production ngoài Phase 6.
 
-Admin → **Kho** (`/admin/stock`): GET tồn hiện tại, đối chiếu tồn thực tế, nhập **delta**, không nhập nhầm số tồn đích vào delta. Khi ghi lỗi `NETWORK`, `TIMEOUT`, `BAD_RESPONSE` hoặc `INTERNAL`, request có thể đã áp dụng: UI xóa delta vừa nhập, khóa hàng; bấm tải lại/kiểm lại để GET thành công, đối chiếu rồi mới nhập delta mới. Không lặp tự động delta cũ. Nếu GET vẫn lỗi, giữ hàng bị khóa và xử lý kết nối trước. Sau hủy đơn hợp lệ, service hoàn tồn đúng một lần; không hoàn tay thêm lần nữa.
+Admin → **Kho** (`/admin/stock`): GET tồn hiện tại, đối chiếu tồn thực tế, nhập **delta**, không nhập nhầm số tồn đích vào delta. Khi ghi lỗi `NETWORK`, `TIMEOUT`, `BAD_RESPONSE` hoặc `INTERNAL`, request có thể đã áp dụng: UI xóa delta vừa nhập, khóa hàng; bấm tải lại/kiểm lại để GET thành công, đối chiếu rồi mới nhập delta mới. Không lặp tự động delta cũ. Nếu GET vẫn lỗi, giữ hàng bị khóa và xử lý kết nối trước. Hủy ở trạng thái sớm mặc định hoàn tồn một lần; IN_TRANSIT hủy cần lý do, restock mặc định false và chỉ hoàn khi owner chọn true vì hoa còn bán được. CANCELLED luôn terminal. Không hoàn tay thêm sau khi service đã hoàn.
 
 ## 8. Kiểm hạn mức hằng ngày và sự cố
 
@@ -187,7 +189,7 @@ Chủ shop mở Cloudflare dashboard mỗi ngày và kiểm các mục sau:
 
 Ghi tổng hợp không chứa PII; kiểm quota **toàn account**, không chỉ Worker/DB này. Chọn ngưỡng cảnh báo nội bộ theo traffic thực tế; việc tạo nhắc lịch do chủ dự án quyết định, runbook này không tạo lịch tự động. Hướng dẫn ngắn đã được cung cấp ngày 15/10/2026; **chưa có xác nhận chủ dự án đã biết cách theo dõi**, nên phần bàn giao này vẫn chờ xác nhận.
 
-Thông số đối chiếu tài liệu Cloudflare ngày **15/10/2026**; trước vận hành phải xác nhận gói/giá thực tế trong account:
+Thông số đối chiếu lại tài liệu Cloudflare ngày **16/10/2026**; trước vận hành phải xác nhận gói/giá thực tế trong account:
 
 | Chỉ số Free | Mức tham chiếu | Nguồn |
 | --- | --- | --- |
@@ -205,13 +207,19 @@ Khi lỗi tăng: xác nhận URL/deployment và request_id, xem metrics/log đã
 
 ## 9. Turnstile và domain
 
-Code local B2/B3 đã có Turnstile cho checkout/lookup/login, verifier đúng action/hostname, rate-limit bindings và cap 3 PENDING/SĐT người đặt. Chưa deploy cập nhật này. Site key owner cung cấp đã nằm trong .env.production; owner kiểm hostname widget và nhập TURNSTILE_SECRET Worker đúng cặp; không bật secret trên UI cũ. [Hướng dẫn cấu hình và quy trình COD](BOT_PROTECTION.md).
+Thiếu/rỗng/whitespace TURNSTILE_SECRET trả503 TURNSTILE_NOT_CONFIGURED trước D1/auth/Siteverify. Chỉ bypass khi cờ server TURNSTILE_ALLOW_LOCAL_BYPASS=true và hostname chính xác localhost/127.0.0.1/[::1]; mặc định local cũng đóng. Có secret thì luôn xác minh token, kể cả bật cờ. Không khai báo cờ trong Wrangler prod/staging, không nhận cờ từ body/header/client. Harness test cô lập tự bật rõ ràng; không đọc ambient .dev.vars. Bản sửa16/10 hiện local/chưa deploy. Phối hợp deployment và secret setup; không xử lý lỗi503 bằng cách bật bypass trên remote.
+
+Kiểm header HTML/static và API độc lập: staging static có CSP/DENY/nosniff, production static còn thiếu; API cảhai có secureHeaders trên200/401/404. [Kết quả22phản hồi](HARDENING.md#header-kiểm-độc-lập-trên-live).
+
+Code có Turnstile checkout/lookup/login, action/hostname verifier, rate-limit bindings và cap3 PENDING/SĐT. Snapshot 16/10: staging đã deploy bản mới với key staging/CSP/RateLimit/TTL 24h/scheduled handler; production vẫn bản cũ. Cả hai thiếu TURNSTILE_SECRET. Site keys riêng trong `.env.production` và `.env.staging`; hai widget chỉ cho hostname tương ứng. Deploy UI mới trước khi nhập secret đúng cặp một lần cho từng Worker; secret tồn tại qua deploy. Có bindings không chứng minh Cron đã thực chạy. [Hướng dẫn cấu hình và quy trình COD](BOT_PROTECTION.md).
 
 Không gửi secret/token trong chat hoặc log. Rate-limit bindings đi cùng deploy, không cần custom domain; không coi Turnstile thay thế rate limit hoặc bảo đảm quota toàn cầu. Shop gọi/Zalo xác nhận trước CONFIRMED/PREPARING. Hủy IN_TRANSIT cần lý do; mặc định không hoàn hoa đã làm, chỉ chọn restock khi còn bán được. Owner đã chốt TTL 24 giờ và Cron mỗi giờ (0 * * * *), cấu hình local đã có cho production/staging, chờ deploy để có hiệu lực. Batch nguyên tử xử lý toàn bộ PENDING quá hạn, hoàn tồn đúng một lần và giữ nguyên đơn đã xác nhận. [Cloudflare Siteverify](https://developers.cloudflare.com/turnstile/get-started/server-side-validation/).
 
 Domain riêng là tùy chọn. Chủ dự án cung cấp domain và đồng ý chi phí/authorization; sau gắn Custom Domain kiểm HTTPS, refresh SPA, asset/API cùng origin, login/logout/cookie Secure và write Origin trên domain mới. Cookie cũ của `workers.dev` không chuyển sang domain mới; đăng nhập lại. Dùng HTTPS origin mới khi chạy smoke và cấu hình hostname Turnstile nếu đã bật. [Cloudflare Custom Domains](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/).
 
 ## 10. Nhật ký nghiệm thu và bàn giao
+
+Trạng thái current và counts public mới nhất ở [PROJECT_STATUS](PROJECT_STATUS.md). Các mốc15/10 dưới đây là lịch sử; không kết luận staging chưa deploy/thiếu secrets từ một mốc local cũ.
 
 Giữ trong [Phase 6](pipeline/PHASE_6_DEPLOY.md) các bằng chứng **đã thực thi**: ngày giờ, target, migration applied, số smoke pass, 10 ca MVP trên deployment, cleanup/tồn, backup remote mở offline, dữ liệu thật và owner xác nhận cách xem quota mỗi ngày. Không ghi URL giả hoặc tick mục đang chờ owner.
 

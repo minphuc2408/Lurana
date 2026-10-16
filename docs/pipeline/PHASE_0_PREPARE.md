@@ -1,5 +1,8 @@
 # Phase 0 — Chuẩn bị repo và môi trường local
 
+> Rà soát 16/10/2026: [hiện trạng chuẩn](../PROJECT_STATUS.md), [contract hiện tại](API_CONTRACT.md). Phase 0–5 DONE local, Phase 6 IN PROGRESS5/7. Local170 tests/215 source files/40 smoke; staging đã deploy bản mới13:31 ngày 16/10, production vẫn bản 15/10. Output/checklist ghi ngày cũ bên dưới là lịch sử, không phải trạng thái cloud hiện tại.
+
+
 **Mục tiêu:** repo chạy được frontend và Worker (Hono) cùng lúc ở local, có D1 local. **Không cần tài khoản Cloudflare** ở phase này.
 
 **Trạng thái:** DONE · 6/6 tiêu chí · lệnh thật + Edge headless. [Hiện trạng](../PROJECT_STATUS.md). Các bước dưới là checklist đã thực hiện, không yêu cầu cài lại hoặc tạo D1 remote.
@@ -22,7 +25,9 @@ Phiên bản được kiểm chứng trong repo: Node `24.11.1`, npm `11.6.3`, V
 | 0.10 | AGENT | Chạy `npm run dev`, mở `/` và `/api/health`; chạy `npm run build` |
 | 0.11 | NGƯỜI (tùy chọn) | Chuẩn bị ~8 ảnh sản phẩm để upload Cloudinary sau; MVP có thể dùng ảnh placeholder trong seed |
 
-## `wrangler.jsonc` mẫu
+## `wrangler.jsonc` mẫu lịch sử — nền tảng Phase 0
+
+Không dùng mẫu rút gọn dưới để ghi đè cấu hình hiện tại: root wrangler.jsonc đã có env.staging, RateLimit, TTL/Cron, observability và Cloudinary.
 
 ```jsonc
 {

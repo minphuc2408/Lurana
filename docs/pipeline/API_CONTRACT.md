@@ -1,8 +1,11 @@
 # API contract MVP
 
+> Rà soát 16/10/2026: [hiện trạng chuẩn](../PROJECT_STATUS.md), [contract hiện tại](API_CONTRACT.md). Phase 0–5 DONE local, Phase 6 IN PROGRESS5/7. Local170 tests/215 source files/40 smoke; staging đã deploy bản mới13:31 ngày 16/10, production vẫn bản 15/10. Output/checklist ghi ngày cũ bên dưới là lịch sử, không phải trạng thái cloud hiện tại.
+
+
 Base path: `/api` (cùng origin với frontend). JSON UTF-8. Đây là hợp đồng giữa Worker và frontend; thay đổi phải sửa file này trước.
 
-**Trạng thái (15/10/2026):** Phase 2–4 API và Phase 5 frontend DONE local: health, catalog, delivery/options, checkout/quote, đặt đơn COD, tra đơn và auth/API admin. Admin status dùng lại `transitionOrder`; không có route hủy đơn khách. Frontend đã nối checkout form/review/gửi/retry/xác nhận trong `/cart`, public `/orders/track`, cookie login và dashboard/orders/products/stock/delivery admin. Không đổi hợp đồng Worker/DDL khi nối Phase 5. Route API lạ trả `NOT_FOUND` JSON 404 (message `Không tìm thấy API.`); boundary admin kiểm cookie trước khi trả 404. [Hiện trạng](../PROJECT_STATUS.md) · [nghiệm thu backend Phase 4](PHASE_4_ADMIN.md) · [nghiệm thu frontend Phase 5](PHASE_5_FRONTEND.md). Phase 6 IN PROGRESS (5/7): D1 remote migration/backup PASS; deployment/API live 7/7 + public browser/10 kết quả MVP PASS, cleanup xong. Còn dữ liệu thật và xác nhận quota; không gọi đây là test đủ checkout/admin UI remote. Contract/API runtime giữ nguyên. [Bằng chứng và điều kiện tiếp tục](PHASE_6_DEPLOY.md).
+**Trạng thái code (16/10/2026):** Phase 2–4 API và Phase 5 frontend DONE local: health, catalog, delivery/options, checkout/quote, đặt đơn COD, tra đơn và auth/API admin. Admin status dùng lại `transitionOrder`; không có route hủy đơn khách. Frontend đã nối checkout form/review/gửi/retry/xác nhận trong `/cart`, public `/orders/track`, cookie login và dashboard/orders/products/stock/delivery admin. Không đổi hợp đồng Worker/DDL khi nối Phase 5. Route API lạ trả `NOT_FOUND` JSON 404 (message `Không tìm thấy API.`); boundary admin kiểm cookie trước khi trả 404. [Hiện trạng](../PROJECT_STATUS.md) · [nghiệm thu backend Phase 4](PHASE_4_ADMIN.md) · [nghiệm thu frontend Phase 5](PHASE_5_FRONTEND.md). Phase 6 IN PROGRESS (5/7): D1 remote migration/backup PASS; deployment/API live 7/7 + public browser/10 kết quả MVP PASS, cleanup xong. Còn dữ liệu thật và xác nhận quota; không gọi đây là test đủ checkout/admin UI remote. B2/B3/M1–M9 đã cập nhật token3 form, rate-limit/cap PENDING, cancellation restock, bounded admin queries và approved image URLs như các phần dưới. [Bằng chứng và điều kiện tiếp tục](PHASE_6_DEPLOY.md).
 
 ## Quy ước chung
 
@@ -22,6 +25,7 @@ Base path: `/api` (cùng origin với frontend). JSON UTF-8. Đây là hợp đ�
 | `VALIDATION_ERROR` | 400 | Zod không qua; `details` = danh sách `{path, message}` |
 | `UNAUTHORIZED` | 401 | Thiếu/hết hạn cookie admin |
 | `INVALID_CREDENTIALS` | 401 | Sai mật khẩu admin |
+| `TURNSTILE_NOT_CONFIGURED` | 503 | TURNSTILE_SECRET thiếu/rỗng/whitespace; không truy vấn D1 hoặc kiểm mật khẩu, no-store |
 | `FORBIDDEN` | 403 | Turnstile checkout/lookup/login không hợp lệ; Origin thiếu/khác ở request ghi admin, kể cả login/logout |
 | `NOT_FOUND` | 404 | Không có tài nguyên; tra đơn sai mã hoặc SĐT dùng chung mã này |
 | `CONFLICT` | 409 | Trùng slug/SKU/mã |
@@ -114,16 +118,16 @@ Header **bắt buộc:** `Idempotency-Key: <uuid v4>`. Body:
 - Replay dùng envelope `{ data: { ...OrderSummary, replayed: true } }`; UUID v4 được chuẩn hóa chữ thường. Sau validate/Turnstile, replay chỉ đọc một statement, không tính lại giá/ngày giao hay ghi tồn. Key xác định đơn đã tạo, kể cả body hợp lệ gửi lại thay đổi.
 - Server **bỏ qua** mọi giá/tổng/phí từ client; tính lại từ DB.
 - Giỏ 15 dòng dùng 35 statements; failed batch được tính nguyên khối, thêm một diagnostic read thành 36. Trùng mã đơn thử tối đa ba batch, nhưng dừng `CONFLICT` 409 trước retry có thể vượt 40 statements (không có đơn/tồn được ghi bởi batch thất bại).
-- Khi có `TURNSTILE_SECRET`, verifier bắt buộc token hợp lệ và đúng action `checkout`/hostname; fail closed khi Siteverify lỗi. Mỗi lần gửi lại dùng token mới, không dùng UUID đơn làm idempotency của Siteverify. Token nằm ngoài fingerprint, nên thay token không đổi UUID đơn. Local không secret bỏ qua verifier; test provider bằng mock.
+- Khi có `TURNSTILE_SECRET`, verifier bắt buộc token hợp lệ và đúng action `checkout`/hostname; fail closed khi Siteverify lỗi. Mỗi lần gửi lại dùng token mới, không dùng UUID đơn làm idempotency của Siteverify. Token nằm ngoài fingerprint, nên thay token không đổi UUID đơn. Thiếu/rỗng/whitespace TURNSTILE_SECRET trả503 TURNSTILE_NOT_CONFIGURED trước D1/auth/Siteverify. Chỉ bypass khi cờ server TURNSTILE_ALLOW_LOCAL_BYPASS=true và hostname chính xác localhost/127.0.0.1/[::1]; mặc định local cũng đóng. Có secret thì luôn xác minh token, kể cả bật cờ. Không khai báo cờ trong Wrangler prod/staging, không nhận cờ từ body/header/client. Harness test cô lập tự bật rõ ràng; không đọc ambient .dev.vars. Bản sửa16/10 hiện local/chưa deploy.
 - Tối đa 3 đơn `PENDING`/SĐT **người đặt** chuẩn hóa. COUNT được kiểm ngay trong INSERT/batch để chặn concurrent creates; vượt ngưỡng kích hoạt NOT NULL sẵn có của sender_phone và rollback. Replay cùng key vẫn trả đơn đã lưu, không chiếm thêm hạn mức; statement count giữ 35/36.
 ```ts
 type OrderSummary = { order_number: string; status_code: string; payment_method: 'COD'; payment_status: 'UNPAID'|'PAID';
   subtotal; discount_total; delivery_fee; grand_total; placed_at: string }
 ```
-Lỗi có thể gặp: `VALIDATION_ERROR`, `OUT_OF_STOCK`, `VARIANT_UNAVAILABLE`, `NO_DELIVERY_ZONE`, `INVALID_DELIVERY_SLOT`, `CART_LIMIT`, `FORBIDDEN`, `CONFLICT`, `INTERNAL`.
+Lỗi có thể gặp: `RATE_LIMITED`, `PENDING_ORDER_LIMIT`, `VALIDATION_ERROR`, `OUT_OF_STOCK`, `VARIANT_UNAVAILABLE`, `NO_DELIVERY_ZONE`, `INVALID_DELIVERY_SLOT`, `CART_LIMIT`, `FORBIDDEN`, `CONFLICT`, `INTERNAL`.
 
 ### `POST /api/orders/lookup`
-Body `{ order_number, phone, turnstile_token? }` (khớp SĐT người đặt **hoặc** người nhận). Token bắt buộc khi có TURNSTILE_SECRET; action `lookup`, đúng hostname. `data: OrderDetail`. Sai mã hoặc sai SĐT đều trả cùng `NOT_FOUND` (không lộ mã nào tồn tại).
+Body `{ order_number, phone, turnstile_token? }` (khớp SĐT người đặt **hoặc** người nhận). Secret thiếu/rỗng trả503 TURNSTILE_NOT_CONFIGURED; token bắt buộc khi secret đã cấu hình; action `lookup`, đúng hostname. `data: OrderDetail`. Sai mã hoặc sai SĐT đều trả cùng `NOT_FOUND` (không lộ mã nào tồn tại).
 
 Body/schema không hợp lệ (ví dụ SĐT không chuẩn hóa được về 10 chữ số) trả `VALIDATION_ERROR` 400; mã hoặc SĐT hợp lệ về cấu trúc nhưng không khớp đơn trả cùng `NOT_FOUND` 404. Lookup dùng ba statements và không trả admin_note/stock_released/actor.
 
@@ -145,7 +149,7 @@ Body `{ phone }`. Khách chỉ hủy được khi `PENDING`. Cùng cơ chế ho�
 
 Mọi route dưới `/api/admin` và `/api/admin/*` (trừ đúng `POST /api/admin/login`) yêu cầu cookie hợp lệ, kể cả route lạ và logout. Request ghi (`POST/PATCH/PUT/DELETE`), bao gồm login/logout, phải có `Content-Type: application/json` (chấp nhận charset) và `Origin` bằng origin đầy đủ của URL request: scheme/host/port. Thiếu/sai Origin → `FORBIDDEN` 403; thiếu/sai Content-Type → `VALIDATION_ERROR` 400. Thiếu cookie được trả 401 trước validate Origin/body.
 
-Login băm SHA-256 hai giá trị và dùng Workers `crypto.subtle.timingSafeEqual`; không băm mật khẩu chậm. Cấu hình thiếu/trống, ADMIN_PASSWORD <24 ký tự, JWT_SECRET <32 ký tự sau trim hoặc hai secret trùng nhau → login `INVALID_CREDENTIALS` 401, không đặt cookie. Secret ngẫu nhiên thật do [NGƯỜI] đặt, không commit. Login giới hạn body 8192 byte và password 1–1024 ký tự, giữ nguyên password (không trim). Turnstile token bắt buộc khi có secret, action `admin_login`/đúng hostname, xác minh trước mật khẩu.
+Login băm SHA-256 hai giá trị và dùng Workers `crypto.subtle.timingSafeEqual`; không băm mật khẩu chậm. Sau khi qua cổng Turnstile, cấu hình thiếu/trống, ADMIN_PASSWORD <24 ký tự, JWT_SECRET <32 ký tự sau trim hoặc hai secret trùng nhau → login `INVALID_CREDENTIALS` 401, không đặt cookie. Secret ngẫu nhiên thật do [NGƯỜI] đặt, không commit. Login giới hạn body 8192 byte và password 1–1024 ký tự, giữ nguyên password (không trim). Thiếu secret trả503 trước kiểm mật khẩu (ngoại trừ controlled loopback test opt-in). Turnstile token bắt buộc khi có secret, action `admin_login`/đúng hostname, xác minh trước mật khẩu.
 
 Cookie `lunara_admin`: HttpOnly; SameSite=Strict; Path=/; Max-Age=43200; Secure với HTTPS (HTTP loopback local bỏ Secure). JWT HS256 chỉ chứa role ADMIN/iat/exp, hạn 12 giờ; middleware kiểm chữ ký, thuật toán, role và thời gian bắt buộc. JSON không trả JWT/password/secret; JWT nằm trong header Set-Cookie theo thiết kế. Logout đặt cookie rỗng/Max-Age=0; JWT đã sao chép vẫn có hiệu lực đến exp (MVP stateless; xoay JWT_SECRET vô hiệu hóa toàn bộ session).
 
@@ -179,7 +183,7 @@ Cookie `lunara_admin`: HttpOnly; SameSite=Strict; Path=/; Max-Age=43200; Secure 
 
 ### Máy trạng thái đơn
 
-Cron nội bộ đã được owner chốt: `PENDING_ORDER_TTL_HOURS=24`, `0 * * * *` (mỗi giờ). Mỗi lượt hủy toàn bộ đơn còn PENDING/stock_released=0 có placed_at quá 24 giờ; đúng mốc 24 giờ chờ lượt sau. Ba statements trong một D1 batch ghi history SYSTEM, hoàn tổng quantity theo variant còn tồn tại và chuyển CANCELLED/stock_released=1, rollback toàn bộ khi lỗi. Không sửa đơn đã xác nhận, không hoàn tồn lặp khi Cron chạy chồng. Đây là scheduled handler, không thêm public HTTP route/DDL. Cấu hình local chưa deploy.
+Cron nội bộ đã được owner chốt: `PENDING_ORDER_TTL_HOURS=24`, `0 * * * *` (mỗi giờ). Mỗi lượt hủy toàn bộ đơn còn PENDING/stock_released=0 có placed_at quá 24 giờ; đúng mốc 24 giờ chờ lượt sau. Ba statements trong một D1 batch ghi history SYSTEM, hoàn tổng quantity theo variant còn tồn tại và chuyển CANCELLED/stock_released=1, rollback toàn bộ khi lỗi. Không sửa đơn đã xác nhận, không hoàn tồn lặp khi Cron chạy chồng. Đây là scheduled handler, không thêm public HTTP route/DDL. Staging version16/10 có TTL 24h/scheduled handler; production chưa có. Lịch0 * * * * nằm trong Wrangler, chưa kiểm tick cloud thực chạy trong lượt chỉ đọc.
 
 | Từ | Được chuyển tới | Tác dụng phụ |
 | --- | --- | --- |
@@ -212,7 +216,9 @@ Cron nội bộ đã được owner chốt: `PENDING_ORDER_TTL_HOURS=24`, `0 * *
 
 Helper ngày/khung giờ Phase 2 đã được order service Phase 3 sử dụng; quote không kiểm ngày/slot vì body không có các trường này. Giả định config: STANDARD/EXPRESS/SAME_DAY có phụ phí 0/30000/50000; EXPRESS và SAME_DAY dùng cutoff 16:00. Mọi phương thức giao hôm nay, gồm STANDARD, yêu cầu ít nhất 120 phút đến giờ bắt đầu khung; đúng 120 phút được nhận. Sáu khung 2 giờ từ 08:00 đến 20:00. Ngày hợp lệ đến +30 ngày theo Asia/Ho_Chi_Minh, gồm kiểm tra ngày có thật trong lịch.
 
-## Admin image upload — local integration
+## Admin image upload — signed direct integration
+
+Có code và staging deployment/config/secret names; upload provider thật chưa nghiệm thu, production còn thiếu cấu hình. [Snapshot](../PROJECT_STATUS.md).
 
 POST /api/admin/uploads/sign dùng admin cookie, Origin cùng nguồn và JSON ≤1 KB. Input strict: mime (image/jpeg, image/png, image/webp), size (1..5242880). Output data: cloud_name/api_key/signature và params timestamp/public_id/asset_folder/upload_preset/overwrite=false/allowed_formats. Params do server quyết định; SHA-256, Cloudinary validity 1h. 503 CLOUDINARY_NOT_CONFIGURED nếu thiếu keys/config; 400 VALIDATION_ERROR nếu input sai; 401/403 theo middleware hiện có. Không ghi D1; browser upload trực tiếp Cloudinary rồi Save product qua hợp đồng image.url hiện có. Xem [Cloudinary](../CLOUDINARY.md).
 

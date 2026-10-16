@@ -1,5 +1,8 @@
 # Phase 4 — Admin: đăng nhập và API quản trị
 
+> Rà soát 16/10/2026: [hiện trạng chuẩn](../PROJECT_STATUS.md), [contract hiện tại](API_CONTRACT.md). Phase 0–5 DONE local, Phase 6 IN PROGRESS5/7. Local170 tests/215 source files/40 smoke; staging đã deploy bản mới13:31 ngày 16/10, production vẫn bản 15/10. Output/checklist ghi ngày cũ bên dưới là lịch sử, không phải trạng thái cloud hiện tại.
+
+
 B2/B3 sau nghiệm thu Phase 4 (15/10/2026, local/chưa deploy): login thêm Turnstile action/hostname và rate-limit binding, body limit 8192 byte để chứa token. Status API nhận restock boolean; IN_TRANSIT hủy cần lý do, mặc định giữ tồn đã tiêu thụ. Không đổi auth cookie, bảng hoặc dependency. [Contract hiện tại](API_CONTRACT.md) · [Cấu hình/evidence B2/B3](../BOT_PROTECTION.md). Mô tả/output tại mốc nghiệm thu dưới đây là lịch sử.
 
 **Mục tiêu:** chủ shop đăng nhập an toàn, quản lý đơn, sản phẩm/tồn kho, phí giao. Hợp đồng: [API_CONTRACT.md](API_CONTRACT.md) (mục Admin).
@@ -12,18 +15,18 @@ B2/B3 sau nghiệm thu Phase 4 (15/10/2026, local/chưa deploy): login thêm Tur
 
 Sizing pipeline giả định **10 ms CPU/request**; kiểm tra gói/runtime thực tế trước deploy. Thiết kế MVP tránh bcrypt/argon2, dùng **một tài khoản admin** với **mật khẩu dài ngẫu nhiên** trong secret. Workers hỗ trợ [WebCrypto timingSafeEqual](https://developers.cloudflare.com/workers/runtime-apis/web-crypto/#timingsafeequal); JWT dùng [Hono helper](https://hono.dev/docs/helpers/jwt) đã có trong dependency:
 
-1. `POST /api/admin/login { password }`: băm SHA-256 cả mật khẩu gửi lên và `env.ADMIN_PASSWORD` bằng `crypto.subtle.digest`, so sánh bằng `crypto.subtle.timingSafeEqual`.
+1. `POST /api/admin/login { password, turnstile_token? }`: băm SHA-256 cả mật khẩu gửi lên và `env.ADMIN_PASSWORD` bằng `crypto.subtle.digest`, so sánh bằng `crypto.subtle.timingSafeEqual`.
 2. Đúng → ký JWT HS256 bằng `env.JWT_SECRET` (`hono/jwt`): `{ role: 'ADMIN', iat, exp: +12h }`; đặt cookie `lunara_admin`: `HttpOnly`, `SameSite=Strict`, `Path=/`, `Max-Age=43200`, `Secure` khi chạy HTTPS (local HTTP `127.0.0.1` bỏ Secure).
 3. Middleware `requireAdmin` xác thực HS256/role ADMIN/iat/exp bắt buộc, hạn tối đa 12h cho `/api/admin` và mọi `/api/admin/*` (trừ đúng `POST /login`), kể cả unknown route/logout. Sai/hết hạn → `UNAUTHORIZED`; kiểm auth trước body/Origin.
-4. Request ghi, kể cả login/logout: bắt buộc `Content-Type: application/json` (chấp nhận charset) và header `Origin` bằng scheme/host/port của URL request. Thiếu/sai Origin → 403; thiếu/sai Content-Type → 400. Login body tối đa 4096 byte/password 1–1024 ký tự để giới hạn phần xử lý.
+4. Request ghi, kể cả login/logout: bắt buộc `Content-Type: application/json` (chấp nhận charset) và header `Origin` bằng scheme/host/port của URL request. Thiếu/sai Origin → 403; thiếu/sai Content-Type → 400. Login body hiện tối đa8192 byte để chứa token/password 1–1024 ký tự để giới hạn phần xử lý.
 5. Không dùng bảng `users` ở MVP; lịch sử trạng thái ghi `actor_label = 'ADMIN'`, `actor_id = NULL`.
 
 **Yêu cầu bảo mật:**
 - [NGƯỜI] Mật khẩu admin ≥ 24 ký tự ngẫu nhiên (`openssl rand -base64 24`); `JWT_SECRET` ≥ 32 ký tự ngẫu nhiên, khác mật khẩu. Vì không có băm chậm nên **độ dài/ngẫu nhiên của mật khẩu là lớp bảo vệ chính**.
-- Hạn chế dò mật khẩu: bật Turnstile cho form đăng nhập nếu kịp; nếu có tên miền riêng, cân nhắc rule rate limit ở dashboard Cloudflare (kiểm tra gói Free có hỗ trợ không). Không thêm bảng đếm lần đăng nhập (tốn lượt ghi D1).
+- Hạn chế dò mật khẩu: widget/verifier Turnstile và rate-limit binding đã có; cần đúng Site/Secret key và deployment từng môi trường; nếu có tên miền riêng, cân nhắc rule rate limit ở dashboard Cloudflare (kiểm tra gói Free có hỗ trợ không). Không thêm bảng đếm lần đăng nhập (tốn lượt ghi D1).
 - Không log mật khẩu, JWT hay cookie.
 - `ADMIN_PASSWORD`/`JWT_SECRET` thiếu/trống, ngắn hơn 24/32 ký tự sau trim hoặc trùng nhau → từ chối đăng nhập 401 `INVALID_CREDENTIALS`, không set cookie; đã test fail closed. Giá trị demo local không dùng production. Password gửi vào được giữ nguyên, không trim.
-- JSON response không chứa credentials/JWT/secret; JWT được trả đúng qua header HttpOnly `Set-Cookie`. Log unexpected error chỉ có request_id/error_name, không dump error message/stack/cookie/request. Cookie logout được xóa; JWT đã sao chép vẫn có hiệu lực tới exp vì MVP stateless, xoay JWT_SECRET vô hiệu hóa toàn bộ session.
+- JSON response không chứa credentials/JWT/secret; JWT được trả đúng qua header HttpOnly `Set-Cookie`. Log unexpected error có request_id/error_name và chẩn đoán D1/SQLite/constraint/target allowlist khi nhận diện được, không dump error message/stack/cookie/request. Cookie logout được xóa; JWT đã sao chép vẫn có hiệu lực tới exp vì MVP stateless, xoay JWT_SECRET vô hiệu hóa toàn bộ session.
 - Khi cần nhiều tài khoản/vai trò: chuyển sang Better Auth hoặc dịch vụ ngoài (xem [BACKLOG](BACKLOG.md)); đừng tự viết băm mật khẩu trong Worker Free.
 
 ## Việc cần làm
@@ -96,12 +99,12 @@ Synced 12 changed files; Added: 12
 Final sync: Modified: 2; index up to date; files=234
 ```
 
-40 nhóm smoke =16 catalog +10 order +1 đối chiếu tồn Phase 3 +12 admin +1 đối chiếu snapshot persisted categories/products/delivery. Smoke đã pass trên dev5173 và build preview4173; catalog read-only trên URL đó, mọi ca ghi chạy HTTP loopback riêng với D1 thật `persist:false`, `remoteBindings:false`, Wrangler chỉ nạp `.dev.vars.example` và app dùng credentials synthetic riêng. Không reset hoặc ghi seed persisted, không truy cập remote. Tests Node dùng shim timingSafeEqual để mô phỏng extension WebCrypto Workers; D1 tests vẫn chạy binding workerd thật.
+40 nhóm smoke =16 catalog +10 order +1 đối chiếu tồn Phase 3 +12 admin +1 đối chiếu snapshot persisted categories/products/delivery. Smoke đã pass trên dev5173 và build preview 4173; catalog read-only trên URL đó, mọi ca ghi chạy HTTP loopback riêng với D1 thật `persist:false`, `remoteBindings:false`, Wrangler chỉ nạp `.dev.vars.example` và app dùng credentials synthetic riêng. Không reset hoặc ghi seed persisted, không truy cập remote. Tests Node dùng shim timingSafeEqual để mô phỏng extension WebCrypto Workers; D1 tests vẫn chạy binding workerd thật.
 
 | Bằng chứng Phase 4 | Output/đối chiếu |
 | --- | --- |
 | Auth/CSRF/JWT | wrong/missing/blank/short/equal →401; no cookie tất cả routes →401; expired/tampered/wrong role →401; Origin sai →403; thiếu/sai JSON Content-Type →400; HttpOnly/Strict/Path/12h; HTTPS Secure |
-| Native Worker auth riêng | Vite workerd local5173: no-cookie/wrong401; login/me/logout200; cross-origin403; SHA-256/timingSafeEqual native; D1 writes=0; `.dev.vars` chỉ đối chiếu demo `.example`, không in giá trị/cookie/JWT |
+| Native Worker auth riêng | Vite workerd local 5173: no-cookie/wrong401; login/me/logout200; cross-origin403; SHA-256/timingSafeEqual native; D1 writes=0; `.dev.vars` chỉ đối chiếu demo `.example`, không in giá trị/cookie/JWT |
 | Summary/list/detail/note | summary đúng3 aggregate statements; ngày VN gồm ca UTC hôm qua; list filtered total/pagination; `%`, `_`, `\` literal; ghi chú nội bộ không có trong public lookup |
 | Status/hủy | PENDING→DELIVERED409; full flow PAID/có paid_at+delivered_at UTC; actor_label ADMIN/actor_id NULL; hủy sequential/race200,409, hoàn đúng1 lần/history1 dòng |
 | Tồn kho | delta +5/−2 đúng; delta ưu tiên absolute; âm400 và không đổi tồn; đồng thời delta +4/order −1 →+3; compare_at_price<price400; D1 thật: 20 − 2 + 5 =23 |
@@ -109,7 +112,7 @@ Final sync: Modified: 2; index up to date; files=234
 | Delivery | phí admin20000→23000, quote kế tiếp23000; default zone mới17000; deactivate→NO_DELIVERY_ZONE, dòng vẫn còn |
 | Privacy/integrity | mọi JSON smoke quét credentials/JWT/secret/SQL/stack; FK sạch; không tồn âm; persisted snapshot không đổi |
 
-Đây là nghiệm thu backend local tại mốc Phase 4; admin UI đã được nối và nghiệm thu riêng trong Phase 5 sau đó. Rate limit/Turnstile login và deployment/nghiệm thu remote vẫn chưa có. Sau nghiệm thu backend, chủ dự án đã cấu hình secret local riêng và đã kiểm điều kiện độ dài/khác nhau; tests/UI acceptance dùng synthetic secrets cô lập, không lưu secret thật trong tài liệu/Git. Không băm mật khẩu nặng; 10ms CPU là giới hạn thiết kế, chưa đo/khẳng định CPU trên cloud. Secrets thật do [NGƯỜI] quản lý; tests/smoke vẫn dùng demo riêng và không cần secret thật để đạt các tiêu chí local trên.
+Đây là nghiệm thu backend local tại mốc Phase 4; admin UI đã được nối và nghiệm thu riêng trong Phase 5 sau đó. Tại mốc nghiệm thu backend chưa có rate-limit/widget login; code hiện đã có, staging deploy 16/10; production bản cũ và Turnstile secret thật còn chờ. Sau nghiệm thu backend, chủ dự án đã cấu hình secret local riêng và đã kiểm điều kiện độ dài/khác nhau; tests/UI acceptance dùng synthetic secrets cô lập, không lưu secret thật trong tài liệu/Git. Không băm mật khẩu nặng; 10ms CPU là giới hạn thiết kế, chưa đo/khẳng định CPU trên cloud. Secrets thật do [NGƯỜI] quản lý; tests/smoke vẫn dùng demo riêng và không cần secret thật để đạt các tiêu chí local trên.
 
 ### Chỉnh storefront trước khi kết Phase 4 — 15/10/2026
 
@@ -117,4 +120,4 @@ Final sync: Modified: 2; index up to date; files=234
 - Footer tên cửa hàng/địa chỉ/map URL chuyển sang `src/shared/i18n/locales/en/common.json` và `vi/common.json`; config TS chỉ giữ ID/thứ tự/khóa locale. English fallback và ba URL bản đồ giữ theo yêu cầu chủ dự án.
 - Typecheck/architecture/build pass; suite 125/125 pass. UI preview mặc định 15 routes/0 exceptions; kiểm riêng icon tự vẽ, hover/focus/click/góc phải/popup và nội dung JSON EN/VI ở 320/390/768/1024/1440px; đo chiều rộng viền giữa transition mở và đóng, xác nhận 60→giữa→208px, cả normal và reduced motion (20 trường hợp). Evidence screenshot giữ local trong `.security-review/`.
 - Hai test D1 Phase 2/3 được giới hạn `envFiles` về `.dev.vars.example` để không nạp ambient secret thật; focused 10/10 pass, giữ `persist:false`/`remoteBindings:false`.
-- Trạng thái tại mốc chỉnh storefront này: Phase 4 DONE local 9/9; Phase 5 khi đó PARTIAL, Phase 6 PLANNED. Hiện tại Phase 5 đã DONE local theo nghiệm thu riêng ở [PHASE_5_FRONTEND.md](PHASE_5_FRONTEND.md); Phase 6 vẫn PLANNED.
+- Trạng thái tại mốc chỉnh storefront này: Phase 4 DONE local 9/9; Phase 5 khi đó PARTIAL, Phase 6 IN PROGRESS5/7. Hiện tại Phase 5 đã DONE local theo nghiệm thu riêng ở [PHASE_5_FRONTEND.md](PHASE_5_FRONTEND.md); Phase 6 hiện IN PROGRESS5/7; xem PROJECT_STATUS.
