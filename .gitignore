@@ -484,3 +484,10 @@
 !/.agents/skills/lunara-flower-shop/agents/
 !/.agents/skills/lunara-flower-shop/SKILL.md
 !/.agents/skills/lunara-flower-shop/agents/openai.yaml
+
+# Reviewed generated hero photography; responsive WebP derivatives only.
+!/src/assets/
+!/src/assets/hero/
+!/src/assets/hero/lunara-bouquet-640.webp
+!/src/assets/hero/lunara-bouquet-960.webp
+!/src/assets/hero/lunara-bouquet-1440.webp

@@ -1,6 +1,9 @@
 import { useLocale } from "@/shared/i18n";
 import { Link } from "react-router";
 import { ArrowRight } from "lucide-react";
+import bouquetSmall from '@/assets/hero/lunara-bouquet-640.webp';
+import bouquetMedium from '@/assets/hero/lunara-bouquet-960.webp';
+import bouquetLarge from '@/assets/hero/lunara-bouquet-1440.webp';
 export function Hero() {
   const { t } = useLocale("landing");
   return <section data-home-hero className="overflow-hidden rounded-[28px] border border-lunara-border bg-lunara-cream">
@@ -15,7 +18,24 @@ export function Hero() {
           {t("Shop Flowers")}<ArrowRight size={16} aria-hidden="true" />
         </Link></div>
       </div>
-      <div data-editorial-image="hero" aria-hidden="true" className="min-h-48 bg-lunara-border/25 sm:min-h-64 lg:col-span-7 lg:min-h-full" />
+      <div data-hero-visual aria-hidden="true" className="relative aspect-[4/3] min-w-0 overflow-hidden bg-lunara-cream lg:col-span-7 lg:aspect-auto">
+        <picture className="absolute inset-0 block">
+          <img
+            data-hero-image
+            src={bouquetMedium}
+            srcSet={`${bouquetSmall} 640w, ${bouquetMedium} 960w, ${bouquetLarge} 1440w`}
+            sizes="(min-width: 1400px) 770px, (min-width: 1024px) 55vw, (min-width: 640px) calc(100vw - 48px), calc(100vw - 32px)"
+            width={1440}
+            height={1080}
+            alt=""
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
+            className="h-full w-full object-cover object-[62%_45%] lg:object-[58%_42%]"
+          />
+        </picture>
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-lunara-cream to-transparent lg:inset-y-0 lg:right-auto lg:h-full lg:w-32 lg:bg-gradient-to-r" />
+      </div>
     </div>
   </section>;
 }
