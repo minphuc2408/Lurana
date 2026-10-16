@@ -134,3 +134,5 @@ Tất cả kịch bản sau pass trên bản **đã deploy**:
 10. Không còn ký hiệu ₱ hay dữ liệu fixture ở các luồng trên.
 
 M1–M9 (15/10/2026) đã sửa local, chưa deploy: mọi đơn hôm nay chuẩn bị ≥120 phút; low-stock chỉ hàng đang bán; CSP/static headers; browser locale và metadata/robots/sitemap/OG; log D1 theo allowlist, observability 10%; summary 30 ngày, tra đơn mặc định90/tối đa366 ngày với index sẵn có; URL ảnh HTTPS Cloudinary/Unsplash. Public Turnstile key owner đã cấu hình .env.production; secret/hostname/deploy còn chờ owner. Không thêm dependency/DDL, Phase 6 giữ 5/7. 166/166 tests, smoke 40/40 và preview CSP/SDK test-key PASS; [chi tiết](../HARDENING.md).
+
+Bổ sung owner-requested16/10: ảnh danh mục dùng migration0002_category_images.sql sau base0001, đã áp local/staging; không phải deferred/0002_custom_requests.sql.4 URL image_url được UPDATE riêng, không full seed.172 tests/215 files/smoke40 hiện tại;Phase6 vẫn5/7,production chưa migrate. [Runbook](../CATEGORY_IMAGES.md).

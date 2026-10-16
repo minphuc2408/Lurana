@@ -63,3 +63,5 @@ Unit/integration kiểm cả3route, secret undefined/rỗng/whitespace, remote c
 Đây là hai bộ policy có phạm vi khác nhau. API trả JSON, không suy ra thiếu secureHeaders chỉ vì không có CSP của HTML. _headers không áp vào phản hồi do Worker tạo; nếu bổ sung HTML/SSR trong Worker phải đặt header trực tiếp trên Response. [Cloudflare Static Assets headers](https://developers.cloudflare.com/workers/static-assets/headers/).
 
 Production cần deploy static headers mới. Lượt này không thay deployment hoặc tuyên bố headers đã được sửa trên production. Staging private routes có X-Robots-Tag lặp noindex do các rule chồng nhau; không thay đổi ý nghĩa noindex, chưa sửa ngoài phạm vi.
+
+Cập nhật deploy16/10:owner đã cho deploy staging version `75fcbb54-5528-4cc1-b101-22fdc7a91a40` cùng UI/ảnh category,bao gồm Turnstile fail-closed.TURNSTILE_SECRET vẫn thiếu;live login/lookup503TURNSTILE_NOT_CONFIGURED đã kiểm bằng inputsynthetic.Không đổi/bypasssecrets,khôngđặtđơn;production giữ bảncũ.[Hiện trạng](PROJECT_STATUS.md),[scope ảnh](CATEGORY_IMAGES.md).

@@ -44,3 +44,5 @@ Nguồn Cloudflare được kiểm ngày 15/10/2026: [Turnstile client](https://
 
 
 Owner chốt chính sách Cron 24 giờ/mỗi giờ (15/10/2026): production/staging đã khai báo `PENDING_ORDER_TTL_HOURS="24"` và `0 * * * *` trong Wrangler, chưa deploy. Scheduled handler chuyển sang batch 3 statements xử lý toàn bộ PENDING quá hạn, hoàn tồn đúng một lần và ghi SYSTEM; xác nhận/hủy admin được D1 tuần tự hóa với batch. Kiểm local hiện tại **160/160 tests**, typecheck/architecture/build PASS, **40/40 smoke**, persisted D1 giữ nguyên. Ca D1 mới kiểm nhiều đơn/15 dòng, đúng mốc 24h, timestamp ISO/SQLite, mọi trạng thái đã xác nhận, Cron chạy chồng, xác nhận trước batch và rollback lịch sử/tồn/trạng thái.
+
+Cập nhật deploy16/10:owner đã cho deploy staging version `75fcbb54-5528-4cc1-b101-22fdc7a91a40` cùng UI/ảnh category,bao gồm Turnstile fail-closed.TURNSTILE_SECRET vẫn thiếu;live login/lookup503TURNSTILE_NOT_CONFIGURED đã kiểm bằng inputsynthetic.Không đổi/bypasssecrets,khôngđặtđơn;production giữ bảncũ.[Hiện trạng](PROJECT_STATUS.md),[scope ảnh](CATEGORY_IMAGES.md).

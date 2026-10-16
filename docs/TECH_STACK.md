@@ -11,9 +11,9 @@ Giữ phiên bản trong package.json/package-lock.json, cài bằng `npm ci`; k
 | Frontend | React/React DOM 18.3.1, React Router 7.18.4, TypeScript 5.7.3, Vite 6.4.4, Tailwind 4.1.12, React plugin 4.7.0 |
 | Backend | Hono 4.13.13, Cloudflare Workers, @cloudflare/vite-plugin 1.63.2, Wrangler 4.150.0 |
 | Validation | Zod 4.6.7; root `shared/` chứa API schemas/constants, frontend bật jitless trước load schemas để chạy dưới CSP |
-| Database | D1/SQLite, binding DB; 10 bảng, `migrations/0001_mvp.sql` là canonical duy nhất; custom_requests deferred |
+| Database | D1/SQLite, binding DB; 10 bảng, `migrations/0001_mvp.sql` base bất biến + `0002_category_images.sql` additive cho ảnh category; custom_requests deferred |
 | i18n | i18next/react-i18next, `src/shared/i18n/`; preference → browser EN/VI → English fallback; VND/Asia/Ho_Chi_Minh không đổi theo locale |
-| UI | cream/rose, font EN Cormorant Garamond/Jost, VI Lora/Be Vietnam Pro; Button/Input/Dialog và Lucide |
+| UI | cream/rose, font EN Fraunces 500/500 Italic (optical sizing auto) + Inter, VI Lora/Be Vietnam Pro; Button/Input/Dialog và Lucide |
 | Media | Cloudinary signed direct upload, cookie admin + same-origin JSON, SHA-256 params server-owned; browser upload rồi Save image.url |
 | Auth | Một admin từ secret, SHA-256/timingSafeEqual, hono/jwt HS256 cookie HttpOnly/Strict/12h; Secure trên HTTPS; không credentials/JWT trong browser storage |
 | Chống bot | Turnstile fail-closed checkout/lookup/admin-login; thiếu secret503, controlled loopback opt-in only; kiểm action/hostname; RateLimit bindings riêng prod/staging; cap 3 PENDING/SĐT trong INSERT atomic |
@@ -58,3 +58,11 @@ Workers Free tham chiếu100.000 request/ngày,10ms CPU/request; D1 50 queries/i
 Dữ liệu seed, delivery surcharges0/30.000/50.000, cutoff16:00, preparation120 phút/slots08:00–20:00 vẫn cần owner chốt cho mở bán. Không thêm DDL/dependency/provider ngoài yêu cầu.
 
 [Guide](../PROJECT_GUIDE.md) · [Database](DATABASE_DESIGN.md) · [Entities](FRONTEND_ENTITIES.md) · [API](pipeline/API_CONTRACT.md) · [Operations](OPERATIONS.md) · [Hardening](HARDENING.md).
+
+UI Home local16/10 tham chiếu cấu trúc Stitch 14566722138013174841; dùng React/Tailwind hiện có, palette brand.css, chung ProductGrid/ProductCard với Shop. Ảnh trang trí trống; ảnh/mô tả sản phẩm từ D1. Header dùng React Router Form GET; useProducts nhận q/category từ URL. Không thêm UI stack/dependency.
+
+Hero asset local16/10: import WebP tĩnh từ src/assets/hero (640/960/1440), Vite content hash, srcset/sizes và fetchPriority high; tsconfig frontend nạp vite/client để khai báo module ảnh. Không thêm dependency; cwebp có sẵn chỉ dùng để tạo derivative, build không yêu cầu cwebp. Ba file ảnh có allowlist chính xác. Hero dùng ảnh AI được chủ shop chấp thuận, category/trang trí khác giữ trống.
+
+Ảnh category: public WebP256px với URL revisioned lưu D1 categories.image_url, GET categories trả nullable; không Cloudinary key/dependency mới. Test/harness SQLite/workerd áp cả migration0001+0002. Local172 tests,architecture215,db:verify13/13,smoke40 PASS; ảnh256px tải thật ở10 case EN/VI/5viewport. [Runbook](CATEGORY_IMAGES.md).
+
+Staging đã deploy version `75fcbb54-5528-4cc1-b101-22fdc7a91a40`;APIcategory+ảnh publiclive và browser10casePASS.Production chưa migrate0002 hoặc deploy lần này;không thêm dependency.

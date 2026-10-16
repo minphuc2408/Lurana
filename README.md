@@ -19,7 +19,7 @@ Footer: cấu hình tên cửa hàng, địa chỉ và link bản đồ trong `s
 
 ## Hiện trạng — 16/10/2026
 
-Phase 0–5 DONE local; Phase 6 IN PROGRESS (5/7). Code tới `1fecd26` đã push. Local: **170/170 tests, architecture 215, smoke 40/40, typecheck/build/dry-run prod và staging PASS**. Snapshot cloud chỉ đọc16/10: production vẫn bản 15/10; staging đã deploy 13:31 với CSP/SEO, đúng key staging, RateLimit/TTL 24h và scheduled handler. Cả hai chưa có TURNSTILE_SECRET; upload thật/Cron thực chạy chưa được nghiệm thu. Staging hiện4 categories/1 sản phẩm active/0 tỉnh giao. [Trạng thái và giới hạn chi tiết](docs/PROJECT_STATUS.md).
+Phase 0–5 DONE local; Phase 6 IN PROGRESS (5/7). Các thay đổi mới được chia thành commit typography, bố cục/card, hero, catalog/DB và tài liệu; xem `git log` và trạng thái chi tiết bên dưới. Local: **172/172 tests, architecture 215, smoke 40/40, typecheck/build và staging dry-run PASS**. Production giữ bản15/10. Staging đã deploy `75fcbb54` ngày16/10 với layout/font/hero,4ảnh category từ DB,CSP/noindex,key staging,RateLimit/TTL24h và scheduled handler. Migration0002 chỉ áp local/staging. Cả hai chưa có TURNSTILE_SECRET;staging giữ fail-closed theo owner,login/lookup trả503; upload thật/Cron thực chạy chưa được nghiệm thu. Staging hiện4 categories/1 sản phẩm active/0 tỉnh giao. [Trạng thái và giới hạn chi tiết](docs/PROJECT_STATUS.md).
 
 ## Chạy local
 
@@ -133,3 +133,13 @@ Figma gốc: [Flower Shop Website Design](https://www.figma.com/design/0YRitOqUy
 
 
 Rà soát tài liệu16/10/2026: [kết quả và phạm vi](docs/DOCUMENTATION_AUDIT.md). Snapshot remote là kết quả chỉ đọc; lượt rà tài liệu không deploy hoặc ghi dữ liệu.
+
+Typography EN thử local (16/10/2026): Fraunces 500/500 Italic cho heading/logo, optical sizing tự động (opsz 9–144); Inter cho body/UI. Bỏ Caveat, nhãn hero dùng body. VI giữ Lora/Be Vietnam Pro. Google Fonts dùng preconnect + display=swap; chưa deploy.
+
+Bố cục Home theo [Stitch](https://stitch.withgoogle.com/projects/14566722138013174841) được triển khai local16/10: hero hai cột, category DB, dải dịch vụ COD, grid/card dùng chung Shop; giữ màu Lunara và Fraunces/Inter (VI Lora/Be Vietnam Pro). Ảnh trang trí để trống chờ chủ shop cung cấp, ảnh sản phẩm giữ nguồn DB. Header search/category nối Shop qua q/category; Home có chọn size/thêm giỏ thật. Không đổi API/DDL/dependency hoặc deploy.
+
+Hero responsive local16/10: ảnh bó hoa mới tạo bằng imagegen theo ảnh tham chiếu và chấp thuận của chủ shop; lưu src/assets/hero/lunara-bouquet-{640,960,1440}.webp (~47/83/150 KB), import Vite thay vì public, srcset/sizes + high priority. Desktop ảnh phải/gradient ngang; dưới1024px ảnh dưới chữ, khung4:3/gradient trên. Ảnh category/trang trí khác vẫn trống, ảnh DB giữ nguyên. [Nguồn/prompt](ATTRIBUTIONS.md). Chưa deploy.
+
+Ảnh category16/10:4 thumbnail AI WebP256px đã tạo, image_url đã lưu local/staging qua migration0002 + data UPDATE riêng. UI đọc URL từ DB, preview http://127.0.0.1:4182/. Production chưa migrate; owner đã cho deploy staging với Turnstile fail-closed. [Runbook/kết quả](docs/CATEGORY_IMAGES.md).
+
+Ảnh đã live trên [staging](https://lunara-staging.minphuc2408.workers.dev),version `75fcbb54-5528-4cc1-b101-22fdc7a91a40`:API4URL,4WebPkhớpSHA256,browserEN/VI10casePASS,0exception.172tests/schema13/13/smoke40PASS. [Nguồn và prompt](ATTRIBUTIONS.md).
