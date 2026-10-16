@@ -2,7 +2,7 @@ import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import app from '../worker/index.ts';
 import { createTestDb } from './helpers/worker.mjs';
-import { getProduct, getProducts, loadCatalog, normalizeProduct, selectProducts } from '../src/features/shop/shop.service.ts';
+import { getProduct, getProducts, loadCatalog, loadProductDetail, normalizeProduct, selectProducts } from '../src/features/shop/shop.service.ts';
 import { cartReducer, readCart, saveCart, CART_STORAGE_KEY } from '../src/features/cart/cart.service.ts';
 import { formatVND } from '../src/shared/lib/format.ts';
 import { apiRequest, ApiError } from '../src/shared/api/client.ts';
@@ -63,4 +63,14 @@ test('API wrapper preserves error codes and rejects malformed responses/network 
 });
 test('VND remains VND when switching English/Vietnamese and has no decimal prices', () => {
  assert.equal(formatVND(450000,'vi').replace(/\s/g,' '),'450.000 ₫');assert.match(formatVND(450000,'en'),/450,000/);assert.match(formatVND(450000,'en'),/₫/);
+});
+
+
+test('product-detail client reads the live slug endpoint, gallery and variants; missing products stay 404', async t => {
+ t.mock.method(globalThis, 'fetch', (url, options) => app.request(String(url), options, { DB: fixture.db }));
+ const product = await loadProductDetail('blush-peony-bouquet');
+ assert.equal(product.id, 1); assert.equal(product.images.length, 1);
+ assert.deepEqual(product.variants.map(variant => variant.size_code), ['S', 'M', 'L']);
+ assert.equal(product.variants.find(variant => variant.size_code === 'M').price, 650000);
+ await assert.rejects(() => loadProductDetail('does-not-exist'), error => error instanceof ApiError && error.status === 404 && error.code === 'NOT_FOUND');
 });

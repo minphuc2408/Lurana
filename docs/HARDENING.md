@@ -65,3 +65,6 @@ Unit/integration kiểm cả3route, secret undefined/rỗng/whitespace, remote c
 Production cần deploy static headers mới. Lượt này không thay deployment hoặc tuyên bố headers đã được sửa trên production. Staging private routes có X-Robots-Tag lặp noindex do các rule chồng nhau; không thay đổi ý nghĩa noindex, chưa sửa ngoài phạm vi.
 
 Cập nhật deploy16/10:owner đã cho deploy staging version `75fcbb54-5528-4cc1-b101-22fdc7a91a40` cùng UI/ảnh category,bao gồm Turnstile fail-closed.TURNSTILE_SECRET vẫn thiếu;live login/lookup503TURNSTILE_NOT_CONFIGURED đã kiểm bằng inputsynthetic.Không đổi/bypasssecrets,khôngđặtđơn;production giữ bảncũ.[Hiện trạng](PROJECT_STATUS.md),[scope ảnh](CATEGORY_IMAGES.md).
+
+
+16/10 local: sampling0.1 được khai báo rõ ở observability/logs/traces cho prod+staging để tránh diff defaults1 trong Wrangler4.150.0; invocation logs vẫn false, traces không bật. Staging guard kiểmsource/generated. Không deploy/cloud verification; [chẩn đoán và xử lý prompt](STAGING.md).

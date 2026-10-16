@@ -1,20 +1,22 @@
 # Database MVP — Cloudflare D1
 
+> Hiện hành 16/10/2026 — Đã nhập danh mục D1 Hà Nội 1 tỉnh/126 phường vào local + staging bằng migration0003 (12 bảng); không nhập TP.HCM. Admin chọn/tìm tỉnh-phường, nhập phí; checkout chỉ hiện zone active thuộc danh mục, server không fallback tỉnh. Checkout gộp, thiệp NONE, terms nội bộ và bank rollback COD được giữ. Staging đã deploy version 27c3d24e-f3df-42e1-8d18-8b8299427062; zones0 nên checkout chưa có nơi giao cho tới khi admin cấu hình phí. Local190tests/225source/typecheck/build, schema13/13, smoke40/40, browser admin7nhóm PASS. Owner đã yêu cầu commit/push sau deploy; production không đổi, Phase6 giữ5/7. [Địa chỉ](DELIVERY_ADDRESS.md), [Checkout](CHECKOUT_UI.md). Các mốc dưới đây là lịch sử khi khác hiện trạng này.
+
 B2/B3 trong source hiện tại (staging deploy16/10, production còn bản cũ): **không đổi DDL/migration**. COUNT tối đa 3 PENDING/SĐT người đặt chuẩn hóa nằm trong INSERT/batch; nhánh vượt hạn mức kích hoạt NOT NULL sẵn có của sender_phone để rollback, không tăng số statements. `stock_released` giữ đúng nghĩa: true khi đã cộng lại tồn, false cả khi CANCELLED không hoàn tồn; trạng thái terminal ngăn hủy/hoàn lặp. Cron 24 giờ/mỗi giờ dùng một D1 batch nguyên tử gồm 3 statements: ghi SYSTEM history, cộng SUM quantity của các variant còn tồn tại, rồi chuyển CANCELLED/stock_released=1. Cả ba lọc status PENDING, stock_released=0 và ngày đặt quá hạn ngay trong giao dịch, tránh hoàn tồn lặp hoặc hủy đơn đã xác nhận. RateLimit bindings không tạo bảng đếm D1. [Chi tiết](BOT_PROTECTION.md).
 
 **Cập nhật:** 16/10/2026 · **Runtime:** D1/SQLite · **Phase 0–3:** DONE local · **Phase 4:** DONE local (9/9 tiêu chí) · **Phase 5:** DONE local (6/6 tiêu chí) · **Phase 6:** IN PROGRESS (5/7 tiêu chí; deploy/API live + browser/cleanup PASS, còn dữ liệu thật và xác nhận quota). [Bằng chứng Phase 1](pipeline/PHASE_1_DATABASE.md) · [Phase 2](pipeline/PHASE_2_API_CATALOG.md) · [Phase 3](pipeline/PHASE_3_CHECKOUT_ORDERS.md) · [Phase 4](pipeline/PHASE_4_ADMIN.md) · [Phase 5](pipeline/PHASE_5_FRONTEND.md) · [Hiện trạng](PROJECT_STATUS.md) · [Stack](TECH_STACK.md) · [Entity frontend](FRONTEND_ENTITIES.md).
 
 | Phạm vi | Trạng thái |
 | --- | --- |
-| Schema chuẩn | [`migrations/0001_mvp.sql`](../migrations/0001_mvp.sql) là base bất biến; [`0002_category_images.sql`](../migrations/0002_category_images.sql) thêm categories.image_url, vẫn10 bảng |
-| D1 local | Migration `0001_mvp.sql` + `0002_category_images.sql`; seed và `npm run db:verify`; output nghiệm thu ở [Phase 1](pipeline/PHASE_1_DATABASE.md) |
+| Schema chuẩn | [`migrations/0001_mvp.sql`](../migrations/0001_mvp.sql) là base bất biến; [`0002_category_images.sql`](../migrations/0002_category_images.sql) thêm categories.image_url; [0003_hanoi_administrative_areas.sql](../migrations/0003_hanoi_administrative_areas.sql) thêm2bảng, hiện12bảng local/staging |
+| D1 local | Migration0001 + 0002 + 0003, Hà Nội1/126; seed và `npm run db:verify`; output nghiệm thu ở [Phase 1](pipeline/PHASE_1_DATABASE.md) |
 | API D1 local | Catalog/admin products/summary ≤3 statements; quote read-only; order API trừ/hoàn tồn, lookup; admin orders/products/variants/zones đã có. Giỏ 15 dòng 35/36 statements, retry guard ≤40; test ghi dùng DB cô lập, DDL Phase 1 giữ nguyên |
-| D1 remote | Production giữ0001;local/staging đã áp0001+0002 và4URL category theo owner16/10;DB riêng.[Hiện trạng](PROJECT_STATUS.md) |
+| D1 remote | Production giữ0001;local/staging đã áp0001+0002+0003,4URL category và danh mục Hà Nội126 theo owner16/10;DB riêng.[Hiện trạng](PROJECT_STATUS.md) |
 | Frontend | Catalog/cart/delivery/quote VND/localStorage được giữ; checkout COD/xác nhận/tra đơn và cookie admin/đơn/sản phẩm/tồn/phí giao/summary đã nối API Phase 3–4, Phase 5 DONE local; source deferred giữ và ẩn |
 
 ## Một nguồn schema chuẩn
 
-[`migrations/0001_mvp.sql`](../migrations/0001_mvp.sql) là **base DDL đã áp, giữ nguyên**; schema hiện tại là base cộng [`0002_category_images.sql`](../migrations/0002_category_images.sql). [`sql/MVP_SCHEMA.sql`](sql/MVP_SCHEMA.sql) và [`pipeline/MVP_SCHEMA.sql`](pipeline/MVP_SCHEMA.sql) chỉ chứa chú thích dẫn về migration, không giữ bản DDL sao chép. Khi cần xem hoặc kiểm chứng schema, đọc chuỗi migration này.
+[`migrations/0001_mvp.sql`](../migrations/0001_mvp.sql) là **base DDL đã áp, giữ nguyên**; schema local/staging hiện tại là base cộng [`0002_category_images.sql`](../migrations/0002_category_images.sql) và [`0003_hanoi_administrative_areas.sql`](../migrations/0003_hanoi_administrative_areas.sql).0003 theo yêu cầu owner nhập danh mục Hà Nội vào2bảng riêng, không sửa dữ liệu nghiệp vụ. [`sql/MVP_SCHEMA.sql`](sql/MVP_SCHEMA.sql) và [`pipeline/MVP_SCHEMA.sql`](pipeline/MVP_SCHEMA.sql) chỉ chứa chú thích dẫn về migration, không giữ bản DDL sao chép. Khi cần xem hoặc kiểm chứng schema, đọc chuỗi migration này.
 
 Canonical được chốt **trước migration**: chọn nguyên DDL v2 phù hợp 10 bảng và [seed dev](sql/MVP_SEED_DEV.sql); không thêm chức năng ngoài Phase 1. Sau khi chốt, không sửa base ngoài lỗi thực tế đã chứng minh; tính năng schema mới cần yêu cầu owner và migration tiếp theo. Owner đã yêu cầu ảnh category16/10, là lý do thêm0002 chứ không sửa0001. Khi migration đã áp lên remote, mọi thay đổi phải thành migration tiếp theo, không sửa lịch sử.
 
@@ -41,9 +43,9 @@ Seed local gồm **4 categories, 8 products, 24 variants, 8 images, 4 delivery z
 | Index | Có index lặp khóa unique | Bỏ `categories.slug`, `products.slug`, `orders.order_number` và `product_variants.product_id`; thêm `orders.placed_at`; timeline dùng `(order_id, occurred_at)` | Unique index đã phục vụ ba khóa đơn và tiền tố `(product_id, size_code)`; index mới phục vụ sắp xếp đơn/timeline |
 | Foreign keys | `PRAGMA foreign_keys = ON` trong draft | Không có PRAGMA thực thi trong migration; giữ FK/cascade/restrict/set-null | D1 bật FK sẵn; tránh thay đổi PRAGMA không phù hợp migration D1 |
 
-Không cần ràng buộc JSON cho 10 bảng hiện tại: các trường JSON nằm trong `custom_requests` deferred, chưa nằm trong schema MVP.
+Không cần ràng buộc JSON cho12bảng hiện tại: các trường JSON nằm trong `custom_requests` deferred, chưa nằm trong schema MVP.
 
-## 10 bảng MVP
+## 10 bảng base MVP và 2 bảng danh mục
 
 | Bảng | Vai trò / ràng buộc chính |
 | --- | --- |
@@ -53,7 +55,9 @@ Không cần ràng buộc JSON cho 10 bảng hiện tại: các trường JSON n
 | `products` | Category FK restrict, slug unique, tên/mô tả EN/VI, badge/featured, ACTIVE/HIDDEN/ARCHIVED |
 | `product_variants` | SKU unique, unique product+size; giá/tồn không âm và ngưỡng cảnh báo theo variant |
 | `product_images` | Product FK cascade; URL, metadata Cloudinary tùy chọn; tối đa một ảnh chính/product |
-| `delivery_zones` | Tỉnh/phường unique, phí và ngưỡng miễn phí, ETA và active; không phải FK của snapshot đơn |
+| `administrative_provinces` | Mã2ký tự PK, tên unique; hiện chỉ Hà Nội01 |
+| `administrative_wards` | Mã5ký tự PK, FK tỉnh RESTRICT, unique tên trong tỉnh;126phường Hà Nội |
+| `delivery_zones` | Tỉnh/phường unique, phí/ngưỡng/ETA/active; service kiểm danh mục, legacy không bị xóa; không phải FK snapshot đơn |
 | `orders` | COD guest, snapshot người gửi/nhận/giao hàng/thiệp; total, idempotency và mốc/cờ hỗ trợ xử lý |
 | `order_items` | Snapshot SKU/tên EN/VI/size/ảnh/giá; xóa catalog đặt FK product/variant về NULL, giữ snapshot |
 | `order_status_history` | Timeline trạng thái, actor ID/label, ghi chú và thời gian |
@@ -111,3 +115,15 @@ UI tạo sản phẩm tự sinh slug tên + UUID; unique constraint products.slu
 M1–M9 local không thay DDL/migration: summary/search lọc raw placed_at với idx_orders_placed_at hiện có, hỗ trợ ISO và SQLite UTC; EXPLAIN QUERY PLAN xác nhận SEARCH thay SCAN orders. Low-stock join active variant/product/category. Summary30 ngày, search mặc định90/tối đa366 ngày; không tạo counter/FTS. [Giới hạn và bằng chứng](HARDENING.md).
 
 Ảnh danh mục16/10:0002 đã áp local/staging,4 URL đã UPDATE theo code từ docs/sql/CATEGORY_IMAGES.sql; vẫn10 bảng. Test upgrade giữ ID/tên/quan hệ/giá/tồn và chạy lặp data update PASS; db:verify13/13,FK sạch. Backup riêng categories ignored đã lưu. Production chưa áp0002; [runbook và rollback](CATEGORY_IMAGES.md).
+
+### Gallery 16/10 local — không thay DDL
+
+Schema 0001 đã có quan hệ 1:N qua `product_images`, `cloudinary_public_id` nullable, alt EN/VI, `sort_order` và unique partial index cho một ảnh chính. Bản local mới dùng đúng bảng/cột này để lưu tối đa 8 ảnh qua API admin; không cần tạo bảng, cột ảnh bổ sung, JSON, migration hoặc chuyển dữ liệu cũ.
+
+Gallery được thay trong một D1 batch. Gỡ ảnh chỉ xóa liên kết, không gọi Cloudinary destroy. API kiểm giới hạn 8 ảnh, đúng một primary và không trùng URL/public ID; ảnh cũ vẫn đọc được. API public không trả public ID. Chưa ghi DB remote hoặc deploy.
+
+
+Danh mục Hà Nội16/10 hiện hành:0003 đã áp local/staging,1tỉnh/126phường/HCM0;12bảng,FK sạch. `delivery_zones` vẫn chỉ biểu diễn phí/phạm vi giao; chỉ zone active khớp danh mục được public và quote/order chấp nhận, không fallback tỉnh. Staging zones0/products1/variants3/tổng tồn30/orders0 không đổi sau migration. Không ghi production. [Nguồn, thao tác và bằng chứng](DELIVERY_ADDRESS.md).
+
+
+Checkout consent/payment16/10 local: đây là state UI trong memory, không tạo bảng/cột/ghi D1 đồng ý điều khoản/cọc hay chuyển khoản. API tiếp tục COD hiện hữu. Không migration/data write trong lượt thay layout. [Giới hạn](CHECKOUT_UI.md).

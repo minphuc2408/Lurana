@@ -503,3 +503,38 @@
 !/public/images/categories/gift-sets-v1.webp
 
 !/docs/CATEGORY_IMAGES.md
+
+# Reviewed shared accessible dropdown, using the existing Radix dependency.
+!/src/shared/ui/dropdown.tsx
+
+# Reviewed product-detail UI, using existing catalog API and shared cart.
+!/src/pages/ProductDetailPage.tsx
+!/src/features/shop/hooks/useProductDetail.ts
+!/src/features/shop/components/ProductDetailView.tsx
+!/src/features/shop/components/ProductGallery.tsx
+
+# Reviewed admin gallery editor.
+!/src/features/admin/components/AdminProductImages.tsx
+
+# Reviewed local administrative reference subset and searchable checkout controls.
+!/src/features/cart/data/delivery-divisions.json
+!/src/features/cart/delivery-address.ts
+!/src/shared/ui/combobox.tsx
+!/tests/delivery-address.test.mjs
+!/docs/DELIVERY_ADDRESS.md
+!/scripts/check-ui-delivery.mjs
+
+# Reviewed checkout blocks, payment availability and consent validation.
+!/src/features/cart/checkout-form.ts
+!/src/features/cart/components/CheckoutPayment.tsx
+!/tests/checkout-form.test.mjs
+!/scripts/check-ui-checkout-layout.mjs
+
+!/docs/CHECKOUT_UI.md
+
+# Reviewed Hanoi-only administrative catalog and delivery coverage.
+!/migrations/0003_hanoi_administrative_areas.sql
+!/shared/delivery-areas.ts
+!/worker/services/administrative-areas.ts
+!/tests/delivery-areas.test.mjs
+!/scripts/check-ui-delivery-admin.mjs

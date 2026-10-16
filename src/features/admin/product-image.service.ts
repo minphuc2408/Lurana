@@ -26,7 +26,7 @@ export function cloudinaryImageUrl(value: unknown, ticket: AdminImageUploadTicke
   return url.href;
 }
 
-export async function uploadProductImage(file: File, ticket: AdminImageUploadTicket, signal?: AbortSignal): Promise<string> {
+export async function uploadProductImage(file: File, ticket: AdminImageUploadTicket, signal?: AbortSignal): Promise<{ url: string; cloudinary_public_id: string }> {
   validateProductImage(file);
   const controller = new AbortController();
   const abort = () => controller.abort();
@@ -43,7 +43,8 @@ export async function uploadProductImage(file: File, ticket: AdminImageUploadTic
       method: 'POST', body, signal: controller.signal, credentials: 'omit', redirect: 'error',
     });
     if (!response.ok) throw new ApiError('IMAGE_UPLOAD_FAILED', 'Image upload failed.');
-    return cloudinaryImageUrl(await response.json(), ticket);
+    const url = cloudinaryImageUrl(await response.json(), ticket);
+    return { url, cloudinary_public_id: ticket.params.public_id };
   } catch (error) {
     if (error instanceof ApiError) throw error;
     throw new ApiError('IMAGE_UPLOAD_FAILED', 'Image upload could not be confirmed.');

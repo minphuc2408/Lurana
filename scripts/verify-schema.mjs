@@ -11,12 +11,13 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 const configPath = path.join(root, 'wrangler.jsonc');
 const schema = readFileSync(path.join(root, 'migrations/0001_mvp.sql'), 'utf8');
 const imageSchema = readFileSync(path.join(root, 'migrations/0002_category_images.sql'), 'utf8');
+const administrativeSchema = readFileSync(path.join(root, 'migrations/0003_hanoi_administrative_areas.sql'), 'utf8');
 const seed = readFileSync(path.join(root, 'docs/sql/MVP_SEED_DEV.sql'), 'utf8');
 const tables = [
-  'categories', 'delivery_zones', 'order_items', 'order_status_history', 'orders',
+  'administrative_provinces', 'administrative_wards', 'categories', 'delivery_zones', 'order_items', 'order_status_history', 'orders',
   'product_images', 'product_variants', 'products', 'user_addresses', 'users',
 ];
-const expectedCounts = { categories: 4, products: 8, product_variants: 24, product_images: 8, delivery_zones: 4 };
+const expectedCounts = { administrative_provinces: 1, administrative_wards: 126, categories: 4, products: 8, product_variants: 24, product_images: 8, delivery_zones: 4 };
 const schemaQuery = `SELECT type, name, tbl_name, sql FROM sqlite_master
   WHERE type IN ('table', 'index') AND name NOT LIKE 'sqlite_%'
   AND name NOT LIKE '_cf_%' AND tbl_name != 'd1_migrations' ORDER BY type, name`;
@@ -77,14 +78,14 @@ async function counts(db) {
 async function snapshot(db) {
   const result = {};
   // Table names are the fixed allowlist above, never input.
-  for (const table of tables) result[table] = await rows(db, `SELECT * FROM ${table} ORDER BY id`);
+  for (const table of tables) result[table] = await rows(db, `SELECT * FROM ${table} ORDER BY ${table.startsWith('administrative_') ? 'code' : 'id'}`);
   return result;
 }
 
 async function checkStructure(db) {
   equal((await rows(db, `SELECT name FROM sqlite_master WHERE type = 'table'
     AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%'
-    AND name != 'd1_migrations' ORDER BY name`)).map(row => row.name), tables, 'exactly 10 MVP tables');
+    AND name != 'd1_migrations' ORDER BY name`)).map(row => row.name), tables, '12 business tables including administrative catalog');
   equal(await rows(db, 'PRAGMA foreign_key_check'), [], 'foreign keys');
 }
 
@@ -119,10 +120,10 @@ async function verify() {
     await checkStructure(db);
     equal(await counts(db), expectedCounts, 'seed counts in persisted local D1');
     const migrations = await rows(db, 'SELECT name FROM d1_migrations ORDER BY id');
-    equal(migrations, [{ name: '0001_mvp.sql' }, { name: '0002_category_images.sql' }], 'base and category-image migrations recorded');
+    equal(migrations, [{ name: '0001_mvp.sql' }, { name: '0002_category_images.sql' }, { name: '0003_hanoi_administrative_areas.sql' }], 'base and category-image migrations recorded');
     localSchema = await rows(db, schemaQuery);
     console.log(`LOCAL migration: ${JSON.stringify(migrations)}; seed: ${JSON.stringify(await counts(db))}`);
-    console.log('LOCAL foreign_key_check: []; business tables: 10');
+    console.log('LOCAL foreign_key_check: []; business tables: 12');
   } finally {
     await local.dispose();
   }
@@ -134,6 +135,7 @@ async function verify() {
     const db = isolated.env.DB;
     await apply(db, schema);
     await apply(db, imageSchema);
+    await apply(db, administrativeSchema);
     equal(await rows(db, schemaQuery), localSchema, 'persisted local schema matches the migration chain');
     await apply(db, seed);
     equal(await counts(db), expectedCounts, 'initial isolated seed');

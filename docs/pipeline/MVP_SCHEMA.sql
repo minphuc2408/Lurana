@@ -4,4 +4,6 @@
 -- Apply locally: npm run db:migrate:local
 -- Verify locally: npm run db:verify
 -- custom_requests remains deferred; do not apply deferred/0002 for MVP.
--- Current additive migration: ../../migrations/0002_category_images.sql (categories.image_url).
+-- Additive migrations: ../../migrations/0002_category_images.sql (categories.image_url).
+-- ../../migrations/0003_hanoi_administrative_areas.sql (Hanoi province +126wards, two new tables).
+-- Applied local/staging; production remains0001. See PROJECT_STATUS.md for deployment scope.

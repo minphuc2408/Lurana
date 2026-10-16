@@ -25,14 +25,14 @@ function rejectsCode(action, code, status) {
   return assert.rejects(action, error => error.code === code && error.status === status);
 }
 
-test('delivery chooses exact active ward before province default and binds the address', async t => {
+test('delivery requires an explicitly active imported ward and binds the address', async t => {
   const h = fixture(t);
   assert.equal(await resolveFee(h.db, province, ward, 450000, 'STANDARD'), 20000);
   assert.equal(h.queryCount, 1);
-  assert.deepEqual(h.queries[0].values, [province, ward, ward]);
-  assert.equal(await resolveFee(h.db, province, 'Phường mới', 450000, 'STANDARD'), 35000);
+  assert.deepEqual(h.queries[0].values, [province, 'Hoàn Kiếm']);
+  await rejectsCode(() => resolveFee(h.db, province, 'Phường mới', 450000, 'STANDARD'), 'NO_DELIVERY_ZONE', 422);
   const hostileWard = "' OR 1=1 --";
-  assert.equal(await resolveFee(h.db, province, hostileWard, 450000, 'STANDARD'), 35000);
+  await rejectsCode(() => resolveFee(h.db, province, hostileWard, 450000, 'STANDARD'), 'NO_DELIVERY_ZONE', 422);
   assert.ok(h.queries.every(({ sql }) => !sql.includes(hostileWard)));
 });
 
@@ -41,8 +41,7 @@ test('delivery free threshold waives base fee only, including at the exact thres
   assert.equal(await resolveFee(h.db, province, ward, 799999, 'EXPRESS'), 50000);
   assert.equal(await resolveFee(h.db, province, ward, 800000, 'EXPRESS'), 30000);
   assert.equal(await resolveFee(h.db, province, ward, 800001, 'SAME_DAY'), 50000);
-  assert.equal(await resolveFee(h.db, province, 'Phường mới', 999999, 'STANDARD'), 35000);
-  assert.equal(await resolveFee(h.db, province, 'Phường mới', 1000000, 'STANDARD'), 0);
+  await rejectsCode(() => resolveFee(h.db, province, 'Cửa Nam', 1000000, 'STANDARD'), 'NO_DELIVERY_ZONE', 422);
   h.exec("UPDATE delivery_zones SET free_from_amount = NULL WHERE ward_name <> ''");
   assert.equal(await resolveFee(h.db, province, ward, 9000000, 'STANDARD'), 20000);
   h.exec("UPDATE delivery_zones SET free_from_amount = 0 WHERE ward_name <> ''");
@@ -52,7 +51,7 @@ test('delivery free threshold waives base fee only, including at the exact thres
 test('inactive delivery rows are ignored and unsupported province throws NO_DELIVERY_ZONE', async t => {
   const h = fixture(t);
   h.exec("UPDATE delivery_zones SET is_active = 0 WHERE ward_name <> ''");
-  assert.equal(await resolveFee(h.db, province, ward, 450000, 'STANDARD'), 35000);
+  await rejectsCode(() => resolveFee(h.db, province, ward, 450000, 'STANDARD'), 'NO_DELIVERY_ZONE', 422);
   await rejectsCode(() => resolveFee(h.db, 'Tỉnh chưa giao', ward, 450000, 'STANDARD'), 'NO_DELIVERY_ZONE', 422);
   h.exec('UPDATE delivery_zones SET is_active = 0');
   await rejectsCode(() => resolveFee(h.db, province, ward, 450000, 'STANDARD'), 'NO_DELIVERY_ZONE', 422);
@@ -77,14 +76,12 @@ test('delivery options group active DB zones, preserve a missing default and exp
   assert.equal(h.queryCount, 1);
   const hanoi = options.provinces.find(value => value.province_name === province);
   assert.deepEqual(hanoi, {
-    province_name: province, default_fee: 35000, free_from_amount: 1000000,
-    wards: [{ ward_name: ward, fee: 20000 }],
+    province_name: province, default_fee: null, free_from_amount: null,
+    wards: [{ ward_name: 'Hoàn Kiếm', fee: 20000 }],
   });
-  assert.deepEqual(options.provinces.find(value => value.province_name === 'Tỉnh thử nghiệm'), {
-    province_name: 'Tỉnh thử nghiệm', default_fee: null, free_from_amount: null,
-    wards: [{ ward_name: 'Phường A', fee: 12000 }],
-  });
-  assert.deepEqual(options.provinces.find(value => value.province_name === 'Thành phố Hồ Chí Minh').wards, []);
+  assert.equal(options.provinces.length, 1);
+  assert.equal(options.provinces.find(value => value.province_name === 'Tỉnh thử nghiệm'), undefined);
+  assert.equal(options.provinces.find(value => value.province_name === 'Thành phố Hồ Chí Minh'), undefined);
   assert.deepEqual(options.methods, [
     { code: 'STANDARD', surcharge: 0 }, { code: 'EXPRESS', surcharge: 30000 }, { code: 'SAME_DAY', surcharge: 50000 },
   ]);

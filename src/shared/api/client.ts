@@ -37,6 +37,8 @@ export function apiErrorKey(error: unknown): string {
   const code = error instanceof ApiError ? error.code : 'INTERNAL';
   if (code === 'TURNSTILE_NOT_CONFIGURED') return 'Security verification unavailable';
   if (code === 'PENDING_ORDER_LIMIT') return 'API pending order limit';
+  if (code === 'IMAGE_LIMIT') return 'A product can have up to eight images.';
+  if (code === 'IMAGE_DUPLICATE') return 'This image is already in the gallery.';
   if (code === 'IMAGE_REQUIRED') return 'Upload a product image before saving.';
   if (code === 'CLOUDINARY_NOT_CONFIGURED') return 'Image upload is not configured. You can paste an image URL.';
   if (code === 'INVALID_IMAGE') return 'Choose a JPEG, PNG or WebP image up to 5 MB.';

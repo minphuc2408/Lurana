@@ -4,6 +4,7 @@ import {
 } from '../../shared/admin-catalog-schemas.ts';
 import { AppError } from '../lib/errors.ts';
 import { parseSchema } from '../lib/validate.ts';
+import { validateZoneAddress } from './administrative-areas.ts';
 import type { ProductDTO, ProductImageDTO, ProductVariantDTO } from './catalog.ts';
 
 interface AdminVariant extends Omit<ProductVariantDTO, 'in_stock' | 'low_stock' | 'max_quantity'> {
@@ -13,14 +14,18 @@ interface AdminVariant extends Omit<ProductVariantDTO, 'in_stock' | 'low_stock' 
   is_active: boolean;
 }
 interface VariantRow extends Omit<AdminVariant, 'is_active'> { is_active: number; }
-interface AdminProduct extends Omit<ProductDTO, 'variants'> {
+interface AdminProduct extends Omit<ProductDTO, 'variants' | 'images'> {
   category_id: number;
   status: 'ACTIVE' | 'HIDDEN' | 'ARCHIVED';
   archived_at: string | null;
   variants: AdminVariant[];
+  images: (ProductImageDTO & { id: number; sort_order: number; cloudinary_public_id: string | null })[];
 }
 interface ProductRow extends Omit<AdminProduct, 'is_featured' | 'variants' | 'images'> { is_featured: number; }
 interface ImageRow {
+  id: number;
+  sort_order: number;
+  cloudinary_public_id: string | null;
   product_id: number;
   image_url: string;
   alt_vi: string | null;
@@ -64,7 +69,7 @@ export async function listAdminProducts(db: D1Database): Promise<AdminProduct[]>
   const { results: variants } = await db.prepare(`SELECT ${VARIANT_COLUMNS} FROM product_variants
     ORDER BY product_id, CASE size_code WHEN 'S' THEN 0 WHEN 'M' THEN 1 WHEN 'L' THEN 2
       WHEN 'STANDARD' THEN 3 WHEN 'DELUXE' THEN 4 END, id`).all<VariantRow>();
-  const { results: images } = await db.prepare(`SELECT product_id, image_url, alt_vi, alt_en, is_primary
+  const { results: images } = await db.prepare(`SELECT id, product_id, image_url, cloudinary_public_id, sort_order, alt_vi, alt_en, is_primary
     FROM product_images ORDER BY product_id, sort_order, id`).all<ImageRow>();
   const variantsByProduct = new Map<number, AdminVariant[]>();
   for (const row of variants) {
@@ -72,10 +77,10 @@ export async function listAdminProducts(db: D1Database): Promise<AdminProduct[]>
     rows.push(variantDTO(row));
     variantsByProduct.set(row.product_id, rows);
   }
-  const imagesByProduct = new Map<number, ProductImageDTO[]>();
+  const imagesByProduct = new Map<number, AdminProduct['images']>();
   for (const row of images) {
     const rows = imagesByProduct.get(row.product_id) ?? [];
-    rows.push({ url: row.image_url, alt_vi: row.alt_vi, alt_en: row.alt_en, is_primary: row.is_primary === 1 });
+    rows.push({ id: row.id, sort_order: row.sort_order, cloudinary_public_id: row.cloudinary_public_id, url: row.image_url, alt_vi: row.alt_vi, alt_en: row.alt_en, is_primary: row.is_primary === 1 });
     imagesByProduct.set(row.product_id, rows);
   }
   return products.map(row => ({ ...row, is_featured: row.is_featured === 1,
@@ -98,9 +103,10 @@ export async function createAdminProduct(db: D1Database, body: AdminProductCreat
       .bind(input.slug, variant.sku, variant.size_code, variant.price, variant.compare_at_price ?? null,
         variant.stock_quantity, variant.low_stock_threshold, Number(variant.is_active), now));
   }
-  statements.push(db.prepare(`INSERT INTO product_images (product_id, image_url, alt_vi, alt_en, sort_order, is_primary)
-    VALUES ((SELECT id FROM products WHERE slug = ?), ?, ?, ?, ?, ?)`)
-    .bind(input.slug, input.image.url, input.image.alt_vi ?? null, input.image.alt_en ?? null, 0, 1));
+  const images = input.images || [{ ...input.image!, is_primary: true }];
+  for (const [index, image] of images.entries()) statements.push(db.prepare(`INSERT INTO product_images (product_id, image_url, cloudinary_public_id, alt_vi, alt_en, sort_order, is_primary)
+    VALUES ((SELECT id FROM products WHERE slug = ?), ?, ?, ?, ?, ?, ?)`)
+    .bind(input.slug, image.url, image.cloudinary_public_id ?? null, image.alt_vi ?? null, image.alt_en ?? null, index, Number(image.is_primary)));
   try {
     const results = await db.batch<{ id: number }>(statements);
     return { id: results[0].results[0].id };
@@ -130,12 +136,20 @@ export async function patchAdminProduct(db: D1Database, id: number, body: AdminP
   if (input.image) {
     const image = input.image;
     statements.push(db.prepare(`UPDATE product_images SET image_url = ?, alt_vi = ?, alt_en = ?,
-      cloudinary_public_id = NULL, is_primary = ? WHERE id =
+      cloudinary_public_id = ?, is_primary = ? WHERE id =
       (SELECT id FROM product_images WHERE product_id = ? ORDER BY is_primary DESC, sort_order, id LIMIT 1)`)
-      .bind(image.url, image.alt_vi ?? null, image.alt_en ?? null, 1, id));
-    statements.push(db.prepare(`INSERT INTO product_images (product_id, image_url, alt_vi, alt_en, sort_order, is_primary)
-      SELECT ?, ?, ?, ?, ?, ? WHERE NOT EXISTS (SELECT id FROM product_images WHERE product_id = ?)`)
-      .bind(id, image.url, image.alt_vi ?? null, image.alt_en ?? null, 0, 1, id));
+      .bind(image.url, image.alt_vi ?? null, image.alt_en ?? null, image.cloudinary_public_id ?? null, 1, id));
+    statements.push(db.prepare(`INSERT INTO product_images (product_id, image_url, alt_vi, alt_en, cloudinary_public_id, sort_order, is_primary)
+      SELECT ?, ?, ?, ?, ?, ?, ? WHERE NOT EXISTS (SELECT id FROM product_images WHERE product_id = ?)`)
+      .bind(id, image.url, image.alt_vi ?? null, image.alt_en ?? null, image.cloudinary_public_id ?? null, 0, 1, id));
+  }
+  if (input.images) {
+    // A single atomic gallery replacement avoids transient two-primary conflicts.
+    // Removing a link never deletes the asset at Cloudinary.
+    statements.push(db.prepare('DELETE FROM product_images WHERE product_id = ?').bind(id));
+    for (const [index, image] of input.images.entries()) statements.push(db.prepare(`INSERT INTO product_images
+      (product_id, image_url, cloudinary_public_id, alt_vi, alt_en, sort_order, is_primary) VALUES (?, ?, ?, ?, ?, ?, ?)`)
+      .bind(id, image.url, image.cloudinary_public_id ?? null, image.alt_vi ?? null, image.alt_en ?? null, index, Number(image.is_primary)));
   }
   try { await db.batch(statements); } catch (error) { mapWriteError(error); }
   return { id };
@@ -184,6 +198,7 @@ export async function listAdminDeliveryZones(db: D1Database): Promise<DeliveryZo
 }
 export async function createAdminDeliveryZone(db: D1Database, body: AdminDeliveryZoneInput): Promise<DeliveryZone> {
   const input = parseSchema(adminDeliveryZoneSchema, body);
+  input.ward_name = await validateZoneAddress(db, input.province_name, input.ward_name);
   const now = new Date().toISOString();
   try {
     const { results } = await db.prepare(`INSERT INTO delivery_zones
@@ -195,6 +210,11 @@ export async function createAdminDeliveryZone(db: D1Database, body: AdminDeliver
 }
 export async function putAdminDeliveryZone(db: D1Database, id: number, body: AdminDeliveryZoneInput): Promise<DeliveryZone> {
   const input = parseSchema(adminDeliveryZoneSchema, body);
+  const previous = await db.prepare(`SELECT ${ZONE_COLUMNS} FROM delivery_zones WHERE id = ?`).bind(id).first<ZoneRow>();
+  if (!previous) throw new AppError('NOT_FOUND', 404, 'Không tìm thấy khu vực giao hàng.');
+  // Allow old province-default/out-of-catalog rows to be disabled without deleting history or fees.
+  const disablingLegacy = !input.is_active && input.province_name === previous.province_name && input.ward_name === previous.ward_name;
+  if (!disablingLegacy) input.ward_name = await validateZoneAddress(db, input.province_name, input.ward_name, id);
   try {
     const { results } = await db.prepare(`UPDATE delivery_zones SET province_name = ?, ward_name = ?, fee = ?,
       free_from_amount = ?, eta_minutes = ?, is_active = ?, updated_at = ? WHERE id = ? RETURNING ${ZONE_COLUMNS}`)

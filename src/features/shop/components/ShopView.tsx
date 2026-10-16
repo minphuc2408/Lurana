@@ -13,10 +13,9 @@ export function ShopView(model: ProductsModel & {
 }) {
   const { t } = useLocale("shop");
   return <div className="min-h-screen bg-lunara-cream font-body">
-    <div className="bg-[linear-gradient(135deg,#F9EDE9_0%,#F5E8E4_100%)] px-6 pt-[60px] pb-10">
+    <div className="bg-lunara-blush px-6 pt-[60px] pb-10">
       <div className="mx-auto max-w-7xl text-center">
-        <span className="text-xs tracking-[0.2em] text-lunara-rose-strong uppercase">{t("Our Collection")}</span>
-        <h1 className="mt-2 font-display text-[clamp(2.2rem,5vw,3.5rem)] font-semibold text-lunara-ink">{t("The Lunara Shop")}</h1>
+        <h1 className="mt-2 font-display text-[clamp(2.2rem,5vw,3.5rem)] font-semibold text-lunara-ink">{t("Our Collection")}</h1>
         <p className="mt-3 text-[0.92rem] text-lunara-body">{t("Discover handcrafted arrangements for every occasion")}</p>
       </div>
     </div>

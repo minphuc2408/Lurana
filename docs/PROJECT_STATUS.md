@@ -1,8 +1,51 @@
-# Lunara Shop — trạng thái hiện tại
+# Lunarra — trạng thái hiện tại
+
+> Hiện hành 16/10/2026 — Đã nhập danh mục D1 Hà Nội 1 tỉnh/126 phường vào local + staging bằng migration0003 (12 bảng); không nhập TP.HCM. Admin chọn/tìm tỉnh-phường, nhập phí; checkout chỉ hiện zone active thuộc danh mục, server không fallback tỉnh. Checkout gộp, thiệp NONE, terms nội bộ và bank rollback COD được giữ. Staging đã deploy version 27c3d24e-f3df-42e1-8d18-8b8299427062; zones0 nên checkout chưa có nơi giao cho tới khi admin cấu hình phí. Local190tests/225source/typecheck/build, schema13/13, smoke40/40, browser admin7nhóm PASS. Owner đã yêu cầu commit/push sau deploy; production không đổi, Phase6 giữ5/7. [Địa chỉ](DELIVERY_ADDRESS.md), [Checkout](CHECKOUT_UI.md). Các mốc dưới đây là lịch sử khi khác hiện trạng này.
+
+## Danh mục Hà Nội và staging hiện hành — 16/10/2026
+
+- Hai bảng mới `administrative_provinces`/`administrative_wards` qua0003, đã áp local + staging: **1 tỉnh,126 phường,không Hồ Chí Minh**,12bảng,FK sạch.0001/0002 không sửa.
+- Admin delivery-zones chọn/tìm không dấu trong danh mục rồi nhập phí; checkout chỉ nhận phường có zone active hợp danh mục. Quote/order cùng kiểm server, không fallback tỉnh. Tạo Cửa Nam → hiện, tắt → ẩn/directquote422 đã kiểm với DB cô lập.
+- Staging version **`27c3d24e-f3df-42e1-8d18-8b8299427062`**, deploy19:21 giờ Việt Nam. Live JS `index-Ba-uzNNV.js` khớp SHA256 artifact staging tại kiểm tra trước build local; CSP/noindex giữ nguyên. Public options200/provinces=[], admin401 không cookie.
+- Staging aggregate sau migrate: **zones0/products1/variants3/tổng tồn30/orders0/items0/history0**, không đổi nghiệp vụ. **Chưa tự tạo phí**; admin cần cấu hình từng phường thì checkout mới có lựa chọn. Không chạy seed hoặc xuất dữ liệu khách, không đổi secrets.
+- **190/190tests, architecture225source, typecheck/build, schema13/13 (46assertions), smoke40/40 PASS**. Browser admin7 + địa chỉ8 + checkout12nhóm PASS,0exceptions, EN/VI320/390/768/1440px. Địa chỉ:0quote khi gõ,3quote cho chọn/lựa chọn lại/nhóm tăng số lượng. Checkout:1quote khi chọn địa chỉ,0quote khi gõ,0POSTorder; Turnstile callback synthetic. Admin CRUD dùng cookie demo/SQLite cô lập, không tài khoản thật hoặc ghi staging.
+- Checkout gộp/3khối dọc/cặp field640px, cùng người nhận, NONE ẩn-xóa message, terms “Cập nhật sau”, bank đóng trả COD, consent/schema/challenge gates giữ nguyên. Preview local4184 chạy lại sau build.
+- Owner đã yêu cầu commit/push source sau khi xác nhận staging; không migrate hoặc deploy production. Staging deploy bao gồm source UI/gallery/checkout đang có lúc build; các ghi chú “local/chưa deploy” bên dưới là **lịch sử từng lượt**, không còn mô tả staging hiện hành. Phase6 vẫn5/7; provider/upload/Cron/quota chưa được nghiệm thu thêm.
+- Full backup staging không được tạo: automatic approval review từ chối khả năng xuất dữ liệu khách. Chọn migration chỉ bổ sung và đối chiếu aggregate/FK trước-sau; backup local ignored đã tạo. [Chi tiết nguồn/schema/DB](DELIVERY_ADDRESS.md), [checkout](CHECKOUT_UI.md).
+
+## Các mốc trước lượt danh mục
 
 Cập nhật **16/10/2026**, giờ Việt Nam. Repo GitHub: **Lurana**. Code của lượt UI/ảnh danh mục đã chia theo nhóm: typography `14c82c2`, bố cục/card `9e8f20d`, hero `9f19e2c` và catalog/DB `5ed8a56`; tài liệu được commit riêng cùng lượt. Owner đã cho migrate/gán 4 ảnh category trên DB local + staging và deploy staging version `75fcbb54-5528-4cc1-b101-22fdc7a91a40` ngày 16/10. Không deploy/ghi production hoặc thay secrets.
 
-## Cập nhật mới nhất — ảnh category đã live staging
+## Gallery nhiều ảnh local trước checkout gộp (chưa push/deploy)
+
+- Schema đã có `product_images`, `cloudinary_public_id`, thứ tự và unique một primary: **không tạo bảng/migration**, không thay dữ liệu hiện có.
+- Admin chọn nhiều file JPEG/PNG/WebP (mỗi ảnh≤5MiB), tối đa8 ảnh; upload từng ảnh bằng signed ticket riêng, lưu URL + public ID, chọn cover, lên/xuống, gỡ liên kết. Upload lỗi giữ những ảnh thành công và dừng, không auto-retry. Lưu sản phẩm mới ghi gallery vào D1; hủy/gỡ không tự xóa Cloudinary asset.
+- POST/PATCH products nhận `images`1..8 với đúng1primary, không URL/public ID trùng, public ID phải khớp URL. API `image` đơn cũ vẫn dùng được; không gửi đồng thời cả hai. Gallery patch thay liên kết trong1 D1 batch, rollback toàn bộ khi một insert lỗi. Admin đọc thêmid/sort_order/public ID; API public không trả public ID.
+- GET products chỉ trả1 cover (fallback xác định nếu dữ liệu cũ thiếu primary); GET products/:slug trả toàn bộ ảnh theo sort_order/id. Gallery frontend bắt đầu ở cover và cho chuyển đủ các ảnh. Không tải toàn bộ ảnh phụ khi đang ở Shop.
+- “Trở về bộ sưu tập” nằm ngay trên sản phẩm; CTA “Đặt hoa ngay” chỉ có chữ căn giữa.
+- Local: typecheck, architecture221source, build, smoke40/40 và db:verify13/13 PASS. Tests mới nhất179/179 PASS, gồm8ảnh/list-vs-detail/validation và rollback trên real workerd D1. Browser Edge + Worker/D1 tạm5/5nhóm PASS,0exceptions: multi-upload/sort/primary/remove/save, lỗi upload từng phần, limit/duplicate/type,8ảnh end-to-end, vị trí back/CTA và EN/VI320/390/768/1440px. Cloudinary delivery/upload và Turnstile là mock; ký ticket, API product và D1 là code thật với cấu hình tổng hợp, persist:false/remoteBindings:false. Snapshot D1 persisted không đổi; chưa nghiệm thu upload provider thật.
+- Preview mới nhất `http://127.0.0.1:4184/`. Không thay Worker secrets, không commit/push/deploy hoặc ghi DB staging/production; Phase6 giữ5/7. Evidence local ignored: `.security-review/gallery-ui-results.json`.
+
+## Trang sản phẩm local trước đó (chưa push/deploy)
+
+- Card dùng shadow màu token, không viền; hover nâng4px và tăng shadow, tôn trọng reduced motion. Ảnh/tên/mô tả cùng dẫn tới `/shop/:slug`.
+- Trang `ProductDetailPage` dùng endpoint có sẵn `GET /api/products/:slug`: gallery từ DB với thumbnail khi có nhiều ảnh, phóng ảnh bằng Dialog, breadcrumb, tên/mô tả EN/VI, SKU/giá/compare-at/size/tồn. Desktop chia2cột, mobile xếp dọc. Không dựng thêm tone/loại hoa/kích thước cm/dịp tặng khi DB chưa có.
+- **Đặt hoa ngay** thêm1 variant đang chọn rồi chuyển `/cart`; thêm thất bại do giới hạn giỏ/hết hàng thì giữ trang và báo lỗi. `addItem` trả boolean; giỏ vẫn chỉ lưu variantId/quantity và quote server định giá. Detail API được cập nhật vào CatalogProvider bằng `rememberProduct`, cho phép đặt từ link trực tiếp ngoài100 sản phẩm đầu; không tăng giới hạn API list.
+- Loading/error/retry/404 và ảnh rỗng có trạng thái riêng; không fixture fallback. Metadata client theo tên/mô tả/ảnh/canonical sản phẩm, staging vẫn noindex; nội dung sản phẩm chưa SSR/prerender và sitemap chỉ Home/Shop.
+- Local: **174/174 tests, architecture220source, typecheck/build PASS**. Browser Edge + Worker bridge/D1 tạm: **6/6 nhóm,0exception**, EN/VI ở320/390/768/1024/1440px; link/hover/reduced-motion, gallery/zoom/Escape/focus, size→giá/SKU→cart, cart-limit/sold-out, reload/404/hidden/retry và link ngoài100 mẫu đầu đều đạt. D1 persisted không đổi. Evidence local ignored: `.security-review/product-detail-ui-results.json`.
+- Không đổi Worker/API/schema/dependency/secret hoặc ghi DB local/staging. Các trang mới và tinh chỉnh UI trước đó đều chưa push/deploy; bản remote giữ nguyên. Phase6 giữ5/7; kết quả UI toàn phần cũ bên dưới là phạm vi khác.
+
+## Tinh chỉnh UI local trước đó (chưa push/deploy)
+
+- Đổi tên hiển thị thành **Lunarra** trên EN/VI, logo, metadata và ảnh OG; giữ tên kỹ thuật Worker/D1/repo và khóa i18n tương thích.
+- Home bỏ caption Khám phá bộ sưu tập, tile Tất cả hoa dùng token blush; tiêu đề Những mẫu hoa nổi bật căn giữa và bỏ mô tả. Shop chỉ giữ tiêu đề Bộ sưu tập của chúng tôi và câu mô tả theo yêu cầu.
+- Shared `src/shared/ui/dropdown.tsx` dùng Radix Select đã có: cùng popup cream/blush/rose cho sort, size, checkout/admin và source deferred; không kích hoạt chức năng đang ẩn, không thêm dependency. Giữ giá trị, required/disabled, portal trong dialog và keyboard/focus.
+- Con trỏ pointer cho nút/link/filter/options/checkbox/radio và summary; disabled dùng not-allowed, input chữ giữ text. Overlay đóng sidebar là button có nhãn. Toolbar filter co vừa320px.
+- Typecheck, architecture216 source,172/172 tests và build PASS. Browser Edge + Worker bridge/D1 tạm `persist:false`, `remoteBindings:false`, synthetic auth/Turnstile mock:4/4 nhóm UI đạt,0exception; EN/VI tại320/390/768/1024/1440px, dropdown Escape/focus, variant→cart, slot/card/form values, admin reset/category/status trong dialog. D1 persisted không đổi.
+- Bộ UI toàn phần vẫn vướng assertion Total670 trước chọn vùng giao đã ghi nhận từ lượt trước;4 nhóm trên là kiểm tra tập trung, không thay nghiệm thu toàn bộ checkout/cloud. Không sửa Worker/schema/secret; staging/production giữ bản đã deploy bên dưới.
+
+## Bản đã live staging — ảnh category
 
 - Staging version `75fcbb54-5528-4cc1-b101-22fdc7a91a40` đã deploy với bố cục, font, hero mới và 4 ảnh danh mục từ DB.
 - Migration `0002_category_images.sql` và 4 URL ảnh đã áp local/staging. Production vẫn chỉ có migration 0001.
@@ -73,7 +116,7 @@ Migration 0001 đã được xác minh trên cả hai D1 ngày 15/10. Counts đ�
 
 [Kiến trúc](../PROJECT_GUIDE.md) · [Stack](TECH_STACK.md) · [API contract](pipeline/API_CONTRACT.md) · [Database](DATABASE_DESIGN.md) · [Entity](FRONTEND_ENTITIES.md) · [Staging](STAGING.md) · [Cloudinary](CLOUDINARY.md) · [Turnstile/COD](BOT_PROTECTION.md) · [Hardening](HARDENING.md) · [Phase 6](pipeline/PHASE_6_DEPLOY.md) · [Rà soát tài liệu](DOCUMENTATION_AUDIT.md).
 
-Các output 53/92/125/136/143/148/150/158/160 tests trong pipeline là kết quả tại mốc cũ. Giữ nguyên bằng chứng, dùng **172 tests / 215 files / 40 smoke** cho code hiện tại;170 thuộc mốc trước ảnh category.
+Các output 53/92/125/136/143/148/150/158/160 tests trong pipeline là kết quả tại mốc cũ. Giữ nguyên bằng chứng, dùng **190 tests / 225 files / 40 smoke** cho code hiện tại;172/215 là mốc ảnh category;170 thuộc mốc trước ảnh category.
 
 Typography EN thử local (16/10/2026): Fraunces 500/500 Italic cho heading/logo, optical sizing tự động (opsz 9–144); Inter cho body/UI. Bỏ Caveat, nhãn hero dùng body. VI giữ Lora/Be Vietnam Pro. Google Fonts dùng preconnect + display=swap; chưa deploy.
 
@@ -88,3 +131,16 @@ Hero responsive local16/10: ảnh bó hoa mới tạo bằng imagegen theo ảnh
 Kiểm chứng hero ảnh16/10: typecheck PASS sau bật vite/client, architecture215,170/170 tests, build/diff check PASS. Probe Edge EN/VI ở320/390/768/1024/1440px (10 cases) và mobile390px DPR2 PASS: ảnh load thật/có naturalWidth, không overlap CTA/text, không overflow, khung mobile4:3; mỗi navigation tải đúng1 candidate (640px~47KB ở mobile DPR1,960px~83KB ở mobile DPR2). Không JS exception. Screenshot/probe trong .security-review local; preview http://127.0.0.1:4180. Không chạy lại full UI checker ở lượt chỉ thêm hero ảnh (lỗi quote-before-zone từ lượt layout vẫn chưa xử lý); không đổi Worker/D1 hoặc deploy.
 
 Category images16/10 (cập nhật mới hơn snapshot remote chỉ đọc ở trên): owner yêu cầu tạo/gán ảnh local+staging và xác nhận deploy staging giữ fail-closed. Migration0002_category_images.sql và4 URL đã áp cả2DB; staging kiểm trực tiếp có4category/1product/3variants/0orders,FK sạch.4WebP256px trong public/images/categories,10–14KB/tấm;API thêm image_url nullable,UI tròn từDB. Local172/172tests,typecheck,architecture215,db:verify13/13,smoke40/40,build và staging dry-run PASS. Probe ảnh load thật EN/VI/nămviewport10/10,category navigation PASS,0exception. Production chưa migrate/deploy; staging delivery đã PASS trên version `75fcbb54-5528-4cc1-b101-22fdc7a91a40`:API4URL,ảnh4/4khớpSHA256,browser10/10case;khôngproduction. [Chi tiết](CATEGORY_IMAGES.md).
+
+
+## Checkout địa chỉ — 16/10/2026, local/chưa push/deploy
+
+Đã thêm chọn/tìm không dấu Hà Nội126 và Hồ Chí Minh168 đơn vị từ snapshot Open Admin Data, city→ward reset và shared Combobox có bàn phím/empty state. Quote chỉ nhận lựa chọn hợp lệ, debounce350ms; gõ tìm kiếm hoặc contact/address không gọi API. Phí vẫn theo D1, không ghi D1/đổi Worker/API/DDL/dependency hay remote. Typecheck/build/182tests/architecture223source PASS;8nhóm Edge browser PASS,0exceptions,0request khi gõ;3quote tương ứng2lựa chọn địa chỉ +1nhóm tăng số lượng nhanh. Viewport320/390/768/1440 và EN/VI PASS. Full UI cũ vẫn vướng quote-before-zone/input-datalist; không lấy targeted pass thay full suite. Nguồn/license/mapping phí tại [DELIVERY_ADDRESS](DELIVERY_ADDRESS.md). Preview4184 đã restart sau build để nạp manifest mới. Phase6 giữ5/7; remote versions không đổi.
+
+
+## Form checkout —16/10/2026, local/chưa push/deploy
+
+3khối responsive người đặt/người nhận/thiệp-yêu cầu, checkbox cùng người nhận sao chép/live-sync tên/SĐT và tắt để sửa riêng. Payment dưới Total; mặc định COD với note thanh toán khi nhận hàng, không note cọc50%. Bank-transfer mở Dialog dùng FeatureUnavailable inline và khóa nút; consent mặc định false, schema/date/slot/quote/COD/consent gate cả review và submit, submit vẫn cần Turnstile. Không quận/huyện với snapshot2cấp, không đổi Worker/DDL/API/dependency/remote.186tests/architecture225source/typecheck/build PASS;10nhóm browser checkout EN/VI/320-1440px PASS,0exceptions,1quote khi chọn địa chỉ và0quote khi gõ/đổi consent/payment,0POST order. Callback Turnstile synthetic, không nghiệm thu provider;8nhóm địa chỉ vẫn PASS. Full UI legacy chưa thích ứng consent/datalist/quote-before-zone, không coi full suite pass. [Chi tiết](CHECKOUT_UI.md).Phase6 giữ5/7.
+
+
+Wrangler config16/10 local: explicit sampling10% cho observability/logs/traces, không bật traces, invocation_logs=false; staging guard giữ đúng target và sampling.186tests/typecheck/architecture225/build+dry-run2môi trường đạt; không upload/remote changes. Dry-run không chứng minh cloud diff hết. [Chi tiết](STAGING.md).

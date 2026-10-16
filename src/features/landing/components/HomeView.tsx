@@ -15,10 +15,10 @@ export function HomeView(model: HomeModel) {
         <span data-category-thumbnail={category.code} aria-hidden="true" className="size-11 shrink-0 overflow-hidden rounded-full border border-lunara-border bg-lunara-cream sm:size-12">
           {category.image_url && <ImageWithFallback src={category.image_url} alt="" width={256} height={256} loading="lazy" decoding="async" className="h-full w-full object-cover" />}
         </span>
-        <div className="min-w-0 flex-1"><h2 className="font-display text-base leading-6 font-semibold text-lunara-ink">{getLocalizedName(category, language)}</h2><p className="mt-1 text-[0.65rem] leading-4 text-lunara-body">{t('Discover the Collection')}</p></div>
+        <div className="min-w-0 flex-1"><h2 className="font-display text-base leading-6 font-semibold text-lunara-ink">{getLocalizedName(category, language)}</h2></div>
         <ChevronRight size={15} className="shrink-0 text-lunara-rose-strong" aria-hidden="true" />
       </Link>)}
-      <Link to="/shop" className="flex min-h-24 items-center justify-between gap-3 rounded-2xl border border-lunara-border bg-lunara-ink p-4 text-lunara-cream transition-colors hover:bg-lunara-rose-strong">
+      <Link to="/shop" className="flex min-h-24 items-center justify-between gap-3 rounded-2xl border border-lunara-border bg-lunara-blush p-4 text-lunara-ink transition-colors hover:border-lunara-rose-strong hover:bg-lunara-border/50">
         <div><h2 className="font-display text-base leading-6 font-semibold">{t('All Flowers')}</h2><p className="mt-1 text-[0.65rem] leading-4">{t('Find Your Favourite')}</p></div><ChevronRight size={16} className="shrink-0" aria-hidden="true" />
       </Link>
     </nav>}

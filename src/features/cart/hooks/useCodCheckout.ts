@@ -6,22 +6,24 @@ import { vietnamDate } from '@/shared/lib/format';
 import { useQuoteCart } from './useQuoteCart';
 import { checkoutIntent, type CheckoutIntent } from '../checkout-intent';
 import { useTurnstile } from '@/shared/hooks/useTurnstile';
+import { canReviewCheckout, copySenderToRecipient, updateCheckoutForm, type CodForm } from '../checkout-form';
 
-export interface CodForm {
-  senderName: string; senderPhone: string; senderEmail: string; anonymous: boolean;
-  recipientName: string; recipientPhone: string; address: string;
-  date: string; slot: string; cardType: 'NONE' | 'GREETING_CARD' | 'BANNER'; cardMessage: string; note: string;
-}
+export type { CodForm } from '../checkout-form';
 export function useCodCheckout() {
   const cart = useQuoteCart();
   const challenge = useTurnstile();
-  const [step, setStep] = useState<'cart' | 'details' | 'review' | 'success'>('cart');
+  const [step, setStep] = useState<'details' | 'review' | 'success'>('details');
   const [form, setForm] = useState<CodForm>({ senderName: '', senderPhone: '', senderEmail: '', anonymous: false,
     recipientName: '', recipientPhone: '', address: '', date: vietnamDate(1), slot: '', cardType: 'NONE', cardMessage: '', note: '' });
   const [error, setError] = useState<unknown>(null);
   const [invalidFields, setInvalidFields] = useState<string[]>([]);
   const [sending, setSending] = useState(false);
   const [order, setOrder] = useState<OrderSummary | null>(null);
+  const [sameRecipient, setSameRecipient] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [payment, setPayment] = useState<'COD' | 'BANK_TRANSFER'>('COD');
+  const [paymentNoticeOpen, setPaymentNoticeOpen] = useState(false);
+  const [termsNoticeOpen, setTermsNoticeOpen] = useState(false);
   const sendingRef = useRef(false);
   const intentRef = useRef<CheckoutIntent | null>(null);
   const makePayload = (): OrderInput => ({
@@ -33,16 +35,18 @@ export function useCodCheckout() {
     ...(form.note ? { customer_note: form.note } : {}),
   });
   const ready = Boolean(cart.quote && !cart.quote.issues.length && !cart.quoteLoading && !cart.quoteError && cart.items.length);
+  const canReview = canReviewCheckout(makePayload(), { quoteReady: ready, termsAccepted, payment,
+    today: vietnamDate(), latestDate: cart.method === 'STANDARD' ? vietnamDate(cart.options?.limits.max_advance_days || 30) : vietnamDate(), slots: cart.options?.time_slots || [] });
   const review = () => {
     const parsed = orderSchema.safeParse(makePayload());
     if (!parsed.success) { setInvalidFields(parsed.error.issues.map(issue => issue.path.join('.'))); setError(new ApiError('VALIDATION_ERROR', 'Check order details.')); return; }
-    if (!ready || !form.date || !parsed.data.delivery.time_slot) { setError(new ApiError('INVALID_DELIVERY_SLOT', 'Select valid delivery details.')); return; }
+    if (!canReview) return;
     setInvalidFields([]); setError(null);
     intentRef.current = checkoutIntent(parsed.data, intentRef.current);
     setStep('review');
   };
   const placeOrder = async () => {
-    if (sendingRef.current || !ready || !challenge.ready) return;
+    if (sendingRef.current || !canReview || !challenge.ready) return;
     const parsed = orderSchema.safeParse(makePayload());
     if (!parsed.success) { setStep('details'); setError(new ApiError('VALIDATION_ERROR', 'Check order details.')); return; }
     const intent = checkoutIntent(parsed.data, intentRef.current);
@@ -58,12 +62,16 @@ export function useCodCheckout() {
   };
   const stockIssues = error instanceof ApiError && Array.isArray(error.details) && ['OUT_OF_STOCK', 'VARIANT_UNAVAILABLE'].includes(error.code)
     ? error.details as { variant_id: number; available?: number }[] : [];
-  return { ...cart, step, form, submitError: error, invalidFields, sending, order, ready, stockIssues, challenge,
-    updateForm: <K extends keyof CodForm>(key: K, value: CodForm[K]) => { setForm(previous => ({ ...previous, [key]: value })); setInvalidFields([]); },
+  return { ...cart, step, form, submitError: error, invalidFields, sending, order, ready, canReview, stockIssues, challenge,
+    sameRecipient, termsAccepted, payment, paymentNoticeOpen, termsNoticeOpen, setTermsNoticeOpen,
+    setPaymentNoticeOpen: (open: boolean) => { setPaymentNoticeOpen(open); if (!open) setPayment('COD'); },
+    setTermsAccepted: (value: boolean) => { if (!sendingRef.current) setTermsAccepted(value); },
+    selectPayment: (value: 'COD' | 'BANK_TRANSFER') => { if (sendingRef.current) return; setPayment(value); if (value === 'BANK_TRANSFER') setPaymentNoticeOpen(true); },
+    setSameRecipient: (value: boolean) => { setSameRecipient(value); if (value) setForm(copySenderToRecipient); setInvalidFields([]); },
+    updateForm: <K extends keyof CodForm>(key: K, value: CodForm[K]) => { setForm(previous => updateCheckoutForm(previous, key, value, sameRecipient)); setInvalidFields([]); },
     setMethod: (value: Parameters<typeof cart.setMethod>[0]) => { const method = typeof value === 'function' ? value(cart.method) : value; cart.setMethod(method); if (method !== 'STANDARD') setForm(previous => ({ ...previous, date: vietnamDate() })); },
-    startCheckout: () => { setError(null); setStep('details'); },
     editDetails: () => { if (!sendingRef.current) setStep('details'); },
-    backToCart: () => { if (!sendingRef.current) setStep('cart'); }, review, placeOrder,
+    review, placeOrder,
   };
 }
 export type CodCheckoutModel = ReturnType<typeof useCodCheckout>;

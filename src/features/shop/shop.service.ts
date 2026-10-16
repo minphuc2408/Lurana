@@ -21,6 +21,9 @@ export async function loadCatalog(signal?: AbortSignal) {
   products = items; categories = categoryList;
   return { products: structuredClone(items), categories: structuredClone(categoryList) };
 }
+export async function loadProductDetail(slug: string, signal?: AbortSignal) {
+  return apiRequest<ProductApiDto>(`/products/${encodeURIComponent(slug)}`, { signal });
+}
 export function getProducts(): Product[] { return structuredClone(products); }
 export function getProduct(id: number): Product | undefined {
   const product = products.find(item => item.id === id);

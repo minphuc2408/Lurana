@@ -1,3 +1,4 @@
+import { Dropdown } from "@/shared/ui/dropdown";
 import { useLocale } from "@/shared/i18n";
 import { Store, Mail, Phone } from "lucide-react";
 import type { AdminSettingsModel } from "../hooks/useAdminSettings";
@@ -27,12 +28,12 @@ export function StoreSettings(model: AdminSettingsModel) {
           </div>
           <div>
             <label className="[display:block] [font-size:0.72rem] text-lunara-body [letter-spacing:0.1em] [text-transform:uppercase] [margin-bottom:6px]" htmlFor={"storesettings-2"}>{t("Currency")}</label>
-            <select value={store.currency} onChange={e => setStore({
+            <Dropdown value={store.currency} onValueChange={value => setStore({
           ...store,
-          currency: e.target.value
+          currency: value
         })} className="[border:1px_solid_#F0DDD5] [font-size:0.88rem] text-lunara-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lunara-ink bg-lunara-surface [border-radius:12px] [padding:10px_14px] [width:100%]" id={"storesettings-2"}>
               <option value="PHP">{t("PHP")}</option><option value="USD">{t("USD")}</option><option value="EUR">{t("EUR")}</option>
-            </select>
+            </Dropdown>
           </div>
           <div>
             <label className="[display:block] [font-size:0.72rem] text-lunara-body [letter-spacing:0.1em] [text-transform:uppercase] [margin-bottom:6px]" htmlFor={"storesettings-3"}><Mail size={10} className="[display:inline] [margin-right:4px]" />{t("Email")}</label>
@@ -57,12 +58,12 @@ export function StoreSettings(model: AdminSettingsModel) {
           </div>
           <div>
             <label className="[display:block] [font-size:0.72rem] text-lunara-body [letter-spacing:0.1em] [text-transform:uppercase] [margin-bottom:6px]" htmlFor={"storesettings-6"}>{t("Timezone")}</label>
-            <select value={store.timezone} onChange={e => setStore({
+            <Dropdown value={store.timezone} onValueChange={value => setStore({
           ...store,
-          timezone: e.target.value
+          timezone: value
         })} className="[border:1px_solid_#F0DDD5] [font-size:0.88rem] text-lunara-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lunara-ink bg-lunara-surface [border-radius:12px] [padding:10px_14px] [width:100%]" id={"storesettings-6"}>
               <option value="Asia/Manila">{t("Asia/Manila")}</option><option value="UTC">{t("UTC")}</option><option value="America/New_York">{t("America/New_York")}</option>
-            </select>
+            </Dropdown>
           </div>
         </div>
       </div>;

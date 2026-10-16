@@ -24,10 +24,10 @@ export function useCartState() {
   const addItem = (productId: number, size: ProductSize | number = 'Small') => {
     const product = catalog.products.find(item => item.id === productId);
     const variant = product?.variants?.find(item => typeof size === 'number' ? item.id === size : sizes[item.size_code] === size);
-    if (!hydrated || !variant?.in_stock) { setError('API variant unavailable'); return; }
+    if (!hydrated || !variant?.in_stock) { setError('API variant unavailable'); return false; }
     const existing = items.find(item => item.variantId === variant.id);
-    if ((!existing && items.length >= 15) || (existing?.qty || 0) >= variant.max_quantity) { setError('API cart limit'); return; }
-    setError(''); dispatch({ type: 'add', item: makeItem(catalog.products, variant.id) });
+    if ((!existing && items.length >= 15) || (existing?.qty || 0) >= variant.max_quantity) { setError('API cart limit'); return false; }
+    setError(''); dispatch({ type: 'add', item: makeItem(catalog.products, variant.id) }); return true;
   };
   return { items, error, itemCount: items.reduce((count, item) => count + item.qty, 0), addItem, loading: !hydrated,
     updateQty: (id: string, delta: number) => { setError(''); dispatch({ type: 'quantity', id, delta }); },

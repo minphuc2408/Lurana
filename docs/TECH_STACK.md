@@ -1,6 +1,8 @@
-# Tech stack Lunara Shop
+# Tech stack Lunarra
 
-Cập nhật **16/10/2026**. Repo `Lurana`; branding UI **Lunara Shop**. **Phase 0–5 DONE local; Phase 6 IN PROGRESS (5/7)**. [Hiện trạng và snapshot live](PROJECT_STATUS.md).
+> Hiện hành 16/10/2026 — Đã nhập danh mục D1 Hà Nội 1 tỉnh/126 phường vào local + staging bằng migration0003 (12 bảng); không nhập TP.HCM. Admin chọn/tìm tỉnh-phường, nhập phí; checkout chỉ hiện zone active thuộc danh mục, server không fallback tỉnh. Checkout gộp, thiệp NONE, terms nội bộ và bank rollback COD được giữ. Staging đã deploy version 27c3d24e-f3df-42e1-8d18-8b8299427062; zones0 nên checkout chưa có nơi giao cho tới khi admin cấu hình phí. Local190tests/225source/typecheck/build, schema13/13, smoke40/40, browser admin7nhóm PASS. Owner đã yêu cầu commit/push sau deploy; production không đổi, Phase6 giữ5/7. [Địa chỉ](DELIVERY_ADDRESS.md), [Checkout](CHECKOUT_UI.md). Các mốc dưới đây là lịch sử khi khác hiện trạng này.
+
+Cập nhật **16/10/2026**. Repo `Lurana`; branding UI **Lunarra**. **Phase 0–5 DONE local; Phase 6 IN PROGRESS (5/7)**. [Hiện trạng và snapshot live](PROJECT_STATUS.md).
 
 ## Công nghệ và phiên bản repository
 
@@ -11,9 +13,9 @@ Giữ phiên bản trong package.json/package-lock.json, cài bằng `npm ci`; k
 | Frontend | React/React DOM 18.3.1, React Router 7.18.4, TypeScript 5.7.3, Vite 6.4.4, Tailwind 4.1.12, React plugin 4.7.0 |
 | Backend | Hono 4.13.13, Cloudflare Workers, @cloudflare/vite-plugin 1.63.2, Wrangler 4.150.0 |
 | Validation | Zod 4.6.7; root `shared/` chứa API schemas/constants, frontend bật jitless trước load schemas để chạy dưới CSP |
-| Database | D1/SQLite, binding DB; 10 bảng, `migrations/0001_mvp.sql` base bất biến + `0002_category_images.sql` additive cho ảnh category; custom_requests deferred |
+| Database | D1/SQLite, binding DB; 12 bảng local/staging: `0001_mvp.sql` base10bảng bất biến + `0002_category_images.sql` + `0003_hanoi_administrative_areas.sql` (1tỉnh/126phường); production vẫn0001; custom_requests deferred |
 | i18n | i18next/react-i18next, `src/shared/i18n/`; preference → browser EN/VI → English fallback; VND/Asia/Ho_Chi_Minh không đổi theo locale |
-| UI | cream/rose, font EN Fraunces 500/500 Italic (optical sizing auto) + Inter, VI Lora/Be Vietnam Pro; Button/Input/Dialog và Lucide |
+| UI | cream/rose, font EN Fraunces 500/500 Italic (optical sizing auto) + Inter, VI Lora/Be Vietnam Pro; Button/Input/Dialog/Dropdown (Radix Select)/Combobox tìm không dấu và Lucide |
 | Media | Cloudinary signed direct upload, cookie admin + same-origin JSON, SHA-256 params server-owned; browser upload rồi Save image.url |
 | Auth | Một admin từ secret, SHA-256/timingSafeEqual, hono/jwt HS256 cookie HttpOnly/Strict/12h; Secure trên HTTPS; không credentials/JWT trong browser storage |
 | Chống bot | Turnstile fail-closed checkout/lookup/admin-login; thiếu secret503, controlled loopback opt-in only; kiểm action/hostname; RateLimit bindings riêng prod/staging; cap 3 PENDING/SĐT trong INSERT atomic |
@@ -22,6 +24,8 @@ Giữ phiên bản trong package.json/package-lock.json, cài bằng `npm ci`; k
 | Tooling | CodeGraph1.5.0 local; Node24.11.1/npm11.6.3 là môi trường đã kiểm; scripts architecture/typecheck/tests/smoke/UI |
 
 ## Kiến trúc và ownership
+
+Danh mục hành chính ở hai bảng D1, chỉ admin GET nhận đủ Hà Nội126; public options JOIN active zones nên checkout không dùng JSON runtime. Phí quote/order kiểm cùng coverage, không fallback tỉnh; legacy zones được giữ nhưng không mở giao. Không dependency/binding mới.
 
 `pages → features → shared`; cross-feature qua index.ts. Pages ghép hooks/views, services gọi API client cùng origin; component không fetch trực tiếp. Router duy nhất `src/app/router.tsx`, MetadataLayout bọc routes, AppProviders ghép i18n/auth/catalog/cart. API Worker là ranh giới quyền; AdminRoute chỉ bảo vệ điều hướng UI.
 
@@ -43,13 +47,13 @@ Deploy commands: `npm run deploy` và `npm run deploy:staging`, đều build m�
 
 TURNSTILE_SECRET và Cloudinary API secrets chỉ ở Worker, nhập riêng từng môi trường, không nhập lại mỗi deploy. Hai widget dùng hai cặp Site/Secret key đúng hostname. .dev.vars local ignored, .dev.vars.example chỉ demo. Không đọc password local để kiểm chứng production.
 
-Snapshot 16/10: production còn version15/10; staging đã deploy bản mới13:31, có CSP/SEO/rate-limit/TTL/scheduled handler và Cloudinary config. Cả hai thiếu TURNSTILE_SECRET. Có binding/secret name không thay nghiệm thu runtime thật; [chi tiết](PROJECT_STATUS.md#snapshot-remote-chỉ-đọc--16102026).
+Snapshot trước lượt danh mục: production còn version15/10; staging đã deploy bản13:31, có CSP/SEO/rate-limit/TTL/scheduled handler và Cloudinary config. Cả hai thiếu TURNSTILE_SECRET. Có binding/secret name không thay nghiệm thu runtime thật; [chi tiết](PROJECT_STATUS.md#snapshot-remote-chỉ-đọc--16102026).
 
 ## Kiểm chứng và giới hạn
 
 Bản fail-closed mới16/10: Thiếu/rỗng/whitespace TURNSTILE_SECRET trả503 TURNSTILE_NOT_CONFIGURED trước D1/auth/Siteverify. Chỉ bypass khi cờ server TURNSTILE_ALLOW_LOCAL_BYPASS=true và hostname chính xác localhost/127.0.0.1/[::1]; mặc định local cũng đóng. Có secret thì luôn xác minh token, kể cả bật cờ. Không khai báo cờ trong Wrangler prod/staging, không nhận cờ từ body/header/client. Harness test cô lập tự bật rõ ràng; không đọc ambient .dev.vars. Bản sửa16/10 hiện local/chưa deploy. Tests170 PASS; header live kiểm độc lập22phản hồi, native verifier3cấu hình PASS. [Chi tiết](HARDENING.md#turnstile-fail-closed-và-header-live-16102026).
 
-Local gần nhất: typecheck/architecture 215/tests 166/build/dry-run hai môi trường PASS; smoke 40/40, persisted D1 giữ nguyên. Các số 125/136/143/148/150/158/160 tests là mốc cũ, không cộng hoặc dùng thay current count. Pipeline giữ nguyên output lịch sử.
+Mốc local gallery trước lượt danh mục: typecheck/architecture221/tests179/build PASS;5 nhóm browser gallery PASS; smoke40 PASS; dropdown dùng dependency Radix có sẵn, không đổi lockfile. Mốc trước: build/dry-run hai môi trường PASS; smoke 40/40, persisted D1 giữ nguyên. Các số 125/136/143/148/150/158/160 tests là mốc cũ, không cộng hoặc dùng thay current count. Pipeline giữ nguyên output lịch sử.
 
 UI Phase 5 đầy đủ tại mốc cũ:17 routes/0 exceptions,10/10 MVP+2/2 extended. Hardening UI/mock/test-key đã pass targeted; responsive rộng còn tràn Shop320px, chưa nghiệm thu lại toàn suite. CPU cloud/quota/challenge thật/upload thật/Cron thực chạy chưa được xác minh đầy đủ. Không dùng evidence local để kết Phase 6.
 
@@ -66,3 +70,16 @@ Hero asset local16/10: import WebP tĩnh từ src/assets/hero (640/960/1440), Vi
 Ảnh category: public WebP256px với URL revisioned lưu D1 categories.image_url, GET categories trả nullable; không Cloudinary key/dependency mới. Test/harness SQLite/workerd áp cả migration0001+0002. Local172 tests,architecture215,db:verify13/13,smoke40 PASS; ảnh256px tải thật ở10 case EN/VI/5viewport. [Runbook](CATEGORY_IMAGES.md).
 
 Staging đã deploy version `75fcbb54-5528-4cc1-b101-22fdc7a91a40`;APIcategory+ảnh publiclive và browser10casePASS.Production chưa migrate0002 hoặc deploy lần này;không thêm dependency.
+
+Product detail local16/10: route React /shop/:slug và API existing /api/products/:slug, ảnh/variants/mô tả/SKU từ DB, Dialog zoom và shared Dropdown; canonical/title/OG client theo sản phẩm. Chưa SSR/prerender/sitemap sản phẩm. CatalogProvider cập nhật detail DTO trong memory để giỏ nhận sản phẩm ngoài100 mẫu đầu; cart add trả boolean, quote vẫn server-owned. Card bỏ border dùng shadow token/hover lift4px/reduced-motion. Không đổi dependency/DDL/Worker; chưa push/deploy.
+
+Gallery 16/10 local dùng `product_images/cloudinary_public_id` sẵn có, không thêm DDL/dependency. Product create/patch nhận images từ 1 đến 8 ảnh, đúng một primary, không trùng URL/ID; thay gallery trong một batch atomic. Signed direct upload chạy tuần tự, mỗi ảnh kiểm 5 MiB ở client/metadata; không tự xóa asset Cloudinary. Public list trả cover, detail trả đủ ảnh; admin có public ID. Provider thật chưa nghiệm thu; 5 nhóm browser dùng mock provider và D1 tạm đã đạt.
+
+
+Checkout16/10 local: shared Combobox không dependency mới; snapshot JSON Open Admin Data CC-BY4.0 (2city/294ward), tìm không dấu và chọn giá trị xác định; useQuoteCart debounce350ms/hủy request cũ. Phí D1/API không đổi;182tests/223source và8browser groups PASS. [Chi tiết](DELIVERY_ADDRESS.md).
+
+
+Checkout16/10 local: service checkout-form.ts giữ logic sync người nhận/validation; hook sở hữu consent/payment, CheckoutPayment trình bày sidebar. Tái dùng Radix Dialog/FeatureUnavailable inline, không dependency mới.186tests/225source/10nhóm checkout +8nhóm địa chỉ browser PASS. [Chi tiết](CHECKOUT_UI.md).
+
+
+Wrangler config16/10 local: explicit sampling10% cho observability/logs/traces, không bật traces, invocation_logs=false; staging guard giữ đúng target và sampling.186tests/typecheck/architecture225/build+dry-run2môi trường đạt; không upload/remote changes. Dry-run không chứng minh cloud diff hết. [Chi tiết](STAGING.md).

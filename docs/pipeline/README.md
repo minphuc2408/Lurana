@@ -1,6 +1,6 @@
 # Pipeline Lunara MVP — hiện trạng và kế hoạch
 
-> Rà soát 16/10/2026: [hiện trạng chuẩn](../PROJECT_STATUS.md), [contract hiện tại](API_CONTRACT.md). Phase 0–5 DONE local, Phase 6 IN PROGRESS5/7. Local170 tests/215 source files/40 smoke; staging đã deploy bản mới13:31 ngày 16/10, production vẫn bản 15/10. Output/checklist ghi ngày cũ bên dưới là lịch sử, không phải trạng thái cloud hiện tại.
+> Rà soát 16/10/2026: [hiện trạng chuẩn](../PROJECT_STATUS.md), [contract hiện tại](API_CONTRACT.md). Phase 0–5 DONE local, Phase 6 IN PROGRESS5/7. Local190 tests/225 source files/40 smoke/schema13nhóm; staging đã áp0003 Hà Nội126/12bảng và deploy27c3d24e ngày16/10, production giữ0001/bản15/10. Browser admin7/địa chỉ8/checkout12nhóm PASS; staging chưa có zone phí, không tự mở toàn Hà Nội. Output/checklist ghi ngày cũ bên dưới là lịch sử, không phải trạng thái cloud hiện tại.
 
 
 B2/B3 đã có trong source; staging deploy 16/10, production chưa cập nhật: Turnstile checkout/lookup/login, rate-limit bindings, cap PENDING, xử lý khách từ chối nhận và Cron 24 giờ/mỗi giờ đã chốt trong cấu hình local. Phase 6 vẫn 5/7; cấu hình cloud và hạn mức WAF Free xem [runbook](../BOT_PROTECTION.md).
@@ -32,7 +32,7 @@ Khách vào web, xem hoa, thêm giỏ, **đặt hàng COD** (không cần tài k
 | Tiền / múi giờ | VND (số nguyên) / Asia/Ho_Chi_Minh; toàn UI MVP dùng formatter chung. EN mặc định/fallback, đổi locale không đổi currency/timezone/dữ liệu khách; PHP/₱ chỉ còn source legacy ẩn |
 | Địa chỉ | `province_name` + `ward_name` + `address_line`, không có quận/huyện |
 | Tồn kho | Theo từng variant (size): `product_variants.stock_quantity`, trừ khi đặt; early cancel mặc định hoàn, IN_TRANSIT cancel cần lý do/restock mặc định false |
-| Phí giao | Bảng `delivery_zones` (khớp phường, không có thì mặc định tỉnh) + phụ phí theo phương thức (config) |
+| Phí giao | Hai bảng danh mục Hà Nội + `delivery_zones` từng phường active; không fallback tỉnh; phụ phí phương thức từ config |
 | Auth admin | Phase 4 local: một mật khẩu dài ngẫu nhiên trong secret, SHA-256/timingSafeEqual + JWT HS256 cookie HttpOnly/SameSite=Strict 12h; requireAdmin/requireSameOrigin; không bcrypt/argon2 hoặc bảng mới |
 | Auth khách | Bảng `users` dựng sẵn, chưa dùng. Better Auth/Auth khác làm sau |
 | Backend | Cùng source, mỗi môi trường có một Worker phục vụ static assets và `/api/*` cùng origin; prod/staging tách Worker/D1/secrets |
@@ -53,7 +53,7 @@ Khách vào web, xem hoa, thêm giỏ, **đặt hàng COD** (không cần tài k
 
 Tài liệu dùng chung: [API_CONTRACT](API_CONTRACT.md) • [BACKLOG](BACKLOG.md) • SQL: [migration canonical](../../migrations/0001_mvp.sql), [dev seed](../sql/MVP_SEED_DEV.sql).
 
-**Schema đã thống nhất ở Phase 1:** dùng nguyên DDL v2 cho 10 bảng, có `delivery_zones`, idempotency và các ràng buộc; `custom_requests` deferred. [`migrations/0001_mvp.sql`](../../migrations/0001_mvp.sql) là nguồn DDL duy nhất; hai file `MVP_SCHEMA.sql` cũ chỉ dẫn về migration. [Đối chiếu v1/v2 và lý do](../DATABASE_DESIGN.md). Seed và migration đã áp D1 local; `npm run db:verify` pass 13/13 nhóm trên binding D1 local, dùng database cô lập cho ca ghi/xóa thử. Verifier Python tham chiếu cũ đã được thay bằng script Node này, không còn suite tự áp deferred/0002. [Output nghiệm thu](PHASE_1_DATABASE.md#bằng-chứng-lệnh--14102026). Đây là phạm vi Phase 1 local lịch sử; Phase 6 sau đó đã áp0001 trên hai D1 remote.
+**Schema đã thống nhất ở Phase 1:** dùng nguyên DDL v2 cho 10 bảng, có `delivery_zones`, idempotency và các ràng buộc; `custom_requests` deferred. [`migrations/0001_mvp.sql`](../../migrations/0001_mvp.sql) là base bất biến; local/staging thêm0002ảnh +0003danh mục thành12bảng, production giữ0001; hai file `MVP_SCHEMA.sql` cũ chỉ dẫn về migration. [Đối chiếu v1/v2 và lý do](../DATABASE_DESIGN.md). Seed và migration đã áp D1 local; `npm run db:verify` pass 13/13 nhóm trên binding D1 local, dùng database cô lập cho ca ghi/xóa thử. Verifier Python tham chiếu cũ đã được thay bằng script Node này, không còn suite tự áp deferred/0002. [Output nghiệm thu](PHASE_1_DATABASE.md#bằng-chứng-lệnh--14102026). Đây là phạm vi Phase 1 local lịch sử; Phase 6 sau đó đã áp0001 trên hai D1 remote.
 
 **Lịch 2 ngày:** Ngày 1 = Phase 0 → 3 (+ bắt đầu 4). Ngày 2 = Phase 4 → 6.
 

@@ -87,7 +87,7 @@ test('browser upload sends signed multipart directly without cookies and never r
     assert.equal(options.body.get('overwrite'), 'false');
     return Response.json(image(ticket));
   });
-  assert.equal(await uploadProductImage(file, ticket), image(ticket).secure_url);
+  assert.deepEqual(await uploadProductImage(file, ticket), { url: image(ticket).secure_url, cloudinary_public_id: ticket.params.public_id });
   mock.mock.mockImplementation(async () => { throw new Error('network'); });
   await assert.rejects(() => uploadProductImage(file, ticket), error => error.code === 'IMAGE_UPLOAD_FAILED');
   assert.equal(mock.mock.callCount(), 2);

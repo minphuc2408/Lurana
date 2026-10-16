@@ -232,8 +232,7 @@ await check('delivery options: DB provinces/wards/fees + configured limits', asy
   deliveryOptions = options;
   const provinces = [...options.provinces].sort((a, b) => a.province_name.localeCompare(b.province_name));
   assert.deepEqual(provinces, [
-    { province_name: 'Thành phố Hà Nội', default_fee: 35000, free_from_amount: 1000000, wards: [{ ward_name: 'Phường Hoàn Kiếm', fee: 20000 }] },
-    { province_name: 'Thành phố Hồ Chí Minh', default_fee: 35000, free_from_amount: 1000000, wards: [{ ward_name: 'Phường Bến Nghé', fee: 20000 }] },
+    { province_name: 'Thành phố Hà Nội', default_fee: null, free_from_amount: null, wards: [{ ward_name: 'Hoàn Kiếm', fee: 20000 }] },
   ]);
   assert.deepEqual(options.methods, [{ code: 'STANDARD', surcharge: 0 }, { code: 'EXPRESS', surcharge: 30000 }, { code: 'SAME_DAY', surcharge: 50000 }]);
   assert.ok(Array.isArray(options.time_slots) && options.time_slots.length > 0);
@@ -256,10 +255,8 @@ await check('quote ignores forged client price/totals; ward fee uses DB', async 
   assert.deepEqual(data.issues, []);
 });
 
-await check('quote unknown ward falls back to province default; unknown province is 422', async () => {
-  const data = await quote(quoteBody({ ward_name: 'Phường mẫu không có dòng riêng' }));
-  assert.equal(data.delivery_fee, 35000);
-  assert.equal(data.grand_total, 485000);
+await check('quote unconfigured ward and unknown province are both 422', async () => {
+  await error('/api/checkout/quote', 422, 'NO_DELIVERY_ZONE', post(quoteBody({ ward_name: 'Cửa Nam' })));
   await error('/api/checkout/quote', 422, 'NO_DELIVERY_ZONE', post(quoteBody({ province_name: 'Tỉnh mẫu không giao' })));
 });
 
@@ -329,7 +326,7 @@ async function orderSmoke() {
   let server;
   try {
     const db = platform.env.DB;
-    for (const file of ['../migrations/0001_mvp.sql', '../migrations/0002_category_images.sql', '../docs/sql/MVP_SEED_DEV.sql']) {
+    for (const file of ['../migrations/0001_mvp.sql', '../migrations/0002_category_images.sql', '../migrations/0003_hanoi_administrative_areas.sql', '../docs/sql/MVP_SEED_DEV.sql']) {
       const sql = readFileSync(new URL(file, import.meta.url), 'utf8');
       await db.batch(splitSqlQuery(sql).map(statement => db.prepare(statement)));
     }
@@ -544,7 +541,7 @@ async function orderSmoke() {
       assert.equal(await orderCount(), beforeOrders);
     });
 
-    await check('Phase 3 06/10 unavailable province rejects; ward fee and both free thresholds use DB', async () => {
+    await check('Phase 3 06/10 unconfigured areas reject; configured ward fee/free threshold use DB', async () => {
       const beforeOrders = await orderCount();
       const beforeStock = await stock(peonyVariant.id);
       await localError('/api/orders', orderPost(body({
@@ -557,12 +554,14 @@ async function orderSmoke() {
       const wardFree = (await create(body({ items: [{ variant_id: peonyVariant.id, quantity: 2 }] }))).payload.data;
       assert.equal(wardFree.subtotal, 900000);
       assert.equal(wardFree.delivery_fee, 0);
-      const provinceFree = (await create(body({
+      const countBeforeUnsupported = await orderCount();
+      const stockBeforeUnsupported = await stock(peonyVariant.id);
+      await localError('/api/orders', orderPost(body({
         items: [{ variant_id: peonyVariant.id, quantity: 3 }],
-        recipient: { ...body().recipient, ward_name: 'Phường mẫu dùng phí tỉnh' },
-      }))).payload.data;
-      assert.equal(provinceFree.subtotal, 1350000);
-      assert.equal(provinceFree.delivery_fee, 0);
+        recipient: { ...body().recipient, ward_name: 'Cửa Nam' },
+      })), 422, 'NO_DELIVERY_ZONE');
+      assert.equal(await orderCount(), countBeforeUnsupported);
+      assert.equal(await stock(peonyVariant.id), stockBeforeUnsupported);
     });
 
     await check('Phase 3 07/10 SAME_DAY tomorrow and past delivery date reject without writes', async () => {
@@ -949,17 +948,17 @@ async function orderSmoke() {
       });
       assert.equal((await localQuote(input)).delivery_fee, 23000);
       const newZone = {
-        province_name: 'Tỉnh smoke local', ward_name: '', fee: 17000,
+        province_name: 'Thành phố Hà Nội', ward_name: 'Cửa Nam', fee: 17000,
         free_from_amount: null, eta_minutes: 120, is_active: true,
       };
       const created = (await admin('/delivery-zones', 'POST', newZone, 201)).payload.data;
-      const newQuote = { ...input, province_name: newZone.province_name, ward_name: 'Phường smoke local' };
+        const newQuote = { ...input, province_name: newZone.province_name, ward_name: newZone.ward_name };
       assert.equal((await localQuote(newQuote)).delivery_fee, 17000);
       await localError('/api/admin/delivery-zones', adminInit('POST', newZone), 409, 'CONFLICT');
       await admin(`/delivery-zones/${created.id}`, 'PUT', { ...newZone, is_active: false });
       await localError('/api/checkout/quote', post(newQuote), 422, 'NO_DELIVERY_ZONE');
       assert.equal((await admin('/delivery-zones')).payload.data.items.some(zone => zone.id === created.id && !zone.is_active), true);
-      console.log('D1 Phase 4 delivery: admin fee 20000→23000; next quote=23000; create default zone=17000; inactive quote=NO_DELIVERY_ZONE; row retained.');
+      console.log('D1 Phase 4 delivery: admin fee 20000→23000; next quote=23000; create catalog ward zone=17000; inactive quote=NO_DELIVERY_ZONE; row retained.');
     });
 
     await check('Phase 4 12/12 logout expires cookie; private bodies contain no credentials/JWT; D1 intact', async () => {

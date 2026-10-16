@@ -125,7 +125,7 @@ async function createBridge() {
   const { default: app } = await import('../worker/index.ts');
   platform = await getPlatformProxy({ configPath: path.join(root, 'wrangler.jsonc'), persist: false, remoteBindings: false, envFiles: ['.dev.vars.example'] });
   const db = platform.env.DB;
-  for (const file of ['migrations/0001_mvp.sql', 'migrations/0002_category_images.sql', 'docs/sql/MVP_SEED_DEV.sql']) {
+  for (const file of ['migrations/0001_mvp.sql', 'migrations/0002_category_images.sql', 'migrations/0003_hanoi_administrative_areas.sql', 'docs/sql/MVP_SEED_DEV.sql']) {
     await db.batch(splitSqlQuery(readFileSync(path.join(root, file), 'utf8')).map(sql => db.prepare(sql)));
   }
   server = createServer(async (incoming, outgoing) => {
@@ -235,6 +235,11 @@ async function textClick(text, scope = 'document') {
 }
 
 async function input(selector, value) {
+  if (await evaluate(`Boolean(document.querySelector(${JSON.stringify(selector)})?.matches('[data-dropdown]'))`)) {
+    await click(selector);
+    await click(`[role=option][data-value=${JSON.stringify(String(value))}]`);
+    return;
+  }
   const set = await evaluate(`(() => { const el = document.querySelector(${JSON.stringify(selector)}); if (!el) return false; const proto = el instanceof HTMLSelectElement ? HTMLSelectElement.prototype : el instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype; Object.getOwnPropertyDescriptor(proto,'value').set.call(el, ${JSON.stringify(String(value))}); el.dispatchEvent(new Event(el instanceof HTMLSelectElement ? 'change' : 'input', { bubbles: true })); return true; })()`);
   assert.equal(set, true, `Missing form field ${selector} on ${routeName}`);
   await pause(70);
@@ -328,8 +333,8 @@ async function addPeony(size = 'M') {
   await navigate('/shop');
   await waitFor("document.querySelectorAll('[data-product-id]').length >= 8");
   const variant = await evaluate(`fetch('/api/products', {cache:'no-store'}).then(r=>r.json()).then(b=>b.data.items.find(p=>p.slug==='blush-peony-bouquet').variants.find(v=>v.size_code===${JSON.stringify(size)}).id)`);
-  await input('[data-product-id="1"] select', variant);
-  await click('[data-product-id="1"] button');
+  await input('[data-product-id="1"] [data-dropdown]', variant);
+  await click('[data-product-id="1"] [data-product-add]');
   await waitFor("JSON.parse(localStorage.getItem('lunara.cart.v1') || '{}').lines?.length > 0");
   await navigate('/cart');
   await waitFor("Boolean(document.querySelector('[data-quote-amount=Total]'))");
@@ -516,9 +521,10 @@ async function runAcceptance(db) {
     await waitFor(`document.querySelector('[data-variant-id="${variant}"]')?.dataset.stock === '0'`);
     assert.equal(await stock(variant), 0);
     await navigate('/shop'); await waitFor("document.querySelectorAll('[data-product-id]').length === 8");
-    await input('[data-product-id="1"] select', variant);
-    await expect("document.querySelector('[data-product-id=\"1\"] button').disabled", 'Out of stock selected variant must block Add');
-    return { atomicDelta: -current, stock: 0, shopAddDisabled: true };
+    await click('[data-product-id="1"] [data-dropdown]');
+    await expect(`document.querySelector('[role=option][data-value="${variant}"]').getAttribute('aria-disabled') === 'true'`, 'Out of stock variant must be unavailable');
+    await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape' });
+    return { atomicDelta: -current, stock: 0, shopVariantDisabled: true };
   });
   await scenario(10, 'MVP source uses VND/Vietnam timezone and hidden legacy links stay absent', async () => {
     const scan = scanActiveRuntime();

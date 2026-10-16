@@ -13,9 +13,11 @@ export async function verifyLiveCatalog({ navigate, input, assert, evaluate, wai
   await assert("!document.querySelector('a[href=\"/signup\"]') && !document.querySelector('a[href=\"/profile\"]') && !document.querySelector('a[href=\"/request\"]')", 'Unavailable feature remains in navigation');
   const prices = await evaluate("fetch('/api/products',{cache:'no-store'}).then(r=>r.json()).then(b=>b.data.items.map(p=>({id:p.id,price:p.variants.find(v=>v.size_code==='M').price,variant:p.variants.find(v=>v.size_code==='M').id})))");
   const peony = prices.find(item => item.id === 1);
-  await evaluate(`(() => { const select=document.querySelector('[data-product-id="1"] select');select.value='${peony.variant}';select.dispatchEvent(new Event('change',{bubbles:true})); })()`);
+  await evaluate("document.querySelector('[data-product-id=\"1\"] [data-dropdown]').click()");
+  await waitFor(`Boolean(document.querySelector('[role=option][data-value="${peony.variant}"]'))`);
+  await evaluate(`document.querySelector('[role=option][data-value="${peony.variant}"]').click()`);
   await waitFor("document.querySelector('[data-product-id=\"1\"] [data-product-price]').innerText.includes('650')");
-  await evaluate("document.querySelector('[data-product-id=\"1\"] button').click()");
+  await evaluate("document.querySelector('[data-product-id=\"1\"] [data-product-add]').click()");
   await waitFor("JSON.parse(localStorage.getItem('lunara.cart.v1')).lines.length === 1");
   await assert(`JSON.parse(localStorage.getItem('lunara.cart.v1')).lines[0].variantId === ${peony.variant}`, 'Selected size was not stored by variant ID');
   await assert("!localStorage.getItem('lunara.cart.v1').includes('price')", 'Storage contains client prices');

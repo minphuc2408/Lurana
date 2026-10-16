@@ -4,7 +4,7 @@
   "account_id": "411a1de267e251745a176dfd37257ea6",
   "main": "./worker/index.ts",
   "compatibility_date": "2026-10-06",
-  "observability": { "enabled": true, "head_sampling_rate": 0.1, "logs": { "enabled": true, "invocation_logs": false } },
+  "observability": { "enabled": true, "head_sampling_rate": 0.1, "logs": { "enabled": true, "invocation_logs": false, "head_sampling_rate": 0.1 }, "traces": { "head_sampling_rate": 0.1 } },
   "triggers": { "crons": ["0 * * * *"] },
   "ratelimits": [
     { "name": "RATE_LIMIT_SENSITIVE", "namespace_id": "240801", "simple": { "limit": 6, "period": 60 } },
@@ -31,7 +31,7 @@
   "env": {
     "staging": {
       "name": "lunara-staging",
-      "observability": { "enabled": true, "head_sampling_rate": 0.1, "logs": { "enabled": true, "invocation_logs": false } },
+      "observability": { "enabled": true, "head_sampling_rate": 0.1, "logs": { "enabled": true, "invocation_logs": false, "head_sampling_rate": 0.1 }, "traces": { "head_sampling_rate": 0.1 } },
       "triggers": { "crons": ["0 * * * *"] },
       "ratelimits": [
         { "name": "RATE_LIMIT_SENSITIVE", "namespace_id": "240811", "simple": { "limit": 6, "period": 60 } },

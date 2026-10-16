@@ -184,7 +184,7 @@ test('oversized merged quantities and unavailable variants never write orders or
   assert.equal(stock(h), 1);
 });
 
-test('order delivery uses ward priority, province fallback and free threshold; invalid delivery leaves no order', async t => {
+test('order delivery requires configured wards and retains free threshold; invalid delivery leaves no order', async t => {
   const h = fixture(t);
   const exact = await post(h.db);
   assert.equal(exact.response.status, 201);
@@ -192,8 +192,8 @@ test('order delivery uses ward priority, province fallback and free threshold; i
   assert.equal(exact.body.data.grand_total, 470000);
   const body = orderBody();
   const fallback = await post(h.db, { ...body, recipient: { ...body.recipient, ward_name: 'Phường mới' } });
-  assert.equal(fallback.response.status, 201);
-  assert.equal(fallback.body.data.delivery_fee, 35000);
+  assert.equal(fallback.response.status, 422);
+  assert.equal(fallback.body.error.code, 'NO_DELIVERY_ZONE');
   h.sqlite.prepare('UPDATE delivery_zones SET free_from_amount = ? WHERE province_name = ? AND ward_name = ?').run(450000, body.recipient.province_name, body.recipient.ward_name);
   const free = await post(h.db);
   assert.equal(free.response.status, 201);

@@ -10,6 +10,7 @@ export const adminCatalogIdSchema = z.object({
   id: z.string().regex(/^[1-9]\d*$/, 'Mã tài nguyên không hợp lệ.').transform(Number)
     .pipe(z.number().int().positive().max(Number.MAX_SAFE_INTEGER)),
 });
+export const MAX_PRODUCT_IMAGES = 8;
 export const adminProductImageSchema = z.object({
   url: z.string().trim().max(2048).url('URL ảnh không hợp lệ.').refine(value => {
     try {
@@ -18,8 +19,19 @@ export const adminProductImageSchema = z.object({
         && !url.port && !url.username && !url.password;
     } catch { return false; }
   }, 'Ảnh phải dùng HTTPS từ Cloudinary hoặc Unsplash, không chứa thông tin đăng nhập.'),
+  cloudinary_public_id: z.string().trim().min(1).max(255).regex(/^[a-zA-Z0-9/_-]+$/).nullable().optional(),
   alt_vi: z.string().max(200).nullable().optional(),
   alt_en: z.string().max(200).nullable().optional(),
+}).refine(image => {
+  if (!image.cloudinary_public_id) return true;
+  try { const url = new URL(image.url); return url.hostname === 'res.cloudinary.com' && ['jpg', 'png', 'webp'].some(format => url.pathname.endsWith(`/${image.cloudinary_public_id}.${format}`)); }
+  catch { return false; }
+}, { message: 'Public ID không khớp URL ảnh.', path: ['cloudinary_public_id'] });
+export const adminProductImagesSchema = z.array(adminProductImageSchema.safeExtend({ is_primary: z.boolean() })).min(1).max(MAX_PRODUCT_IMAGES).superRefine((images, ctx) => {
+  if (images.filter(image => image.is_primary).length !== 1) ctx.addIssue({ code: 'custom', message: 'Chọn đúng một ảnh đại diện.' });
+  if (new Set(images.map(image => image.url)).size !== images.length) ctx.addIssue({ code: 'custom', message: 'Ảnh không được trùng URL.' });
+  const ids = images.map(image => image.cloudinary_public_id).filter(Boolean);
+  if (new Set(ids).size !== ids.length) ctx.addIssue({ code: 'custom', message: 'Ảnh không được trùng public ID.' });
 });
 const variantCreate = z.object({
   sku: z.string().trim().min(1).max(100),
@@ -44,7 +56,8 @@ export const adminProductCreateSchema = z.object({
   badge_code: badge.optional(),
   is_featured: z.boolean().optional().default(false),
   status: status.optional().default('ACTIVE'),
-  image: adminProductImageSchema,
+  image: adminProductImageSchema.optional(),
+  images: adminProductImagesSchema.optional(),
   variants: z.array(variantCreate).min(1).max(5).superRefine((variants, ctx) => {
     const sizes = new Set<string>();
     const skus = new Set<string>();
@@ -55,7 +68,7 @@ export const adminProductCreateSchema = z.object({
       skus.add(variant.sku);
     });
   }),
-});
+}).refine(value => Boolean(value.image) !== Boolean(value.images), { message: 'Cần gửi image hoặc images.', path: ['images'] });
 export const adminProductPatchSchema = z.object({
   name_vi: name.optional(),
   name_en: name.optional(),
@@ -65,7 +78,8 @@ export const adminProductPatchSchema = z.object({
   is_featured: z.boolean().optional(),
   status: status.optional(),
   image: adminProductImageSchema.optional(),
-}).refine(value => Object.keys(value).length > 0, 'Vui lòng chọn thông tin cần cập nhật.');
+  images: adminProductImagesSchema.optional(),
+}).refine(value => !(value.image && value.images), 'Chỉ gửi image hoặc images.').refine(value => Object.keys(value).length > 0, 'Vui lòng chọn thông tin cần cập nhật.');
 export const adminVariantPatchSchema = z.object({
   price: amount.optional(),
   compare_at_price: amount.nullable().optional(),

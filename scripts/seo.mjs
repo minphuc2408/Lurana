@@ -10,7 +10,7 @@ export function renderSeoHtml(html, path, site) {
     `<meta name="robots" content="${meta.robots}" />`,
     `<link rel="canonical" href="${meta.canonical}" />`,
     `<meta property="og:type" content="website" />`,
-    `<meta property="og:site_name" content="Lunara Shop" />`,
+    `<meta property="og:site_name" content="Lunarra" />`,
     `<meta property="og:title" content="${escape(meta.title)}" />`,
     `<meta property="og:description" content="${escape(meta.description)}" />`,
     `<meta property="og:url" content="${meta.canonical}" />`,

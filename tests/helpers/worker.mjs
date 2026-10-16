@@ -8,6 +8,7 @@ export function createTestDb() {
   sqlite.exec('PRAGMA foreign_keys = ON');
   sqlite.exec(readFileSync(new URL('../../migrations/0001_mvp.sql', import.meta.url), 'utf8'));
   sqlite.exec(readFileSync(new URL('../../migrations/0002_category_images.sql', import.meta.url), 'utf8'));
+  sqlite.exec(readFileSync(new URL('../../migrations/0003_hanoi_administrative_areas.sql', import.meta.url), 'utf8'));
   sqlite.exec(readFileSync(new URL('../../docs/sql/MVP_SEED_DEV.sql', import.meta.url), 'utf8'));
   const queries = [];
   const plain = row => row ? { ...row } : null;

@@ -48,6 +48,22 @@ html[lang='vi'] {
 }
 
 @layer base {
+  :where(button:not(:disabled):not([aria-disabled='true']), a[href]:not([aria-disabled='true']), summary, select:not(:disabled), input[type='checkbox']:not(:disabled), input[type='radio']:not(:disabled), input[type='button']:not(:disabled), input[type='submit']:not(:disabled), [role='button']:not([aria-disabled='true']), [role='option']:not([aria-disabled='true'])) {
+    cursor: pointer;
+  }
+
+  :where(button:disabled, select:disabled, input:disabled, [aria-disabled='true']) {
+    cursor: not-allowed;
+  }
+
+  :where(label:has(input[type='checkbox']:not(:disabled)), label:has(input[type='radio']:not(:disabled))) {
+    cursor: pointer;
+  }
+
+  input[type='date']::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+  }
+
   :where(a, button, input, select, textarea):focus-visible {
     outline: 2px solid var(--lunara-rose-light);
     outline-offset: 1px;

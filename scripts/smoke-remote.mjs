@@ -1,3 +1,4 @@
+import { canonicalWardName } from '../shared/delivery-areas.ts';
 import { randomUUID } from 'node:crypto';
 import { emitKeypressEvents } from 'node:readline';
 import { isIP } from 'node:net';
@@ -230,9 +231,8 @@ export async function runRemoteSmoke(config, { fetchImpl = fetch, log = console.
     cookie = setCookie.split(';', 1)[0];
     ensure((await api('/api/admin/me', { admin: true })).data.role === 'ADMIN', 'Admin session not confirmed.');
     const zones = (await api('/api/admin/delivery-zones', { admin: true })).data.items.filter(zone => zone.is_active);
-    const wardZone = zones.find(zone => zone.ward_name && zones.some(other => other.province_name === zone.province_name && other.ward_name === ''));
-    ensure(wardZone, 'Existing active ward override plus province default are required; configure them through the approved owner workflow.');
-    const provinceZone = zones.find(zone => zone.province_name === wardZone.province_name && zone.ward_name === '');
+    const wardZone = zones.find(zone => zone.ward_name && options.provinces.some(p => p.province_name === zone.province_name && p.wards.some(w => w.ward_name === canonicalWardName(zone.ward_name))));
+    ensure(wardZone, 'An imported active ward is required; configure it through the approved owner workflow.');
     baseline = await stock();
     expectedStock = baseline;
     ensure(baseline >= 1, 'Selected test variant needs at least one unit of stock.');
@@ -245,13 +245,13 @@ export async function runRemoteSmoke(config, { fetchImpl = fetch, log = console.
     const wardQuote = await quote(wardZone.province_name, wardZone.ward_name);
     ensure(wardQuote.delivery_fee === fee(wardZone) && wardQuote.subtotal === price, 'Ward quote must use DB price and ward fee.');
     const fallbackWard = `SMOKE ${runId}`;
-    ensure((await quote(provinceZone.province_name, fallbackWard)).delivery_fee === fee(provinceZone), 'Missing ward must use province default.');
+    await api('/api/checkout/quote', { method: 'POST', status: 422, errorCode: 'NO_DELIVERY_ZONE', body: { items: [{ variant_id: config.variantId, quantity: 1 }], province_name: wardZone.province_name, ward_name: fallbackWard, delivery_method_code: 'STANDARD' } });
     const missingProvince = `SMOKE ${runId}`;
     ensure(!zones.some(zone => zone.province_name === missingProvince), 'Synthetic unsupported province unexpectedly exists.');
     await api('/api/checkout/quote', { method: 'POST', status: 422, errorCode: 'NO_DELIVERY_ZONE', body: {
       items: [{ variant_id: config.variantId, quantity: 1 }], province_name: missingProvince, ward_name: fallbackWard, delivery_method_code: 'STANDARD',
     } });
-    done('admin HTTPS login; existing ward/default/no-delivery-zone fee rules');
+    done('admin HTTPS login; configured ward/unconfigured/no-delivery-zone fee rules');
     const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
     const date = new Date(`${today}T00:00:00Z`);
     date.setUTCDate(date.getUTCDate() + 1);

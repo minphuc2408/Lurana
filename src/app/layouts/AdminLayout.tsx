@@ -114,7 +114,7 @@ export function AdminLayout() {
           <aside className="flex flex-col flex-shrink-0 [width:240px] bg-lunara-sidebar">
             <SidebarContent onClose={() => setSidebarOpen(false)} />
           </aside>
-          <div onClick={() => setSidebarOpen(false)} className="flex-1 bg-[rgba(0,0,0,0.55)] [backdrop-filter:blur(2px)]" />
+          <button type="button" aria-label={t("Close")} onClick={() => setSidebarOpen(false)} className="flex-1 bg-[rgba(0,0,0,0.55)] [backdrop-filter:blur(2px)]" />
         </div>}
 
       {/* Main area */}

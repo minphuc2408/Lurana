@@ -107,7 +107,10 @@ async function loadProducts(db: D1Database, filters: ProductFilters, slug?: stri
       WHEN 'STANDARD' THEN 3 WHEN 'DELUXE' THEN 4 END, id`)
     .bind(...ids).all<VariantRow>();
   const { results: images } = await db.prepare(`SELECT product_id, image_url, alt_vi, alt_en, is_primary
-    FROM product_images WHERE product_id IN (${placeholders}) ORDER BY product_id, sort_order, id`)
+    FROM product_images WHERE product_id IN (${placeholders}) ${slug === undefined ? `AND id =
+      (SELECT cover.id FROM product_images cover WHERE cover.product_id = product_images.product_id
+       ORDER BY cover.is_primary DESC, cover.sort_order, cover.id LIMIT 1)` : ''}
+    ORDER BY product_id, sort_order, id`)
     .bind(...ids).all<ImageRow>();
 
   const variantsByProduct = new Map<number, ProductVariantDTO[]>();

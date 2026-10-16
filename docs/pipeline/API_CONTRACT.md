@@ -1,5 +1,7 @@
 # API contract MVP
 
+> Hiện hành 16/10/2026 — Đã nhập danh mục D1 Hà Nội 1 tỉnh/126 phường vào local + staging bằng migration0003 (12 bảng); không nhập TP.HCM. Admin chọn/tìm tỉnh-phường, nhập phí; checkout chỉ hiện zone active thuộc danh mục, server không fallback tỉnh. Checkout gộp, thiệp NONE, terms nội bộ và bank rollback COD được giữ. Staging đã deploy version 27c3d24e-f3df-42e1-8d18-8b8299427062; zones0 nên checkout chưa có nơi giao cho tới khi admin cấu hình phí. Local190tests/225source/typecheck/build, schema13/13, smoke40/40, browser admin7nhóm PASS. Owner đã yêu cầu commit/push sau deploy; production không đổi, Phase6 giữ5/7. [Địa chỉ](../DELIVERY_ADDRESS.md), [Checkout](../CHECKOUT_UI.md). Các mốc dưới đây là lịch sử khi khác hiện trạng này.
+
 > Rà soát 16/10/2026: [hiện trạng chuẩn](../PROJECT_STATUS.md), [contract hiện tại](API_CONTRACT.md). Phase 0–5 DONE local, Phase 6 IN PROGRESS5/7. Local170 tests/215 source files/40 smoke; staging đã deploy bản mới13:31 ngày 16/10, production vẫn bản 15/10. Output/checklist ghi ngày cũ bên dưới là lịch sử, không phải trạng thái cloud hiện tại.
 
 
@@ -87,7 +89,7 @@ data: {
   limits: { max_cart_lines: 15; max_quantity_per_line: 20; max_advance_days: 30 };
 }
 ```
-Frontend dùng danh sách này để dựng ô chọn tỉnh/phường/phương thức/khung giờ.
+Frontend dùng danh sách này để dựng ô chọn tỉnh/phường/phương thức/khung giờ. Provinces/wards chỉ gồm từng zone active khớp hai bảng danh mục D1 (hiện Hà Nội126). Không có zone hợp lệ → provinces=[]; không trả toàn bộ danh mục hoặc mặc định tỉnh. default_fee và free_from_amount cấp tỉnh luôn null, giữ shape tương thích. Tên phường trả dạng chuẩn không tiền tố.
 
 ### `POST /api/checkout/quote`
 Body:
@@ -106,7 +108,7 @@ Luôn 200 nếu body hợp lệ (kể cả có `issues`) để UI hiển thị; 
 
 Giỏ kiểm tra 1–15 dòng đầu vào, quantity nguyên 1–20, rồi gộp cùng `variant_id`; tổng quantity sau gộp >20 trả `CART_LIMIT` (422). Quantity 0/sai kiểu và giỏ rỗng trả `VALIDATION_ERROR` (400); >15 dòng hoặc quantity >20 trả `CART_LIMIT`. Các field ngoài schema (kể cả `price`, tổng, phí, role) bị bỏ qua. Tên tỉnh/phường được trim, dài 1–100 ký tự.
 
-Variant thiếu/inactive, sản phẩm HIDDEN/ARCHIVED hoặc category inactive tạo `VARIANT_UNAVAILABLE` và không có dòng giá trong `lines`. Variant bán được nhưng thiếu tồn vẫn có dòng giá theo số lượng yêu cầu, kèm `OUT_OF_STOCK`/`available`. `subtotal` cộng các `lines`; ngưỡng miễn phí dùng subtotal này. Quote chỉ đọc, không giữ/trừ tồn hoặc tạo đơn; Phase 3 phải từ chối đặt đơn khi có issues. Ảnh snapshot ưu tiên ảnh chính, rồi sort_order/ID; không có ảnh → null. Giá hiện tại đọc từ DB bằng một statement variants `IN`, phí giao bằng một statement chọn phường trước/mặc định tỉnh sau.
+Variant thiếu/inactive, sản phẩm HIDDEN/ARCHIVED hoặc category inactive tạo `VARIANT_UNAVAILABLE` và không có dòng giá trong `lines`. Variant bán được nhưng thiếu tồn vẫn có dòng giá theo số lượng yêu cầu, kèm `OUT_OF_STOCK`/`available`. `subtotal` cộng các `lines`; ngưỡng miễn phí dùng subtotal này. Quote chỉ đọc, không giữ/trừ tồn hoặc tạo đơn; Phase 3 phải từ chối đặt đơn khi có issues. Ảnh snapshot ưu tiên ảnh chính, rồi sort_order/ID; không có ảnh → null. Giá hiện tại đọc từ DB bằng một statement variants `IN`, phí giao bằng một statement JOIN danh mục và zone active của phường; không fallback mặc định tỉnh. Phường chưa cấu hình/tắt/ngoài danh mục →422 NO_DELIVERY_ZONE cho cả quote và order.
 
 ### `POST /api/orders`
 Header **bắt buộc:** `Idempotency-Key: <uuid v4>`. Body:
@@ -184,7 +186,7 @@ Cookie `lunara_admin`: HttpOnly; SameSite=Strict; Path=/; Max-Age=43200; Secure 
 - Products GET trả `{items}` mọi trạng thái với id/slug/category_code/category_id/tên/mô tả/badge/featured/status/archived_at/images/variants; variants có stock_quantity/low_stock_threshold/is_active và giá chính xác. Dùng 3 truy vấn, không truy vấn từng sản phẩm. Product PATCH chỉ tên/mô tả/badge/featured/status/image; ARCHIVED ghi archived_at, rời ARCHIVED xóa mốc; ảnh chính cập nhật atomic, giữ 1 ảnh chính. POST/PATCH trả `{id}`.
 - Variant PATCH trả variant với id/product_id/sku/size_code/price/compare_at_price/stock_quantity/low_stock_threshold/is_active. stock_delta được cộng nguyên tử và ưu tiên khi có cả stock_quantity; stock_quantity tuyệt đối chỉ dùng khi không có delta. Không ghi đè price/compare_at_price/stock từ snapshot cũ khi client không sửa field đó. CHECK tồn âm → VALIDATION_ERROR400 "Tồn kho không thể âm"; phép cộng vượt safe integer cũng bị từ chối. compare_at_price được kiểm trước ghi và CHECK bảo vệ race. Không nhận SKU/size/product_id ở PATCH.
 - `stock_delta` không có idempotency key. Frontend xử lý lỗi ghi chưa biết kết quả (NETWORK/TIMEOUT/BAD_RESPONSE/INTERNAL) bằng cách xóa delta vừa nhập, khóa dòng và yêu cầu GET tải tồn hiện tại thành công trước lần chỉnh tiếp; không retry delta tự động. Người vận hành kiểm lại tồn rồi nhập delta mới để tránh cộng/trừ hai lần khi request trước có thể đã commit.
-- Delivery zones GET `{items}` gồm id/province_name/ward_name/fee/free_from_amount/eta_minutes/is_active. POST (201)/PUT full body `{province_name,ward_name?,fee,free_from_amount?,eta_minutes?,is_active?}`; ward_name mặc định `''` là mặc định tỉnh, fee/free_from_amount safe integer không âm, eta_minutes nullable hoặc nguyên dương. Trùng tỉnh/phường → CONFLICT409. POST/PUT trả zone cùng projection GET. Soft-delete is_active=false giữ dòng nhưng quote bỏ qua; quote đọc DB ngay ở request kế tiếp.
+- Delivery zones GET `{items,provinces}`: items giữ id/province_name/ward_name/fee/free_from_amount/eta_minutes/is_active; provinces là `{code,province_name,wards:[{code,ward_name}] }[]` đầy đủ danh mục (Hà Nội01/126). POST201/PUT giữ body tên/fee/free_from_amount/eta_minutes/is_active, yêu cầu tỉnh-phường trong danh mục; rỗng/ngoài danh mục → VALIDATION_ERROR400. Chuẩn hóa tiền tố Phường/Xã/Đặc khu, trùng kể cả alias → CONFLICT409. Fee/free safe integer không âm, ETA nullable hoặc nguyên dương. PUT cho phép tắt dòng legacy không hợp danh mục nếu không đổi địa chỉ; không cho bật mới dòng đó. Response write giữ DTO zone. Chỉ zone active hợp danh mục hiện public; không fallback dòng province-default. Cookie/Origin/JSON boundaries giữ nguyên.
 - Object schemas bỏ field ngoài contract. PATCH rỗng sau strip → VALIDATION_ERROR400. Không tạo bảng mới, không thêm dependency. Mọi giá trị input bind; chỉ ghép SQL fragments/column names do server chọn.
 
 ### Máy trạng thái đơn
@@ -216,7 +218,7 @@ Cron nội bộ đã được owner chốt: `PENDING_ORDER_TTL_HOURS=24`, `0 * *
 | `delivery.date` | hôm nay → +30 ngày (giờ VN) |
 | `delivery.time_slot` | thuộc danh sách khung giờ trong `worker/config.ts` |
 | `SAME_DAY`/`EXPRESS` | chỉ cho ngày hôm nay; trước giờ chốt cấu hình; khung giờ đủ thời gian chuẩn bị |
-| `province_name`/`ward_name` | khớp `delivery_zones` đang hoạt động (phường không có dòng riêng thì dùng dòng mặc định của tỉnh) |
+| `province_name`/`ward_name` | khớp danh mục D1 và `delivery_zones` active của chính phường; không dùng mặc định tỉnh |
 
 **Phí giao** = (phí khu vực; bằng 0 nếu `subtotal ≥ free_from_amount`) + phụ phí phương thức (`config.ts`). Giá trị phụ phí, giờ chốt, khung giờ trong `config.ts` là **giả định ban đầu**, chủ shop cần chỉnh.
 
@@ -229,3 +231,21 @@ Có code và staging deployment/config/secret names; upload provider thật chư
 POST /api/admin/uploads/sign dùng admin cookie, Origin cùng nguồn và JSON ≤1 KB. Input strict: mime (image/jpeg, image/png, image/webp), size (1..5242880). Output data: cloud_name/api_key/signature và params timestamp/public_id/asset_folder/upload_preset/overwrite=false/allowed_formats. Params do server quyết định; SHA-256, Cloudinary validity 1h. 503 CLOUDINARY_NOT_CONFIGURED nếu thiếu keys/config; 400 VALIDATION_ERROR nếu input sai; 401/403 theo middleware hiện có. Không ghi D1; browser upload trực tiếp Cloudinary rồi Save product qua hợp đồng image.url hiện có. Xem [Cloudinary](../CLOUDINARY.md).
 
 UI tạo sản phẩm tự sinh slug từ tên + UUID và tiếp tục gửi slug theo adminProductCreateSchema; API vẫn yêu cầu slug, không đổi schema/route. UUID giảm trùng tên, không phải idempotency key cho tạo sản phẩm; không tự retry request tạo.
+
+### Frontend consumer — product detail16/10 local
+
+`/shop/:slug` gọi GET /api/products/:slug hiện có, không đổi envelope/route/query/DDL. Gallery dùng images/alt/is_primary; giá/SKU/size/tồn theo variant. DTO được đồng bộ vào CatalogProvider trong memory để shared cart có sản phẩm khi link nằm ngoài100 item list. Đặt hoa ngay thêm1 variant rồi sang /cart, không POST order và không reserve stock; quote vẫn server-owned. Tone/loại hoa/kích thước cm chưa có trong contract nên UI không dựng giá trị. Chưa push/deploy.
+
+### Gallery contract 16/10 — local, chưa deploy
+
+- GET products.images chỉ trả một cover; nếu thiếu primary thì lấy ảnh đầu theo sort_order/id. GET products/:slug.images trả toàn bộ ảnh theo sort_order/id. Các field ảnh public URL/alt/is_primary giữ nguyên, không có public ID.
+- POST/PATCH admin products nhận `images: [{url, cloudinary_public_id?: string|null, alt_vi?: string|null, alt_en?: string|null, is_primary: boolean}]`, từ 1 đến 8 ảnh, đúng một primary, URL/public ID không trùng. Khi có public ID, giá trị phải khớp URL Cloudinary. Server gán sort_order theo vị trí trong mảng.
+- POST yêu cầu images hoặc image; PATCH không nhận đồng thời cả hai. `image` cũ vẫn hỗ trợ cập nhật ảnh chính và giữ ảnh phụ.
+- Gallery PATCH xóa/thêm toàn bộ liên kết trong một D1 batch cùng cập nhật text; lỗi sẽ rollback toàn bộ. ID ảnh được cấp lại sau replace; client không gửi ID để sửa ảnh của sản phẩm khác. Chưa có ETag/concurrency version, giữ mô hình một admin như patch cũ.
+- Admin GET products.images thêm id, sort_order, cloudinary_public_id. Cookie/Origin/JSON guards giữ nguyên. Không ký params tùy ý, không secret trong VITE, không tự xóa asset. Không đổi DDL hoặc migration.
+
+
+Địa chỉ16/10 hiện hành (đã deploy staging27c3d24e): admin GET thêm danh mục D1, public options chỉ từng phường active, quote/order cùng kiểm coverage; không fallback tỉnh. UI không import JSON runtime, tìm/chọn bằng Combobox, quote debounce350ms và không gọi khi gõ. Không đổi payload đơn hoặc thêm payment/consent fields.0003 đã áp local/staging, production không đổi. [Chi tiết](../DELIVERY_ADDRESS.md).
+
+
+Checkout16/10 local: không đổi OrderInput hoặc API. Client chỉ cho đi tiếp/gửi khi COD+consent+schema/date/slot/quote hợp lệ; token Turnstile vẫn kiểm riêng. Chọn BANK_TRANSFER chỉ mở thông báo và khóa gửi; không gửi payment/terms/sameRecipient vào payload. Recipient được sync thành các field name/phone hiện có. Không có server consent audit hay thanh toán cọc mới. [UI và bằng chứng](../CHECKOUT_UI.md).

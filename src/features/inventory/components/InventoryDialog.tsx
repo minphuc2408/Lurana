@@ -1,3 +1,4 @@
+import { Dropdown } from "@/shared/ui/dropdown";
 import { useLocale } from "@/shared/i18n";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/shared/ui/dialog";
 import { X, Save } from "lucide-react";
@@ -40,12 +41,12 @@ export function InventoryDialog(model: InventoryModel) {
                 </div>)}
               <div>
                 <label className="[display:block] [font-size:0.74rem] text-lunara-body [letter-spacing:0.1em] [text-transform:uppercase] [margin-bottom:6px]" htmlFor={"inventorydialog-2"}>{t("Category")}</label>
-                <select value={formData.category} onChange={e => setFormData({
+                <Dropdown value={formData.category} onValueChange={value => setFormData({
             ...formData,
-            category: e.target.value
+            category: value
           })} className="w-full rounded-xl px-4 py-3 [border:1px_solid_#F0DDD5] [font-size:0.88rem] text-lunara-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lunara-ink bg-lunara-surface" id={"inventorydialog-2"}>
                   {["Bouquets", "Arrangements", "Gift Sets", "Dried Flowers"].map(c => <option key={c} value={c}>{t(c)}</option>)}
-                </select>
+                </Dropdown>
               </div>
               <div className="grid grid-cols-3 gap-3">
                 {[{

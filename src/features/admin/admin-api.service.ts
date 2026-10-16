@@ -1,3 +1,4 @@
+import type { AdministrativeProvince } from '../../../shared/delivery-areas';
 import { z } from 'zod';
 import { ADMIN_UNAUTHORIZED_EVENT } from '@/features/auth';
 import { ApiError, apiRequest } from '@/shared/api/client';
@@ -43,5 +44,5 @@ export const getAdminProducts = (signal?: AbortSignal) => adminRequest<{ items: 
 export const createAdminProduct = (body: unknown) => adminRequest<{ id: number }>('/products', { method: 'POST', body: JSON.stringify(validated(adminProductCreateSchema, body)) });
 export const patchAdminProduct = (id: number, body: unknown) => adminRequest<{ id: number }>(`/products/${id}`, { method: 'PATCH', body: JSON.stringify(validated(adminProductPatchSchema, body)) });
 export const patchAdminVariant = (id: number, body: unknown) => adminRequest<AdminVariant>(`/variants/${id}`, { method: 'PATCH', body: JSON.stringify(validated(adminVariantPatchSchema, body)) });
-export const getDeliveryZones = (signal?: AbortSignal) => adminRequest<{ items: DeliveryZone[] }>('/delivery-zones', { signal });
+export const getDeliveryZones = (signal?: AbortSignal) => adminRequest<{ items: DeliveryZone[]; provinces: AdministrativeProvince[] }>('/delivery-zones', { signal });
 export const saveDeliveryZone = (id: number | null, body: unknown) => adminRequest<DeliveryZone>(`/delivery-zones${id == null ? '' : `/${id}`}`, { method: id == null ? 'POST' : 'PUT', body: JSON.stringify(validated(adminDeliveryZoneSchema, body)) });

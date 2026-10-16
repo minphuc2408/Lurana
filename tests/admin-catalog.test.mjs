@@ -28,7 +28,7 @@ function product(overrides = {}) {
       stock_quantity: 20, low_stock_threshold: 3, is_active: true }], ...overrides };
 }
 function zone(overrides = {}) {
-  return { province_name: 'Tỉnh quản trị', ward_name: '', fee: 22000, free_from_amount: null,
+  return { province_name: 'Thành phố Hà Nội', ward_name: 'Cửa Nam', fee: 22000, free_from_amount: null,
     eta_minutes: null, is_active: true, ...overrides };
 }
 const rejectsCode = (action, code, status) => assert.rejects(action, error => error.code === code && error.status === status);
@@ -46,7 +46,7 @@ test('admin catalog returns every product/variant status and exact stock in exac
   assert.equal(products[0].variants[0].is_active, false);
   assert.equal(typeof products[0].is_featured, 'boolean');
   assert.equal(products[0].images[0].is_primary, true);
-  assert.doesNotMatch(JSON.stringify(products), /cloudinary_public_id|password|secret/);
+  assert.doesNotMatch(JSON.stringify(products), /password|secret/);
 });
 
 test('admin catalog has no public 100-product truncation or per-product queries', async t => {
@@ -222,7 +222,7 @@ test('concurrent price change still cannot violate DB compare price constraint',
 test('delivery zone fee changes immediately affect quote and inactive zones remain visible only in admin', async t => {
   const { db } = fixture(t);
   const created = await createAdminDeliveryZone(db, zone());
-  const quote = () => priceCart(db, [{ variant_id: 1, quantity: 1 }], created.province_name, 'Phường mới', 'STANDARD');
+  const quote = () => priceCart(db, [{ variant_id: 1, quantity: 1 }], created.province_name, created.ward_name, 'STANDARD');
   assert.equal((await quote()).delivery_fee, 22000);
   const changed = await putAdminDeliveryZone(db, created.id, zone({ fee: 33000, eta_minutes: 60 }));
   assert.equal(changed.fee, 33000);
@@ -238,13 +238,13 @@ test('delivery zone fee changes immediately affect quote and inactive zones rema
 test('delivery zone bound names, conflict, validation and missing IDs behave safely', async t => {
   const { db, queries } = fixture(t);
   const input = zone({ province_name: "Tỉnh ' OR 1=1 --", ward_name: "Phường %_" });
-  const created = await createAdminDeliveryZone(db, input);
-  assert.equal(created.province_name, input.province_name);
+  await rejectsCode(() => createAdminDeliveryZone(db, input), 'VALIDATION_ERROR', 400);
+  const created = await createAdminDeliveryZone(db, zone({ ward_name: 'Ba Đình' }));
   assert.ok(queries.some(query => query.values.includes(input.province_name)));
   assert.ok(queries.every(query => !query.sql.includes(input.province_name)));
-  await rejectsCode(() => createAdminDeliveryZone(db, input), 'CONFLICT', 409);
+  await rejectsCode(() => createAdminDeliveryZone(db, zone({ ward_name: 'Ba Đình' })), 'CONFLICT', 409);
   const second = await createAdminDeliveryZone(db, zone());
-  await rejectsCode(() => putAdminDeliveryZone(db, second.id, input), 'CONFLICT', 409);
+  await rejectsCode(() => putAdminDeliveryZone(db, second.id, zone({ ward_name: 'Ba Đình' })), 'CONFLICT', 409);
   await rejectsCode(() => putAdminDeliveryZone(db, 999, zone()), 'NOT_FOUND', 404);
   for (const bad of [zone({ fee: -1 }), zone({ eta_minutes: 0 }), zone({ province_name: '' }), zone({ free_from_amount: -1 })]) {
     await rejectsCode(() => createAdminDeliveryZone(db, bad), 'VALIDATION_ERROR', 400);
@@ -301,7 +301,7 @@ test('admin catalog runs on isolated real workerd D1: atomic rollback, archive/i
     envFiles: [fileURLToPath(new URL('../.dev.vars.example', import.meta.url))], persist: false, remoteBindings: false });
   try {
     const db = platform.env.DB;
-    for (const file of ['../migrations/0001_mvp.sql', '../migrations/0002_category_images.sql', '../docs/sql/MVP_SEED_DEV.sql']) {
+    for (const file of ['../migrations/0001_mvp.sql', '../migrations/0002_category_images.sql', '../migrations/0003_hanoi_administrative_areas.sql', '../docs/sql/MVP_SEED_DEV.sql']) {
       await db.batch(splitSqlQuery(readFileSync(new URL(file, import.meta.url), 'utf8')).map(sql => db.prepare(sql)));
     }
     await t.test('a child SKU conflict rolls back product and earlier child on real D1', async () => {
@@ -323,6 +323,15 @@ test('admin catalog runs on isolated real workerd D1: atomic rollback, archive/i
       await patchAdminProduct(db, product.id, { status: 'ACTIVE' });
       assert.equal((await getProduct(db, product.slug)).id, product.id);
     });
+    await t.test('real D1 gallery replacement persists eight images and rolls back all links on insert failure', async () => {
+      const product = (await listAdminProducts(db)).find(row => row.slug === 'admin-test-bouquet');
+      await patchAdminProduct(db, product.id, { images: gallery() });
+      assert.equal((await getProduct(db, product.slug)).images.length, 8);
+      const before = (await db.prepare('SELECT * FROM product_images WHERE product_id=? ORDER BY id').bind(product.id).all()).results;
+      await db.prepare("CREATE TRIGGER gallery_failure BEFORE INSERT ON product_images WHEN NEW.image_url LIKE '%broken%' BEGIN SELECT RAISE(ABORT,'synthetic gallery failure'); END").run();
+      await assert.rejects(() => patchAdminProduct(db, product.id, { images: [{ url: 'https://images.unsplash.com/broken.jpg', is_primary: true }] }));
+      assert.deepEqual((await db.prepare('SELECT * FROM product_images WHERE product_id=? ORDER BY id').bind(product.id).all()).results, before);
+    });
     await t.test('concurrent admin delta and new order conserve real D1 stock; excessive negative delta rolls back', async () => {
       const date = new Date(Date.parse(`${todayInVN()}T00:00:00Z`) + 86400000).toISOString().slice(0, 10);
       const order = {
@@ -339,4 +348,55 @@ test('admin catalog runs on isolated real workerd D1: atomic rollback, archive/i
     });
     console.log('Admin catalog real D1 evidence: creation rollback, atomic image/archive, concurrent order + delta => stock=23; persist=false, remoteBindings=false.');
   } finally { await platform.dispose(); }
+});
+
+
+const gallery = (count = 8, cover = 3) => Array.from({length: count}, (_, index) => ({
+ url: `https://res.cloudinary.com/demo/image/upload/v1/lunara/test/photo-${index}.webp`, cloudinary_public_id: `lunara/test/photo-${index}`,
+ alt_vi: `Ảnh ${index}`, alt_en: `Photo ${index}`, is_primary: index === cover,
+}));
+test('eight-image create stores public IDs/order with one cover; list only returns cover and detail returns full gallery', async t => {
+ const { db, sqlite } = fixture(t);
+ const input = product(); delete input.image; input.images = gallery();
+ const { id } = await createAdminProduct(db, input);
+ const rows = sqlite.prepare('SELECT * FROM product_images WHERE product_id=? ORDER BY sort_order').all(id);
+ assert.equal(rows.length,8); assert.deepEqual(rows.map(r=>r.sort_order),[0,1,2,3,4,5,6,7]);
+ assert.equal(rows.filter(r=>r.is_primary).length,1); assert.equal(rows[3].cloudinary_public_id,input.images[3].cloudinary_public_id);
+ const detail=await getProduct(db,input.slug); assert.equal(detail.images.length,8);
+ assert.deepEqual(detail.images.map(i=>i.url),input.images.map(i=>i.url));
+ const summary=(await listProducts(db)).find(p=>p.id===id); assert.equal(summary.images.length,1); assert.equal(summary.images[0].url,input.images[3].url);
+ assert.doesNotMatch(JSON.stringify(detail),/cloudinary_public_id/);
+ const admin=(await listAdminProducts(db)).find(p=>p.id===id); assert.equal(admin.images[3].cloudinary_public_id,input.images[3].cloudinary_public_id);
+});
+
+test('gallery replacement reorders, removes links and changes cover atomically without touching stock', async t => {
+ const { db, sqlite } = fixture(t); const input=product(); delete input.image; input.images=gallery(3,0);
+ const {id}=await createAdminProduct(db,input);
+ const stock=sqlite.prepare('SELECT stock_quantity FROM product_variants WHERE product_id=?').get(id).stock_quantity;
+ const images=[{...input.images[2],is_primary:true},{...input.images[0],is_primary:false}];
+ await patchAdminProduct(db,id,{images});
+ const before=sqlite.prepare('SELECT * FROM product_images WHERE product_id=? ORDER BY sort_order').all(id);
+ assert.deepEqual(before.map(i=>i.image_url),images.map(i=>i.url)); assert.deepEqual(before.map(i=>i.sort_order),[0,1]);
+ sqlite.exec("CREATE TRIGGER reject_gallery BEFORE INSERT ON product_images WHEN NEW.image_url LIKE '%broken%' BEGIN SELECT RAISE(ABORT,'synthetic gallery failure'); END");
+ await assert.rejects(()=>patchAdminProduct(db,id,{name_en:'Must roll back',images:[{url:'https://images.unsplash.com/broken.jpg',is_primary:true}]}));
+ assert.deepEqual(sqlite.prepare('SELECT * FROM product_images WHERE product_id=? ORDER BY sort_order').all(id),before);
+ assert.equal(sqlite.prepare('SELECT name_en FROM products WHERE id=?').get(id).name_en,input.name_en);
+ assert.equal(sqlite.prepare('SELECT stock_quantity FROM product_variants WHERE product_id=?').get(id).stock_quantity,stock);
+});
+
+test('gallery rejects invalid count, duplicate URLs, cover ambiguity and mismatched public IDs before writing', async t => {
+ const {db,queries}=fixture(t);
+ for(const images of [[],gallery(9,0),gallery(2,-1),gallery(2,0).map(i=>({...i,is_primary:true})),[gallery(1,0)[0],gallery(1,0)[0]],
+ [{...gallery(1,0)[0],cloudinary_public_id:'someone-else'}], [{url:'not-a-url',cloudinary_public_id:'asset',is_primary:true}]]) {
+  queries.length=0; await rejectsCode(()=>patchAdminProduct(db,1,{images}),'VALIDATION_ERROR',400); assert.equal(queries.length,0);
+ }
+ await rejectsCode(()=>patchAdminProduct(db,1,{image:{url:'https://images.unsplash.com/a.jpg'},images:gallery(1,0)}),'VALIDATION_ERROR',400);
+});
+
+test('public list selects one deterministic fallback image when a legacy product has no cover', async t => {
+ const {db,sqlite}=fixture(t);
+ sqlite.exec("UPDATE product_images SET is_primary=0 WHERE product_id=1; INSERT INTO product_images(product_id,image_url,sort_order) VALUES(1,'https://images.unsplash.com/secondary.jpg',2)");
+ const item=(await listProducts(db)).find(p=>p.id===1); assert.equal(item.images.length,1);
+ assert.equal((await getProduct(db,'blush-peony-bouquet')).images.length,2);
+ assert.notEqual(item.images[0].url,'https://images.unsplash.com/secondary.jpg');
 });

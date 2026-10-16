@@ -130,3 +130,16 @@ test('SEO provides crawlable public metadata and keeps private and staging pages
     else { assert.equal(robots, 'User-agent: *\nDisallow: /\n'); assert.doesNotMatch(sitemap, /<loc>/); assert.ok(files.find(file => file.fileName === '_headers')); }
   }
 });
+
+
+test('product metadata uses its own canonical and DB copy while keeping missing products and staging noindex', () => {
+ const site = getSiteConfiguration({ VITE_SITE_URL: 'https://shop.example.test' });
+ const path = '/shop/blush-peony-bouquet';
+ const product = { name: 'Blush Peony Bouquet', description: 'Description from catalog', image: 'https://res.cloudinary.com/demo/image/upload/flower.webp' };
+ const metadata = pageMetadata(path, 'en', site, product);
+ assert.equal(metadata.title, 'Blush Peony Bouquet | Lunarra');
+ assert.equal(metadata.description, product.description); assert.equal(metadata.image, product.image);
+ assert.equal(metadata.canonical, site.origin + path); assert.equal(metadata.robots, 'index, follow');
+ assert.equal(pageMetadata(path, 'vi', site).robots, 'noindex, nofollow');
+ assert.equal(pageMetadata(path, 'vi', { ...site, indexable: false }, product).robots, 'noindex, nofollow');
+});

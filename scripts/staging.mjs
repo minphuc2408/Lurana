@@ -18,6 +18,10 @@ function validateTarget(target) {
   assert.equal(database.database_name, 'lunara-staging-db');
   assert.equal(database.database_id, databaseId, 'Refusing unexpected staging database ID.');
   assert.ok(!config.d1_databases.some(item => item.database_id === databaseId), 'Staging cannot share production D1.');
+  assert.equal(target.observability?.head_sampling_rate, 0.1, 'Staging observability must retain 10% sampling.');
+  assert.equal(target.observability?.logs?.head_sampling_rate, 0.1, 'Staging logs must explicitly retain 10% sampling.');
+  assert.equal(target.observability?.traces?.head_sampling_rate, 0.1, 'Staging traces must explicitly retain 10% sampling.');
+  assert.equal(target.observability?.logs?.invocation_logs, false, 'Staging invocation logs must stay disabled.');
 }
 
 const [action, ...extra] = process.argv.slice(2);

@@ -1,3 +1,4 @@
+import { Dropdown } from "@/shared/ui/dropdown";
 import { ORDER_STATUSES } from '../../../../shared/constants';
 import { OrderDetailView } from '@/features/orders';
 import { useLocale } from '@/shared/i18n';
@@ -13,7 +14,7 @@ export function AdminApiOrdersView(model: AdminApiOrdersModel) {
       <p className="text-sm text-lunara-body sm:col-span-2 lg:col-span-4">{t('Search orders in selected dates. Default is the last 90 days; maximum 366 days.')}</p>
       <label className="text-sm">{t('Placed from')}<input name="placed_from" type="date" required className={`${adminInputClass} mt-1`} value={model.filters.placed_from} onChange={event => model.setFilters({ ...model.filters, placed_from: event.target.value })} /></label>
       <label className="text-sm">{t('Placed to')}<input name="placed_to" type="date" required className={`${adminInputClass} mt-1`} value={model.filters.placed_to} onChange={event => model.setFilters({ ...model.filters, placed_to: event.target.value })} /></label>
-      <label className="text-sm">{t('Status')}<select name="status" className={`${adminInputClass} mt-1`} value={model.filters.status} onChange={event => model.setFilters({ ...model.filters, status: event.target.value })}><option value="">{t('All')}</option>{ORDER_STATUSES.map(status => <option key={status} value={status}>{t(`Status ${status}`)}</option>)}</select></label>
+      <label className="text-sm">{t('Status')}<Dropdown name="status" className={`${adminInputClass} mt-1`} value={model.filters.status} onValueChange={value => model.setFilters({ ...model.filters, status: value })}><option value="">{t('All')}</option>{ORDER_STATUSES.map(status => <option key={status} value={status}>{t(`Status ${status}`)}</option>)}</Dropdown></label>
       <label className="text-sm">{t('Delivery date')}<input name="date" type="date" className={`${adminInputClass} mt-1`} value={model.filters.date} onChange={event => model.setFilters({ ...model.filters, date: event.target.value })} /></label>
       <label className="text-sm">{t('Search orders')}<input name="q" minLength={2} maxLength={100} className={`${adminInputClass} mt-1`} value={model.filters.q} onChange={event => model.setFilters({ ...model.filters, q: event.target.value })} /></label>
       <button type="submit" className={`${adminButtonClass} self-end`}>{t('Apply filters')}</button>

@@ -11,7 +11,7 @@
     <circle cx="12" cy="12" r="3"/>
     <path d="M12 16.5A4.5 4.5 0 1 1 7.5 12 4.5 4.5 0 1 1 12 7.5a4.5 4.5 0 1 1 4.5 4.5 4.5 4.5 0 1 1-4.5 4.5"/>
   </g>
-  <text x="600" y="334" text-anchor="middle" font-family="Georgia,serif" font-size="86" fill="#3D2228">Lunara Shop</text>
+  <text x="600" y="334" text-anchor="middle" font-family="Georgia,serif" font-size="86" fill="#3D2228">Lunarra</text>
   <text x="600" y="408" text-anchor="middle" font-family="Arial,sans-serif" font-size="29" fill="#6B4C55">Hoa tươi, gửi trọn yêu thương</text>
   <path d="M500 454H700" stroke="#C17B8A" stroke-width="2"/>
   <text x="600" y="504" text-anchor="middle" font-family="Arial,sans-serif" font-size="17" letter-spacing="5" fill="#6B4C55">FLOWERS &amp; THOUGHTFUL GIFTS</text>

@@ -11,15 +11,17 @@ export interface AdminSummary { orders_by_status: Record<ApiOrderStatus, number>
 export interface AdminVariant extends Omit<ProductVariant, 'in_stock' | 'low_stock' | 'max_quantity'> {
   product_id: number; stock_quantity: number; low_stock_threshold: number; is_active: boolean;
 }
-export interface AdminProduct extends Omit<ProductApiDto, 'variants'> {
+export interface AdminProduct extends Omit<ProductApiDto, 'variants' | 'images'> {
   category_id: number; status: 'ACTIVE' | 'HIDDEN' | 'ARCHIVED'; archived_at: string | null; variants: AdminVariant[];
+  images: (ProductApiDto['images'][number] & { id: number; sort_order: number; cloudinary_public_id: string | null })[];
 }
 export interface DeliveryZone {
   id: number; province_name: string; ward_name: string; fee: number; free_from_amount: number | null; eta_minutes: number | null; is_active: boolean;
 }
 export interface VariantDraft { price: string; compare_at_price: string; low_stock_threshold: string; stock_delta: string; is_active: boolean; }
+export interface ProductImageDraft { url: string; cloudinary_public_id?: string | null; alt_vi?: string | null; alt_en?: string | null; is_primary: boolean; }
 export interface ProductForm {
-  name_en: string; name_vi: string; category_id: string; image_url: string;
+  name_en: string; name_vi: string; category_id: string; image_url: string; images: ProductImageDraft[];
   status: AdminProduct['status']; is_featured: boolean;
   variants: { size_code: 'S' | 'M' | 'L'; sku: string; price: string; stock_quantity: string; low_stock_threshold: string }[];
 }

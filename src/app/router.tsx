@@ -8,6 +8,7 @@ import { AdminRoute } from '@/features/auth';
 import { RouteError } from '@/shared/components/RouteError';
 import HomePage from '@/pages/HomePage';
 import ShopPage from '@/pages/ShopPage';
+import ProductDetailPage from '@/pages/ProductDetailPage';
 import CartPage from '@/pages/CartPage';
 import TrackOrderPage from '@/pages/TrackOrderPage';
 import LoginPage from '@/pages/LoginPage';
@@ -21,6 +22,7 @@ export const router = createBrowserRouter([{ Component: MetadataLayout, children
   path: '/', Component: MainLayout, errorElement: <RouteError />,
   children: [
     { index: true, Component: HomePage }, { path: 'shop', Component: ShopPage }, { path: 'cart', Component: CartPage },
+    { path: 'shop/:slug', Component: ProductDetailPage },
     { path: 'orders/track', Component: TrackOrderPage },
     ...['request', 'orders', 'profile', 'login', 'signup'].map(path => ({ path, Component: UnavailablePage })),
     { path: '*', Component: UnavailablePage },

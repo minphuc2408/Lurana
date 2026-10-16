@@ -1,13 +1,15 @@
-# Lunara Shop
+# Lunarra
 
-Storefront + admin từ thiết kế Flower Shop Figma. **UI: Lunara Shop · GitHub: Lurana**.
+> Hiện hành 16/10/2026 — Đã nhập danh mục D1 Hà Nội 1 tỉnh/126 phường vào local + staging bằng migration0003 (12 bảng); không nhập TP.HCM. Admin chọn/tìm tỉnh-phường, nhập phí; checkout chỉ hiện zone active thuộc danh mục, server không fallback tỉnh. Checkout gộp, thiệp NONE, terms nội bộ và bank rollback COD được giữ. Staging đã deploy version 27c3d24e-f3df-42e1-8d18-8b8299427062; zones0 nên checkout chưa có nơi giao cho tới khi admin cấu hình phí. Local190tests/225source/typecheck/build, schema13/13, smoke40/40, browser admin7nhóm PASS. Owner đã yêu cầu commit/push sau deploy; production không đổi, Phase6 giữ5/7. [Địa chỉ](docs/DELIVERY_ADDRESS.md), [Checkout](docs/CHECKOUT_UI.md). Các mốc dưới đây là lịch sử khi khác hiện trạng này.
+
+Storefront + admin từ thiết kế Flower Shop Figma. **UI: Lunarra · GitHub: Lurana**.
 
 | Keyword | Hiện trạng |
 | --- | --- |
 | Frontend | React/React DOM 18.3.1 · React Router 7.18.4 · Vite 6.4.4 · Tailwind 4.1.12 |
 | Worker | Hono + `@cloudflare/vite-plugin`; Phase 0–3 DONE local, Phase 4 backend đã DONE local (9/9 tiêu chí) |
 | API | Health/catalog/delivery/quote/orders/lookup; auth và quản trị `/api/admin/*` dùng JWT cookie; API lạ → JSON 404, admin thiếu cookie → 401 |
-| D1 | Binding `DB`; canonical 10 bảng; migration/seed remote đã áp 15/10/2026, backup thử mở lại được; chưa có dữ liệu thật |
+| D1 | Binding `DB`; base0001 gồm10bảng, local/staging thêm0002+0003 thành12bảng; production giữ0001; danh mục Hà Nội126 tách khỏi phí giao |
 | Commerce | Home/Shop/Cart/Delivery/Quote, checkout COD, tra đơn và admin đã nối API local; Phase 5 DONE local (6/6 tiêu chí) |
 | Locale | Preference đã lưu → ngôn ngữ trình duyệt EN/VI → fallback English; catalog/giỏ hiển thị VND; Worker dùng Asia/Ho_Chi_Minh |
 | Build | Frontend `dist/client/` · Worker + Wrangler config `dist/lunara/` |
@@ -19,7 +21,9 @@ Footer: cấu hình tên cửa hàng, địa chỉ và link bản đồ trong `s
 
 ## Hiện trạng — 16/10/2026
 
-Phase 0–5 DONE local; Phase 6 IN PROGRESS (5/7). Các thay đổi mới được chia thành commit typography, bố cục/card, hero, catalog/DB và tài liệu; xem `git log` và trạng thái chi tiết bên dưới. Local: **172/172 tests, architecture 215, smoke 40/40, typecheck/build và staging dry-run PASS**. Production giữ bản15/10. Staging đã deploy `75fcbb54` ngày16/10 với layout/font/hero,4ảnh category từ DB,CSP/noindex,key staging,RateLimit/TTL24h và scheduled handler. Migration0002 chỉ áp local/staging. Cả hai chưa có TURNSTILE_SECRET;staging giữ fail-closed theo owner,login/lookup trả503; upload thật/Cron thực chạy chưa được nghiệm thu. Staging hiện4 categories/1 sản phẩm active/0 tỉnh giao. [Trạng thái và giới hạn chi tiết](docs/PROJECT_STATUS.md).
+Mốc lịch sử gallery trước lượt deploy staging hiện tại: **gallery tối đa8 ảnh/sản phẩm** trong admin (multi-upload, cover, thứ tự, gỡ liên kết), lưu URL/public ID vào bảng đã có. Shop lấy cover; `/shop/:slug` hiển thị đầy đủ gallery; link trở về ở trên sản phẩm, nút Đặt hoa ngay chỉ có chữ.179 tests/architecture221/typecheck/build, smoke40/40 và5nhóm browser gallery PASS. Chưa push/deploy; [hướng dẫn](docs/CLOUDINARY.md), [kiểm chứng](docs/PROJECT_STATUS.md).
+
+Phase 0–5 DONE local; Phase 6 IN PROGRESS (5/7). Các thay đổi mới được chia thành commit typography, bố cục/card, hero, catalog/DB và tài liệu; xem `git log` và trạng thái chi tiết bên dưới. Mốc triển khai ảnh category trước lượt UI hiện tại: **172/172 tests, architecture215, smoke40/40, typecheck/build và staging dry-run PASS**. Production giữ bản15/10. Mốc staging trước đó deploy `75fcbb54` ngày16/10 với layout/font/hero,4ảnh category từ DB,CSP/noindex,key staging,RateLimit/TTL24h và scheduled handler. Migration0002 chỉ áp local/staging. Cả hai chưa có TURNSTILE_SECRET;staging giữ fail-closed theo owner,login/lookup trả503; upload thật/Cron thực chạy chưa được nghiệm thu. Staging hiện4 categories/1 sản phẩm active/0 tỉnh giao. [Trạng thái và giới hạn chi tiết](docs/PROJECT_STATUS.md).
 
 ## Chạy local
 
@@ -143,3 +147,12 @@ Hero responsive local16/10: ảnh bó hoa mới tạo bằng imagegen theo ảnh
 Ảnh category16/10:4 thumbnail AI WebP256px đã tạo, image_url đã lưu local/staging qua migration0002 + data UPDATE riêng. UI đọc URL từ DB, preview http://127.0.0.1:4182/. Production chưa migrate; owner đã cho deploy staging với Turnstile fail-closed. [Runbook/kết quả](docs/CATEGORY_IMAGES.md).
 
 Ảnh đã live trên [staging](https://lunara-staging.minphuc2408.workers.dev),version `75fcbb54-5528-4cc1-b101-22fdc7a91a40`:API4URL,4WebPkhớpSHA256,browserEN/VI10casePASS,0exception.172tests/schema13/13/smoke40PASS. [Nguồn và prompt](ATTRIBUTIONS.md).
+
+
+Checkout16/10 local: chọn/tìm không dấu Hà Nội126 và Hồ Chí Minh168 đơn vị; quote chỉ sau lựa chọn hợp lệ, debounce350ms, không gọi theo từng ký tự.182tests/223source và8nhóm browser PASS. [Nguồn/kiểm chứng địa chỉ](docs/DELIVERY_ADDRESS.md). Chưa push/deploy.
+
+
+Checkout16/10 local mới:3khối người đặt/người nhận/thiệp-yêu cầu; tự điền người nhận; payment dưới Total, COD mặc định, bank-transfer thông báo đang phát triển và khóa gửi. Consent + form hợp lệ mới đi tiếp; bỏ note cọc theo owner.186tests/225source và10nhóm browser mới +8nhóm địa chỉ PASS. Chưa push/deploy; [chi tiết](docs/CHECKOUT_UI.md).
+
+
+Wrangler config16/10 local: explicit sampling10% cho observability/logs/traces, không bật traces, invocation_logs=false; staging guard giữ đúng target và sampling.186tests/typecheck/architecture225/build+dry-run2môi trường đạt; không upload/remote changes. Dry-run không chứng minh cloud diff hết. [Chi tiết](docs/STAGING.md).

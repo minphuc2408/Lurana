@@ -61,7 +61,7 @@ test('admin order APIs use isolated real D1: summary, bound filters, private det
     envFiles: [fileURLToPath(new URL('../.dev.vars.example', import.meta.url))], persist: false, remoteBindings: false });
   try {
     const db = platform.env.DB;
-    for (const file of ['../migrations/0001_mvp.sql', '../migrations/0002_category_images.sql', '../docs/sql/MVP_SEED_DEV.sql']) {
+    for (const file of ['../migrations/0001_mvp.sql', '../migrations/0002_category_images.sql', '../migrations/0003_hanoi_administrative_areas.sql', '../docs/sql/MVP_SEED_DEV.sql']) {
       await db.batch(splitSqlQuery(readFileSync(new URL(file, import.meta.url), 'utf8')).map(sql => db.prepare(sql)));
     }
     const orders = [];

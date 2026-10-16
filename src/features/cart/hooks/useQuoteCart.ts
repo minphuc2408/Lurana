@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useCart } from './useCart';
 import { useCatalog } from '@/features/shop';
 import { getDeliveryOptions, requestQuote, type CartQuote, type DeliveryData, type MethodCode } from '../quote.service';
+import { deliveryWardOptions } from '../delivery-address';
 export function useQuoteCart() {
   const cart = useCart(); const catalog = useCatalog();
   const [options, setOptions] = useState<DeliveryData | null>(null);
@@ -19,23 +20,26 @@ export function useQuoteCart() {
     return () => { active = false; controller.abort(); };
   }, [version]);
   const key = JSON.stringify([cart.items.map(item => [item.variantId, item.qty]), province, ward.trim(), method, version]);
+  const addressSelected = Boolean(options?.provinces.some(city => city.province_name === province)) && deliveryWardOptions(province, options).some(item => item.value === ward);
   useEffect(() => {
-    if (!cart.items.length || !province || !ward.trim() || !options) return;
+    if (!cart.items.length || !addressSelected || !options) return;
     const controller = new AbortController(); let active = true;
-    requestQuote(cart.items, province, ward, method, controller.signal).then(data => { if (active) setResult({ key, data }); })
-      .catch(error => { if (active) setResult({ key, error }); });
-    return () => { active = false; controller.abort(); };
-  }, [key, options]);
+    const timer = window.setTimeout(() => {
+      requestQuote(cart.items, province, ward, method, controller.signal).then(data => { if (active) setResult({ key, data }); })
+        .catch(error => { if (active) setResult({ key, error }); });
+    }, 350);
+    return () => { active = false; window.clearTimeout(timer); controller.abort(); };
+  }, [key, options, addressSelected]);
   const quote = result?.key === key ? result.data || null : null;
   const quoteError = result?.key === key ? result.error : null;
   const displayItems = cart.items.map(item => {
     const line = quote?.lines.find(line => line.variant_id === item.variantId);
     return line ? { ...item, name: line.name_en, name_en: line.name_en, name_vi: line.name_vi, price: line.unit_price, image: line.image_url || '' } : item;
   });
-  const changeProvince = (value: string) => { setProvince(value); };
+  const changeProvince = (value: string) => { if (value !== province) { setProvince(value); setWard(''); } };
   return { ...cart, items: displayItems, quote, quoteError, options, optionsError, province, setProvince: changeProvince, ward, setWard, method, setMethod,
     catalogLoading: catalog.loading || (!catalog.error && cart.loading), catalogError: catalog.error, reloadCatalog: catalog.reload,
-    quoteLoading: Boolean(cart.items.length && province && ward.trim() && options && !quote && !quoteError),
+    quoteLoading: Boolean(cart.items.length && addressSelected && options && !quote && !quoteError),
     retry: () => setVersion(previous => previous + 1) };
 }
 export type QuoteCartModel = ReturnType<typeof useQuoteCart>;
