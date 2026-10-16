@@ -39,7 +39,7 @@ function run(binary, args, build = false) {
 
 const wrangler = 'node_modules/wrangler/bin/wrangler.js';
 if (['build', 'dry-run', 'deploy'].includes(action)) {
-  run('node_modules/vite/bin/vite.js', ['build'], true);
+  run('node_modules/vite/bin/vite.js', ['build', '--mode', 'staging'], true);
   // Vite uses the top-level Worker name for its output directory in every environment.
   const outputConfig = path.join(root, 'dist/lunara/wrangler.json');
   validateTarget(JSON.parse(readFileSync(outputConfig, 'utf8')));
