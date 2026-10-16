@@ -108,14 +108,14 @@ try {
     await send('CSS.enable');
     await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
     await navigate('/shop');
-    for (const [language, families] of [['en', ['Cormorant Garamond', 'Jost']], ['vi', ['Lora', 'Be Vietnam Pro']]]) {
+    for (const [language, families] of [['en', ['Fraunces', 'Inter']], ['vi', ['Lora', 'Be Vietnam Pro']]]) {
       await evaluate(`document.querySelector('[data-language-switcher] button[lang="${language}"]').click()`);
       await waitFor(`document.documentElement.lang === '${language}'`);
       for (const [index, family] of families.entries()) {
         const sample = language === 'vi' ? 'Tiếng Việt: Đặng, Nguyễn, Bó mẫu đơn, Ắ ằ ễ ộ ự' : 'Lunara Flower Shop';
-        const loaded = await evaluate(`document.fonts.load('400 20px "${family}"', ${JSON.stringify(sample)}).then(faces => faces.length > 0 && faces.every(face => face.status === 'loaded'))`);
+        const loaded = await evaluate(`document.fonts.load('${language === 'en' && index === 0 ? 500 : 400} 20px "${family}"', ${JSON.stringify(sample)}).then(faces => faces.length > 0 && faces.every(face => face.status === 'loaded'))`);
         if (!loaded) throw new Error(`Font failed to load: ${family}`);
-        await evaluate(`(() => { const el = document.createElement('span'); el.id = 'font-probe'; el.className = '${index === 0 ? 'font-display' : 'font-body'}'; el.style.fontWeight = '400'; el.style.fontSize = '20px'; el.textContent = ${JSON.stringify(sample)}; document.body.append(el); })()`);
+        await evaluate(`(() => { const el = document.createElement('span'); el.id = 'font-probe'; el.className = '${index === 0 ? 'font-display' : 'font-body'}'; el.style.fontWeight = '${language === 'en' && index === 0 ? 500 : 400}'; el.style.fontSize = '20px'; el.textContent = ${JSON.stringify(sample)}; document.body.append(el); })()`);
         await evaluate('new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve(true))))');
         await assert(`getComputedStyle(document.querySelector('#font-probe')).fontFamily.startsWith('${family}') || getComputedStyle(document.querySelector('#font-probe')).fontFamily.startsWith('"${family}"')`, `Incorrect ${language} font token: ${family}`);
         const { root: domRoot } = await send('DOM.getDocument');
@@ -131,7 +131,7 @@ try {
     await assert(`getComputedStyle(document.querySelector('input')).fontFamily.includes('Be Vietnam Pro')`, 'Vietnamese form did not inherit the body font');
     await screenshot('i18n-fonts-mobile-login');
     await evaluate("document.querySelector('[data-language-switcher] button[lang=en]').click()");
-    await waitFor(`getComputedStyle(document.querySelector('input')).fontFamily.includes('Jost')`);
+    await waitFor(`getComputedStyle(document.querySelector('input')).fontFamily.includes('Inter')`);
     await evaluate("document.querySelector('[data-language-switcher] button[lang=vi]').click()");
     await send('Page.reload');
     await waitFor(`document.documentElement.lang === 'vi' && document.querySelector('input') && getComputedStyle(document.querySelector('input')).fontFamily.includes('Be Vietnam Pro')`);

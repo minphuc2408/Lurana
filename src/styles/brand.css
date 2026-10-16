@@ -1,7 +1,7 @@
 /* Shared Lunara palette and typography. Page styles live in Tailwind classes. */
 :root {
-  --lunara-font-display: 'Cormorant Garamond', serif;
-  --lunara-font-body: 'Jost', sans-serif;
+  --lunara-font-display: 'Fraunces', serif;
+  --lunara-font-body: 'Inter', sans-serif;
   --lunara-rose: #C17B8A;
   --lunara-rose-strong: #9D586B;
   --lunara-rose-light: #D4A0AC;
@@ -51,5 +51,19 @@ html[lang='vi'] {
   :where(a, button, input, select, textarea):focus-visible {
     outline: 2px solid var(--lunara-rose-light);
     outline-offset: 1px;
+  }
+}
+
+/* English editorial typography; Vietnamese keeps its existing weights and labels. */
+html[lang='en'] .font-display {
+  font-weight: 500;
+  font-optical-sizing: auto;
+}
+
+@media (width < 640px) {
+  html[lang='en'] [data-storefront-logo] {
+    font-size: clamp(0.95rem, 5vw, 1.25rem);
+    letter-spacing: 0;
+    white-space: nowrap;
   }
 }
