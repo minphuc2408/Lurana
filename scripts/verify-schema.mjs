@@ -10,6 +10,7 @@ assert.equal(process.argv.length, 2, 'db:verify accepts no arguments and only us
 const root = fileURLToPath(new URL('../', import.meta.url));
 const configPath = path.join(root, 'wrangler.jsonc');
 const schema = readFileSync(path.join(root, 'migrations/0001_mvp.sql'), 'utf8');
+const imageSchema = readFileSync(path.join(root, 'migrations/0002_category_images.sql'), 'utf8');
 const seed = readFileSync(path.join(root, 'docs/sql/MVP_SEED_DEV.sql'), 'utf8');
 const tables = [
   'categories', 'delivery_zones', 'order_items', 'order_status_history', 'orders',
@@ -118,7 +119,7 @@ async function verify() {
     await checkStructure(db);
     equal(await counts(db), expectedCounts, 'seed counts in persisted local D1');
     const migrations = await rows(db, 'SELECT name FROM d1_migrations ORDER BY id');
-    equal(migrations, [{ name: '0001_mvp.sql' }], 'exactly one recorded migration');
+    equal(migrations, [{ name: '0001_mvp.sql' }, { name: '0002_category_images.sql' }], 'base and category-image migrations recorded');
     localSchema = await rows(db, schemaQuery);
     console.log(`LOCAL migration: ${JSON.stringify(migrations)}; seed: ${JSON.stringify(await counts(db))}`);
     console.log('LOCAL foreign_key_check: []; business tables: 10');
@@ -132,7 +133,8 @@ async function verify() {
   try {
     const db = isolated.env.DB;
     await apply(db, schema);
-    equal(await rows(db, schemaQuery), localSchema, 'persisted local schema matches canonical DDL');
+    await apply(db, imageSchema);
+    equal(await rows(db, schemaQuery), localSchema, 'persisted local schema matches the migration chain');
     await apply(db, seed);
     equal(await counts(db), expectedCounts, 'initial isolated seed');
 

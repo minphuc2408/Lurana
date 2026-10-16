@@ -171,7 +171,7 @@ await check('categories: four seeded active categories', async () => {
   categories = payload.data;
   assert.deepEqual(categories.map(category => category.code), ['bouquets', 'arrangements', 'dried-flowers', 'gift-sets']);
   for (const category of categories) {
-    assert.deepEqual(Object.keys(category).sort(), ['code', 'id', 'name_en', 'name_vi', 'slug']);
+    assert.deepEqual(Object.keys(category).sort(), ['code', 'id', 'image_url', 'name_en', 'name_vi', 'slug']);
     assert.ok(Number.isInteger(category.id));
     assert.ok(category.name_vi && category.name_en);
   }
@@ -329,7 +329,7 @@ async function orderSmoke() {
   let server;
   try {
     const db = platform.env.DB;
-    for (const file of ['../migrations/0001_mvp.sql', '../docs/sql/MVP_SEED_DEV.sql']) {
+    for (const file of ['../migrations/0001_mvp.sql', '../migrations/0002_category_images.sql', '../docs/sql/MVP_SEED_DEV.sql']) {
       const sql = readFileSync(new URL(file, import.meta.url), 'utf8');
       await db.batch(splitSqlQuery(sql).map(statement => db.prepare(statement)));
     }

@@ -17,7 +17,7 @@ export interface Product extends LocalizedNameFields {
   variants?: ProductVariant[];
 }
 export interface ProductVariant { id: number; sku: string; size_code: 'S'|'M'|'L'|'STANDARD'|'DELUXE'; price: number; compare_at_price: number|null; in_stock: boolean; low_stock: boolean; max_quantity: number; }
-export interface Category { id: number; code: string; slug: string; name_en: string; name_vi: string; }
+export interface Category { id: number; code: string; slug: string; name_en: string; name_vi: string; image_url?: string | null; }
 export interface ProductApiDto {
   id: number; slug: string; category_code: string; name_en: string; name_vi: string;
   description_vi: string|null; description_en: string|null; badge_code: 'BEST_SELLER'|'HOT'|'NEW'|null; is_featured: boolean;

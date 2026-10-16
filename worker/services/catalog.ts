@@ -7,6 +7,7 @@ export interface CategoryDTO {
   slug: string;
   name_vi: string;
   name_en: string;
+  image_url: string | null;
 }
 
 export interface ProductVariantDTO {
@@ -69,7 +70,7 @@ const PRODUCT_COLUMNS = `p.id, p.slug, c.code AS category_code,
   p.badge_code, p.is_featured`;
 
 export async function listCategories(db: D1Database): Promise<CategoryDTO[]> {
-  const { results } = await db.prepare(`SELECT id, code, slug, name_vi, name_en
+  const { results } = await db.prepare(`SELECT id, code, slug, name_vi, name_en, image_url
     FROM categories WHERE is_active = 1 ORDER BY sort_order, id`).all<CategoryDTO>();
   return results;
 }

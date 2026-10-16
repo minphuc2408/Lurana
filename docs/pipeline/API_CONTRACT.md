@@ -7,6 +7,12 @@ Base path: `/api` (cùng origin với frontend). JSON UTF-8. Đây là hợp đ�
 
 **Trạng thái code (16/10/2026):** Phase 2–4 API và Phase 5 frontend DONE local: health, catalog, delivery/options, checkout/quote, đặt đơn COD, tra đơn và auth/API admin. Admin status dùng lại `transitionOrder`; không có route hủy đơn khách. Frontend đã nối checkout form/review/gửi/retry/xác nhận trong `/cart`, public `/orders/track`, cookie login và dashboard/orders/products/stock/delivery admin. Không đổi hợp đồng Worker/DDL khi nối Phase 5. Route API lạ trả `NOT_FOUND` JSON 404 (message `Không tìm thấy API.`); boundary admin kiểm cookie trước khi trả 404. [Hiện trạng](../PROJECT_STATUS.md) · [nghiệm thu backend Phase 4](PHASE_4_ADMIN.md) · [nghiệm thu frontend Phase 5](PHASE_5_FRONTEND.md). Phase 6 IN PROGRESS (5/7): D1 remote migration/backup PASS; deployment/API live 7/7 + public browser/10 kết quả MVP PASS, cleanup xong. Còn dữ liệu thật và xác nhận quota; không gọi đây là test đủ checkout/admin UI remote. B2/B3/M1–M9 đã cập nhật token3 form, rate-limit/cap PENDING, cancellation restock, bounded admin queries và approved image URLs như các phần dưới. [Bằng chứng và điều kiện tiếp tục](PHASE_6_DEPLOY.md).
 
+## Bổ sung ảnh danh mục — 16/10/2026 (đã deploy staging; production chưa migrate/deploy)
+
+GET `/api/categories` bổ sung `image_url: string | null` cho mỗi phần tử, ngoài id/code/slug/name_vi/name_en. `null` nghĩa chưa gán ảnh. Ảnh minh họa danh mục khác ảnh sản phẩm; dữ liệu hiện tại dùng `/images/categories/<code>-v1.webp` cùng origin, file static trong public. Không trả bytes/base64 trong JSON. Client cũ bỏ qua field mới, client mới chấp nhận field vắng mặt khi đọc Worker cũ. Endpoint vẫn chỉ đọc, active/sort/cache30s không đổi; không có API chỉnh category hoặc admin upload category mới trong phạm vi này.
+
+Schema thêm bằng migration `0002_category_images.sql`, không sửa0001 đã áp remote; dữ liệu URL cập nhật riêng qua `docs/sql/CATEGORY_IMAGES.sql` cho đúng4 mã hiện hữu.
+
 ## Quy ước chung
 
 - **Thành công:** `{ "data": ... }`. **Lỗi:** `{ "error": { "code": "...", "message": "...", "details": ... } }`. `message` bằng tiếng Việt, ngắn, an toàn để hiển thị.

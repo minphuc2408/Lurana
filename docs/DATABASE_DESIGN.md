@@ -6,17 +6,17 @@ B2/B3 trong source hiện tại (staging deploy16/10, production còn bản cũ)
 
 | Phạm vi | Trạng thái |
 | --- | --- |
-| Schema chuẩn | [`migrations/0001_mvp.sql`](../migrations/0001_mvp.sql), DDL v2 đã thống nhất theo đúng 10 bảng Phase 1 |
-| D1 local | Migration `0001_mvp.sql`; seed và `npm run db:verify`; output nghiệm thu ở [Phase 1](pipeline/PHASE_1_DATABASE.md) |
+| Schema chuẩn | [`migrations/0001_mvp.sql`](../migrations/0001_mvp.sql) là base bất biến; [`0002_category_images.sql`](../migrations/0002_category_images.sql) thêm categories.image_url, vẫn10 bảng |
+| D1 local | Migration `0001_mvp.sql` + `0002_category_images.sql`; seed và `npm run db:verify`; output nghiệm thu ở [Phase 1](pipeline/PHASE_1_DATABASE.md) |
 | API D1 local | Catalog/admin products/summary ≤3 statements; quote read-only; order API trừ/hoàn tồn, lookup; admin orders/products/variants/zones đã có. Giỏ 15 dòng 35/36 statements, retry guard ≤40; test ghi dùng DB cô lập, DDL Phase 1 giữ nguyên |
-| D1 remote | Production và staging đã áp0001 ngày 15/10; DB riêng. Snapshot public16/10 và giới hạn kiểm chứng ở [PROJECT_STATUS](PROJECT_STATUS.md); lượt rà tài liệu không ghi D1 |
+| D1 remote | Production giữ0001;local/staging đã áp0001+0002 và4URL category theo owner16/10;DB riêng.[Hiện trạng](PROJECT_STATUS.md) |
 | Frontend | Catalog/cart/delivery/quote VND/localStorage được giữ; checkout COD/xác nhận/tra đơn và cookie admin/đơn/sản phẩm/tồn/phí giao/summary đã nối API Phase 3–4, Phase 5 DONE local; source deferred giữ và ẩn |
 
 ## Một nguồn schema chuẩn
 
-[`migrations/0001_mvp.sql`](../migrations/0001_mvp.sql) là **nguồn DDL duy nhất**. [`sql/MVP_SCHEMA.sql`](sql/MVP_SCHEMA.sql) và [`pipeline/MVP_SCHEMA.sql`](pipeline/MVP_SCHEMA.sql) chỉ chứa chú thích dẫn về migration, không giữ bản DDL sao chép. Khi cần xem hoặc kiểm chứng schema, đọc migration này.
+[`migrations/0001_mvp.sql`](../migrations/0001_mvp.sql) là **base DDL đã áp, giữ nguyên**; schema hiện tại là base cộng [`0002_category_images.sql`](../migrations/0002_category_images.sql). [`sql/MVP_SCHEMA.sql`](sql/MVP_SCHEMA.sql) và [`pipeline/MVP_SCHEMA.sql`](pipeline/MVP_SCHEMA.sql) chỉ chứa chú thích dẫn về migration, không giữ bản DDL sao chép. Khi cần xem hoặc kiểm chứng schema, đọc chuỗi migration này.
 
-Canonical được chốt **trước migration**: chọn nguyên DDL v2 phù hợp 10 bảng và [seed dev](sql/MVP_SEED_DEV.sql); không thêm chức năng ngoài Phase 1. Sau khi chốt, chỉ sửa schema nếu test phát hiện lỗi thực tế và phải ghi lý do. Khi migration đã áp lên remote, mọi thay đổi phải thành migration tiếp theo, không sửa lịch sử.
+Canonical được chốt **trước migration**: chọn nguyên DDL v2 phù hợp 10 bảng và [seed dev](sql/MVP_SEED_DEV.sql); không thêm chức năng ngoài Phase 1. Sau khi chốt, không sửa base ngoài lỗi thực tế đã chứng minh; tính năng schema mới cần yêu cầu owner và migration tiếp theo. Owner đã yêu cầu ảnh category16/10, là lý do thêm0002 chứ không sửa0001. Khi migration đã áp lên remote, mọi thay đổi phải thành migration tiếp theo, không sửa lịch sử.
 
 Seed local gồm **4 categories, 8 products, 24 variants, 8 images, 4 delivery zones**. Các câu `INSERT OR IGNORE` kết hợp khóa unique giúp chạy lại không nhân đôi. Ảnh placeholder, giá/tồn và khu vực giao là dữ liệu mẫu; chưa phải cấu hình mở bán. [Verifier](../scripts/verify-schema.mjs) dùng D1 local; bộ SQLite in-memory tham chiếu cũ được thay bằng `npm run db:verify`.
 
@@ -109,3 +109,5 @@ Staging categories fix — 15/10/2026: API public ban đầu categories=[] và p
 UI tạo sản phẩm tự sinh slug tên + UUID; unique constraint products.slug và DDL không đổi. Không cập nhật slug của sản phẩm cũ khi đổi tên.
 
 M1–M9 local không thay DDL/migration: summary/search lọc raw placed_at với idx_orders_placed_at hiện có, hỗ trợ ISO và SQLite UTC; EXPLAIN QUERY PLAN xác nhận SEARCH thay SCAN orders. Low-stock join active variant/product/category. Summary30 ngày, search mặc định90/tối đa366 ngày; không tạo counter/FTS. [Giới hạn và bằng chứng](HARDENING.md).
+
+Ảnh danh mục16/10:0002 đã áp local/staging,4 URL đã UPDATE theo code từ docs/sql/CATEGORY_IMAGES.sql; vẫn10 bảng. Test upgrade giữ ID/tên/quan hệ/giá/tồn và chạy lặp data update PASS; db:verify13/13,FK sạch. Backup riêng categories ignored đã lưu. Production chưa áp0002; [runbook và rollback](CATEGORY_IMAGES.md).

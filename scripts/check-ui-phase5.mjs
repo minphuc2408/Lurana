@@ -125,7 +125,7 @@ async function createBridge() {
   const { default: app } = await import('../worker/index.ts');
   platform = await getPlatformProxy({ configPath: path.join(root, 'wrangler.jsonc'), persist: false, remoteBindings: false, envFiles: ['.dev.vars.example'] });
   const db = platform.env.DB;
-  for (const file of ['migrations/0001_mvp.sql', 'docs/sql/MVP_SEED_DEV.sql']) {
+  for (const file of ['migrations/0001_mvp.sql', 'migrations/0002_category_images.sql', 'docs/sql/MVP_SEED_DEV.sql']) {
     await db.batch(splitSqlQuery(readFileSync(path.join(root, file), 'utf8')).map(sql => db.prepare(sql)));
   }
   server = createServer(async (incoming, outgoing) => {

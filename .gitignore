@@ -491,3 +491,15 @@
 !/src/assets/hero/lunara-bouquet-640.webp
 !/src/assets/hero/lunara-bouquet-960.webp
 !/src/assets/hero/lunara-bouquet-1440.webp
+
+# Reviewed category illustration migration, narrow data update and static assets.
+!/migrations/0002_category_images.sql
+!/docs/sql/CATEGORY_IMAGES.sql
+!/public/images/
+!/public/images/categories/
+!/public/images/categories/bouquets-v1.webp
+!/public/images/categories/arrangements-v1.webp
+!/public/images/categories/dried-flowers-v1.webp
+!/public/images/categories/gift-sets-v1.webp
+
+!/docs/CATEGORY_IMAGES.md

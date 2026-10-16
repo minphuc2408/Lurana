@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { DatabaseSync } from 'node:sqlite';
 import { listCategories, listProducts, getProduct } from '../worker/services/catalog.ts';
 import { createTestDb } from './helpers/worker.mjs';
 
@@ -13,7 +15,7 @@ test('categories return the four active seed categories in sort order with only 
   const { db, sqlite } = await fixture(t);
   const categories = await listCategories(db);
   assert.deepEqual(categories.map(category => category.code), ['bouquets', 'arrangements', 'dried-flowers', 'gift-sets']);
-  assert.deepEqual(Object.keys(categories[0]).sort(), ['code', 'id', 'name_en', 'name_vi', 'slug']);
+  assert.deepEqual(Object.keys(categories[0]).sort(), ['code', 'id', 'image_url', 'name_en', 'name_vi', 'slug']);
   sqlite.exec("UPDATE categories SET sort_order = -1 WHERE code = 'gift-sets'; UPDATE categories SET is_active = 0 WHERE code = 'bouquets'");
   assert.deepEqual((await listCategories(db)).map(category => category.code), ['gift-sets', 'arrangements', 'dried-flowers']);
 });
@@ -116,4 +118,43 @@ test('catalog caps products at 100 and child IN queries at 100 parameters withou
   assert.equal(queries[2].values.length, 100);
   assert.ok(products.every(product => product.variants.length > 0 && product.images.length === 1));
   console.log('Catalog D1 evidence: stored_products=118, returned_products=100, child_bind_parameters=100, executed_statements=3.');
+});
+
+
+test('category illustrations are nullable, remain tied to category codes and use the existing active/sort query', async t => {
+  const { db, sqlite } = await fixture(t);
+  assert.ok((await listCategories(db)).every(category => category.image_url === null));
+  sqlite.exec(readFileSync(new URL('../docs/sql/CATEGORY_IMAGES.sql', import.meta.url), 'utf8'));
+  const categories = await listCategories(db);
+  for (const category of categories) {
+    assert.equal(category.image_url, `/images/categories/${category.code}-v1.webp`);
+    const asset = readFileSync(new URL('../public' + category.image_url, import.meta.url));
+    assert.equal(asset.toString('ascii', 0, 4), 'RIFF');
+    assert.equal(asset.toString('ascii', 8, 12), 'WEBP');
+    assert.ok(asset.length < 25000, 'Category thumbnails stay small');
+  }
+  sqlite.exec("UPDATE categories SET is_active = 0 WHERE code = 'bouquets'");
+  assert.ok((await listCategories(db)).every(category => category.code !== 'bouquets'));
+});
+
+test('category-image migration upgrades populated 0001 without changing category identity, products or stock; URL update is repeatable', t => {
+  const sqlite = new DatabaseSync(':memory:');
+  t.after(() => sqlite.close());
+  sqlite.exec('PRAGMA foreign_keys = ON');
+  sqlite.exec(readFileSync(new URL('../migrations/0001_mvp.sql', import.meta.url), 'utf8'));
+  sqlite.exec(readFileSync(new URL('../docs/sql/MVP_SEED_DEV.sql', import.meta.url), 'utf8'));
+  const read = table => sqlite.prepare(`SELECT * FROM ${table} ORDER BY id`).all().map(row => ({ ...row }));
+  const before = Object.fromEntries(['categories', 'products', 'product_variants', 'product_images'].map(table => [table, read(table)]));
+  sqlite.exec(readFileSync(new URL('../migrations/0002_category_images.sql', import.meta.url), 'utf8'));
+  assert.deepEqual(read('categories'), before.categories.map(category => ({ ...category, image_url: null })));
+  assert.throws(() => sqlite.exec("UPDATE categories SET image_url = '' WHERE code = 'bouquets'"), /CHECK constraint/);
+  sqlite.exec("INSERT INTO categories (code,slug,name_vi,name_en) VALUES ('future','future','Future','Future')");
+  const update = readFileSync(new URL('../docs/sql/CATEGORY_IMAGES.sql', import.meta.url), 'utf8');
+  sqlite.exec(update);
+  const assigned = read('categories');
+  sqlite.exec(update);
+  assert.deepEqual(read('categories'), assigned);
+  assert.equal(assigned.find(category => category.code === 'future').image_url, null);
+  for (const table of ['products', 'product_variants', 'product_images']) assert.deepEqual(read(table), before[table]);
+  assert.deepEqual(sqlite.prepare('PRAGMA foreign_key_check').all(), []);
 });
