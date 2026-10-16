@@ -31,6 +31,7 @@ export function normalizePhone(value: string): string {
 }
 export const phoneSchema = z.string({ error: 'Số điện thoại không hợp lệ.' }).transform(normalizePhone)
   .pipe(z.string().regex(/^0\d{9}$/, 'Số điện thoại phải gồm 10 chữ số, bắt đầu bằng 0.'));
+export const turnstileTokenSchema = z.string({ error: 'Mã xác minh không hợp lệ.' }).max(2048).optional();
 const personNameSchema = z.string({ error: 'Vui lòng nhập tên.' }).trim()
   .min(1, 'Vui lòng nhập tên.').max(100, 'Tên tối đa 100 ký tự.');
 export const orderSchema = z.object({
@@ -63,13 +64,14 @@ export const orderSchema = z.object({
   }),
   customer_note: z.string({ error: 'Ghi chú không hợp lệ.' }).max(500, 'Ghi chú tối đa 500 ký tự.').optional(),
   // Presence/validity is conditional on TURNSTILE_SECRET, checked on the server.
-  turnstile_token: z.string({ error: 'Mã xác minh không hợp lệ.' }).optional(),
+  turnstile_token: turnstileTokenSchema,
 });
 export const orderBodySchema = orderSchema;
 export const lookupOrderSchema = z.object({
   order_number: z.string({ error: 'Mã đơn không hợp lệ.' }).trim()
     .min(1, 'Vui lòng nhập mã đơn.').max(100, 'Mã đơn không hợp lệ.'),
   phone: phoneSchema,
+  turnstile_token: turnstileTokenSchema,
 });
 export const orderLookupSchema = lookupOrderSchema;
 export type CartItem = z.infer<typeof cartItemSchema>;

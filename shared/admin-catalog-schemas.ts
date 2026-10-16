@@ -14,9 +14,10 @@ export const adminProductImageSchema = z.object({
   url: z.string().trim().max(2048).url('URL ảnh không hợp lệ.').refine(value => {
     try {
       const url = new URL(value);
-      return ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password;
+      return url.protocol === 'https:' && ['res.cloudinary.com', 'images.unsplash.com'].includes(url.hostname)
+        && !url.port && !url.username && !url.password;
     } catch { return false; }
-  }, 'Ảnh phải dùng URL HTTP hoặc HTTPS không chứa thông tin đăng nhập.'),
+  }, 'Ảnh phải dùng HTTPS từ Cloudinary hoặc Unsplash, không chứa thông tin đăng nhập.'),
   alt_vi: z.string().max(200).nullable().optional(),
   alt_en: z.string().max(200).nullable().optional(),
 });

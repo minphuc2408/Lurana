@@ -36,7 +36,6 @@ export function validateDeliverySlot(date: string, slot: string, method: string,
   }
   if (daysAhead === 0) {
     const [hour, min] = slot.split('-')[0].split(':').map(Number);
-    const preparation = methodCode === 'STANDARD' ? 0 : MIN_PREPARATION_MINUTES;
-    if (hour * 60 + min < minute + preparation) return fail();
+    if (hour * 60 + min < minute + MIN_PREPARATION_MINUTES) return fail();
   }
 }

@@ -4,6 +4,7 @@ import { AppError } from '../lib/errors.ts';
 import { todayInVN, toIso } from '../lib/datetime.ts';
 import { parseSchema } from '../lib/validate.ts';
 import { transitionOrder } from './orders.ts';
+import { orderDateWindow, recentOrderDates } from '../lib/order-window.ts';
 
 interface AdminOrderRow {
   id: number;
@@ -65,27 +66,31 @@ const detailColumns = `${listColumns}, sender_email, is_anonymous, province_name
 
 /** Three aggregate statements; VN midnight boundaries remain correct for both D1 timestamp formats. */
 export async function getAdminSummary(db: D1Database, now = new Date()) {
-  const start = new Date(`${todayInVN(now)}T00:00:00+07:00`);
-  const end = new Date(start.getTime() + 86400000);
+  const dates = recentOrderDates(30, now);
+  const period = orderDateWindow(dates.from, dates.to);
+  const today = orderDateWindow(todayInVN(now), todayInVN(now));
   const [statusResult, todayResult, stockResult] = await db.batch<{ status_code: string; count: number }>([
-    db.prepare('SELECT status_code, COUNT(*) AS count FROM orders GROUP BY status_code'),
-    db.prepare('SELECT COUNT(*) AS count FROM orders WHERE datetime(placed_at) >= datetime(?) AND datetime(placed_at) < datetime(?)')
-      .bind(start.toISOString(), end.toISOString()),
-    db.prepare('SELECT COUNT(*) AS count FROM product_variants WHERE stock_quantity <= low_stock_threshold'),
+    db.prepare(`SELECT status_code, COUNT(*) AS count FROM orders WHERE ${period.sql} GROUP BY status_code`).bind(...period.values),
+    db.prepare(`SELECT COUNT(*) AS count FROM orders WHERE ${today.sql}`).bind(...today.values),
+    db.prepare(`SELECT COUNT(*) AS count FROM product_variants v JOIN products p ON p.id = v.product_id
+      JOIN categories c ON c.id = p.category_id
+      WHERE v.stock_quantity <= v.low_stock_threshold AND v.is_active = 1 AND p.status = 'ACTIVE' AND c.is_active = 1`),
   ]);
   const ordersByStatus: Record<string, number> = Object.fromEntries(ORDER_STATUSES.map(status => [status, 0]));
   for (const row of statusResult.results as unknown as { status_code: string; count: number }[]) {
     ordersByStatus[row.status_code] = row.count;
   }
-  return { orders_by_status: ordersByStatus,
+  return { orders_by_status: ordersByStatus, period_days: 30,
     today_orders: Number(todayResult.results[0]?.count ?? 0),
     low_stock_count: Number(stockResult.results[0]?.count ?? 0) };
 }
 
 export async function listAdminOrders(db: D1Database, query: unknown) {
   const input = parseSchema(adminOrdersQuerySchema, query);
-  const filters: string[] = [];
-  const values: (string | number)[] = [];
+  const defaults = recentOrderDates(90);
+  const window = orderDateWindow(input.placed_from ?? defaults.from, input.placed_to ?? defaults.to);
+  const filters: string[] = [window.sql];
+  const values: (string | number)[] = [...window.values];
   if (input.status) { filters.push('status_code = ?'); values.push(input.status); }
   if (input.date) { filters.push('delivery_date = ?'); values.push(input.date); }
   if (input.q) {
@@ -138,7 +143,7 @@ export async function getAdminOrder(db: D1Database, orderNumber: string) {
 
 export async function changeAdminOrderStatus(db: D1Database, orderNumber: string, body: unknown) {
   const input = parseSchema(adminOrderStatusSchema, body);
-  return transitionOrder(db, orderNumber, input.to_status, 'ADMIN', input.note);
+  return transitionOrder(db, orderNumber, input.to_status, 'ADMIN', input.note, { restock: input.restock });
 }
 
 export async function updateAdminOrderNote(db: D1Database, orderNumber: string, body: unknown) {

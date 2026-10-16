@@ -8,6 +8,7 @@ export async function verifyTurnstile(
   token: string | undefined,
   requestFetch: typeof fetch = fetch,
   idempotencyKey?: string,
+  expected?: { action: string; hostname: string },
 ): Promise<void> {
   if (!secret) return;
   if (!token?.trim() || token.length > 2048) throw forbidden();
@@ -21,6 +22,8 @@ export async function verifyTurnstile(
     const result: unknown = await response.json();
     if (!response.ok || !result || typeof result !== 'object'
       || !('success' in result) || result.success !== true) throw forbidden();
+    if (expected && (!('action' in result) || result.action !== expected.action
+      || !('hostname' in result) || result.hostname !== expected.hostname)) throw forbidden();
   } catch {
     // Provider errors fail closed; never expose tokens, secrets or remote payloads.
     throw forbidden();

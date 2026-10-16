@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { secureHeaders } from 'hono/secure-headers';
 import { requestId } from 'hono/request-id';
 import type { WorkerEnv } from './env.ts';
-import { handleError } from './lib/errors.ts';
+import { handleError, safeErrorDiagnostic } from './lib/errors.ts';
 import { publicRoutes } from './routes/public.ts';
 import { orderRoutes } from './routes/orders.ts';
 import { requireAdmin, requireSameOrigin } from './lib/auth.ts';
@@ -10,6 +10,9 @@ import { adminAuthRoutes } from './routes/admin-auth.ts';
 import { adminOrderRoutes } from './routes/admin-orders.ts';
 import { adminCatalogRoutes } from './routes/admin-catalog.ts';
 import { adminUploadRoutes } from './routes/admin-uploads.ts';
+import { rateLimit } from './lib/rate-limit.ts';
+import { expirePendingOrders } from './services/pending-orders.ts';
+import type { Bindings } from './env.ts';
 
 const app = new Hono<WorkerEnv>();
 app.use('/api/*', secureHeaders());
@@ -28,6 +31,7 @@ app.use('/api/*', async (c, next) => {
   if (c.req.method === 'GET' && catalog && c.res.status === 200) c.header('Cache-Control', 'public, max-age=30');
 });
 app.onError(handleError);
+app.use('/api/*', rateLimit);
 
 app.get('/api/health', c => c.json({
   data: { ok: true, time: new Date().toISOString() },
@@ -46,4 +50,14 @@ app.notFound(c => c.json({
   error: { code: 'NOT_FOUND', message: 'Không tìm thấy API.' },
 }, 404));
 
-export default app;
+export default Object.assign(app, {
+  async scheduled(controller: ScheduledController, env: Bindings) {
+    try {
+      await expirePendingOrders(env, new Date(controller.scheduledTime));
+    } catch (error) {
+      const request_id = crypto.randomUUID();
+      console.error('SCHEDULED INTERNAL', { request_id, ...(error instanceof Error ? safeErrorDiagnostic(error) : {}) });
+      throw new Error(`Pending order expiry failed; reference ${request_id}`);
+    }
+  },
+});

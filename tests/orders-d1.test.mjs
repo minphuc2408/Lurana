@@ -7,6 +7,8 @@ import { getPlatformProxy, unstable_splitSqlQuery as splitSqlQuery } from 'wrang
 import app from '../worker/index.ts';
 import { createOrder, lookupOrder, transitionOrder } from '../worker/services/orders.ts';
 import { todayInVN } from '../worker/lib/datetime.ts';
+import { expirePendingOrders } from '../worker/services/pending-orders.ts';
+import { changeAdminOrderStatus } from '../worker/services/admin-orders.ts';
 
 function body(items = [{ variant_id: 1, quantity: 1 }]) {
   const date = new Date(Date.parse(`${todayInVN()}T00:00:00Z`) + 86400000).toISOString().slice(0, 10);
@@ -171,6 +173,146 @@ test('Phase 3 orders run on isolated real workerd D1: rollback, concurrency, tra
       assert.deepEqual(await counts(db), [0, 0, 0]);
       for (const id of ids) assert.equal(await stock(db, id), id === lateId ? 0 : 100);
       console.log('Phase 3 D1 LOCAL statement budget: 15 lines success=35; last-stock CHECK failure=36; failed order/items/history=[0,0,0]; all earlier decrements rolled back; limit=40.');
+    });
+
+    await t.test('concurrent phone-cap creates serialize at three; same-key race still replays at the cap', async () => {
+      for (const sameKey of [false, true]) {
+        await reset();
+        for (let i = 0; i < 2; i++) await createOrder(db, body(), randomUUID());
+        const before = await stock(db);
+        const ready = barrier();
+        const counters = [countedDb(db, ready), countedDb(db, ready)];
+        const key = randomUUID();
+        const responses = await Promise.all(counters.map(counter => app.request('/api/orders', {
+          method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': sameKey ? key : randomUUID() },
+          body: JSON.stringify(body()),
+        }, { DB: counter.db })));
+        assert.deepEqual(responses.map(response => response.status).sort(), sameKey ? [200, 201] : [201, 429]);
+        const payloads = await Promise.all(responses.map(response => response.json()));
+        if (!sameKey) assert.equal(payloads.find(payload => payload.error).error.code, 'PENDING_ORDER_LIMIT');
+        assert.deepEqual(await counts(db), [3, 3, 3]);
+        assert.equal(await stock(db), before - 1);
+        assert.ok(counters.every(counter => counter.count <= 40));
+      }
+    });
+
+    await t.test('failed delivery requires a reason; default consumes stock, explicit restock releases exactly once under races', async () => {
+      for (const restock of [undefined, false, true]) {
+        await reset();
+        const before = await stock(db);
+        const number = (await createOrder(db, body(), randomUUID())).data.order_number;
+        for (const status of ['CONFIRMED', 'PREPARING', 'IN_TRANSIT']) await transitionOrder(db, number, status);
+        for (const note of [undefined, '', '   ']) {
+          await assert.rejects(changeAdminOrderStatus(db, number, { to_status: 'CANCELLED', note, restock }), error => error.code === 'VALIDATION_ERROR');
+        }
+        assert.equal((await orderRow(db, number)).status_code, 'IN_TRANSIT');
+        const ready = barrier();
+        const counters = [countedDb(db, ready), countedDb(db, ready)];
+        const results = await Promise.allSettled(counters.map(counter => changeAdminOrderStatus(counter.db, number,
+          { to_status: 'CANCELLED', note: 'Khách từ chối nhận SMOKE', restock })));
+        assert.equal(results.filter(result => result.status === 'fulfilled').length, 1);
+        assert.equal(results.find(result => result.status === 'rejected').reason.code, 'INVALID_TRANSITION');
+        const row = await orderRow(db, number);
+        assert.equal(row.status_code, 'CANCELLED'); assert.equal(row.payment_status, 'UNPAID');
+        assert.equal(row.paid_at, null); assert.equal(row.delivered_at, null);
+        assert.equal(row.stock_released, restock === true ? 1 : 0);
+        assert.equal(await stock(db), before - (restock === true ? 0 : 1));
+        assert.equal((await history(db, number)).filter(row => row.to_status === 'CANCELLED').length, 1);
+        assert.equal((await history(db, number)).at(-1).note, 'Khách từ chối nhận SMOKE');
+        await assert.rejects(changeAdminOrderStatus(db, number, { to_status: 'CANCELLED', note: 'SMOKE', restock: true }), error => error.code === 'INVALID_TRANSITION');
+        assert.equal(await stock(db), before - (restock === true ? 0 : 1));
+      }
+    });
+
+    await t.test('hourly scheduled expiry cancels all overdue PENDING orders in 3 statements; exact 24h and other states stay unchanged', async () => {
+      await reset();
+      await db.prepare('UPDATE product_variants SET stock_quantity = 100').run();
+      const ids = (await db.prepare('SELECT id FROM product_variants ORDER BY id LIMIT 15').all()).results.map(row => row.id);
+      const number = (await createOrder(db, body(ids.map(variant_id => ({ variant_id, quantity: 1 }))), randomUUID())).data.order_number;
+      const second = (await createOrder(db, body([{ variant_id: 1, quantity: 2 }]), randomUUID())).data.order_number;
+      const boundary = (await createOrder(db, body(), randomUUID())).data.order_number;
+      const freshInput = body(); freshInput.sender.phone = '0900000001';
+      const fresh = (await createOrder(db, freshInput, randomUUID())).data.order_number;
+      const now = new Date('2026-10-15T12:00:00Z');
+      const placed = (hours, sqlite = false) => new Date(now.getTime() - hours * 3600000).toISOString().replace(sqlite ? 'T' : '~', ' ');
+      for (const [order, hours, sqlite] of [[number, 25, false], [second, 30, true], [boundary, 24, false], [fresh, 1, false]]) {
+        await db.prepare('UPDATE orders SET placed_at = ? WHERE order_number = ?').bind(placed(hours, sqlite), order).run();
+      }
+      const skipped = [];
+      for (const [index, status] of ['CONFIRMED', 'PREPARING', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED'].entries()) {
+        const input = body(); input.sender.phone = `090000001${index}`;
+        const order = (await createOrder(db, input, randomUUID())).data.order_number;
+        for (const step of (status === 'CANCELLED' ? ['CANCELLED'] : ['CONFIRMED', 'PREPARING', 'IN_TRANSIT', 'DELIVERED'].slice(0, index + 1))) {
+          await transitionOrder(db, order, step);
+        }
+        await db.prepare('UPDATE orders SET placed_at = ? WHERE order_number = ?').bind(placed(30), order).run();
+        skipped.push(await orderRow(db, order));
+      }
+      const before = await stock(db);
+      const counter = countedDb(db);
+      await app.scheduled({ scheduledTime: now.getTime() }, { DB: counter.db, PENDING_ORDER_TTL_HOURS: '24' });
+      assert.equal(counter.count, 3);
+      for (const order of [number, second]) {
+        const row = await orderRow(db, order);
+        assert.equal(row.status_code, 'CANCELLED'); assert.equal(row.stock_released, 1);
+        assert.equal(row.payment_status, 'UNPAID'); assert.equal(row.paid_at, null);
+        assert.equal((await history(db, order)).at(-1).actor_label, 'SYSTEM');
+        assert.equal((await history(db, order)).at(-1).note, 'Tự hủy: quá hạn xác nhận đơn.');
+      }
+      assert.equal((await orderRow(db, boundary)).status_code, 'PENDING');
+      assert.equal((await orderRow(db, fresh)).status_code, 'PENDING');
+      assert.equal(await stock(db), before + 3);
+      for (const id of ids.slice(1)) assert.equal(await stock(db, id), 100);
+      for (const row of skipped) assert.deepEqual(await orderRow(db, row.order_number), row);
+      await expirePendingOrders({ DB: db, PENDING_ORDER_TTL_HOURS: '24' }, now);
+      assert.equal(await stock(db), before + 3);
+      await expirePendingOrders({ DB: db, PENDING_ORDER_TTL_HOURS: '24' }, new Date(now.getTime() + 3600000));
+      assert.equal((await orderRow(db, boundary)).status_code, 'CANCELLED');
+      assert.equal(await stock(db), before + 4);
+    });
+
+    await t.test('overlapping expiry batches restore shared inventory once; confirmation before batch is preserved', async () => {
+      await reset();
+      const first = (await createOrder(db, body(), randomUUID())).data.order_number;
+      const second = (await createOrder(db, body(), randomUUID())).data.order_number;
+      const old = new Date(Date.now() - 25 * 3600000).toISOString();
+      await db.prepare('UPDATE orders SET placed_at = ?').bind(old).run();
+      const before = await stock(db);
+      const ready = barrier();
+      const counters = [countedDb(db, ready), countedDb(db, ready)];
+      await Promise.all(counters.map(counter => expirePendingOrders({ DB: counter.db, PENDING_ORDER_TTL_HOURS: '24' })));
+      assert.equal(await stock(db), before + 2);
+      for (const number of [first, second]) assert.equal((await history(db, number)).filter(row => row.to_status === 'CANCELLED').length, 1);
+      assert.deepEqual(counters.map(counter => counter.count), [3, 3]);
+      const third = (await createOrder(db, body(), randomUUID())).data.order_number;
+      await db.prepare('UPDATE orders SET placed_at = ? WHERE order_number = ?').bind(old, third).run();
+      const beforeConfirm = await stock(db);
+      const raced = countedDb(db, () => transitionOrder(db, third, 'CONFIRMED'));
+      await expirePendingOrders({ DB: raced.db, PENDING_ORDER_TTL_HOURS: '24' });
+      assert.equal((await orderRow(db, third)).status_code, 'CONFIRMED');
+      assert.equal(await stock(db), beforeConfirm);
+      assert.equal((await history(db, third)).filter(row => row.actor_label === 'SYSTEM').length, 0);
+    });
+
+    await t.test('expiry stock/history/status roll back together on a failed batch; NULL variant snapshots are skipped', async () => {
+      await reset();
+      const number = (await createOrder(db, body([{ variant_id: 1, quantity: 2 }, { variant_id: 2, quantity: 1 }]), randomUUID())).data.order_number;
+      await db.prepare('UPDATE orders SET placed_at = ?').bind(new Date(Date.now() - 25 * 3600000).toISOString()).run();
+      const before = await stock(db);
+      const initialHistory = await history(db, number);
+      const broken = { prepare: sql => db.prepare(sql), batch: statements => db.batch([
+        ...statements.slice(0, 2), db.prepare("INSERT INTO order_status_history (order_id, to_status, actor_label) VALUES (-1, 'CANCELLED', 'SYSTEM')"),
+      ]) };
+      await assert.rejects(expirePendingOrders({ DB: broken, PENDING_ORDER_TTL_HOURS: '24' }));
+      assert.equal(await stock(db), before);
+      assert.equal((await orderRow(db, number)).status_code, 'PENDING');
+      assert.deepEqual(await history(db, number), initialHistory);
+      // Match ON DELETE SET NULL without removing a catalog fixture needed by later tests.
+      await db.prepare('UPDATE order_items SET variant_id = NULL WHERE variant_id = 2').run();
+      await expirePendingOrders({ DB: db, PENDING_ORDER_TTL_HOURS: '24' });
+      assert.equal((await orderRow(db, number)).status_code, 'CANCELLED');
+      assert.equal(await stock(db), before + 2);
+      assert.deepEqual((await db.prepare('PRAGMA foreign_key_check').all()).results, []);
     });
 
     await t.test('allowed delivery transitions write one timeline entry each and mark COD PAID only at DELIVERED', async () => {

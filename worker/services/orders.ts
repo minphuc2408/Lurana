@@ -118,8 +118,11 @@ export async function createOrder(db: D1Database, body: unknown, idempotencyKey:
         is_anonymous, recipient_name, recipient_phone, province_name, ward_name, address_line,
         delivery_method_code, delivery_date, delivery_time_slot, card_type, card_message,
         customer_note, subtotal, discount_total, delivery_fee, grand_total, placed_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).bind(orderNumber, key, input.sender.name, input.sender.phone, input.sender.email ?? null,
+      VALUES (?, ?, ?, CASE WHEN
+        (SELECT COUNT(*) FROM (SELECT 1 FROM orders WHERE sender_phone = ? AND status_code = 'PENDING' LIMIT 3)) < 3
+        OR EXISTS (SELECT 1 FROM orders WHERE idempotency_key = ?)
+        THEN ? ELSE NULL END, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(orderNumber, key, input.sender.name, input.sender.phone, key, input.sender.phone, input.sender.email ?? null,
       Number(input.sender.is_anonymous), input.recipient.name, input.recipient.phone,
       input.recipient.province_name, input.recipient.ward_name, input.recipient.address_line,
       input.delivery.method_code, input.delivery.date, input.delivery.time_slot, input.card.type,
@@ -147,6 +150,11 @@ export async function createOrder(db: D1Database, body: unknown, idempotencyKey:
     } catch (error) {
       // D1 wraps the SQLite message in Error.cause in some runtime versions.
       const message = databaseErrorMessage(error);
+      // The INSERT deliberately fails its existing NOT NULL guard at the phone cap.
+      // Checking inside this batch serializes concurrent creates without new DDL/statements.
+      if (message.includes('NOT NULL constraint failed: orders.sender_phone')) {
+        throw new AppError('PENDING_ORDER_LIMIT', 429, 'Số điện thoại đã có 3 đơn chờ xác nhận. Vui lòng liên hệ shop.');
+      }
       if (message.includes('CHECK constraint failed') && message.includes('stock_quantity')) {
         return await stockFailure(db, quote);
       }
@@ -216,21 +224,27 @@ export async function lookupOrder(db: D1Database, body: unknown) {
 
 const transitions: Record<string, readonly string[]> = {
   PENDING: ['CONFIRMED', 'CANCELLED'], CONFIRMED: ['PREPARING', 'CANCELLED'],
-  PREPARING: ['IN_TRANSIT', 'CANCELLED'], IN_TRANSIT: ['DELIVERED'], DELIVERED: [], CANCELLED: [],
+  PREPARING: ['IN_TRANSIT', 'CANCELLED'], IN_TRANSIT: ['DELIVERED', 'CANCELLED'], DELIVERED: [], CANCELLED: [],
 };
 
 /** Internal service only. Phase 4 must authorize the actor before calling it. */
 export async function transitionOrder(db: D1Database, orderNumber: string, newStatus: string,
-  actorLabel: 'ADMIN' | 'CUSTOMER' | 'SYSTEM' = 'ADMIN', note?: string): Promise<OrderSummary> {
+  actorLabel: 'ADMIN' | 'CUSTOMER' | 'SYSTEM' = 'ADMIN', note?: string,
+  options: { restock?: boolean; expectedStatus?: 'PENDING' } = {}): Promise<OrderSummary> {
   const order = await db.prepare(`SELECT ${orderColumns} FROM orders WHERE order_number = ?`)
     .bind(orderNumber).first<OrderRow>();
   if (!order) throw new AppError('NOT_FOUND', 404, 'Không tìm thấy đơn hàng.');
   const invalid = () => new AppError('INVALID_TRANSITION', 409, 'Không thể chuyển trạng thái đơn hàng.');
   if (!transitions[order.status_code]?.includes(newStatus)) throw invalid();
+  if (options.expectedStatus && order.status_code !== options.expectedStatus) throw invalid();
+  const failedDelivery = order.status_code === 'IN_TRANSIT' && newStatus === 'CANCELLED';
+  if (failedDelivery && !note?.trim()) throw new AppError('VALIDATION_ERROR', 400, 'Vui lòng nhập lý do giao hàng thất bại.');
+  if (options.restock !== undefined && newStatus !== 'CANCELLED') throw new AppError('VALIDATION_ERROR', 400, 'Chỉ chọn hoàn tồn khi hủy đơn.');
+  const restock = newStatus === 'CANCELLED' && (options.restock ?? !failedDelivery);
   const { results: items } = await db.prepare('SELECT variant_id, quantity FROM order_items WHERE order_id = ?')
     .bind(order.id).all<{ variant_id: number | null; quantity: number }>();
   const batch: D1PreparedStatement[] = [];
-  if (newStatus === 'CANCELLED') {
+  if (restock) {
     for (const item of items) {
       if (item.variant_id === null) continue;
       batch.push(db.prepare(`
@@ -242,7 +256,7 @@ export async function transitionOrder(db: D1Database, orderNumber: string, newSt
   }
   const updateIndex = batch.length;
   // Only static, server-selected SQL fragments are composed here; all caller data is bound.
-  const effect = newStatus === 'CANCELLED' ? ', stock_released = 1'
+  const effect = newStatus === 'CANCELLED' ? `, stock_released = ${restock ? 1 : 0}`
     : newStatus === 'DELIVERED' ? ", payment_status = 'PAID', paid_at = datetime('now'), delivered_at = datetime('now')" : '';
   const releaseGuard = newStatus === 'CANCELLED' ? ' AND stock_released = 0' : '';
   batch.push(db.prepare(`UPDATE orders SET status_code = ?, updated_at = datetime('now')${effect}

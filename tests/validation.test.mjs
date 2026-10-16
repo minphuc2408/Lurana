@@ -47,7 +47,8 @@ test('delivery rejects past dates, impossible dates, invalid slots and more than
   }
   assert.doesNotThrow(() => validateDeliverySlot('2026-10-14', '12:00-14:00', 'STANDARD', now));
   assert.doesNotThrow(() => validateDeliverySlot('2026-11-13', '08:00-10:00', 'STANDARD', now));
-  assert.doesNotThrow(() => validateDeliverySlot('2026-10-14', '10:00-12:00', 'STANDARD', now));
+  assert.throws(() => validateDeliverySlot('2026-10-14', '10:00-12:00', 'STANDARD', now));
+  assert.throws(() => validateDeliverySlot('2026-10-14', '12:00-14:00', 'STANDARD', new Date(now.getTime() + 1)));
   assert.throws(() => validateDeliverySlot('2026-10-14', '12:00-14:00', 'EXPRESS', new Date(now.getTime() + 1)), /Ngày hoặc khung giờ/);
 });
 

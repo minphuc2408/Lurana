@@ -3,6 +3,9 @@ export interface Bindings {
   ADMIN_PASSWORD?: string;
   JWT_SECRET?: string;
   TURNSTILE_SECRET?: string;
+  RATE_LIMIT_SENSITIVE?: RateLimit;
+  RATE_LIMIT_PUBLIC?: RateLimit;
+  PENDING_ORDER_TTL_HOURS?: string;
   CLOUDINARY_CLOUD_NAME?: string;
   CLOUDINARY_API_KEY?: string;
   CLOUDINARY_API_SECRET?: string;

@@ -4,7 +4,14 @@
   "account_id": "411a1de267e251745a176dfd37257ea6",
   "main": "./worker/index.ts",
   "compatibility_date": "2026-10-06",
+  "observability": { "enabled": true, "head_sampling_rate": 0.1, "logs": { "enabled": true, "invocation_logs": false } },
+  "triggers": { "crons": ["0 * * * *"] },
+  "ratelimits": [
+    { "name": "RATE_LIMIT_SENSITIVE", "namespace_id": "240801", "simple": { "limit": 6, "period": 60 } },
+    { "name": "RATE_LIMIT_PUBLIC", "namespace_id": "240802", "simple": { "limit": 60, "period": 60 } }
+  ],
   "vars": {
+    "PENDING_ORDER_TTL_HOURS": "24",
     "CLOUDINARY_CLOUD_NAME": "yrnqg7ay",
     "CLOUDINARY_UPLOAD_PRESET": "lunara_products_prod",
     "CLOUDINARY_SCOPE": "prod"
@@ -24,7 +31,14 @@
   "env": {
     "staging": {
       "name": "lunara-staging",
+      "observability": { "enabled": true, "head_sampling_rate": 0.1, "logs": { "enabled": true, "invocation_logs": false } },
+      "triggers": { "crons": ["0 * * * *"] },
+      "ratelimits": [
+        { "name": "RATE_LIMIT_SENSITIVE", "namespace_id": "240811", "simple": { "limit": 6, "period": 60 } },
+        { "name": "RATE_LIMIT_PUBLIC", "namespace_id": "240812", "simple": { "limit": 60, "period": 60 } }
+      ],
       "vars": {
+        "PENDING_ORDER_TTL_HOURS": "24",
         "CLOUDINARY_CLOUD_NAME": "yrnqg7ay",
         "CLOUDINARY_UPLOAD_PRESET": "lunara_products_staging",
         "CLOUDINARY_SCOPE": "staging"

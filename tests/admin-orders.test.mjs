@@ -65,8 +65,10 @@ test('admin order APIs use isolated real D1: summary, bound filters, private det
       await db.batch(splitSqlQuery(readFileSync(new URL(file, import.meta.url), 'utf8')).map(sql => db.prepare(sql)));
     }
     const orders = [];
-    for (const name of ['Literal %_\\ demo', 'Normal demo', 'Other demo', 'Fourth demo']) {
-      orders.push((await createOrder(db, body(name), randomUUID())).data.order_number);
+    for (const [index, name] of ['Literal %_\\ demo', 'Normal demo', 'Other demo', 'Fourth demo'].entries()) {
+      const input = body(name);
+      input.sender.phone = `090000000${index}`;
+      orders.push((await createOrder(db, input, randomUUID())).data.order_number);
     }
 
     await t.test('summary uses at most three aggregates and exact VN calendar boundaries', async () => {
@@ -76,10 +78,11 @@ test('admin order APIs use isolated real D1: summary, bound filters, private det
       const summary = await getAdminSummary(counted.db, new Date('2026-10-14T00:30:00Z'));
       assert.equal(counted.queries.length, 3);
       assert.equal(summary.today_orders, 2);
-      assert.deepEqual(summary.orders_by_status, Object.fromEntries(ORDER_STATUSES.map(status => [status, status === 'PENDING' ? 4 : 0])));
-      const lowStock = await db.prepare('SELECT COUNT(*) AS count FROM product_variants WHERE stock_quantity <= low_stock_threshold').first();
+      assert.equal(summary.period_days, 30);
+      assert.deepEqual(summary.orders_by_status, Object.fromEntries(ORDER_STATUSES.map(status => [status, status === 'PENDING' ? 3 : 0])));
+      const lowStock = await db.prepare("SELECT COUNT(*) AS count FROM product_variants v JOIN products p ON p.id=v.product_id JOIN categories c ON c.id=p.category_id WHERE v.stock_quantity <= v.low_stock_threshold AND v.is_active=1 AND p.status='ACTIVE' AND c.is_active=1").first();
       assert.equal(summary.low_stock_count, lowStock.count);
-      assert.deepEqual(counted.queries[1].values, ['2026-10-13T17:00:00.000Z', '2026-10-14T17:00:00.000Z']);
+      assert.deepEqual(counted.queries[1].values, ['2026-10-13T17:00:00.000Z', '2026-10-14T17:00:00.000Z', '2026-10-13 17:00:00', '2026-10-14 17:00:00']);
     });
 
     await t.test('list escapes wildcard and backslash literals, binds every input and retains filtered total', async () => {

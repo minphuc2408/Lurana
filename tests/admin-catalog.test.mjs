@@ -23,7 +23,7 @@ function fixture(t) {
 function product(overrides = {}) {
   return { category_id: 1, slug: 'admin-test-bouquet', name_vi: 'Hoa quản trị', name_en: 'Admin flowers',
     description_vi: null, description_en: null, badge_code: 'NEW', is_featured: true, status: 'ACTIVE',
-    image: { url: 'https://example.test/admin-flower.png', alt_vi: 'Hoa', alt_en: 'Flower' },
+    image: { url: 'https://res.cloudinary.com/demo/image/upload/admin-flower.png', alt_vi: 'Hoa', alt_en: 'Flower' },
     variants: [{ sku: 'ADMIN-STANDARD', size_code: 'STANDARD', price: 100000, compare_at_price: 120000,
       stock_quantity: 20, low_stock_threshold: 3, is_active: true }], ...overrides };
 }
@@ -89,7 +89,7 @@ test('duplicate slug/SKU returns CONFLICT and failed child insert rolls the enti
   }] })), 'CONFLICT', 409);
   assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM products').get().n, baseline);
   assert.equal(sqlite.prepare("SELECT COUNT(*) AS n FROM product_variants WHERE sku = 'ADMIN-STANDARD'").get().n, 0);
-  assert.equal(sqlite.prepare("SELECT COUNT(*) AS n FROM product_images WHERE image_url = 'https://example.test/admin-flower.png'").get().n, 0);
+  assert.equal(sqlite.prepare("SELECT COUNT(*) AS n FROM product_images WHERE image_url = 'https://res.cloudinary.com/demo/image/upload/admin-flower.png'").get().n, 0);
 });
 
 test('product create validation rejects bad image URLs, duplicate sizes, compare price and missing category without partial records', async t => {
@@ -112,14 +112,14 @@ test('product create validation rejects bad image URLs, duplicate sizes, compare
 test('product patches update text, primary image and archive timestamp while public visibility follows status', async t => {
   const { db, sqlite } = fixture(t);
   const { id } = await createAdminProduct(db, product());
-  sqlite.prepare('INSERT INTO product_images (product_id, image_url, sort_order) VALUES (?, ?, ?)').run(id, 'https://example.test/extra.png', 1);
+  sqlite.prepare('INSERT INTO product_images (product_id, image_url, sort_order) VALUES (?, ?, ?)').run(id, 'https://res.cloudinary.com/demo/image/upload/extra.png', 1);
   await patchAdminProduct(db, id, { name_vi: "Hoa ' mới", name_en: 'Updated flowers', description_vi: 'Mô tả',
-    description_en: null, badge_code: null, is_featured: false, image: { url: 'https://example.test/new.png' } });
+    description_en: null, badge_code: null, is_featured: false, image: { url: 'https://res.cloudinary.com/demo/image/upload/new.png' } });
   const updated = await getProduct(db, 'admin-test-bouquet');
   assert.equal(updated.name_vi, "Hoa ' mới");
   assert.equal(updated.badge_code, null);
   assert.equal(updated.is_featured, false);
-  assert.deepEqual(updated.images.map(image => image.url), ['https://example.test/new.png', 'https://example.test/extra.png']);
+  assert.deepEqual(updated.images.map(image => image.url), ['https://res.cloudinary.com/demo/image/upload/new.png', 'https://res.cloudinary.com/demo/image/upload/extra.png']);
   for (const status of ['HIDDEN', 'ARCHIVED']) {
     await patchAdminProduct(db, id, { status });
     await rejectsCode(() => getProduct(db, 'admin-test-bouquet'), 'NOT_FOUND', 404);
@@ -138,7 +138,7 @@ test('primary image patch creates a missing image or promotes an existing fallba
   const { db, sqlite } = fixture(t);
   sqlite.exec('DELETE FROM product_images WHERE product_id = 1; UPDATE product_images SET is_primary = 0 WHERE product_id = 2');
   for (const id of [1, 2]) {
-    await patchAdminProduct(db, id, { image: { url: 'https://example.test/primary.png', alt_vi: 'Ảnh mới' } });
+    await patchAdminProduct(db, id, { image: { url: 'https://res.cloudinary.com/demo/image/upload/primary.png', alt_vi: 'Ảnh mới' } });
     assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM product_images WHERE product_id = ?').get(id).n, 1);
     assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM product_images WHERE product_id = ? AND is_primary = 1').get(id).n, 1);
   }
@@ -315,10 +315,10 @@ test('admin catalog runs on isolated real workerd D1: atomic rollback, archive/i
     });
     await t.test('primary image and archive status are persisted by the real atomic D1 patch', async () => {
       const product = (await listAdminProducts(db)).find(row => row.slug === 'admin-test-bouquet');
-      await patchAdminProduct(db, product.id, { status: 'ARCHIVED', image: { url: 'https://example.test/d1-updated.png' } });
+      await patchAdminProduct(db, product.id, { status: 'ARCHIVED', image: { url: 'https://res.cloudinary.com/demo/image/upload/d1-updated.png' } });
       const archived = (await listAdminProducts(db)).find(row => row.id === product.id);
       assert.match(archived.archived_at, /^\d{4}-\d{2}-\d{2}T.*Z$/);
-      assert.equal(archived.images[0].url, 'https://example.test/d1-updated.png');
+      assert.equal(archived.images[0].url, 'https://res.cloudinary.com/demo/image/upload/d1-updated.png');
       await rejectsCode(() => getProduct(db, product.slug), 'NOT_FOUND', 404);
       await patchAdminProduct(db, product.id, { status: 'ACTIVE' });
       assert.equal((await getProduct(db, product.slug)).id, product.id);
