@@ -3,6 +3,7 @@ export interface Bindings {
   ADMIN_PASSWORD?: string;
   JWT_SECRET?: string;
   TURNSTILE_SECRET?: string;
+  TURNSTILE_ALLOW_LOCAL_BYPASS?: string;
   RATE_LIMIT_SENSITIVE?: RateLimit;
   RATE_LIMIT_PUBLIC?: RateLimit;
   PENDING_ORDER_TTL_HOURS?: string;

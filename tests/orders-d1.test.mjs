@@ -109,7 +109,7 @@ test('Phase 3 orders run on isolated real workerd D1: rollback, concurrency, tra
       const counters = [countedDb(db, ready), countedDb(db, ready)];
       const responses = await Promise.all(counters.map(counter => app.request('/api/orders', {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': randomUUID() }, body: JSON.stringify(body()),
-      }, { DB: counter.db })));
+      }, { DB: counter.db, TURNSTILE_ALLOW_LOCAL_BYPASS: 'true' })));
       assert.deepEqual(responses.map(response => response.status).sort(), [201, 409]);
       const payloads = await Promise.all(responses.map(response => response.json()));
       const loser = payloads.find(payload => payload.error);
@@ -132,7 +132,7 @@ test('Phase 3 orders run on isolated real workerd D1: rollback, concurrency, tra
       const counters = [countedDb(db, ready), countedDb(db, ready)];
       const responses = await Promise.all(counters.map(counter => app.request('/api/orders', {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key }, body: JSON.stringify(body()),
-      }, { DB: counter.db })));
+      }, { DB: counter.db, TURNSTILE_ALLOW_LOCAL_BYPASS: 'true' })));
       assert.deepEqual(responses.map(response => response.status).sort(), [200, 201]);
       const payloads = await Promise.all(responses.map(response => response.json()));
       const replay = payloads.find(payload => payload.data.replayed);
@@ -186,7 +186,7 @@ test('Phase 3 orders run on isolated real workerd D1: rollback, concurrency, tra
         const responses = await Promise.all(counters.map(counter => app.request('/api/orders', {
           method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': sameKey ? key : randomUUID() },
           body: JSON.stringify(body()),
-        }, { DB: counter.db })));
+        }, { DB: counter.db, TURNSTILE_ALLOW_LOCAL_BYPASS: 'true' })));
         assert.deepEqual(responses.map(response => response.status).sort(), sameKey ? [200, 201] : [201, 429]);
         const payloads = await Promise.all(responses.map(response => response.json()));
         if (!sameKey) assert.equal(payloads.find(payload => payload.error).error.code, 'PENDING_ORDER_LIMIT');

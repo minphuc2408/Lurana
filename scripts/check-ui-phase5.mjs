@@ -157,7 +157,7 @@ async function createBridge() {
         requests.push({ path: url.pathname, method, status: 500, fault: fault.mode, scenario: activeScenario });
         return;
       }
-      const response = await app.fetch(new Request(url, { method, headers, ...(!['GET', 'HEAD'].includes(method) ? { body } : {}) }), { DB: db, ADMIN_PASSWORD: demoPassword, JWT_SECRET: demoJwtSecret, ...(turnstileTest ? { TURNSTILE_SECRET: 'isolated-widget-test-secret' } : {}) });
+      const response = await app.fetch(new Request(url, { method, headers, ...(!['GET', 'HEAD'].includes(method) ? { body } : {}) }), { DB: db, ADMIN_PASSWORD: demoPassword, JWT_SECRET: demoJwtSecret, ...(turnstileTest ? { TURNSTILE_SECRET: 'isolated-widget-test-secret' } : { TURNSTILE_ALLOW_LOCAL_BYPASS: 'true' }) });
       const responseBody = Buffer.from(await response.arrayBuffer());
       if (response.headers.get('content-type')?.includes('application/json')) assertNoSecrets(JSON.parse(responseBody.toString()));
       requests.push({ path: url.pathname, method, status: response.status, ...(fault ? { fault: fault.mode || 'delay' } : {}), scenario: activeScenario });

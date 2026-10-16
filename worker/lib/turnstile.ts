@@ -8,9 +8,14 @@ export async function verifyTurnstile(
   token: string | undefined,
   requestFetch: typeof fetch = fetch,
   idempotencyKey?: string,
-  expected?: { action: string; hostname: string },
+  expected?: { action: string; hostname: string; allowLocalBypass?: boolean },
 ): Promise<void> {
-  if (!secret) return;
+  if (!secret?.trim()) {
+    // Explicit server-only test opt-in AND loopback are required. Never bypass remote.
+    if (expected?.allowLocalBypass === true
+      && ['localhost', '127.0.0.1', '[::1]'].includes(expected.hostname)) return;
+    throw new AppError('TURNSTILE_NOT_CONFIGURED', 503, 'Dịch vụ xác minh bảo mật chưa được cấu hình.');
+  }
   if (!token?.trim() || token.length > 2048) throw forbidden();
   try {
     const response = await requestFetch(SITEVERIFY_URL, {

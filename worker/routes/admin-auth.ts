@@ -16,7 +16,7 @@ adminAuthRoutes.post('/login', bodyLimit({ maxSize: 8192, onError: () => {
   throw new AppError('VALIDATION_ERROR', 400, 'Nội dung đăng nhập quá lớn.');
 } }), validate('json', loginSchema), async c => {
   const body = c.req.valid('json');
-  await verifyTurnstile(c.env.TURNSTILE_SECRET, body.turnstile_token, fetch, undefined, { action: 'admin_login', hostname: new URL(c.req.url).hostname });
+  await verifyTurnstile(c.env.TURNSTILE_SECRET, body.turnstile_token, fetch, undefined, { action: 'admin_login', hostname: new URL(c.req.url).hostname, allowLocalBypass: c.env.TURNSTILE_ALLOW_LOCAL_BYPASS === 'true' });
   const token = await authenticate(body.password, c.env);
   setCookie(c, ADMIN_COOKIE, token, { httpOnly: true, sameSite: 'Strict', path: '/',
     maxAge: SESSION_SECONDS, secure: new URL(c.req.url).protocol === 'https:' });

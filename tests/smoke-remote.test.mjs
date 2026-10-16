@@ -66,12 +66,16 @@ async function isolated(action) {
         const chunks = [];
         for await (const chunk of incoming) chunks.push(chunk);
         const body = Buffer.concat(chunks);
-        const url = new URL(incoming.url, origin);
+        // The runner's synthetic HTTPS origin is mapped only inside this local test bridge.
+        // Preserve HTTPS cookie semantics while opting into loopback-only test bypass.
+        const url = new URL(incoming.url, 'https://127.0.0.1');
+        const headers = new Headers(incoming.headers);
+        if (headers.get('Origin') === origin) headers.set('Origin', url.origin);
         const method = incoming.method || 'GET';
         calls.push({ route: url.pathname, method, body: body.length ? JSON.parse(body.toString()) : undefined });
         const response = url.pathname.startsWith('/api/')
-          ? await app.fetch(new Request(url, { method, headers: incoming.headers, ...(!['GET', 'HEAD'].includes(method) ? { body } : {}) }),
-            { DB: db, ADMIN_PASSWORD: demoPassword, JWT_SECRET: demoSecret,
+          ? await app.fetch(new Request(url, { method, headers, ...(!['GET', 'HEAD'].includes(method) ? { body } : {}) }),
+            { DB: db, ADMIN_PASSWORD: demoPassword, JWT_SECRET: demoSecret, TURNSTILE_ALLOW_LOCAL_BYPASS: 'true',
               RATE_LIMIT_SENSITIVE: { limit: async () => ({ success: true }) },
               RATE_LIMIT_PUBLIC: { limit: async () => ({ success: true }) } })
           : new Response('<html><div id="root"></div></html>', { headers: { 'content-type': 'text/html' } });

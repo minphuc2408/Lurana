@@ -35,6 +35,7 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
 }
 export function apiErrorKey(error: unknown): string {
   const code = error instanceof ApiError ? error.code : 'INTERNAL';
+  if (code === 'TURNSTILE_NOT_CONFIGURED') return 'Security verification unavailable';
   if (code === 'PENDING_ORDER_LIMIT') return 'API pending order limit';
   if (code === 'IMAGE_REQUIRED') return 'Upload a product image before saving.';
   if (code === 'CLOUDINARY_NOT_CONFIGURED') return 'Image upload is not configured. You can paste an image URL.';

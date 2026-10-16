@@ -5,6 +5,7 @@ if (!crypto.subtle.timingSafeEqual) Object.defineProperty(crypto.subtle, 'timing
   configurable: true, value: (a, b) => timingSafeEqual(new Uint8Array(a), new Uint8Array(b)),
 });
 export const adminEnv = {
+  TURNSTILE_ALLOW_LOCAL_BYPASS: 'true',
   ADMIN_PASSWORD: 'local-demo-admin-password-do-not-use-in-production',
   JWT_SECRET: 'local-demo-jwt-secret-at-least-32-characters',
 };

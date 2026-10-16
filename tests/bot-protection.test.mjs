@@ -106,3 +106,48 @@ test('pending expiry is disabled without an explicit TTL and rejects invalid con
   }
   assert.equal(typeof app.scheduled, 'function');
 });
+
+
+test('all protected routes fail closed before D1/auth/provider when secret is absent, including remote bypass attempts', async t => {
+  const h = createTestDb(); t.after(() => h.close());
+  let providerCalls = 0;
+  t.mock.method(globalThis, 'fetch', async () => { providerCalls++; throw new Error('provider must not run'); });
+  const paths = [['/api/orders', body()], ['/api/orders/lookup', { order_number: 'unknown', phone: '0900000000' }],
+    ['/api/admin/login', { password: adminEnv.ADMIN_PASSWORD }]];
+  const limiter = { limit: async () => ({ success: true }) };
+  for (const origin of ['https://lunara.minphuc2408.workers.dev', 'https://lunara-staging.minphuc2408.workers.dev', 'https://localhost.attacker.test', 'http://localhost']) {
+    for (const bypass of [undefined, 'false', 'TRUE', ...(origin === 'http://localhost' ? [] : ['true'])]) {
+      for (const secret of [undefined, '', '  ']) {
+        for (const [route, value] of paths) {
+          h.resetQueryCount();
+          const init = post({ ...value, allowLocalBypass: true, TURNSTILE_ALLOW_LOCAL_BYPASS: 'true' });
+          init.headers.Origin = origin;
+          init.headers['X-Forwarded-Host'] = 'localhost';
+          const response = await app.request(origin + route, init, { ...adminEnv, DB: h.db,
+            TURNSTILE_SECRET: secret, TURNSTILE_ALLOW_LOCAL_BYPASS: bypass,
+            RATE_LIMIT_SENSITIVE: limiter, RATE_LIMIT_PUBLIC: limiter });
+          assert.equal(response.status, 503, origin + route);
+          assert.equal((await response.json()).error.code, 'TURNSTILE_NOT_CONFIGURED');
+          assert.equal(response.headers.get('Cache-Control'), 'no-store');
+          assert.equal(response.headers.get('X-Content-Type-Options'), 'nosniff');
+          assert.equal(response.headers.get('Set-Cookie'), null);
+          assert.equal(h.queryCount, 0);
+        }
+      }
+    }
+  }
+  assert.equal(providerCalls, 0);
+});
+
+test('Worker API success and error responses carry security headers independently of static assets', async () => {
+  for (const [route, status] of [['/api/health', 200], ['/api/unknown-header-test', 404], ['/api/admin/me', 401]]) {
+    const response = await app.request('http://localhost' + route, {}, {});
+    assert.equal(response.status, status);
+    assert.equal(response.headers.get('X-Content-Type-Options'), 'nosniff');
+    assert.ok(['DENY', 'SAMEORIGIN'].includes(response.headers.get('X-Frame-Options')));
+    assert.equal(response.headers.get('Referrer-Policy'), 'no-referrer');
+    assert.equal(response.headers.get('Cache-Control'), 'no-store');
+    assert.match(response.headers.get('Content-Type'), /^application\/json/);
+    assert.ok(response.headers.get('X-Request-Id'));
+  }
+});

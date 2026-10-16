@@ -47,7 +47,7 @@ test('missing, blank, short and equal secrets fail closed without cookies or log
     { ADMIN_PASSWORD: adminEnv.JWT_SECRET, JWT_SECRET: adminEnv.JWT_SECRET }]) {
     const response = await app.request('/api/admin/login', { method: 'POST',
       headers: { Origin: origin, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: adminEnv.ADMIN_PASSWORD }) }, env);
+      body: JSON.stringify({ password: adminEnv.ADMIN_PASSWORD }) }, { ...env, TURNSTILE_ALLOW_LOCAL_BYPASS: 'true' });
     assert.equal(response.status, 401); assert.equal((await response.json()).error.code, 'INVALID_CREDENTIALS');
     assert.equal(response.headers.get('Set-Cookie'), null);
   }

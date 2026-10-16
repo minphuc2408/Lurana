@@ -32,12 +32,12 @@ const init = (body, key = randomUUID()) => ({
 });
 
 async function post(db, body = orderBody(), key = randomUUID()) {
-  const response = await app.request('/api/orders', init(body, key), { DB: db });
+  const response = await app.request('/api/orders', init(body, key), { DB: db, TURNSTILE_ALLOW_LOCAL_BYPASS: 'true' });
   return { response, body: await response.json() };
 }
 
 async function lookup(db, order_number, phone) {
-  const response = await app.request('/api/orders/lookup', init({ order_number, phone }), { DB: db });
+  const response = await app.request('/api/orders/lookup', init({ order_number, phone }), { DB: db, TURNSTILE_ALLOW_LOCAL_BYPASS: 'true' });
   return { response, body: await response.json() };
 }
 

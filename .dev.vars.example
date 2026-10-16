@@ -2,6 +2,8 @@
 ADMIN_PASSWORD=local-demo-admin-password-do-not-use-in-production
 JWT_SECRET=local-demo-jwt-secret-at-least-32-characters
 # TURNSTILE_SECRET=local-demo-turnstile-secret
+# Controlled local tests only; ignored unless request hostname is exact loopback.
+# TURNSTILE_ALLOW_LOCAL_BYPASS=true
 # Owner-approved expiry: hourly Cron; cancel only PENDING orders older than 24 hours.
 PENDING_ORDER_TTL_HOURS=24
 # Local uploads use staging preset and a separate local folder; set real keys locally only.

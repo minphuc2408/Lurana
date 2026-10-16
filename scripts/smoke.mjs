@@ -350,7 +350,7 @@ async function orderSmoke() {
     // Never read .dev.vars or use production secrets for destructive acceptance.
     const demoPassword = 'isolated-smoke-admin-password-24-characters';
     const demoJwtSecret = 'isolated-smoke-jwt-secret-32-characters-distinct';
-    const authEnv = { ADMIN_PASSWORD: demoPassword, JWT_SECRET: demoJwtSecret };
+    const authEnv = { ADMIN_PASSWORD: demoPassword, JWT_SECRET: demoJwtSecret, TURNSTILE_ALLOW_LOCAL_BYPASS: 'true' };
 
     server = createServer(async (incoming, outgoing) => {
       let queries = 0;
@@ -693,7 +693,7 @@ async function orderSmoke() {
       ]) {
         const response = await app.fetch(new Request(new URL('/api/admin/login', isolatedUrl), {
           ...adminInit('POST', { password: demoPassword }, null),
-        }), { DB: db, ...credentials });
+        }), { DB: db, ...credentials, TURNSTILE_ALLOW_LOCAL_BYPASS: 'true' });
         assert.equal(response.status, 401, 'Missing/empty secrets must reject login');
         assert.equal(response.headers.has('set-cookie'), false);
         safeApiData(await response.json());
