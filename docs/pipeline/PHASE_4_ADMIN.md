@@ -1,5 +1,7 @@
 # Phase 4 — Admin: đăng nhập và API quản trị
 
+B2/B3 sau nghiệm thu Phase 4 (15/10/2026, local/chưa deploy): login thêm Turnstile action/hostname và rate-limit binding, body limit 8192 byte để chứa token. Status API nhận restock boolean; IN_TRANSIT hủy cần lý do, mặc định giữ tồn đã tiêu thụ. Không đổi auth cookie, bảng hoặc dependency. [Contract hiện tại](API_CONTRACT.md) · [Cấu hình/evidence B2/B3](../BOT_PROTECTION.md). Mô tả/output tại mốc nghiệm thu dưới đây là lịch sử.
+
 **Mục tiêu:** chủ shop đăng nhập an toàn, quản lý đơn, sản phẩm/tồn kho, phí giao. Hợp đồng: [API_CONTRACT.md](API_CONTRACT.md) (mục Admin).
 
 **Trạng thái:** DONE local · **9/9 tiêu chí**, 14/10/2026. Auth cookie và toàn bộ API admin đã triển khai/nghiệm thu local. Cập nhật ngữ cảnh **15/10/2026:** frontend Phase 5 cũng DONE local (6/6 tiêu chí), AuthProvider/AdminRoute và login/orders/products/stock/delivery/summary UI đã nối cookie/API; customer fixture/sessionStorage source vẫn giữ ẩn. [Hiện trạng](../PROJECT_STATUS.md) · [Nghiệm thu frontend Phase 5](PHASE_5_FRONTEND.md). Secret trong `.dev.vars.example` chỉ là demo; không phải credentials production. [Output backend lịch sử](#bằng-chứng-lệnh--14102026).

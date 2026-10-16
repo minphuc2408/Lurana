@@ -11,8 +11,8 @@ Base path: `/api` (cùng origin với frontend). JSON UTF-8. Đây là hợp đ�
 - **Số điện thoại:** server chuẩn hóa về dạng `0xxxxxxxxx` (chấp nhận `+84...`, khoảng trắng, dấu chấm). Hợp lệ: `^0\d{9}$` sau khi chuẩn hóa.
 - **Tên sản phẩm:** luôn trả cả `name_vi` và `name_en`; frontend chọn theo locale.
 - Không bao giờ trả `password_hash`, secret, stack trace, SQL.
-- API dùng `Content-Type: application/json; charset=utf-8`, security headers và `X-Request-Id`. GET catalog thành công (categories/products/detail/delivery options) dùng `Cache-Control: public, max-age=30`; health, request ghi/admin và mọi lỗi dùng `no-store`. Lỗi `INTERNAL` chỉ có mã tham chiếu trong `error.details.request_id`; log chỉ ghi `request_id`/`error_name`, không dump message/stack/request/credential.
-- Frontend services dùng API client chung qua hooks; component không gọi fetch. Client phân biệt HTTP/envelope lỗi và NETWORK/TIMEOUT/BAD_RESPONSE, map mã lỗi/field sang locale EN/VI; English là mặc định/fallback. Currency luôn VND và timezone luôn Asia/Ho_Chi_Minh, không đổi theo locale.
+- API dùng `Content-Type: application/json; charset=utf-8`, security headers và `X-Request-Id`. GET catalog thành công (categories/products/detail/delivery options) dùng `Cache-Control: public, max-age=30`; health, request ghi/admin và mọi lỗi dùng `no-store`. Lỗi `INTERNAL` chỉ có mã tham chiếu trong `error.details.request_id`; log ghi request_id/error_name và mã D1/SQLite/constraint/target thuộc allowlist nếu nhận diện được; không dump message/SQL/binds/stack/request/credential. Observability lấy mẫu 10%, invocation logs tắt; xem [hardening](../HARDENING.md).
+- Frontend services dùng API client chung qua hooks; component không gọi fetch. Client phân biệt HTTP/envelope lỗi và NETWORK/TIMEOUT/BAD_RESPONSE, map mã lỗi/field sang locale EN/VI; Preference đã lưu ưu tiên, sau đó ngôn ngữ trình duyệt EN/VI; English là fallback. Currency luôn VND và timezone luôn Asia/Ho_Chi_Minh, không đổi theo locale.
 - Chỉ cart version/variantId/quantity và preference locale được lưu bền ở frontend. Sender/recipient/SĐT/địa chỉ/đơn/password/JWT/idempotency intent không lưu localStorage/sessionStorage; customer-auth fixture source không active.
 
 ## Mã lỗi
@@ -22,7 +22,7 @@ Base path: `/api` (cùng origin với frontend). JSON UTF-8. Đây là hợp đ�
 | `VALIDATION_ERROR` | 400 | Zod không qua; `details` = danh sách `{path, message}` |
 | `UNAUTHORIZED` | 401 | Thiếu/hết hạn cookie admin |
 | `INVALID_CREDENTIALS` | 401 | Sai mật khẩu admin |
-| `FORBIDDEN` | 403 | Turnstile order không hợp lệ; Origin thiếu/khác ở request ghi admin, kể cả login/logout |
+| `FORBIDDEN` | 403 | Turnstile checkout/lookup/login không hợp lệ; Origin thiếu/khác ở request ghi admin, kể cả login/logout |
 | `NOT_FOUND` | 404 | Không có tài nguyên; tra đơn sai mã hoặc SĐT dùng chung mã này |
 | `CONFLICT` | 409 | Trùng slug/SKU/mã |
 | `OUT_OF_STOCK` | 409 | Thiếu tồn; `details`: `[{variant_id, requested, available}]` |
@@ -31,10 +31,14 @@ Base path: `/api` (cùng origin với frontend). JSON UTF-8. Đây là hợp đ�
 | `NO_DELIVERY_ZONE` | 422 | Tỉnh/phường chưa được giao |
 | `INVALID_DELIVERY_SLOT` | 422 | Ngày/khung giờ/phương thức không hợp lệ (quá khứ, quá giờ chốt…) |
 | `CART_LIMIT` | 422 | Quá 15 dòng hoặc số lượng mỗi dòng > 20 |
-| `RATE_LIMITED` | 429 | Quá giới hạn (nếu có) |
+| `RATE_LIMITED` | 429 | Quá giới hạn IP/route, `Retry-After: 60`; chặn trước D1/Siteverify |
+| `PENDING_ORDER_LIMIT` | 429 | SĐT người đặt đã có 3 đơn PENDING; không tạo đơn/trừ tồn |
+| `INTERNAL` | 503 | Thiếu rate-limit binding trên hostname ngoài loopback |
 | `INTERNAL` | 500 | Lỗi không lường trước; chỉ trả mã tham chiếu `request_id` |
 
 ## Public
+
+Rate-limit bindings chạy trước validation/D1/Siteverify: POST orders/login 6/phút/IP/route; lookup/quote và GET catalog 60/phút/IP/route. Key CF-Connecting-IP, namespace prod/staging riêng; rate limit có tính nhất quán cuối cùng theo Cloudflare location, không phải bộ đếm chính xác toàn cầu. Token Turnstile dài tối đa 2048 ký tự. [Cấu hình](../BOT_PROTECTION.md).
 
 ### `GET /api/health`
 `{ data: { ok: true, time } }`.
@@ -110,7 +114,8 @@ Header **bắt buộc:** `Idempotency-Key: <uuid v4>`. Body:
 - Replay dùng envelope `{ data: { ...OrderSummary, replayed: true } }`; UUID v4 được chuẩn hóa chữ thường. Sau validate/Turnstile, replay chỉ đọc một statement, không tính lại giá/ngày giao hay ghi tồn. Key xác định đơn đã tạo, kể cả body hợp lệ gửi lại thay đổi.
 - Server **bỏ qua** mọi giá/tổng/phí từ client; tính lại từ DB.
 - Giỏ 15 dòng dùng 35 statements; failed batch được tính nguyên khối, thêm một diagnostic read thành 36. Trùng mã đơn thử tối đa ba batch, nhưng dừng `CONFLICT` 409 trước retry có thể vượt 40 statements (không có đơn/tồn được ghi bởi batch thất bại).
-- Khi có `TURNSTILE_SECRET`, verifier bắt buộc token hợp lệ, fail closed khi Siteverify lỗi; gửi UUID qua `idempotency_key` của Siteverify để hỗ trợ retry xác minh. Token Turnstile có hạn/single-use; client phải lấy token mới khi token cũ hết hạn/đã dùng. Local không secret bỏ qua verifier; test nhánh provider bằng mock.
+- Khi có `TURNSTILE_SECRET`, verifier bắt buộc token hợp lệ và đúng action `checkout`/hostname; fail closed khi Siteverify lỗi. Mỗi lần gửi lại dùng token mới, không dùng UUID đơn làm idempotency của Siteverify. Token nằm ngoài fingerprint, nên thay token không đổi UUID đơn. Local không secret bỏ qua verifier; test provider bằng mock.
+- Tối đa 3 đơn `PENDING`/SĐT **người đặt** chuẩn hóa. COUNT được kiểm ngay trong INSERT/batch để chặn concurrent creates; vượt ngưỡng kích hoạt NOT NULL sẵn có của sender_phone và rollback. Replay cùng key vẫn trả đơn đã lưu, không chiếm thêm hạn mức; statement count giữ 35/36.
 ```ts
 type OrderSummary = { order_number: string; status_code: string; payment_method: 'COD'; payment_status: 'UNPAID'|'PAID';
   subtotal; discount_total; delivery_fee; grand_total; placed_at: string }
@@ -118,7 +123,7 @@ type OrderSummary = { order_number: string; status_code: string; payment_method:
 Lỗi có thể gặp: `VALIDATION_ERROR`, `OUT_OF_STOCK`, `VARIANT_UNAVAILABLE`, `NO_DELIVERY_ZONE`, `INVALID_DELIVERY_SLOT`, `CART_LIMIT`, `FORBIDDEN`, `CONFLICT`, `INTERNAL`.
 
 ### `POST /api/orders/lookup`
-Body `{ order_number, phone }` (khớp SĐT người đặt **hoặc** người nhận). `data: OrderDetail`. Sai mã hoặc sai SĐT đều trả cùng `NOT_FOUND` (không lộ mã nào tồn tại).
+Body `{ order_number, phone, turnstile_token? }` (khớp SĐT người đặt **hoặc** người nhận). Token bắt buộc khi có TURNSTILE_SECRET; action `lookup`, đúng hostname. `data: OrderDetail`. Sai mã hoặc sai SĐT đều trả cùng `NOT_FOUND` (không lộ mã nào tồn tại).
 
 Body/schema không hợp lệ (ví dụ SĐT không chuẩn hóa được về 10 chữ số) trả `VALIDATION_ERROR` 400; mã hoặc SĐT hợp lệ về cấu trúc nhưng không khớp đơn trả cùng `NOT_FOUND` 404. Lookup dùng ba statements và không trả admin_note/stock_released/actor.
 
@@ -140,19 +145,19 @@ Body `{ phone }`. Khách chỉ hủy được khi `PENDING`. Cùng cơ chế ho�
 
 Mọi route dưới `/api/admin` và `/api/admin/*` (trừ đúng `POST /api/admin/login`) yêu cầu cookie hợp lệ, kể cả route lạ và logout. Request ghi (`POST/PATCH/PUT/DELETE`), bao gồm login/logout, phải có `Content-Type: application/json` (chấp nhận charset) và `Origin` bằng origin đầy đủ của URL request: scheme/host/port. Thiếu/sai Origin → `FORBIDDEN` 403; thiếu/sai Content-Type → `VALIDATION_ERROR` 400. Thiếu cookie được trả 401 trước validate Origin/body.
 
-Login băm SHA-256 hai giá trị và dùng Workers `crypto.subtle.timingSafeEqual`; không băm mật khẩu chậm. Cấu hình thiếu/trống, ADMIN_PASSWORD <24 ký tự, JWT_SECRET <32 ký tự sau trim hoặc hai secret trùng nhau → login `INVALID_CREDENTIALS` 401, không đặt cookie. Secret ngẫu nhiên thật do [NGƯỜI] đặt, không commit. Login giới hạn body 4096 byte và password 1–1024 ký tự, giữ nguyên password (không trim).
+Login băm SHA-256 hai giá trị và dùng Workers `crypto.subtle.timingSafeEqual`; không băm mật khẩu chậm. Cấu hình thiếu/trống, ADMIN_PASSWORD <24 ký tự, JWT_SECRET <32 ký tự sau trim hoặc hai secret trùng nhau → login `INVALID_CREDENTIALS` 401, không đặt cookie. Secret ngẫu nhiên thật do [NGƯỜI] đặt, không commit. Login giới hạn body 8192 byte và password 1–1024 ký tự, giữ nguyên password (không trim). Turnstile token bắt buộc khi có secret, action `admin_login`/đúng hostname, xác minh trước mật khẩu.
 
 Cookie `lunara_admin`: HttpOnly; SameSite=Strict; Path=/; Max-Age=43200; Secure với HTTPS (HTTP loopback local bỏ Secure). JWT HS256 chỉ chứa role ADMIN/iat/exp, hạn 12 giờ; middleware kiểm chữ ký, thuật toán, role và thời gian bắt buộc. JSON không trả JWT/password/secret; JWT nằm trong header Set-Cookie theo thiết kế. Logout đặt cookie rỗng/Max-Age=0; JWT đã sao chép vẫn có hiệu lực đến exp (MVP stateless; xoay JWT_SECRET vô hiệu hóa toàn bộ session).
 
 | Method + path | Mô tả |
 | --- | --- |
-| `POST /api/admin/login` `{ password }` | Đúng → set cookie, `data: { ok: true }`. Sai → `INVALID_CREDENTIALS` |
+| `POST /api/admin/login` `{ password, turnstile_token? }` | Đúng → set cookie, `data: { ok: true }`. Sai → `INVALID_CREDENTIALS` |
 | `POST /api/admin/logout` | Xóa cookie |
 | `GET /api/admin/me` | `data: { role: 'ADMIN' }` hoặc 401 |
-| `GET /api/admin/summary` | `{ orders_by_status: Record<status, number>, today_orders, low_stock_count }` |
-| `GET /api/admin/orders?status=&date=&q=&limit=20&offset=0` | `{ items: OrderRow[], total }`; `q` khớp mã đơn/SĐT/tên; `date` lọc theo `delivery_date` |
+| `GET /api/admin/summary` | `{ orders_by_status: Record<status, number>, period_days: 30, today_orders, low_stock_count }` |
+| `GET /api/admin/orders?status=&date=&q=&placed_from=&placed_to=&limit=20&offset=0` | `{ items: OrderRow[], total }`; mặc định 90 ngày đặt gần nhất; date lọc delivery_date, placed_from/to lọc ngày đặt |
 | `GET /api/admin/orders/:orderNumber` | `OrderDetail` + `admin_note`, `stock_released` |
-| `PATCH /api/admin/orders/:orderNumber/status` `{ to_status, note? }` | Chuyển trạng thái (bảng dưới) |
+| `PATCH /api/admin/orders/:orderNumber/status` `{ to_status, note?, restock? }` | Chuyển trạng thái; restock boolean chỉ cho CANCELLED; IN_TRANSIT hủy bắt buộc note khác rỗng |
 | `PATCH /api/admin/orders/:orderNumber/note` `{ admin_note }` | Ghi chú nội bộ |
 | `GET /api/admin/products` | Mọi trạng thái, kèm `stock_quantity` chính xác |
 | `POST /api/admin/products` | Tạo sản phẩm + variants + 1 ảnh (URL) trong một `batch` |
@@ -162,10 +167,10 @@ Cookie `lunara_admin`: HttpOnly; SameSite=Strict; Path=/; Max-Age=43200; Secure 
 
 ### DTO và validation admin
 
-- Summary dùng đúng 3 aggregate statements. `today_orders` đếm `placed_at` giữa hai mốc nửa đêm giờ Việt Nam (bind UTC); `orders_by_status` có mọi trạng thái, kể cả 0; `low_stock_count` đếm variants có tồn ≤ ngưỡng.
-- Orders list: status thuộc enum máy trạng thái; date là ngày có thật YYYY-MM-DD; q trim ≤100 ký tự và khớp literal `%`, `_`, `\` (escape LIKE); limit mặc định20, nguyên1–50; offset mặc định0, nguyên không âm. `OrderRow` gồm id/order_number/status_code/payment_method/payment_status/sender_name/sender_phone/recipient_name/recipient_phone/delivery_date/delivery_time_slot/grand_total/placed_at. Sắp placed_at DESC, id DESC; total tính trước phân trang.
+- Summary dùng đúng 3 aggregate statements. today_orders đếm placed_at giữa hai mốc nửa đêm VN; orders_by_status có mọi trạng thái kể cả 0, trong 30 ngày lịch VN gần nhất (gồm hôm nay), period_days=30. Dùng raw ranges/index placed_at cho cả timestamp ISO và SQLite UTC. low_stock_count chỉ đếm variant is_active=1 thuộc product ACTIVE/category active và tồn ≤ ngưỡng, gồm 0.
+- Orders list: status thuộc enum; date/placed_from/placed_to là ngày có thật YYYY-MM-DD. Cặp placed_from/to phải cùng có mặt, từ ≤ đến, tối đa 366 ngày (gồm hai đầu); bỏ cả cặp mặc định 90 ngày lịch VN gần nhất. q trim rỗng được phép; khác rỗng dài 2–100 ký tự, khớp literal ký tự LIKE. Limit mặc định20, nguyên1–50; offset mặc định0, nguyên0–10000; cần thu hẹp ngày để tra nhiều hơn. OrderRow gồm id/order_number/status_code/payment_method/payment_status/sender_name/sender_phone/recipient_name/recipient_phone/delivery_date/delivery_time_slot/grand_total/placed_at. Sắp placed_at DESC, id DESC; total tính trước phân trang trong cửa sổ đã chọn. Chi tiết theo mã đơn không giới hạn ngày.
 - Admin detail = OrderDetail + admin_note nullable, stock_released boolean, timeline thêm actor_label. Không trả idempotency_key, user_id hoặc actor_id. Status PATCH trả OrderSummary; note PATCH nhận `{admin_note: string|null}` ≤500 ký tự, trả `{order_number,admin_note}`. Note chuyển trạng thái ≤500 ký tự.
-- Product create (201): `{category_id,slug,name_vi,name_en,description_vi?,description_en?,badge_code?,is_featured?,status?,image:{url,alt_vi?,alt_en?},variants:[{sku,size_code,price,compare_at_price?,stock_quantity?,low_stock_threshold?,is_active?}]}`. 1–5 variants, size/SKU không trùng; create atomic một batch. Price/stock/threshold là safe integer không âm; compare_at_price nullable và ≥ price. Slug lowercase chữ/số/gạch ngang, image URL HTTP(S). Name trim1–200; descriptions nullable ≤5000; image alt nullable ≤200.
+- Product create (201): `{category_id,slug,name_vi,name_en,description_vi?,description_en?,badge_code?,is_featured?,status?,image:{url,alt_vi?,alt_en?},variants:[{sku,size_code,price,compare_at_price?,stock_quantity?,low_stock_threshold?,is_active?}]}`. 1–5 variants, size/SKU không trùng; create atomic một batch. Price/stock/threshold là safe integer không âm; compare_at_price nullable và ≥ price. Slug lowercase chữ/số/gạch ngang, image URL chỉ HTTPS từ res.cloudinary.com/images.unsplash.com, không credentials hoặc port tùy chỉnh (áp dụng cả PATCH). Name trim1–200; descriptions nullable ≤5000; image alt nullable ≤200.
 - Products GET trả `{items}` mọi trạng thái với id/slug/category_code/category_id/tên/mô tả/badge/featured/status/archived_at/images/variants; variants có stock_quantity/low_stock_threshold/is_active và giá chính xác. Dùng 3 truy vấn, không truy vấn từng sản phẩm. Product PATCH chỉ tên/mô tả/badge/featured/status/image; ARCHIVED ghi archived_at, rời ARCHIVED xóa mốc; ảnh chính cập nhật atomic, giữ 1 ảnh chính. POST/PATCH trả `{id}`.
 - Variant PATCH trả variant với id/product_id/sku/size_code/price/compare_at_price/stock_quantity/low_stock_threshold/is_active. stock_delta được cộng nguyên tử và ưu tiên khi có cả stock_quantity; stock_quantity tuyệt đối chỉ dùng khi không có delta. Không ghi đè price/compare_at_price/stock từ snapshot cũ khi client không sửa field đó. CHECK tồn âm → VALIDATION_ERROR400 "Tồn kho không thể âm"; phép cộng vượt safe integer cũng bị từ chối. compare_at_price được kiểm trước ghi và CHECK bảo vệ race. Không nhận SKU/size/product_id ở PATCH.
 - `stock_delta` không có idempotency key. Frontend xử lý lỗi ghi chưa biết kết quả (NETWORK/TIMEOUT/BAD_RESPONSE/INTERNAL) bằng cách xóa delta vừa nhập, khóa dòng và yêu cầu GET tải tồn hiện tại thành công trước lần chỉnh tiếp; không retry delta tự động. Người vận hành kiểm lại tồn rồi nhập delta mới để tránh cộng/trừ hai lần khi request trước có thể đã commit.
@@ -174,16 +179,18 @@ Cookie `lunara_admin`: HttpOnly; SameSite=Strict; Path=/; Max-Age=43200; Secure 
 
 ### Máy trạng thái đơn
 
+Cron nội bộ đã được owner chốt: `PENDING_ORDER_TTL_HOURS=24`, `0 * * * *` (mỗi giờ). Mỗi lượt hủy toàn bộ đơn còn PENDING/stock_released=0 có placed_at quá 24 giờ; đúng mốc 24 giờ chờ lượt sau. Ba statements trong một D1 batch ghi history SYSTEM, hoàn tổng quantity theo variant còn tồn tại và chuyển CANCELLED/stock_released=1, rollback toàn bộ khi lỗi. Không sửa đơn đã xác nhận, không hoàn tồn lặp khi Cron chạy chồng. Đây là scheduled handler, không thêm public HTTP route/DDL. Cấu hình local chưa deploy.
+
 | Từ | Được chuyển tới | Tác dụng phụ |
 | --- | --- | --- |
 | `PENDING` | `CONFIRMED`, `CANCELLED` | |
 | `CONFIRMED` | `PREPARING`, `CANCELLED` | |
 | `PREPARING` | `IN_TRANSIT`, `CANCELLED` | |
-| `IN_TRANSIT` | `DELIVERED` | |
+| `IN_TRANSIT` | `DELIVERED`, `CANCELLED` | Hủy cần lý do; restock mặc định false |
 | `DELIVERED`, `CANCELLED` | (kết thúc) | |
 
 - `→ DELIVERED`: `payment_status = 'PAID'`, `paid_at = now`, `delivered_at = now`.
-- `→ CANCELLED`: hoàn tồn **đúng một lần** (`stock_released = 0 → 1`). Giao thất bại sau `IN_TRANSIT` xử lý ngoài hệ thống ở MVP (ghi vào `admin_note`); trạng thái `DELIVERY_FAILED` nằm ở backlog.
+- `→ CANCELLED`: mặc định hoàn tồn ở PENDING/CONFIRMED/PREPARING. Từ IN_TRANSIT bắt buộc lý do sau trim; mặc định `restock=false` giữ tồn đã tiêu thụ (`stock_released=0`), `restock=true` hoàn tồn đúng một lần (`stock_released=1`). CANCELLED luôn kết thúc, kể cả không hoàn tồn; hủy lặp bị từ chối. Không đổi payment sang PAID khi hủy. Trạng thái riêng DELIVERY_FAILED vẫn ở backlog.
 - Mỗi lần chuyển ghi 1 dòng `order_status_history` (`actor_label = 'ADMIN'`).
 - Chuyển trạng thái dùng điều kiện lạc quan: `UPDATE ... WHERE id = ? AND status_code = <trạng thái hiện tại>`; nếu 0 dòng bị đổi → `INVALID_TRANSITION`.
 
@@ -203,7 +210,7 @@ Cookie `lunara_admin`: HttpOnly; SameSite=Strict; Path=/; Max-Age=43200; Secure 
 
 **Phí giao** = (phí khu vực; bằng 0 nếu `subtotal ≥ free_from_amount`) + phụ phí phương thức (`config.ts`). Giá trị phụ phí, giờ chốt, khung giờ trong `config.ts` là **giả định ban đầu**, chủ shop cần chỉnh.
 
-Helper ngày/khung giờ Phase 2 đã được order service Phase 3 sử dụng; quote không kiểm ngày/slot vì body không có các trường này. Giả định config: STANDARD/EXPRESS/SAME_DAY có phụ phí 0/30000/50000; EXPRESS và SAME_DAY dùng cutoff 16:00, chuẩn bị ít nhất 120 phút. Sáu khung 2 giờ từ 08:00 đến 20:00; STANDARD ngày hôm nay không nhận khung đã bắt đầu trong quá khứ. Ngày hợp lệ đến +30 ngày theo Asia/Ho_Chi_Minh, gồm kiểm tra ngày có thật trong lịch.
+Helper ngày/khung giờ Phase 2 đã được order service Phase 3 sử dụng; quote không kiểm ngày/slot vì body không có các trường này. Giả định config: STANDARD/EXPRESS/SAME_DAY có phụ phí 0/30000/50000; EXPRESS và SAME_DAY dùng cutoff 16:00. Mọi phương thức giao hôm nay, gồm STANDARD, yêu cầu ít nhất 120 phút đến giờ bắt đầu khung; đúng 120 phút được nhận. Sáu khung 2 giờ từ 08:00 đến 20:00. Ngày hợp lệ đến +30 ngày theo Asia/Ho_Chi_Minh, gồm kiểm tra ngày có thật trong lịch.
 
 ## Admin image upload — local integration
 

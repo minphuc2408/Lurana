@@ -1,5 +1,7 @@
 # Frontend Phase 5 — audit 15/10/2026
 
+B2/B3 sau mốc nghiệm thu (15/10/2026, local/chưa deploy): checkout/lookup/login dùng shared Turnstile; token chỉ ở memory, ngoài fingerprint/UUID và được lấy mới mỗi lần gửi/thử lại. Không thêm PII/credentials vào storage. Hộp hủy IN_TRANSIT yêu cầu lý do, mặc định không hoàn tồn; lỗi/thử lại hiển thị ngay trong dialog. [Cấu hình và evidence hiện tại](../BOT_PROTECTION.md); các output Phase 5 dưới đây là lịch sử.
+
 ## Kiểm kê 5.0 trước khi nối phần còn lại
 
 Đã đọc bảng tiến độ 5.0–5.16, API_CONTRACT, FRONTEND_ENTITIES và project guide trước khi sửa. Bảng dưới ghi kiểm kê lúc bắt đầu; kết quả nghiệm thu cuối ở phần kế tiếp. Giữ backup preview bên dưới, không phục hồi fixture.

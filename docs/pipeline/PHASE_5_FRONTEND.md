@@ -1,5 +1,7 @@
 # Phase 5 — Nối frontend với API thật
 
+B2/B3 sau nghiệm thu (15/10/2026, local/chưa deploy): widget Turnstile cho checkout/lookup/login, lỗi/hết hạn/thử lại/EN/VI và compact ở form hẹp; retry token mới giữ UUID đơn. Admin hủy giao thất bại có lý do và checkbox restock mặc định false. Hiện 160 tests và 40 smoke PASS; UI 10/10 MVP + CRUD/B3 + widget targeted PASS, nhóm responsive rộng còn báo `/shop` tràn 320px. Không thay bằng chứng lịch sử 136 tests/2 nhóm mở rộng bên dưới. Phase 6 hiện IN PROGRESS 5/7. [Evidence/cấu hình mới](../BOT_PROTECTION.md).
+
 **Mục tiêu:** các luồng MVP trong frontend dùng API thật, hiển thị VND, không còn fixture/₱ ở luồng MVP. Tham chiếu: [API_CONTRACT.md](API_CONTRACT.md), [FRONTEND_ENTITIES.md](../FRONTEND_ENTITIES.md). Phase này lớn nhất; làm theo thứ tự dưới đây để luôn có bản chạy được.
 
 **Trạng thái:** DONE local · **6/6 tiêu chí**, 15/10/2026. Đã hoàn thiện theo thứ tự 5.0 → 5.16: giữ catalog/variant cart/localStorage/delivery/quote/VND, nối Checkout COD, gửi/retry/xác nhận, tra đơn và admin thật từ API Phase 3–4. English mặc định/fallback và giờ Việt Nam giữ nguyên. Nghiệm thu **136/136 tests, 40/40 smoke, 10/10 kịch bản UI + 2/2 nhóm mở rộng**, không có JS exception. Phase 6 vẫn PLANNED; chưa deploy hoặc nghiệm thu remote. [Backup/audit/evidence](FE_AUDIT.md) · [Hiện trạng](../PROJECT_STATUS.md).
@@ -104,3 +106,5 @@ npm run check:ui:phase5                    PASS — 10/10 + 2/2, 0 exceptions
 ```
 
 Evidence local/ignored: `.security-review/phase5-ui-results.json` (07:34:46Z / 14:34 VN), `phase5-*.png`, `phase5-tests.txt`, `phase5-build.txt`, `phase5-smoke.txt`, `phase5-preview-ui.txt`. Guard đọc SQL readonly xác nhận nội dung schema/bảng D1 persisted không đổi; không so byte WAL/cache/observability có thể đổi do runtime. Mọi ghi UI/API dùng `persist:false`, `remoteBindings:false`, `.dev.vars.example` và secret tổng hợp; không đọc secret thật cho tests. Bridge Node dùng shim timingSafeEqual; bằng chứng auth native workerd Phase 4 được giữ riêng. Không đổi pin/dependency/lockfile/DDL, không deploy hoặc đổi D1 remote; Turnstile thật, dữ liệu/policy bán hàng và CPU cloud thuộc Phase 6.
+
+M1–M9 local 15/10/2026: locale chọn preference rồi browser EN/VI (English fallback); metadata theo route, public HTML SEO, staging noindex, CSP và Zod jitless. UI10/10 MVP +CRUD/B3/mock widget PASS dưới CSP mới; không chạy lại nhóm responsive rộng. Native preview SDK thật bằng test key nhận token, fonts/images tải thành công,0CSP/JS errors. [Bằng chứng hiện tại](../HARDENING.md); không thay nghiệm thu cloud.

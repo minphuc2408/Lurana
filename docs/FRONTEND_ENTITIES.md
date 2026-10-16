@@ -1,8 +1,10 @@
 # Entity đang có trong frontend Lunara
 
+B2/B3 local, chưa deploy: shared `useTurnstile`/`TurnstileChallenge` dùng cho checkout/lookup/login; token memory reset mỗi request, nằm ngoài fingerprint checkout. Admin status DTO có `restock?: boolean`; hủy IN_TRANSIT bắt buộc lý do và checkbox mặc định false. `stock_released=false` ở CANCELLED nghĩa giữ tồn đã tiêu thụ, đơn vẫn terminal. [Hợp đồng và cấu hình](BOT_PROTECTION.md).
+
 **Cập nhật:** 15/10/2026 · **Phase 0–3:** DONE local · **Phase 4:** DONE local (9/9 tiêu chí) · **Phase 5:** DONE local (6/6 tiêu chí) · **Phase 6:** IN PROGRESS (5/7; API live 7/7 + public browser EN/VI/VND/cart reload PASS, cleanup xong; còn dữ liệu thật và xác nhận quota). **UI:** catalog/cart/checkout COD/xác nhận/tra đơn và đăng nhập/admin dùng API; feature chưa có API tiếp tục ẩn. **Backend:** catalog/delivery/quote, COD/tồn/idempotency/lookup/transition và auth/admin đã có local. [Hiện trạng](PROJECT_STATUS.md) · [Stack](TECH_STACK.md) · [Schema canonical](../migrations/0001_mvp.sql). UI **Lunara**, repo **Lurana**.
 
-**Giữ hiện tại:** English mặc định/fallback, EN/VI JSON, VND/Asia/Ho_Chi_Minh, cart variant/localStorage; code legacy PHP/settings được giữ và ẩn. Phase 5 nối các API Phase 3–4, không đổi DDL hoặc package đã pin. Admin từ secret không dùng bảng users; `custom_requests` deferred. Các bảng `users`/`user_addresses` đã migrate local và remote ở Phase 6 nhưng chưa có customer auth/profile API. [Nghiệm thu database](pipeline/PHASE_1_DATABASE.md).
+**Giữ hiện tại:** Preference → browser EN/VI, English fallback, EN/VI JSON, VND/Asia/Ho_Chi_Minh, cart variant/localStorage; code legacy PHP/settings được giữ và ẩn. Phase 5 nối các API Phase 3–4, không đổi DDL hoặc package đã pin. Admin từ secret không dùng bảng users; `custom_requests` deferred. Các bảng `users`/`user_addresses` đã migrate local và remote ở Phase 6 nhưng chưa có customer auth/profile API. [Nghiệm thu database](pipeline/PHASE_1_DATABASE.md).
 
 Phase 2 trả Product/variants/images, delivery options và CartQuote theo [contract](pipeline/API_CONTRACT.md). Root `shared/constants.ts` và `shared/schemas.ts` dùng chung cho Worker/FE; `src/shared/` vẫn là thư viện UI hiện tại. Giá VND/DTO API đã adapter vào Shop service/CatalogProvider; CartProvider lưu variant IDs/quantity và lấy tổng/phí từ quote. Các model legacy trong bảng dưới giữ source nhưng không render trên các route đã ẩn. [Hướng dẫn test 5173](pipeline/PHASE_2_API_CATALOG.md#test-thủ-công-trên-host-5173).
 
@@ -63,3 +65,5 @@ Xem [DATABASE_DESIGN.md](DATABASE_DESIGN.md) để tra canonical và giới hạ
 Cloudinary upload local: ProductForm.image_url tiếp tục là URL; AdminImageUploadTicket trong shared/admin-upload-schemas.ts chỉ giữ trong bộ nhớ. Hook quản lý imagePending/error/uploaded, chặn lưu/đóng trong upload và abort khi unmount. Chưa lưu public_id riêng hoặc thay AdminProduct DTO. [Chi tiết](CLOUDINARY.md).
 
 ProductForm bỏ slug; useAdminApiProducts giữ slug tạo tự động trong ref cho từng draft. Image URL được thu gọn; file upload là cách nhập chính. AdminProduct.slug và hợp đồng image.url không đổi.
+
+M1–M9 local: AdminSummary thêm period_days=30, status counts trong 30 ngày; AdminOrders filters thêm placed_from/placed_to (mặc định90, tối đa366 ngày). Route metadata/locale theo browser không chứa dữ liệu khách. Product image.url chỉ HTTPS Cloudinary/Unsplash cho create/patch. Không đổi bảng hoặc dữ liệu đã lưu. [Chi tiết](HARDENING.md).

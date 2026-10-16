@@ -1,5 +1,7 @@
 # Phase 3 — Đặt hàng COD, tồn kho, idempotency, tra đơn
 
+B2/B3 sau nghiệm thu Phase 3 (15/10/2026, local/chưa deploy): cap 3 PENDING/SĐT người đặt ngay trong INSERT atomic, giữ 35/36 statements; Turnstile checkout/lookup đúng action/hostname, token mới độc lập UUID đơn; IN_TRANSIT → CANCELLED có lý do/restock mặc định false và scheduled expiry 24 giờ/mỗi giờ trong cấu hình local. [Contract hiện tại](API_CONTRACT.md) · [Cấu hình/evidence B2/B3](../BOT_PROTECTION.md). Các output và tiêu chí Phase 3 bên dưới giữ làm lịch sử.
+
 **Mục tiêu:** `POST /api/orders` đúng, an toàn và không bán quá tồn; tra đơn cho khách; dịch vụ chuyển trạng thái đơn (dùng lại ở Phase 4). Hợp đồng: [API_CONTRACT.md](API_CONTRACT.md). Đây là phase **quan trọng nhất**; không cắt.
 
 **Trạng thái:** DONE local · **5/5 tiêu chí**, 14/10/2026. Đã có API ghi order/tồn/idempotency, tra đơn và service chuyển trạng thái; không làm frontend/admin. [Hiện trạng](../PROJECT_STATUS.md). Dùng nguyên [schema canonical](../../migrations/0001_mvp.sql) Phase 1 và services Phase 2. [Bằng chứng/output](#bằng-chứng-lệnh--14102026).

@@ -1,5 +1,7 @@
 # Pipeline Lunara MVP — hiện trạng và kế hoạch
 
+B2/B3 (15/10/2026) đã triển khai **local, chưa deploy**: Turnstile checkout/lookup/login, rate-limit bindings, cap PENDING, xử lý khách từ chối nhận và Cron 24 giờ/mỗi giờ đã chốt trong cấu hình local. Phase 6 vẫn 5/7; cấu hình cloud và hạn mức WAF Free xem [runbook](../BOT_PROTECTION.md).
+
 Cập nhật: **15/10/2026**. Tech stack giữ nguyên như [TECH_STACK.md](../TECH_STACK.md): React 18 + Vite 6 + React Router 7 + Tailwind 4 (đã có) • Hono + Cloudflare Workers • Zod • Cloudflare D1 • Cloudinary • Turnstile.
 
 Pipeline mô tả đích MVP và các phase tiếp theo; nó không tự cho phép thực hiện tất cả phase. **Phase 0–5 đã xong local**. Phase 5 nối đủ Checkout COD, gửi/retry/xác nhận, tra đơn và admin từ API Phase 3–4, giữ catalog/variant cart/localStorage/delivery/quote/VND cùng English default/fallback. Source deferred còn giữ và ẩn bằng cờ/API readiness. Chủ dự án đã đăng ký Cloudflare, đăng nhập Wrangler và tạo D1 remote `lunara-db`; Phase 6 đã migrate/seed/backup, deploy và smoke API live/public browser rồi cleanup; không làm lại các bước chuẩn bị tài khoản.
@@ -127,3 +129,5 @@ Tất cả kịch bản sau pass trên bản **đã deploy**:
 8. Tra đơn bằng mã + SĐT đúng thấy đơn; SĐT sai báo không tìm thấy.
 9. Admin đăng nhập, đổi trạng thái đúng thứ tự; giao xong → `PAID`; hủy → tồn hoàn đúng một lần.
 10. Không còn ký hiệu ₱ hay dữ liệu fixture ở các luồng trên.
+
+M1–M9 (15/10/2026) đã sửa local, chưa deploy: mọi đơn hôm nay chuẩn bị ≥120 phút; low-stock chỉ hàng đang bán; CSP/static headers; browser locale và metadata/robots/sitemap/OG; log D1 theo allowlist, observability 10%; summary 30 ngày, tra đơn mặc định90/tối đa366 ngày với index sẵn có; URL ảnh HTTPS Cloudinary/Unsplash. Public Turnstile key owner đã cấu hình .env.production; secret/hostname/deploy còn chờ owner. Không thêm dependency/DDL, Phase 6 giữ 5/7. 166/166 tests, smoke40/40 và preview CSP/SDK test-key PASS; [chi tiết](../HARDENING.md).

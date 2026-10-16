@@ -180,7 +180,7 @@ Admin → **Kho** (`/admin/stock`): GET tồn hiện tại, đối chiếu tồn
 
 ## 8. Kiểm hạn mức hằng ngày và sự cố
 
-Chủ shop mở Cloudflare dashboard mỗi ngày và làm hai bước:
+Chủ shop mở Cloudflare dashboard mỗi ngày và kiểm các mục sau:
 
 1. **Workers & Pages → `lunara` → Metrics**: xem Requests, Errors và CPU Time; chọn khoảng thời gian cần kiểm tra, đối chiếu số request với quota ngày trong bảng dưới. [Cloudflare Workers metrics](https://developers.cloudflare.com/workers/observability/metrics-and-analytics/).
 2. **D1 → `lunara-db` → Metrics → Row Metrics**: xem Rows read/Rows written; kiểm thêm Storage/dung lượng database và đối chiếu quota ngày/dung lượng. [Cloudflare D1 metrics](https://developers.cloudflare.com/d1/observability/metrics-analytics/), [D1 pricing](https://developers.cloudflare.com/d1/platform/pricing/).
@@ -194,6 +194,7 @@ Thông số đối chiếu tài liệu Cloudflare ngày **15/10/2026**; trước
 | Worker invocations | 100.000/ngày; CPU 10 ms/request | [Workers limits](https://developers.cloudflare.com/workers/platform/limits/) |
 | D1 rows read / written | 5 triệu / 100.000 mỗi ngày, tính toàn account | [D1 pricing](https://developers.cloudflare.com/d1/platform/pricing/) |
 | D1 dung lượng | 500 MB/database, 5 GB/account | [D1 limits](https://developers.cloudflare.com/d1/platform/limits/) |
+| Workers Logs | 200.000 log events/ngày, lưu 3 ngày (kiểm lại chính sách từ 01/12/2026) | [Workers Logs](https://developers.cloudflare.com/workers/observability/logs/workers-logs/) |
 | D1 queries/Worker invocation | 50 | [D1 limits](https://developers.cloudflare.com/d1/platform/limits/) |
 
 Quota ngày reset **00:00 UTC = 07:00 giờ Việt Nam**. D1 tính số dòng đọc/ghi, không phải chỉ số query hoặc số đơn; một truy vấn quét nhiều dòng có thể tốn nhiều quota. Khi chạm daily read/write Free, truy vấn D1 bị từ chối đến reset hoặc khi nâng gói. Không xóa dữ liệu khách để giải quyết quota ngày. [D1 pricing](https://developers.cloudflare.com/d1/platform/pricing/).
@@ -204,9 +205,9 @@ Khi lỗi tăng: xác nhận URL/deployment và request_id, xem metrics/log đã
 
 ## 9. Turnstile và domain
 
-Hiện mới có verifier Turnstile server có điều kiện cho **đặt đơn**; checkout/admin chưa có widget và login admin chưa gọi verifier. Chỉ đặt `TURNSTILE_SECRET` ngay bây giờ sẽ buộc request order có token trong khi UI chưa tạo token, khiến checkout bị chặn. `VITE_TURNSTILE_SITE_KEY` một mình cũng chưa tạo widget. Không bật secret trước khi tích hợp đầy đủ và test local.
+Code local B2/B3 đã có Turnstile cho checkout/lookup/login, verifier đúng action/hostname, rate-limit bindings và cap 3 PENDING/SĐT người đặt. Chưa deploy cập nhật này. Site key owner cung cấp đã nằm trong .env.production; owner kiểm hostname widget và nhập TURNSTILE_SECRET Worker đúng cặp; không bật secret trên UI cũ. [Hướng dẫn cấu hình và quy trình COD](BOT_PROTECTION.md).
 
-Nếu owner chọn bật Turnstile: cung cấp site key public/hostname và quản lý secret riêng qua Cloudflare; tích hợp widget checkout + admin, thêm verifier ở login, truyền/reset token và kiểm `hostname`/`action` theo cấu hình mong muốn; test token thiếu/sai/hết hạn/provider lỗi và thành công trước deploy. Không gửi secret trong chat. Quá trình bật cần deploy được duyệt; rate limit vẫn là phần chưa có, không coi Turnstile thay thế rate limit. [Cloudflare Siteverify](https://developers.cloudflare.com/turnstile/get-started/server-side-validation/).
+Không gửi secret/token trong chat hoặc log. Rate-limit bindings đi cùng deploy, không cần custom domain; không coi Turnstile thay thế rate limit hoặc bảo đảm quota toàn cầu. Shop gọi/Zalo xác nhận trước CONFIRMED/PREPARING. Hủy IN_TRANSIT cần lý do; mặc định không hoàn hoa đã làm, chỉ chọn restock khi còn bán được. Owner đã chốt TTL 24 giờ và Cron mỗi giờ (0 * * * *), cấu hình local đã có cho production/staging, chờ deploy để có hiệu lực. Batch nguyên tử xử lý toàn bộ PENDING quá hạn, hoàn tồn đúng một lần và giữ nguyên đơn đã xác nhận. [Cloudflare Siteverify](https://developers.cloudflare.com/turnstile/get-started/server-side-validation/).
 
 Domain riêng là tùy chọn. Chủ dự án cung cấp domain và đồng ý chi phí/authorization; sau gắn Custom Domain kiểm HTTPS, refresh SPA, asset/API cùng origin, login/logout/cookie Secure và write Origin trên domain mới. Cookie cũ của `workers.dev` không chuyển sang domain mới; đăng nhập lại. Dùng HTTPS origin mới khi chạy smoke và cấu hình hostname Turnstile nếu đã bật. [Cloudflare Custom Domains](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/).
 
@@ -219,3 +220,5 @@ Giữ trong [Phase 6](pipeline/PHASE_6_DEPLOY.md) các bằng chứng **đã th�
 Đầu vào cần owner cung cấp/xác nhận trước bước phụ thuộc: đúng account/database và quyền ghi; quyền deploy đầu tiên/URL; secrets thật do owner nhập; variant/cửa sổ thử độc quyền; sản phẩm/tồn/khu vực/phí/chính sách thật; lựa chọn Turnstile/domain; người kiểm hạn mức hằng ngày. Các mục tùy chọn không tự chặn deploy cơ bản, nhưng lựa chọn bật chúng cần tích hợp/kiểm thử tương ứng.
 
 Cloudinary 15/10/2026: đã tích hợp local signed direct upload (SHA-256, cookie admin/same-origin, JPEG/PNG/WebP, client 5 MB, prefix local/staging/prod). Typecheck/build/architecture 208 source files PASS; tests 148/148, smoke local 40/40 PASS. Browser mock EN/VI 390px PASS: file sai, thành công/preview, Save URL, thiếu config giữ URL; 0 JS exceptions. Chưa tạo preset/đặt keys/upload thật/deploy tính năng, không ghi D1 remote; Phase 6 vẫn 5/7. Không thêm migration/dependency hoặc tự xóa asset. [Cấu hình Cloudinary](CLOUDINARY.md).
+
+M1–M9 local: log lấy mẫu10%, tắt invocation URL logs; khi tra lỗi dùng request_id và diagnostic_code/constraint/constraint_target đã allowlist. Không có raw SQL/binds/message; lỗi ngoài mẫu có thể không lưu. Kiểm thêm Workers & Pages → lunara → Logs mỗi ngày và đối chiếu hạn mức Workers Logs. Rate limit bên trong Worker không tránh phí/quota invocation; Cache-Control30giây không cam kết bảo vệ account. Summary admin chỉ30 ngày, tra lịch sử qua bộ lọc ngày đặt (mặc định90/tối đa366 ngày). [Cấu hình, giới hạn SEO/ảnh và bằng chứng](HARDENING.md).

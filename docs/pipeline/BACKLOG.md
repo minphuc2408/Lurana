@@ -4,13 +4,15 @@
 
 ## Ưu tiên cao (tuần đầu sau khi mở bán)
 
+B2/B3 cập nhật local 15/10/2026 bên dưới chưa deploy. Phase 6 hiện IN PROGRESS (5/7), đã deploy phiên bản trước và nghiệm thu API/browser; các số/mô tả đầu trang là mốc lịch sử trước triển khai. Xem [chống bot và COD](../BOT_PROTECTION.md).
+
 | Hạng mục | Ghi chú |
 | --- | --- |
 | **Thông báo đơn mới cho chủ shop** | MVP dự kiến chỉ có admin nên dễ bỏ sót đơn. Worker gọi webhook trong `ctx.waitUntil()` sau khi tạo đơn; lỗi gửi không làm hỏng đơn. Chọn provider và kiểm tra quota/chi phí khi triển khai |
-| Trạng thái `DELIVERY_FAILED` | Giao thất bại/khách không nhận: cần migration đổi `CHECK` của `orders.status_code` (SQLite phải tạo bảng mới + chép dữ liệu) và cập nhật máy trạng thái |
+| Trạng thái `DELIVERY_FAILED` riêng | B3 đã xử lý local bằng IN_TRANSIT → CANCELLED, bắt buộc lý do, restock mặc định false/opt-in true; không cần migration. Trạng thái riêng/thống kê nâng cao vẫn deferred |
 | Trang chính sách | Quyền riêng tư (thu thập tên/SĐT/địa chỉ), đổi/trả hoa tươi, liên hệ. Là yêu cầu vận hành, không phải code |
 | Upload ảnh từ admin | Cloudinary Unsigned Upload Preset **giới hạn định dạng/dung lượng/thư mục**; lưu `image_url` + `cloudinary_public_id`. Xóa ảnh phải ký request ở Worker (secret không để ở trình duyệt) |
-| Rate limit / Turnstile cho toàn bộ route ghi | Phase 3 có verifier theo secret cho tạo order (mock-tested); Phase 4 có cookie authorization + Origin/JSON cho ghi admin. Widget đăng nhập/checkout, production setup và rate limit chưa có; không thêm bảng đếm đăng nhập |
+| Chống bot và vận hành COD | B2 local đã có Turnstile checkout/lookup/login, rate-limit bindings, 3 PENDING/SĐT và Cron TTL 24 giờ, chạy mỗi giờ trong cấu hình local. Owner cấu hình khóa/deploy; Cron đã chốt 24 giờ/mỗi giờ; WAF/custom domain và bảo vệ các route admin mở rộng còn chờ nhu cầu. [Hướng dẫn](../BOT_PROTECTION.md) |
 
 ## Ưu tiên trung bình
 
