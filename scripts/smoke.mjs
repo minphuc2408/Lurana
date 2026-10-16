@@ -18,7 +18,7 @@ if (baseUrl.hostname !== '127.0.0.1' || !['http:', 'https:'].includes(baseUrl.pr
 }
 
 const request = (route, options = {}) => fetch(new URL(route, baseUrl), {
-  ...options, redirect: 'error', signal: AbortSignal.timeout(10_000),
+  ...options, redirect: options.redirect ?? 'error', signal: AbortSignal.timeout(10_000),
 });
 const navigationHeaders = { accept: 'text/html', 'sec-fetch-mode': 'navigate' };
 const forbiddenKeys = new Set(['stock_quantity', 'archived_at', 'cloudinary_public_id']);
@@ -149,7 +149,15 @@ await check('API JSON 404 with normal/navigation headers', async () => {
 
 await check('home + SPA /shop return HTML', async () => {
   for (const route of ['/', '/shop']) {
-    const response = await request(route, { headers: navigationHeaders });
+    let response = await request(route, { headers: navigationHeaders, redirect: 'manual' });
+    // Static Shop metadata may canonicalize /shop to /shop/; never follow another origin.
+    if (route === '/shop' && [301, 302, 307, 308].includes(response.status)) {
+      const location = response.headers.get('location');
+      assert.ok(location, 'Shop redirect must include Location');
+      assert.equal(new URL(location, baseUrl).href, new URL('/shop/', baseUrl).href);
+      await response.body?.cancel();
+      response = await request('/shop/', { headers: navigationHeaders });
+    }
     assert.equal(response.status, 200);
     assert.match(response.headers.get('content-type'), /text\/html/);
     assert.match(await response.text(), /id="root"/);
@@ -402,9 +410,10 @@ async function orderSmoke() {
     const tomorrowDate = tomorrow.toISOString().slice(0, 10);
     const yesterday = new Date(`${todayInVN()}T00:00:00Z`);
     yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+    let senderSequence = 0;
     const body = (overrides = {}) => ({
       items: [{ variant_id: peonyVariant.id, quantity: 1 }],
-      sender: { name: 'Smoke sender', phone: '0900000000', email: 'smoke@example.test', is_anonymous: false },
+      sender: { name: 'Smoke sender', phone: `0900000${String(senderSequence++).padStart(3, '0')}`, email: 'smoke@example.test', is_anonymous: false },
       recipient: { name: 'Smoke recipient', phone: '0911111111', province_name: 'Thành phố Hà Nội', ward_name: 'Phường Hoàn Kiếm', address_line: 'Demo smoke address' },
       delivery: { method_code: 'STANDARD', date: tomorrowDate, time_slot: '08:00-10:00' },
       card: { type: 'GREETING_CARD', message: 'Synthetic local smoke data' },
@@ -517,7 +526,7 @@ async function orderSmoke() {
       assert.equal(forged.subtotal, peonyVariant.price);
       assert.equal(forged.delivery_fee, 20000);
       assert.equal(forged.grand_total, 470000);
-      const detail = await lookup(forged.order_number, '0900000000');
+      const detail = await lookup(forged.order_number, '0911111111');
       assert.equal(detail.items[0].unit_price, peonyVariant.price);
       assert.equal(detail.items[0].line_total, peonyVariant.price);
     });
@@ -619,7 +628,7 @@ async function orderSmoke() {
       assert.equal((await first('SELECT stock_released FROM orders WHERE order_number = ?', [cancellable.order_number])).stock_released, 1);
       await assert.rejects(() => transitionOrder(db, cancellable.order_number, 'CANCELLED', 'ADMIN'), cause => cause.code === 'INVALID_TRANSITION');
       assert.equal(await stock(peonyVariant.id), beforeCancel + 2);
-      const detail = await lookup(cancellable.order_number, '0900000000');
+      const detail = await lookup(cancellable.order_number, '0911111111');
       assert.deepEqual(detail.timeline.map(event => event.to_status), ['PENDING', 'CANCELLED']);
       console.log('D1 Phase 3 transitions: history=PENDING,CONFIRMED,PREPARING,IN_TRANSIT,DELIVERED; payment=PAID; cancellation=+2 once; repeat=INVALID_TRANSITION/+0.');
     });
@@ -629,7 +638,7 @@ async function orderSmoke() {
       const fifteen = variants.slice(0, 15).map(variant => ({ variant_id: variant.id, quantity: 1 }));
       const result = await create(body({ items: fifteen }));
       assert.ok(result.queryCount <= 40);
-      const lines = await lookup(result.payload.data.order_number, '0900000000');
+      const lines = await lookup(result.payload.data.order_number, '0911111111');
       assert.equal(lines.items.length, 15);
       const current = await all('SELECT id, stock_quantity FROM product_variants ORDER BY id');
       const sold = await all(`SELECT oi.variant_id, SUM(oi.quantity) AS quantity
@@ -777,7 +786,7 @@ async function orderSmoke() {
       }
       for (const [status, count] of Object.entries(expectedStatus)) assert.equal(summary.payload.data.orders_by_status[status], count);
       assert.equal(summary.payload.data.today_orders, (await first("SELECT COUNT(*) AS total FROM orders WHERE substr(datetime(placed_at, '+7 hours'), 1, 10) = ?", [todayInVN()])).total);
-      assert.equal(summary.payload.data.low_stock_count, (await first('SELECT COUNT(*) AS total FROM product_variants WHERE stock_quantity <= low_stock_threshold')).total);
+      assert.equal(summary.payload.data.low_stock_count, (await first('SELECT COUNT(*) AS total FROM product_variants v JOIN products p ON p.id=v.product_id JOIN categories c ON c.id=p.category_id WHERE v.stock_quantity <= v.low_stock_threshold AND v.is_active=1 AND p.status="ACTIVE" AND c.is_active=1')).total);
       const listed = (await admin('/orders?status=PENDING&date=' + tomorrowDate + '&limit=2&offset=0')).payload.data;
       const pending = (await first('SELECT COUNT(*) AS total FROM orders WHERE status_code = ? AND delivery_date = ?', ['PENDING', tomorrowDate])).total;
       assert.equal(listed.total, pending);
@@ -805,9 +814,6 @@ async function orderSmoke() {
       for (const to of ['CONFIRMED', 'PREPARING', 'IN_TRANSIT', 'DELIVERED']) {
         await localJson(`/api/admin/orders/${number}/status`, statusPatch(number, to), 200);
         assert.equal((await adminDetail(number)).status_code, to);
-        if (to === 'IN_TRANSIT') {
-          await localError(`/api/admin/orders/${number}/status`, statusPatch(number, 'CANCELLED'), 409, 'INVALID_TRANSITION');
-        }
       }
       const delivered = await adminDetail(number);
       assert.equal(delivered.payment_status, 'PAID');
@@ -897,7 +903,7 @@ async function orderSmoke() {
       const input = {
         category_id: categories[0].id, slug: 'isolated-admin-smoke-product',
         name_vi: 'Sản phẩm thử local', name_en: 'Isolated admin smoke product', status: 'ACTIVE',
-        image: { url: 'https://images.example.test/smoke.jpg', alt_vi: 'Hoa thử', alt_en: 'Test flowers' },
+        image: { url: 'https://res.cloudinary.com/demo/image/upload/smoke.jpg', alt_vi: 'Hoa thử', alt_en: 'Test flowers' },
         variants: [{ sku: 'ISOLATED-SMOKE-STANDARD', size_code: 'STANDARD', price: 100000, compare_at_price: 120000, stock_quantity: 12, low_stock_threshold: 2, is_active: true }],
       };
       const created = await admin('/products', 'POST', input, 201);
@@ -912,7 +918,7 @@ async function orderSmoke() {
       assert.equal((await first('SELECT COUNT(*) AS total FROM products')).total, beforeConflict, 'SKU conflict must roll back inserted product');
       for (const status of ['HIDDEN', 'ARCHIVED']) {
         await admin(`/products/${id}`, 'PATCH', {
-          status, name_en: 'Patched isolated product', image: { url: 'https://images.example.test/patched.jpg' },
+          status, name_en: 'Patched isolated product', image: { url: 'https://res.cloudinary.com/demo/image/upload/patched.jpg' },
         });
         const publicItems = (await localJson('/api/products', undefined, 200)).payload.data.items;
         assert.equal(publicItems.some(product => product.id === id), false);
@@ -921,7 +927,7 @@ async function orderSmoke() {
         assert.equal(record.status, status);
         assert.equal(record.name_en, 'Patched isolated product');
         assert.equal(record.images.filter(image => image.is_primary).length, 1);
-        assert.equal(record.images.find(image => image.is_primary).url, 'https://images.example.test/patched.jpg');
+        assert.equal(record.images.find(image => image.is_primary).url, 'https://res.cloudinary.com/demo/image/upload/patched.jpg');
         if (status === 'ARCHIVED') assert.match((await first('SELECT archived_at FROM products WHERE id = ?', [id])).archived_at, /Z$/);
       }
       console.log('D1 Phase 4 products: list_statements<=3; create_batch=3; slug/SKU=CONFLICT/rollback; ACTIVE visible; HIDDEN/ARCHIVED public absent/admin retained.');

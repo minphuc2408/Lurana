@@ -21,6 +21,21 @@ const exceptions = [];
 const requests = [];
 const orderRequests = [];
 const faults = [];
+const turnstileTest = process.argv.includes('--turnstile-test');
+const skipResponsive = process.argv.includes('--skip-responsive');
+const verifiedActions = new Set();
+const usedTokens = new Set();
+if (turnstileTest) {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    if (String(url) !== 'https://challenges.cloudflare.com/turnstile/v0/siteverify') return originalFetch(url, init);
+    const token = JSON.parse(init.body).response;
+    const action = token?.split(':')[1];
+    if (!action || usedTokens.has(token)) return Response.json({ success: false });
+    usedTokens.add(token); verifiedActions.add(action);
+    return Response.json({ success: true, action, hostname: '127.0.0.1' });
+  };
+}
 let browser;
 let server;
 let platform;
@@ -32,6 +47,9 @@ let activeScenario = '';
 const pending = new Map();
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 const mimeTypes = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.ico': 'image/x-icon', '.woff2': 'font/woff2' };
+const staticHeaders = Object.fromEntries(readFileSync(path.join(clientRoot, '_headers'), 'utf8')
+  .split(/\r?\n\r?\n/)[0].split(/\r?\n/).slice(1).filter(line => line.trim())
+  .map(line => { const colon = line.indexOf(':'); return [line.slice(0, colon).trim(), line.slice(colon + 1).trim()]; }));
 const activeRuntimeFiles = [
   'src/pages/HomePage.tsx', 'src/pages/ShopPage.tsx', 'src/pages/CartPage.tsx', 'src/pages/TrackOrderPage.tsx', 'src/pages/LoginPage.tsx',
   'src/pages/admin/AdminDashboardPage.tsx', 'src/pages/admin/AdminOrdersPage.tsx', 'src/pages/admin/AdminStockPage.tsx', 'src/pages/admin/AdminDeliveryZonesPage.tsx',
@@ -117,7 +135,7 @@ async function createBridge() {
         let target = path.resolve(clientRoot, `.${decodeURIComponent(url.pathname)}`);
         if (target !== clientRoot && !target.startsWith(`${clientRoot}${path.sep}`)) { outgoing.writeHead(403); outgoing.end(); return; }
         if (!existsSync(target) || !statSync(target).isFile()) target = path.join(clientRoot, 'index.html');
-        outgoing.writeHead(200, { 'content-type': mimeTypes[path.extname(target)] || 'application/octet-stream', 'cache-control': 'no-store' });
+        outgoing.writeHead(200, { ...staticHeaders, 'content-type': mimeTypes[path.extname(target)] || 'application/octet-stream', 'cache-control': 'no-store' });
         outgoing.end(readFileSync(target));
         return;
       }
@@ -139,7 +157,7 @@ async function createBridge() {
         requests.push({ path: url.pathname, method, status: 500, fault: fault.mode, scenario: activeScenario });
         return;
       }
-      const response = await app.fetch(new Request(url, { method, headers, ...(!['GET', 'HEAD'].includes(method) ? { body } : {}) }), { DB: db, ADMIN_PASSWORD: demoPassword, JWT_SECRET: demoJwtSecret });
+      const response = await app.fetch(new Request(url, { method, headers, ...(!['GET', 'HEAD'].includes(method) ? { body } : {}) }), { DB: db, ADMIN_PASSWORD: demoPassword, JWT_SECRET: demoJwtSecret, ...(turnstileTest ? { TURNSTILE_SECRET: 'isolated-widget-test-secret' } : {}) });
       const responseBody = Buffer.from(await response.arrayBuffer());
       if (response.headers.get('content-type')?.includes('application/json')) assertNoSecrets(JSON.parse(responseBody.toString()));
       requests.push({ path: url.pathname, method, status: response.status, ...(fault ? { fault: fault.mode || 'delay' } : {}), scenario: activeScenario });
@@ -276,6 +294,19 @@ async function startBrowser() {
     if (response.method === 'Runtime.exceptionThrown') exceptions.push({ route: routeName, detail: response.params.exceptionDetails.exception?.description });
   });
   await send('Page.enable'); await send('Runtime.enable'); await send('Network.enable');
+  if (turnstileTest) await send('Page.addScriptToEvaluateOnNewDocument', { source: `
+    window.__turnstileWidgets = new Map();
+    window.turnstile = {
+      render(element, options) {
+        if (options.sitekey !== '1x00000000000000000000AA') throw new Error('Build with the official test site key for this harness');
+        const id = crypto.randomUUID();
+        element.textContent = 'Security verification (local mock)';
+        window.__turnstileWidgets.set(id, options);
+        setTimeout(() => { if (window.__turnstileWidgets.has(id)) options.callback('test:' + options.action + ':' + crypto.randomUUID()); }, 50);
+        return id;
+      },
+      remove(id) { window.__turnstileWidgets.delete(id); }
+    };` });
   await send('Network.setCacheDisabled', { cacheDisabled: true });
   await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });
 }
@@ -306,13 +337,16 @@ async function addPeony(size = 'M') {
 }
 
 async function fillCheckout(date) {
+  await input('input[name=province_name]', 'Thành phố Hà Nội');
+  await input('input[name=ward_name]', 'Phường Hoàn Kiếm');
   if (!await evaluate(`Boolean(document.querySelector(${JSON.stringify(selectors.checkout)}))`)) await click('[data-checkout-start]');
   await waitFor(`Boolean(document.querySelector(${JSON.stringify(selectors.checkout)}))`);
   for (const [name, value] of Object.entries({ senderName: 'Phase Five Sender', senderPhone: '0900000000', senderEmail: 'phase5@example.test', recipientName: 'Phase Five Recipient', recipientPhone: '0911111111', address: '12 Synthetic Flower Street', date, note: 'Only isolated acceptance data' })) await input(`[name="${name}"]`, value);
   await input('[name="cardType"]', 'GREETING_CARD');
   await input('[name="cardMessage"]', 'Synthetic acceptance flowers');
   await input('[name="slot"]', '08:00-10:00');
-  await input('input[list="delivery-wards"]', 'Phường Hoàn Kiếm');
+  await input('input[name=province_name]', 'Thành phố Hà Nội');
+  await input('input[name=ward_name]', 'Phường Hoàn Kiếm');
   await waitFor("!document.querySelector('[data-quote-loading]') && Boolean(document.querySelector('[data-quote-amount=Total]'))");
 }
 
@@ -353,17 +387,21 @@ async function runAcceptance(db) {
     return { variantIdentity: true, reload: true, corruptStorage: true };
   });
   await scenario(3, 'Delivery ward fee, province default and unsupported area handling', async () => {
+    await input('input[name=province_name]', 'Thành phố Hà Nội');
+    await input('input[name=ward_name]', 'Phường Hoàn Kiếm');
     await waitFor("document.querySelector('[data-quote-amount=Total]')?.innerText.includes('670')");
-    await input('input[list="delivery-wards"]', 'Phường chưa có phí riêng');
+    await input('input[name=ward_name]', 'Phường chưa có phí riêng');
     await waitFor("document.querySelector('[data-quote-amount=Total]')?.innerText.includes('685')");
-    const limited = await evaluate("(() => {const p=document.querySelector('select[name=province_name]') || document.querySelector('select');return p && [...p.options].every(o => !o.value || ['Thành phố Hà Nội','Thành phố Hồ Chí Minh'].includes(o.value));})()");
-    assert.equal(limited, true, 'Province choices must come from delivery options');
-    await input('input[list="delivery-wards"]', 'Phường Hoàn Kiếm');
+    await input('input[name=province_name]', 'Tỉnh chưa được giao');
+    await waitFor("Boolean(document.querySelector('[role=alert]')) && document.querySelector('[data-checkout-start]').disabled");
+    await input('input[name=province_name]', 'Thành phố Hà Nội');
+    await input('input[name=ward_name]', 'Phường Hoàn Kiếm');
     await waitFor("document.querySelector('[data-quote-amount=Total]')?.innerText.includes('670')");
     return { wardFee: 20000, provinceDefaultFee: 35000, unsupportedProvinceBlocked: true };
   });
   await scenario(4, 'Rapid double submit creates exactly one order and deducts stock once', async () => {
     await fillCheckout(tomorrow); await reviewCheckout();
+    await waitFor(`!document.querySelector(${JSON.stringify(selectors.place)}).disabled`);
     const beforeCount = await count(); const beforeStock = await stock(variant);
     faults.push({ path: '/api/orders', method: 'POST', delay: 300 });
     await evaluate(`(() => {const b=document.querySelector(${JSON.stringify(selectors.place)});b.click();b.click();return true;})()`);
@@ -391,7 +429,9 @@ async function runAcceptance(db) {
     await click(selectors.place); cancelOrder = await confirmedNumber();
     assert.equal(await count(), beforeCount + 1); assert.equal(await stock(variant), beforeStock - 1);
     const attempts = orderRequests.filter(item => item.scenario === '5');
-    assert.ok(attempts.length >= 3); assert.equal(new Set(attempts.map(item => item.key)).size, 1); assert.equal(new Set(attempts.map(item => item.body)).size, 1);
+    assert.ok(attempts.length >= 3); assert.equal(new Set(attempts.map(item => item.key)).size, 1);
+    assert.equal(new Set(attempts.map(item => { const { turnstile_token, ...payload } = JSON.parse(item.body); return JSON.stringify(payload); })).size, 1);
+    if (turnstileTest) assert.equal(new Set(attempts.map(item => JSON.parse(item.body).turnstile_token)).size, attempts.length);
     return { beforeCommit500: true, afterCommitNetworkLoss: true, attempts: attempts.length, stableKeyAndBody: true, duplicateOrders: 0 };
   });
   await scenario(6, 'Confirmation lookup matches items/totals/timeline; wrong phone hides order', async () => {
@@ -441,7 +481,32 @@ async function runAcceptance(db) {
     assert.equal(await stock(variant), before + 1);
     await expect("!document.querySelector('[data-testid^=order-status-]')", 'Terminal order must expose no invalid transitions');
     await screenshot('08-admin-cancelled');
-    return { deliveredPaid: true, cancellationStockReleasedOnce: true };
+    const { createOrder, transitionOrder } = await import('../worker/services/orders.ts');
+    for (const restock of [false, true]) {
+      const inputBody = JSON.parse(orderRequests[0].body);
+      inputBody.sender.phone = '0900002222';
+      const number = (await createOrder(db, inputBody, crypto.randomUUID())).data.order_number;
+      for (const status of ['CONFIRMED', 'PREPARING', 'IN_TRANSIT']) await transitionOrder(db, number, status);
+      const beforeFailure = await stock(variant);
+      await navigate(`/admin/orders?order=${number}`); await waitFor("document.querySelector('[data-testid=admin-order-detail]')?.dataset.status === 'IN_TRANSIT'");
+      await click('[data-testid=order-status-CANCELLED]');
+      await expect("document.querySelector('[data-testid=confirm-cancel-order]').disabled && !document.querySelector('[data-testid=cancel-order-dialog] input[type=checkbox]').checked", 'Failed delivery defaults to no restock and requires reason');
+      await input('[data-testid=failed-delivery-reason]', 'SMOKE: recipient refused delivery');
+      if (restock) await checked('[data-testid=cancel-order-dialog] input[type=checkbox]', true);
+      if (!restock) {
+        faults.push({ path: `/api/admin/orders/${number}/status`, method: 'PATCH', mode: 'before-500' });
+        await click('[data-testid=confirm-cancel-order]');
+        await waitFor("Boolean(document.querySelector('[data-testid=cancel-order-dialog] [role=alert]'))");
+        assert.equal((await first('SELECT status_code FROM orders WHERE order_number = ?', [number])).status_code, 'IN_TRANSIT');
+        assert.equal(await stock(variant), beforeFailure);
+      }
+      await click('[data-testid=confirm-cancel-order]');
+      await waitFor("document.querySelector('[data-testid=admin-order-detail]')?.dataset.status === 'CANCELLED'");
+      assert.equal(await stock(variant), beforeFailure + (restock ? 1 : 0));
+      const closed = await first('SELECT stock_released, payment_status FROM orders WHERE order_number = ?', [number]);
+      assert.equal(closed.stock_released, restock ? 1 : 0); assert.equal(closed.payment_status, 'UNPAID');
+    }
+    return { deliveredPaid: true, cancellationStockReleasedOnce: true, failedDeliveryReason: true, failedDeliveryDefaultNoRestock: true, explicitRestock: true };
   });
   await scenario(9, 'Admin stock_delta to zero disables selected shop variant', async () => {
     await navigate('/admin/stock'); await waitFor(`Boolean(document.querySelector('[data-variant-id="${variant}"]'))`);
@@ -472,7 +537,7 @@ async function runAcceptance(db) {
     await verifyAdminCrud({ first, all, today: todayInVN() });
     return { products: true, variants: true, zones: true, dashboard: true, orderFilters: true, ambiguousStockDeltaCommittedOnce: true, stockRecheckResetsDelta: true };
   });
-  await scenario('12', 'English/Vietnamese loading/error/retry/unauthorized and responsive layouts', async () => {
+  if (!skipResponsive) await scenario('12', 'English/Vietnamese loading/error/retry/unauthorized and responsive layouts', async () => {
     await verifyStatesAndResponsive(tomorrow);
     assert.deepEqual(await all('PRAGMA foreign_key_check'), []);
     assert.equal((await first('SELECT COUNT(*) AS n FROM product_variants WHERE stock_quantity < 0')).n, 0);
@@ -487,7 +552,7 @@ async function verifyAdminCrud({ first, today }) {
   await click('[data-testid=product-create]');
   await evaluate("document.querySelector('[data-testid=product-form] details').open = true");
   assert.equal(await evaluate("Boolean(document.querySelector('[data-testid=product-form] [name=slug]'))"), false);
-  for (const [name, value] of Object.entries({ name_en: 'Phase Five Test Bouquet', name_vi: 'Bó hoa kiểm Phase Five', image_url: 'https://images.example.test/phase5.jpg' })) await input(`[data-testid=product-form] [name="${name}"]`, value);
+  for (const [name, value] of Object.entries({ name_en: 'Phase Five Test Bouquet', name_vi: 'Bó hoa kiểm Phase Five', image_url: 'https://res.cloudinary.com/demo/image/upload/phase5.jpg' })) await input(`[data-testid=product-form] [name="${name}"]`, value);
   await input('[data-testid=product-form] [name=category_id]', 1);
   for (const [index, size] of ['S', 'M', 'L'].entries()) {
     await input(`[data-testid=product-form] [name="sku-${size}"]`, `P5-TEST-${size}`);
@@ -539,13 +604,14 @@ async function verifyAdminCrud({ first, today }) {
   await waitFor(`document.querySelector('[data-zone-id="${zone.id}"]')?.dataset.active === 'false'`);
   assert.equal((await first('SELECT is_active FROM delivery_zones WHERE id = ?', [zone.id])).is_active, 0);
   await navigate('/admin/dashboard'); await waitFor("Boolean(document.querySelector('[data-testid=admin-dashboard]'))");
+  await waitFor("Boolean(document.querySelector('[data-order-number]'))");
   await expect("!document.querySelector('svg.recharts-surface') && Boolean(document.querySelector('[data-order-number]'))", 'Dashboard must show server summary/recent orders without fixture chart');
   const statusCounts = {};
   for (const status of ['PENDING', 'CONFIRMED', 'PREPARING', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED']) {
     statusCounts[status] = (await first('SELECT COUNT(*) AS n FROM orders WHERE status_code = ?', [status])).n;
     await expect(`document.querySelector('[data-status-count="${status}"]')?.innerText.includes(${JSON.stringify(String(statusCounts[status]))})`, `Dashboard ${status} count must match D1`);
   }
-  const lowStock = (await first('SELECT COUNT(*) AS n FROM product_variants WHERE stock_quantity <= low_stock_threshold')).n;
+  const lowStock = (await first('SELECT COUNT(*) AS n FROM product_variants v JOIN products p ON p.id=v.product_id JOIN categories c ON c.id=p.category_id WHERE v.stock_quantity <= v.low_stock_threshold AND v.is_active=1 AND p.status="ACTIVE" AND c.is_active=1')).n;
   await expect(`document.querySelector('[data-testid=low-stock-count]')?.innerText.includes(${JSON.stringify(String(lowStock))})`, 'Dashboard low stock count must match D1');
   const todayOrders = (await first("SELECT COUNT(*) AS n FROM orders WHERE date(placed_at, '+7 hours') = ?", [today])).n;
   await expect(`document.querySelector('[data-testid=today-orders]')?.innerText.includes(${JSON.stringify(String(todayOrders))})`, 'Dashboard orders today must match Vietnam date in D1');
@@ -620,6 +686,26 @@ try {
   console.log(`Phase 5 UI LOCAL ONLY at ${origin}; D1 persist:false; remoteBindings:false; synthetic auth; built frontend/current Worker.`);
   await startBrowser();
   await runAcceptance(db);
+  if (turnstileTest) {
+    assert.deepEqual([...verifiedActions].sort(), ['admin_login', 'checkout', 'lookup']);
+    await send('Network.clearBrowserCookies');
+    await navigate('/admin/login');
+    await waitFor("Boolean(document.querySelector('[data-turnstile-challenge=admin_login]')) && !document.querySelector('[data-testid=admin-login-submit]').disabled");
+    await evaluate("[...window.__turnstileWidgets.values()][0]['expired-callback']()");
+    await waitFor("document.querySelector('[data-testid=admin-login-submit]').disabled");
+    await evaluate("[...window.__turnstileWidgets.values()][0]['error-callback']()");
+    await waitFor("Boolean(document.querySelector('[data-turnstile-challenge] [role=alert]'))");
+    await click('[data-turnstile-challenge] button');
+    await waitFor("!document.querySelector('[data-testid=admin-login-submit]').disabled && !document.querySelector('[data-turnstile-challenge] [role=alert]')");
+    await locale('en'); await locale('vi');
+    await waitFor("[...window.__turnstileWidgets.values()][0]?.language === 'vi'");
+    for (const width of [320, 390, 768, 1440]) {
+      await send('Emulation.setDeviceMetricsOverride', { width, height: 1000, deviceScaleFactor: 1, mobile: width < 768 });
+      await waitFor("[...window.__turnstileWidgets.values()].every(widget => widget.size === (document.querySelector('[data-turnstile-challenge] > div').clientWidth < 300 ? 'compact' : 'flexible'))");
+      await expect(`document.documentElement.scrollWidth <= ${width} + 1`, `Turnstile login overflows at ${width}px`);
+    }
+    console.log('PASS B2 Turnstile: all 3 actions, single-use tokens, fresh-token/same-order retry, expiry blocks submit, error/retry and EN/VI widget lifecycle (mock provider).');
+  }
 } catch (error) {
   fatal = error.message;
   process.exitCode = 1;
@@ -639,7 +725,8 @@ try {
     extendedPassed: results.filter(result => Number(result.number) > 10 && result.status === 'PASS').length,
     requests, orderRetryEvidence: orderRequests.map(({ key, body, scenario }) => ({ scenario, keyHash: createHash('sha256').update(key || '').digest('hex'), bodyHash: createHash('sha256').update(body).digest('hex') })),
     exceptions, ...(fatal ? { fatal } : {}),
+    turnstile: { mocked: turnstileTest, verifiedActions: [...verifiedActions], singleUseTokens: usedTokens.size }, skippedResponsive: skipResponsive,
   };
   writeFileSync(path.join(evidenceRoot, 'phase5-ui-results.json'), JSON.stringify(evidence, null, 2));
-  console.log(`Phase 5 UI: ${evidence.mandatoryPassed}/10 scenarios; ${evidence.extendedPassed}/2 extended; persisted D1 unchanged=${persistedUnchanged}; exceptions=${exceptions.length}.`);
+  console.log(`Phase 5 UI: ${evidence.mandatoryPassed}/10 scenarios; ${evidence.extendedPassed}/2 extended; responsive group skipped=${skipResponsive}; persisted D1 unchanged=${persistedUnchanged}; exceptions=${exceptions.length}.`);
 }

@@ -58,7 +58,7 @@ export function parseCredentials(input) {
   ensure(typeof result.admin_password === 'string' && result.admin_password.length >= 24 && result.admin_password.length <= 1024,
     'Provide an admin password of at least 24 characters through hidden stdin.');
   const tokens = result.turnstile_tokens ?? [];
-  ensure(Array.isArray(tokens) && tokens.length <= 10 && tokens.every(token => typeof token === 'string' && token.length > 0 && token.length <= 2048), 'Invalid Turnstile token input.');
+  ensure(Array.isArray(tokens) && tokens.length <= 16 && tokens.every(token => typeof token === 'string' && token.length > 0 && token.length <= 2048), 'Invalid Turnstile token input.');
   return { password: result.admin_password, tokens: [...tokens] };
 }
 
@@ -97,7 +97,7 @@ async function readCredentials() {
   let input = '';
   for await (const chunk of process.stdin) {
     input += chunk;
-    ensure(input.length <= 24_000, 'Credential stdin is too long.');
+    ensure(input.length <= 40_000, 'Credential stdin is too long.');
   }
   return parseCredentials(input);
 }
@@ -125,6 +125,10 @@ export async function runRemoteSmoke(config, { fetchImpl = fetch, log = console.
   const created = new Set();
   const done = label => { passed++; log(`PASS ${label}`); };
   const api = async (route, { method = 'GET', body, admin = false, status = 200, key, errorCode } = {}) => {
+    if (method === 'POST' && ['/api/admin/login', '/api/orders', '/api/orders/lookup'].includes(route)) {
+      const token = tokens.shift();
+      if (token) body = { ...body, turnstile_token: token };
+    }
     const mutates = method !== 'GET' && route !== '/api/checkout/quote' && route !== '/api/orders/lookup' && route !== '/api/admin/login' && route !== '/api/admin/logout';
     ensure(!mutates || config.writes, 'Read-only smoke refused a write.');
     const headers = { ...(body !== undefined ? { 'content-type': 'application/json' } : {}),
@@ -260,8 +264,7 @@ export async function runRemoteSmoke(config, { fetchImpl = fetch, log = console.
     });
     const create = async (input = body(), key = randomUUID(), status = 201) => {
       writesStarted = true;
-      const token = tokens.shift();
-      const result = await api('/api/orders', { method: 'POST', body: { ...input, ...(token ? { turnstile_token: token } : {}) }, key, status });
+      const result = await api('/api/orders', { method: 'POST', body: input, key, status });
       if (result.response.ok) {
         if (!/^LNR-\d{6}-[A-HJ-KM-NP-Z2-9]{6}$/.test(result.data?.order_number || '')) {
           uncertain = true;

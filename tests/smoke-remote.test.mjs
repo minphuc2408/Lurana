@@ -71,7 +71,9 @@ async function isolated(action) {
         calls.push({ route: url.pathname, method, body: body.length ? JSON.parse(body.toString()) : undefined });
         const response = url.pathname.startsWith('/api/')
           ? await app.fetch(new Request(url, { method, headers: incoming.headers, ...(!['GET', 'HEAD'].includes(method) ? { body } : {}) }),
-            { DB: db, ADMIN_PASSWORD: demoPassword, JWT_SECRET: demoSecret })
+            { DB: db, ADMIN_PASSWORD: demoPassword, JWT_SECRET: demoSecret,
+              RATE_LIMIT_SENSITIVE: { limit: async () => ({ success: true }) },
+              RATE_LIMIT_PUBLIC: { limit: async () => ({ success: true }) } })
           : new Response('<html><div id="root"></div></html>', { headers: { 'content-type': 'text/html' } });
         outgoing.writeHead(response.status, Object.fromEntries(response.headers));
         outgoing.end(Buffer.from(await response.arrayBuffer()));
