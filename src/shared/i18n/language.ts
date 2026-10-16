@@ -6,9 +6,13 @@ export function normalizeLanguage(language?: string): Language {
   return language?.toLowerCase().split("-")[0] === "vi" ? "vi" : "en";
 }
 
-export function readLanguage(storage?: Pick<Storage, "getItem">): Language {
-  try { return normalizeLanguage(storage?.getItem(LANGUAGE_STORAGE_KEY) ?? undefined); }
-  catch { return "en"; }
+export function readLanguage(storage?: Pick<Storage, "getItem">, browserLanguages: readonly string[] = []): Language {
+  try {
+    const saved = storage?.getItem(LANGUAGE_STORAGE_KEY);
+    if (saved === 'en' || saved === 'vi') return saved;
+  } catch { /* Browser language still works when storage is disabled. */ }
+  const supported = browserLanguages.find(value => /^(vi|en)(-|$)/i.test(value));
+  return normalizeLanguage(supported);
 }
 
 export function saveLanguage(language: Language, storage?: Pick<Storage, "setItem">) {

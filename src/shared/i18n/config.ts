@@ -11,7 +11,7 @@ function storage() {
 export const i18n = i18next.createInstance();
 void i18n.use(initReactI18next).init({
   resources,
-  lng: readLanguage(storage()),
+  lng: readLanguage(storage(), typeof navigator === 'undefined' ? [] : navigator.languages?.length ? navigator.languages : [navigator.language]),
   supportedLngs: supportedLanguages,
   fallbackLng: "en",
   fallbackNS: "common",

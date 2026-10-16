@@ -3,6 +3,7 @@ import { lazy } from 'react';
 import { MainLayout } from './layouts/MainLayout';
 import { AuthLayout } from './layouts/AuthLayout';
 import { AdminLayout } from './layouts/AdminLayout';
+import { MetadataLayout } from './layouts/MetadataLayout';
 import { AdminRoute } from '@/features/auth';
 import { RouteError } from '@/shared/components/RouteError';
 import HomePage from '@/pages/HomePage';
@@ -16,7 +17,7 @@ const AdminOrdersPage = lazy(() => import('@/pages/admin/AdminOrdersPage'));
 const AdminStockPage = lazy(() => import('@/pages/admin/AdminStockPage'));
 const AdminDeliveryZonesPage = lazy(() => import('@/pages/admin/AdminDeliveryZonesPage'));
 // Deferred features keep their source while routes without real APIs stay hidden.
-export const router = createBrowserRouter([{
+export const router = createBrowserRouter([{ Component: MetadataLayout, children: [{
   path: '/', Component: MainLayout, errorElement: <RouteError />,
   children: [
     { index: true, Component: HomePage }, { path: 'shop', Component: ShopPage }, { path: 'cart', Component: CartPage },
@@ -35,4 +36,4 @@ export const router = createBrowserRouter([{
     { path: 'delivery-zones', Component: AdminDeliveryZonesPage },
     { path: '*', Component: UnavailablePage },
   ],
-}]);
+}] }]);
