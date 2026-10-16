@@ -25,8 +25,8 @@ export async function getAdminOrders(query: Record<string, string> = {}, signal?
   return adminRequest<{ items: AdminOrderRow[]; total: number }>(`/orders?${params}`, { signal });
 }
 export const getAdminOrder = (number: string, signal?: AbortSignal) => adminRequest<AdminOrderDetail>(`/orders/${encodeURIComponent(number)}`, { signal });
-export const changeOrderStatus = (number: string, status: ApiOrderStatus, note: string) => adminRequest(`/orders/${encodeURIComponent(number)}/status`, {
-  method: 'PATCH', body: JSON.stringify(validated(adminOrderStatusSchema, { to_status: status, ...(note ? { note } : {}) })),
+export const changeOrderStatus = (number: string, status: ApiOrderStatus, note: string, restock?: boolean) => adminRequest(`/orders/${encodeURIComponent(number)}/status`, {
+  method: 'PATCH', body: JSON.stringify(validated(adminOrderStatusSchema, { to_status: status, ...(note ? { note } : {}), ...(restock === undefined ? {} : { restock }) })),
 });
 export const saveAdminOrderNote = (number: string, note: string) => adminRequest(`/orders/${encodeURIComponent(number)}/note`, {
   method: 'PATCH', body: JSON.stringify(validated(adminOrderNoteSchema, { admin_note: note || null })),

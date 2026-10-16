@@ -30,7 +30,7 @@ test('admin actions follow the legal COD path and terminal orders expose no tran
   assert.deepEqual(allowedAdminTransitions('PENDING'), ['CONFIRMED', 'CANCELLED']);
   assert.deepEqual(allowedAdminTransitions('CONFIRMED'), ['PREPARING', 'CANCELLED']);
   assert.deepEqual(allowedAdminTransitions('PREPARING'), ['IN_TRANSIT', 'CANCELLED']);
-  assert.deepEqual(allowedAdminTransitions('IN_TRANSIT'), ['DELIVERED']);
+  assert.deepEqual(allowedAdminTransitions('IN_TRANSIT'), ['DELIVERED', 'CANCELLED']);
   assert.deepEqual(allowedAdminTransitions('DELIVERED'), []);
   assert.deepEqual(allowedAdminTransitions('CANCELLED'), []);
 });

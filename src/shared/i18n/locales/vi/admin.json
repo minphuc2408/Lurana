@@ -1,4 +1,7 @@
 {
+  "Failed delivery keeps stock consumed unless you choose to restock.": "Đóng đơn giao thất bại và giữ nguyên tồn đã trừ. Chỉ hoàn tồn hoa còn có thể bán lại. Không thể hoàn tác thao tác này.",
+  "Failed delivery reason required": "Lý do giao thất bại (bắt buộc)",
+  "Return reusable flowers to stock": "Hoàn tồn hoa còn có thể bán lại",
   "Security": "Bảo mật",
   "Admin account security settings": "Cài đặt bảo mật tài khoản quản trị",
   "Current Password": "Mật khẩu hiện tại",
@@ -178,5 +181,10 @@
   "No categories yet. Add at least one category before creating a product, then reload categories.": "Chưa có danh mục. Cần thêm ít nhất một danh mục trước khi tạo sản phẩm, sau đó tải lại danh mục.",
   "Reload categories": "Tải lại danh mục",
   "Create a product with three sizes and upload an image": "Tạo sản phẩm với ba kích cỡ và tải ảnh lên",
-  "Use an existing image URL instead": "Dùng đường dẫn ảnh có sẵn"
+  "Use an existing image URL instead": "Dùng đường dẫn ảnh có sẵn",
+  "Placed from": "Đặt từ ngày",
+  "Placed to": "Đặt đến ngày",
+  "Search orders in selected dates. Default is the last 90 days; maximum 366 days.": "Tìm trong khoảng ngày đặt đã chọn. Mặc định 90 ngày gần nhất, tối đa 366 ngày. Từ khóa cần ít nhất 2 ký tự. Thu hẹp khoảng ngày để xem quá 10.000 kết quả.",
+  "Orders by status in last {{count}} days": "Đơn theo trạng thái trong {{count}} ngày gần nhất",
+  "Only Cloudinary or Unsplash HTTPS image URLs are allowed.": "Dùng URL ảnh HTTPS từ Cloudinary hoặc Unsplash."
 }

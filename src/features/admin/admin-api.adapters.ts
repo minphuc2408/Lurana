@@ -6,7 +6,7 @@ import type { AdminVariant, VariantDraft } from './admin-api.types';
 export function allowedAdminTransitions(status: ApiOrderStatus): ApiOrderStatus[] {
   const next: Record<ApiOrderStatus, ApiOrderStatus[]> = {
     PENDING: ['CONFIRMED', 'CANCELLED'], CONFIRMED: ['PREPARING', 'CANCELLED'],
-    PREPARING: ['IN_TRANSIT', 'CANCELLED'], IN_TRANSIT: ['DELIVERED'], DELIVERED: [], CANCELLED: [],
+    PREPARING: ['IN_TRANSIT', 'CANCELLED'], IN_TRANSIT: ['DELIVERED', 'CANCELLED'], DELIVERED: [], CANCELLED: [],
   };
   return next[status];
 }

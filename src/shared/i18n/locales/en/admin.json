@@ -1,4 +1,7 @@
 {
+  "Failed delivery keeps stock consumed unless you choose to restock.": "This closes the failed delivery without returning stock. Only restock flowers that can still be sold. This action cannot be undone.",
+  "Failed delivery reason required": "Reason for failed delivery (required)",
+  "Return reusable flowers to stock": "Return reusable flowers to stock",
   "Security": "Security",
   "Admin account security settings": "Admin account security settings",
   "Current Password": "Current Password",
@@ -178,5 +181,10 @@
   "No categories yet. Add at least one category before creating a product, then reload categories.": "No categories yet. Add at least one category before creating a product, then reload categories.",
   "Reload categories": "Reload categories",
   "Create a product with three sizes and upload an image": "Create a product with three sizes and upload an image",
-  "Use an existing image URL instead": "Use an existing image URL instead"
+  "Use an existing image URL instead": "Use an existing image URL instead",
+  "Placed from": "Placed from",
+  "Placed to": "Placed to",
+  "Search orders in selected dates. Default is the last 90 days; maximum 366 days.": "Search orders in selected dates. Default: last 90 days; maximum: 366 days. Use at least 2 characters for search. Narrow the date range to view more than 10,000 results.",
+  "Orders by status in last {{count}} days": "Orders by status in the last {{count}} days",
+  "Only Cloudinary or Unsplash HTTPS image URLs are allowed.": "Use an HTTPS image URL from Cloudinary or Unsplash."
 }

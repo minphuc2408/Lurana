@@ -7,7 +7,7 @@ export interface AdminOrderRow {
   delivery_date: string; delivery_time_slot: string; grand_total: number; placed_at: string;
 }
 export interface AdminOrderDetail extends OrderDetail { admin_note: string | null; stock_released: boolean; }
-export interface AdminSummary { orders_by_status: Record<ApiOrderStatus, number>; today_orders: number; low_stock_count: number; }
+export interface AdminSummary { orders_by_status: Record<ApiOrderStatus, number>; period_days: number; today_orders: number; low_stock_count: number; }
 export interface AdminVariant extends Omit<ProductVariant, 'in_stock' | 'low_stock' | 'max_quantity'> {
   product_id: number; stock_quantity: number; low_stock_threshold: number; is_active: boolean;
 }

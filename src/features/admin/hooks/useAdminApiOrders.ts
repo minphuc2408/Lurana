@@ -5,10 +5,11 @@ import { ApiError } from '@/shared/api/client';
 import { allowedAdminTransitions } from '../admin-api.adapters';
 import { changeOrderStatus, getAdminOrder, getAdminOrders, saveAdminOrderNote } from '../admin-api.service';
 import type { AdminOrderDetail, AdminOrderRow } from '../admin-api.types';
+import { vietnamDate } from '@/shared/lib/format';
 
 export function useAdminApiOrders() {
   const [params] = useSearchParams();
-  const [filters, setFilters] = useState({ status: '', date: '', q: '' });
+  const [filters, setFilters] = useState({ status: '', date: '', q: '', placed_from: vietnamDate(-89), placed_to: vietnamDate() });
   const [query, setQuery] = useState<Record<string, string>>({ limit: '20', offset: '0' });
   const [orders, setOrders] = useState<AdminOrderRow[]>([]);
   const [total, setTotal] = useState(0);
@@ -24,6 +25,7 @@ export function useAdminApiOrders() {
   const [pending, setPending] = useState(false);
   const [saved, setSaved] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [restock, setRestock] = useState(false);
   const inFlight = useRef(false);
   const listVersion = useRef(0);
   const queryRef = useRef(query);
@@ -54,13 +56,13 @@ export function useAdminApiOrders() {
   const transition = async (status: ApiOrderStatus) => {
     if (!selected || inFlight.current) return;
     inFlight.current = true; setPending(true); setActionError(null); setSaved(false);
-    try { await changeOrderStatus(selected.order_number, status, transitionNote); setConfirmCancel(false); setTransitionNote(''); await Promise.all([loadDetail(selected.order_number), loadOrders()]); }
+    try { await changeOrderStatus(selected.order_number, status, transitionNote, status === 'CANCELLED' && selected.status_code === 'IN_TRANSIT' ? restock : undefined); setConfirmCancel(false); setTransitionNote(''); await Promise.all([loadDetail(selected.order_number), loadOrders()]); }
     catch (cause) {
       setActionError(cause);
       if (cause instanceof ApiError && cause.code === 'INVALID_TRANSITION') await Promise.all([loadDetail(selected.order_number), loadOrders()]);
     } finally { inFlight.current = false; setPending(false); }
   };
-  const requestTransition = (status: ApiOrderStatus) => { if (status === 'CANCELLED') setConfirmCancel(true); else void transition(status); };
+  const requestTransition = (status: ApiOrderStatus) => { if (status === 'CANCELLED') { setActionError(null); setRestock(false); setConfirmCancel(true); } else void transition(status); };
   const saveNote = async () => {
     if (!selected || inFlight.current) return;
     inFlight.current = true; setPending(true); setActionError(null); setSaved(false);
@@ -75,6 +77,6 @@ export function useAdminApiOrders() {
     closeOrder: () => { if (inFlight.current) return; detailVersion.current++; setSelected(null); setSelectedNumber(''); setDetailError(null); setDetailLoading(false); },
     adminNote, setAdminNote, transitionNote, setTransitionNote, actionError, pending, saved, saveNote,
     transitions: selected ? allowedAdminTransitions(selected.status_code) : [], requestTransition, confirmCancel, setConfirmCancel,
-    confirmCancellation: () => void transition('CANCELLED') };
+    restock, setRestock, confirmCancellation: () => void transition('CANCELLED') };
 }
 export type AdminApiOrdersModel = ReturnType<typeof useAdminApiOrders>;
