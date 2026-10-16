@@ -5,6 +5,7 @@ import { ApiError } from '@/shared/api/client';
 import { vietnamDate } from '@/shared/lib/format';
 import { useQuoteCart } from './useQuoteCart';
 import { checkoutIntent, type CheckoutIntent } from '../checkout-intent';
+import { useTurnstile } from '@/shared/hooks/useTurnstile';
 
 export interface CodForm {
   senderName: string; senderPhone: string; senderEmail: string; anonymous: boolean;
@@ -13,6 +14,7 @@ export interface CodForm {
 }
 export function useCodCheckout() {
   const cart = useQuoteCart();
+  const challenge = useTurnstile();
   const [step, setStep] = useState<'cart' | 'details' | 'review' | 'success'>('cart');
   const [form, setForm] = useState<CodForm>({ senderName: '', senderPhone: '', senderEmail: '', anonymous: false,
     recipientName: '', recipientPhone: '', address: '', date: vietnamDate(1), slot: '', cardType: 'NONE', cardMessage: '', note: '' });
@@ -40,23 +42,23 @@ export function useCodCheckout() {
     setStep('review');
   };
   const placeOrder = async () => {
-    if (sendingRef.current || !ready) return;
+    if (sendingRef.current || !ready || !challenge.ready) return;
     const parsed = orderSchema.safeParse(makePayload());
     if (!parsed.success) { setStep('details'); setError(new ApiError('VALIDATION_ERROR', 'Check order details.')); return; }
     const intent = checkoutIntent(parsed.data, intentRef.current);
     intentRef.current = intent;
     sendingRef.current = true; setSending(true); setError(null);
     try {
-      const result = await submitOrder(parsed.data, intent.key);
+      const result = await submitOrder({ ...parsed.data, ...(challenge.token ? { turnstile_token: challenge.token } : {}) }, intent.key);
       setOrder(result); setStep('success'); cart.clearCart(); cart.reloadCatalog();
     } catch (failure) {
       setError(failure);
       if (failure instanceof ApiError && ['OUT_OF_STOCK', 'VARIANT_UNAVAILABLE'].includes(failure.code)) { cart.retry(); cart.reloadCatalog(); }
-    } finally { sendingRef.current = false; setSending(false); }
+    } finally { challenge.reset(); sendingRef.current = false; setSending(false); }
   };
   const stockIssues = error instanceof ApiError && Array.isArray(error.details) && ['OUT_OF_STOCK', 'VARIANT_UNAVAILABLE'].includes(error.code)
     ? error.details as { variant_id: number; available?: number }[] : [];
-  return { ...cart, step, form, submitError: error, invalidFields, sending, order, ready, stockIssues,
+  return { ...cart, step, form, submitError: error, invalidFields, sending, order, ready, stockIssues, challenge,
     updateForm: <K extends keyof CodForm>(key: K, value: CodForm[K]) => { setForm(previous => ({ ...previous, [key]: value })); setInvalidFields([]); },
     setMethod: (value: Parameters<typeof cart.setMethod>[0]) => { const method = typeof value === 'function' ? value(cart.method) : value; cart.setMethod(method); if (method !== 'STANDARD') setForm(previous => ({ ...previous, date: vietnamDate() })); },
     startCheckout: () => { setError(null); setStep('details'); },

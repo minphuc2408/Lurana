@@ -6,6 +6,6 @@ export interface AuthContextValue {
   loading: boolean;
   error: unknown;
   refresh: () => Promise<void>;
-  login: (emailOrPassword: string, password?: string) => Promise<LoginResult>;
+  login: (emailOrPassword: string, password?: string, turnstileToken?: string) => Promise<LoginResult>;
   logout: () => Promise<boolean>;
 }

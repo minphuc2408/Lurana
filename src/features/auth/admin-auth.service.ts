@@ -7,8 +7,8 @@ export async function getAdminSession(signal?: AbortSignal): Promise<AuthUser> {
   await apiRequest<{ role: 'ADMIN' }>('/admin/me', { signal });
   return adminUser();
 }
-export async function loginAdmin(password: string): Promise<AuthUser> {
-  await apiRequest('/admin/login', { method: 'POST', body: JSON.stringify({ password }) });
+export async function loginAdmin(password: string, turnstileToken?: string): Promise<AuthUser> {
+  await apiRequest('/admin/login', { method: 'POST', body: JSON.stringify({ password, ...(turnstileToken ? { turnstile_token: turnstileToken } : {}) }) });
   return getAdminSession();
 }
 export async function logoutAdmin() {

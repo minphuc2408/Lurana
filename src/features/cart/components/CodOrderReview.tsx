@@ -2,6 +2,7 @@ import { useLocale, getLocalizedName } from '@/shared/i18n';
 import { formatVietnamDate } from '@/shared/lib/format';
 import { apiErrorKey } from '@/shared/api/client';
 import type { CodCheckoutModel } from '../hooks/useCodCheckout';
+import { TurnstileChallenge } from '@/shared/components/TurnstileChallenge';
 
 export function CodOrderReview(model: CodCheckoutModel) {
   const { t, language } = useLocale("cart");
@@ -16,9 +17,10 @@ export function CodOrderReview(model: CodCheckoutModel) {
       <div><dt className="font-medium text-lunara-ink">{t('Payment')}</dt><dd>{t('Cash on delivery COD')}</dd></div>
     </dl>
     <p className="mb-6 text-sm text-lunara-body">{t('Server confirms final total')}</p>
+    <TurnstileChallenge action="checkout" {...model.challenge} />
     {Boolean(model.submitError) && <div role="alert" className="mb-4 rounded-xl bg-lunara-blush p-4 text-lunara-ink">{t(apiErrorKey(model.submitError))}<p className="mt-2 text-sm">{t('Retry keeps same order intent')}</p></div>}
     {model.stockIssues.map(issue => <p key={issue.variant_id} role="alert" className="mb-4">{t('Stock issue {{name}} {{available}}', { name: getLocalizedName(model.items.find(item => item.variantId === issue.variant_id) || {}, language) || '#' + issue.variant_id, available: issue.available ?? 0 })}</p>)}
-    <div className="flex flex-wrap gap-4"><button data-checkout-edit type="button" disabled={model.sending} onClick={model.editDetails} className="rounded-full border border-lunara-border px-5 py-3 text-lunara-body disabled:opacity-50">{t('Edit details')}</button><button data-checkout-submit type="button" onClick={model.placeOrder} disabled={model.sending || !model.ready} className="rounded-full bg-lunara-rose-strong px-7 py-3 text-white disabled:opacity-50">{model.sending ? t('Placing order') : model.submitError ? t('Retry order') : t('Place Order')}</button></div>
+    <div className="flex flex-wrap gap-4"><button data-checkout-edit type="button" disabled={model.sending} onClick={model.editDetails} className="rounded-full border border-lunara-border px-5 py-3 text-lunara-body disabled:opacity-50">{t('Edit details')}</button><button data-checkout-submit type="button" onClick={model.placeOrder} disabled={model.sending || !model.ready || !model.challenge.ready} className="rounded-full bg-lunara-rose-strong px-7 py-3 text-white disabled:opacity-50">{model.sending ? t('Placing order') : model.submitError ? t('Retry order') : t('Place Order')}</button></div>
     {model.sending && <p role="status" className="mt-4 text-lunara-body">{t('Placing order')}</p>}
   </section>;
 }

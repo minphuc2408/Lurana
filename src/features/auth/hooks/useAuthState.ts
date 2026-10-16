@@ -33,12 +33,12 @@ export function useAuthState() {
     window.addEventListener(ADMIN_UNAUTHORIZED_EVENT, unauthorized);
     return () => { controller.abort(); window.removeEventListener(ADMIN_UNAUTHORIZED_EVENT, unauthorized); };
   }, [readSession, invalidateSessionRead]);
-  const login = async (emailOrPassword: string, password?: string): Promise<LoginResult> => {
+  const login = async (emailOrPassword: string, password?: string, turnstileToken?: string): Promise<LoginResult> => {
     invalidateSessionRead();
     const revision = generation.current;
     setError(null);
     try {
-      const session = await loginAdmin(password ?? emailOrPassword);
+      const session = await loginAdmin(password ?? emailOrPassword, turnstileToken);
       if (revision !== generation.current) return { success: false, error: apiErrorKey(new ApiError('UNAUTHORIZED', 'Session changed.')) };
       setUser(session); setLoading(false);
       return { success: true, user: session };

@@ -2,6 +2,7 @@ import { Link } from 'react-router';
 import { ArrowLeft, Flower } from 'lucide-react';
 import { useLocale } from '@/shared/i18n';
 import type { AdminLoginModel } from '../hooks/useAdminLogin';
+import { TurnstileChallenge } from '@/shared/components/TurnstileChallenge';
 
 export function AdminLoginView(model: AdminLoginModel) {
   const { t } = useLocale("auth");
@@ -19,7 +20,8 @@ export function AdminLoginView(model: AdminLoginModel) {
             <input id="admin-password" name="password" type="password" required maxLength={1024} autoComplete="current-password" value={model.password} onChange={event => model.setPassword(event.target.value)} disabled={model.submitting} className="min-h-12 w-full rounded-xl border border-lunara-border bg-lunara-surface px-4" />
           </div>
           {model.errorKey && <p role="alert" className="rounded-xl bg-lunara-blush p-3 text-sm text-lunara-ink">{common.t(model.errorKey)}</p>}
-          <button data-testid="admin-login-submit" disabled={model.submitting} className="min-h-12 w-full rounded-full bg-lunara-rose-strong px-6 py-3 text-white disabled:opacity-60">{t(model.submitting ? 'Signing in…' : 'Sign In')}</button>
+          <TurnstileChallenge action="admin_login" {...model.challenge} />
+          <button data-testid="admin-login-submit" disabled={model.submitting || !model.challenge.ready} className="min-h-12 w-full rounded-full bg-lunara-rose-strong px-6 py-3 text-white disabled:opacity-60">{t(model.submitting ? 'Signing in…' : 'Sign In')}</button>
         </form>
       </section>
     </div>
