@@ -9,5 +9,5 @@ export function useMainLayout() {
   const navLinks = [{ to: '/', label: 'Home' }, { to: '/shop', label: 'Shop' }, { to: '/cart', label: 'Cart' }, { to: '/orders/track', label: 'Track order' },
     ...(featureFlags.customerAuth ? [{ to: '/orders', label: 'My Orders' }, { to: '/profile', label: 'Profile' }] : [])];
   const isActive = (path: string) => path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
-  return { itemCount, menuOpen, setMenuOpen, navLinks, isActive };
+  return { searchQuery: new URLSearchParams(location.search).get('q') || '', itemCount, menuOpen, setMenuOpen, navLinks, isActive };
 }

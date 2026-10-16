@@ -4,13 +4,10 @@ import { ArrowRight } from "lucide-react";
 import type { HomeModel } from "../hooks/useHome";
 export function OurStory(model: HomeModel) {
   const { t } = useLocale("landing");
-  const {
-    shopImage
-  } = model;
   return <section className="bg-lunara-blush [padding:80px_0]">
         <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
           <div className="relative">
-            <img src={shopImage} alt={t("Our shop")} className="rounded-3xl shadow-xl [width:100%] [aspect-ratio:4/3] [object-fit:cover]" />
+            <div data-editorial-image="story" aria-hidden="true" className="aspect-[4/3] rounded-3xl border border-lunara-border bg-lunara-cream" />
 
           </div>
 

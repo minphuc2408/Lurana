@@ -18,8 +18,9 @@ test('catalog is an API snapshot with variant prices, categories and no fabricat
  assert.equal(getProduct(999),undefined);
 });
 test('adapter selects primary image and lowest variant price; empty variants are supported', () => {
- const base={id:100,slug:'test',category_code:'bouquets',name_vi:'Hoa',name_en:'Flower',badge_code:null,is_featured:false,description_vi:null,description_en:null};
+ const base={id:100,slug:'test',category_code:'bouquets',name_vi:'Hoa',name_en:'Flower',badge_code:null,is_featured:false,description_vi:'Hoa do cửa hàng mô tả',description_en:'Description written by the shop'};
  const p=normalizeProduct({...base,images:[{url:'secondary',is_primary:false},{url:'primary',is_primary:true}],variants:[{price:600000},{price:350000}]},[{code:'bouquets',name_en:'Bouquets'}]);
+ assert.equal(p.description_vi,base.description_vi);assert.equal(p.description_en,base.description_en);
  assert.equal(p.image,'primary');assert.equal(p.price,350000);assert.equal(p.category,'Bouquets');assert.equal(p.reviews,undefined);
  assert.equal(normalizeProduct({...base,images:[],variants:[]}).image,'');
 });

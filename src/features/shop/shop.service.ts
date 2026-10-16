@@ -12,6 +12,7 @@ export function normalizeProduct(product: ProductDto | ProductApiDto, categoryLi
     price: product.variants.length ? Math.min(...product.variants.map(variant => variant.price)) : 0,
     image: (product.images.find(image => image.is_primary) || product.images[0])?.url || '',
     tag: product.badge_code ? badge[product.badge_code] : '', is_featured: product.is_featured,
+    description_en: product.description_en, description_vi: product.description_vi,
     variants: structuredClone(product.variants) };
 }
 export async function loadCatalog(signal?: AbortSignal) {

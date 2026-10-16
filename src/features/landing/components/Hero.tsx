@@ -1,54 +1,21 @@
 import { useLocale } from "@/shared/i18n";
 import { Link } from "react-router";
-import { ArrowRight, Heart } from "lucide-react";
-import type { HomeModel } from "../hooks/useHome";
-export function Hero(model: HomeModel) {
+import { ArrowRight } from "lucide-react";
+export function Hero() {
   const { t } = useLocale("landing");
-  const {
-    heroImage
-  } = model;
-  return <section className="relative overflow-hidden [min-height:90vh] bg-lunara-cream">
-        <div className="max-w-7xl mx-auto px-6 py-20 flex flex-col md:flex-row items-center gap-12">
-          {/* Text */}
-          <div className="flex-1 z-10">
-            <span className="[font-size:0.78rem] [letter-spacing:0.2em] [text-transform:uppercase] text-lunara-rose-strong [font-weight:500]">
-              {t("✦ Premium Floral Studio")}</span>
-            <h1 className="font-display [font-size:clamp(3rem,_6vw,_5.5rem)] [font-weight:600] [line-height:1.1] text-lunara-ink [margin-top:16px] [margin-bottom:24px]">
-              {t("Where Flowers")}<br />
-              <span className="[font-style:italic] text-lunara-rose-strong">{t("Tell Your Story")}</span>
-            </h1>
-            <p className="[font-size:1rem] [line-height:1.8] text-lunara-body [max-width:440px] [margin-bottom:40px]">
-              {t("Handcrafted with love and intention, each arrangement at Lunara is a living work of art designed to express what words cannot.")}</p>
-            <div className="flex flex-wrap gap-4">
-              <Link to="/shop" className="flex items-center gap-2 px-8 py-4 rounded-full bg-lunara-rose-strong text-white [text-decoration:none] [font-size:0.85rem] [letter-spacing:0.1em] [text-transform:uppercase] [font-weight:500] [transition:all_0.2s_ease]">
-                {t("Explore Collection")}{" "}<ArrowRight size={16} />
-              </Link>
-
-            </div>
-
-            {/* Stats */}
-
-          </div>
-
-          {/* Hero Image */}
-          <div className="flex-1 relative flex justify-center">
-            <div className="rounded-3xl overflow-hidden shadow-2xl [width:min(480px,_100%)] [aspect-ratio:3/4] [position:relative]">
-              <img src={heroImage} alt={t("Beautiful roses")} className="[width:100%] [height:100%] [object-fit:cover]" />
-              <div className="[position:absolute] [inset:0] [background:linear-gradient(to_bottom,_transparent_60%,_rgba(61,34,40,0.3))]" />
-            </div>
-
-            {/* Floating badge */}
-
-
-            {/* Floating heart */}
-            <div className="absolute bottom-12 -right-4 w-12 h-12 rounded-full flex items-center justify-center shadow-lg bg-lunara-rose-strong">
-              <Heart size={18} color="white" fill="white" />
-            </div>
-          </div>
-        </div>
-
-        {/* Decorative elements */}
-        <div className="[position:absolute] [top:10%] [right:5%] [width:300px] [height:300px] [border-radius:50%] bg-[#F8D7E0] [opacity:0.3] [filter:blur(60px)] [z-index:0]" />
-        <div className="[position:absolute] [bottom:10%] [left:5%] [width:200px] [height:200px] [border-radius:50%] bg-[#D4B896] [opacity:0.2] [filter:blur(50px)] [z-index:0]" />
-      </section>;
+  return <section data-home-hero className="overflow-hidden rounded-[28px] border border-lunara-border bg-lunara-cream">
+    <div className="grid lg:min-h-[440px] lg:grid-cols-12">
+      <div className="flex min-w-0 flex-col justify-center px-6 py-10 sm:p-10 lg:col-span-5 lg:px-12 lg:py-10">
+        <span className="mb-4 text-[0.68rem] font-semibold tracking-[0.18em] text-lunara-rose-strong uppercase sm:text-xs">{t("✦ Premium Floral Studio")}</span>
+        <h1 className="mb-5 font-display text-[clamp(2.15rem,4.2vw,3.5rem)] leading-[1.12] font-semibold tracking-tight text-lunara-ink">
+          {t("Where Flowers")}<br /><span className="text-lunara-rose-strong italic">{t("Tell Your Story")}</span>
+        </h1>
+        <p className="mb-8 max-w-md text-sm leading-7 text-lunara-body sm:text-base">{t("Handcrafted with love and intention, each arrangement at Lunara is a living work of art designed to express what words cannot.")}</p>
+        <div><Link to="/shop" className="inline-flex min-h-11 items-center gap-3 rounded-full bg-lunara-rose-strong px-7 py-3.5 text-xs font-semibold tracking-[0.08em] text-white uppercase transition-colors hover:bg-lunara-ink">
+          {t("Shop Flowers")}<ArrowRight size={16} aria-hidden="true" />
+        </Link></div>
+      </div>
+      <div data-editorial-image="hero" aria-hidden="true" className="min-h-48 bg-lunara-border/25 sm:min-h-64 lg:col-span-7 lg:min-h-full" />
+    </div>
+  </section>;
 }

@@ -265,5 +265,7 @@
   "Image upload is not configured. You can paste an image URL.": "Chưa cấu hình tải ảnh. Bạn vẫn có thể dán URL ảnh.",
   "Choose a JPEG, PNG or WebP image up to 5 MB.": "Chọn ảnh JPEG, PNG hoặc WebP, tối đa 5 MB.",
   "Image upload was not confirmed. Check Cloudinary before trying again.": "Chưa xác nhận được kết quả tải ảnh. Kiểm tra Cloudinary trước khi thử lại.",
-  "Upload a product image before saving.": "Vui lòng tải ảnh sản phẩm lên trước khi lưu."
+  "Upload a product image before saving.": "Vui lòng tải ảnh sản phẩm lên trước khi lưu.",
+  "Search flowers": "Tìm hoa",
+  "Search flowers...": "Tìm hoa..."
 }

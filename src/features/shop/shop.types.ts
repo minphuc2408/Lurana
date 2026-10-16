@@ -7,6 +7,8 @@ export interface Product extends LocalizedNameFields {
   category: ProductCategory;
   image: string;
   tag: string;
+  description_en?: string | null;
+  description_vi?: string | null;
   rating?: number;
   reviews?: number;
   slug?: string;

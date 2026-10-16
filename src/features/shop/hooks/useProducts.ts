@@ -1,12 +1,18 @@
 import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router";
 import { selectProducts } from "../shop.service";
 import { useCatalog } from './useCatalog';
 export function useProducts() {
   const catalog = useCatalog();
+  const [params] = useSearchParams();
   const products = catalog.products;
   const [selectedVariants, setSelectedVariants] = useState<Record<number, number>>({});
-  const [activeCategory, setActiveCategory] = useState("All");
-  const [search, setSearch] = useState("");
+  const [activeCategory, setActiveCategory] = useState(params.get("category") || "All");
+  const [search, setSearch] = useState(params.get("q") || "");
+  useEffect(() => {
+    setActiveCategory(params.get("category") || "All");
+    setSearch(params.get("q") || "");
+  }, [params]);
   const [sortBy, setSortBy] = useState("featured");
   const [liked, setLiked] = useState<number[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
