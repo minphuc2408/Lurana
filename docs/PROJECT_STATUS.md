@@ -1,6 +1,6 @@
 # Lunarra — trạng thái hiện tại
 
-Cập nhật tài liệu **17/10/2026**, giờ Việt Nam. Đây là nơi tổng hợp nghiệm thu và các mốc triển khai đã ghi nhận. Lượt audit hiện tại chỉ đọc source và sửa tài liệu, không chạy lại runtime tests, tái nghiệm thu cloud hoặc thay deployment (HTTP public chỉ dùng kiểm liên kết); các kết quả bên dưới giữ đúng ngày và phạm vi của lần kiểm trước.
+Cập nhật tài liệu **17/10/2026**, giờ Việt Nam. Đây là nơi tổng hợp nghiệm thu và các mốc triển khai đã ghi nhận. Các kết quả giữ đúng ngày và phạm vi của từng lượt kiểm; thay đổi local chưa deploy không thay mốc staging bên dưới.
 
 ## Code và kiểm chứng local
 
@@ -8,11 +8,12 @@ Cập nhật tài liệu **17/10/2026**, giờ Việt Nam. Đây là nơi tổng
 
 | Mốc kiểm local đã ghi nhận | Kết quả và giới hạn |
 | --- | --- |
+| Home theo ref,17/10 — **local, chưa deploy** | Thay khối Featured cũ bằng Tuyển chọn hôm nay/Sản phẩm nổi bật và Hành trình trao gửi. Typecheck, architecture **234 source files**, **191/191 tests**, build PASS; CodeGraph đã sync. Preview EN/VI ×7 widths320–1440: **14 ca** layout, quick-add variant còn hàng đầu tiên, keyboard/detail/Shop, hết hàng/loading/rỗng/lỗi/retry PASS;0exceptions/0API writes. Catalog synthetic bị intercept; snapshot GET staging **1sản phẩm**, ảnh Cloudinary tải đúng trong preview, không phải deploy mới. Evidence ignored `.security-review/home-selection-results.json` và ảnh `home-selection-*`; probe tạm không đưa vào Git. |
 | 17/10, Tra đơn/footer | Typecheck, architecture **234 source files**, **191 tests**, production build và staging build/dry-run PASS. Không phải lượt chạy mới của audit tài liệu |
 | Tra đơn | **72 ca** =6 trạng thái ×2 locale ×6 widths320–1440px; căn giữa/cùng chiều rộng/không overflow, lỗi và phản hồi trễ, required mã+SĐT, memory-only PII PASS. API/challenge bị intercept;0exceptions/0order writes. Runner [check-ui-order-lookup](../scripts/check-ui-order-lookup.mjs), evidence ignored `.security-review/lookup-ref-results.json` |
 | Footer | **84 lượt** =14 mục ×2 locale ×3 widths320/768/1440px; notice đúng tên, Escape/X/Đóng, focus restoration và không điều hướng PASS;0exceptions. Probe tạm ignored, không có runner footer riêng trong Git |
 | Cart/checkout hai trang,17/10 | **18 nhóm**: EN/VI/responsive/cart controls/consent/bank rollback/review/memory draft/retry UUID PASS;2 order responses bị intercept(503→201),0order API writes/0exceptions. [Runner](../scripts/check-ui-cart-checkout.mjs), evidence `.security-review/`/ảnh probe local; không nghiệm thu provider thật |
-| Story,17/10 | **28 ca** =2 routes ×2 locale ×7 widths;7 vị trí ảnh đã tải, noindex/navigation/địa chỉ chung footer PASS,0exceptions/0order writes. [Runner](../scripts/check-ui-story.mjs), `.security-review/story-ui-results.json` |
+| Story,17/10 | **28 ca** =2 routes ×2 locale ×7 widths;7 vị trí ảnh đã tải, noindex/navigation/địa chỉ chung footer PASS,0exceptions/0order writes. Đã chạy lại sau khi chèn Hành trình trao gửi, assertion thứ tự Home được cập nhật. [Runner](../scripts/check-ui-story.mjs), `.security-review/story-ui-results.json` |
 | Header/layout/typeface,17/10 | Header/search/cart **24 ca**, EN/VI/6 widths/cart0 và12; query tiếng Việt, Escape/focus, container/grid PASS. Probe typography tải4font/glyph VI, body/form/portal PASS. Local evidence, không phải full UI suite |
 | Delivery/catalog,16/10 | **190 tests/225 source files**, typecheck/build, schema **13/13 nhóm(46 assertions)** và smoke **40/40** PASS; browser admin7 +address8 +checkout12nhóm PASS trên dữ liệu cô lập;0exceptions. [Delivery](DELIVERY_ADDRESS.md) |
 | Gallery/detail,16/10 | Gallery5nhóm và product detail6nhóm browser PASS; signed-upload/challenge giả lập, Worker/D1 cô lập; snapshot persisted không đổi. Lần lượt179/174tests tại đúng mốc, không phải counts hiện tại |
@@ -20,7 +21,7 @@ Cập nhật tài liệu **17/10/2026**, giờ Việt Nam. Đây là nơi tổng
 | Hardening/fail-closed,16/10 | Native verifier3cấu hình và22phản hồi header live đã kiểm; bằng chứng tại mốc đó, không chứng minh secret/challenge hiện tại hoặc CPU cloud |
 | Phase5,15/10 |136tests/207source/smoke40, UI17routes/0exceptions;10/10MVP +2/2mở rộng trên local. [Nghiệm thu Phase5](pipeline/PHASE_5_FRONTEND.md) |
 
-Full UI checker cũ còn assertion quote-before-zone/luồng checkout gộp chưa được điều chỉnh và nghiệm thu lại toàn bộ. Các targeted PASS ở trên không thay kết quả full suite. Ảnh/provider bị chặn hoặc mock trong một số probe; không suy ra upload thật, Turnstile thật hoặc quota/CPU cloud.
+Full UI checker đã chạy lại cho Home17/10, vẫn dừng ở assertion total670 trong `check-ui-live-catalog.mjs`: checker cũ còn giả định quote-before-zone/luồng checkout gộp. Chưa điều chỉnh và nghiệm thu lại toàn bộ; các targeted PASS ở trên không thay kết quả full suite. Ảnh/provider bị chặn hoặc mock trong một số probe; không suy ra upload thật, Turnstile thật hoặc quota/CPU cloud.
 
 ## Staging ghi nhận gần nhất — 17/10/2026
 

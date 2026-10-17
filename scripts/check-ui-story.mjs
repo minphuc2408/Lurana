@@ -92,7 +92,7 @@ try {
   ws.addEventListener('message',event=>{const m=JSON.parse(event.data);if(m.method==='Network.requestWillBeSent'&&m.params.request.method==='POST'&&new URL(m.params.request.url).pathname==='/api/orders')orderWrites++;});
   await navigate('/');
   await waitFor("Boolean(document.querySelector('[data-home-story]'))");
-  await assert("document.querySelector('[data-home-story]').previousElementSibling.id==='featured'",'Story must immediately follow featured products');
+  await assert("document.querySelector('[data-home-story]').previousElementSibling.hasAttribute('data-home-journey') && document.querySelector('[data-home-journey]').previousElementSibling.id==='featured'",'Story must follow the featured collection and gifting journey');
   const checkLayout=async(route)=>{
     for(const language of ['vi','en']) {
       await evaluate("document.querySelector('[data-language-switcher] button[lang="+language+"]').click()");

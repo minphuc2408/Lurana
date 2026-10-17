@@ -1,13 +1,14 @@
 import { Link } from 'react-router';
 import { Dropdown } from "@/shared/ui/dropdown";
 import { useLocale, getLocalizedName } from "@/shared/i18n";
-import { ShoppingBag } from "lucide-react";
+import { Check, ShoppingBag } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { ImageWithFallback } from "@/shared/components/ImageWithFallback";
 import { cn } from "@/shared/lib/utils";
 import { formatVND } from "@/shared/lib/format";
 import type { Product } from "../shop.types";
 interface ProductCardProps {
+  appearance?: 'default' | 'featured';
   product: Product;
   liked?: boolean;
   added: boolean;
@@ -16,12 +17,34 @@ interface ProductCardProps {
   selectedVariantId?: number;
   onSelectVariant?: (productId: number, variantId: number) => void;
 }
-export function ProductCard({ product, added, onAdd, selectedVariantId, onSelectVariant }: ProductCardProps) {
+export function ProductCard({ appearance = 'default', product, added, onAdd, selectedVariantId, onSelectVariant }: ProductCardProps) {
   const { t, language } = useLocale("shop");
   const variants = product.variants || [];
   const variant = variants.find(item => item.id === selectedVariantId) || variants.find(item => item.in_stock) || variants[0];
   const description = language === 'vi' ? product.description_vi || product.description_en : product.description_en || product.description_vi;
   const detailPath = product.slug ? `/shop/${encodeURIComponent(product.slug)}` : '/shop';
+  if (appearance === 'featured') return <article data-product-id={product.id} data-product-appearance="featured" className="group flex h-full min-w-0 flex-col">
+    <Link to={detailPath} data-product-image-link aria-label={t('View {{name}}', { name: getLocalizedName(product, language) })} className="relative mb-3 block aspect-[4/5] overflow-hidden rounded-[2px] bg-lunara-blush sm:mb-4">
+      <ImageWithFallback src={product.image} alt={getLocalizedName(product, language)} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 motion-safe:group-hover:scale-[1.02] motion-reduce:transition-none" />
+      <span aria-hidden="true" className="absolute inset-0 flex items-end bg-lunara-ink/10 p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100 motion-reduce:transition-none">
+        <span className="w-full rounded-[2px] bg-lunara-cream py-2 text-center text-xs font-medium text-lunara-ink">{t('View details')} →</span>
+      </span>
+    </Link>
+    <div className="flex flex-1 flex-col justify-between">
+      <div>
+        <h3 className="font-display text-base leading-snug text-lunara-ink transition-colors group-hover:text-lunara-rose-strong sm:text-[17px]"><Link to={detailPath} data-product-name-link className="block truncate">{getLocalizedName(product, language)}</Link></h3>
+        {description && <Link to={detailPath} data-product-description-link className="mt-1 block text-xs leading-5 text-lunara-body hover:text-lunara-rose-strong"><p className="line-clamp-1">{description}</p></Link>}
+        {!variant?.in_stock && <p className="mt-1 text-xs leading-5 text-lunara-body">{t('Out of stock')}</p>}
+      </div>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 pt-2">
+        <span data-product-price className="text-sm font-medium tracking-tight text-lunara-ink sm:text-base">{variant ? formatVND(variant.price, language) : t('Unavailable')}</span>
+        <Button type="button" data-product-add variant="outline" size="icon" disabled={!variant?.in_stock} onClick={() => onAdd(product.id, variant?.id)} aria-label={t("Add {{value0}} to cart", { value0: getLocalizedName(product, language) })} title={variant?.in_stock ? added ? t('Added') : t('Add to Cart') : t('Out of stock')} className={cn("size-11 rounded-full border-lunara-border bg-lunara-cream text-lunara-body hover:border-lunara-rose-strong hover:bg-lunara-rose-strong hover:text-white focus-visible:ring-lunara-rose-strong [&_svg]:size-3.5", added && "border-lunara-rose-strong text-lunara-rose-strong")}>
+          {added ? <Check aria-hidden="true" strokeWidth={1.8} /> : <ShoppingBag aria-hidden="true" strokeWidth={1.8} />}
+        </Button>
+        <span role="status" className="sr-only">{!variant?.in_stock ? t('Out of stock') : added ? t('Added') : ''}</span>
+      </div>
+    </div>
+  </article>;
   return <article data-product-id={product.id} className="group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl bg-lunara-surface shadow-sm shadow-lunara-ink/5 transition-[transform,box-shadow] duration-300 ease-out hover:shadow-lg hover:shadow-lunara-rose-strong/10 motion-safe:hover:-translate-y-1 motion-reduce:transition-none">
     <Link to={detailPath} data-product-image-link aria-label={t('View {{name}}', { name: getLocalizedName(product, language) })} className="block aspect-[4/5] overflow-hidden bg-lunara-blush">
       <ImageWithFallback src={product.image} alt={getLocalizedName(product, language)} loading="lazy" className="h-full w-full object-cover transition-transform duration-300 motion-safe:group-hover:scale-105" />

@@ -25,6 +25,7 @@ export function HomeView(model: HomeModel) {
     </nav>}
     <Benefits />
     <FeaturedCollection {...model} />
+    <Benefits variant="journey" />
     <OurStory />
   </main>;
 }
