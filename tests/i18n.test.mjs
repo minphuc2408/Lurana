@@ -35,7 +35,7 @@ test('static UI translation keys resolve through their namespace or common fallb
   for (const file of files(new URL('../src/', import.meta.url)).filter(file => file.pathname.endsWith('.tsx'))) {
     const text = fs.readFileSync(file, 'utf8');
     if (!text.includes('useLocale')) continue;
-    const namespace = text.match(/useLocale\("([^"]+)"\)/)?.[1] ?? 'common';
+    const namespace = text.match(/useLocale\((['"])([^'"]+)\1\)/)?.[2] ?? 'common';
     const source = ts.createSourceFile(file.pathname, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
     function visit(node) {
       if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === 't' && ts.isStringLiteral(node.arguments[0])) {

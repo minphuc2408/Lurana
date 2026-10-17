@@ -22,13 +22,15 @@
 
 /* i18n updates the root language; utilities inherit these fonts in dialogs too. */
 html[lang='vi'] {
-  --lunara-font-display: 'Lora', serif;
-  --lunara-font-body: 'Be Vietnam Pro', sans-serif;
+  --lunara-font-display: 'Lora', Georgia, serif;
+  --lunara-font-body: 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
 }
 
 @theme inline {
   --font-display: var(--lunara-font-display);
   --font-body: var(--lunara-font-body);
+  --font-serif: var(--lunara-font-display);
+  --font-sans: var(--lunara-font-body);
   --color-lunara-rose: var(--lunara-rose);
   --color-lunara-rose-strong: var(--lunara-rose-strong);
   --color-lunara-rose-light: var(--lunara-rose-light);
@@ -48,6 +50,10 @@ html[lang='vi'] {
 }
 
 @layer base {
+  html {
+    font-family: var(--lunara-font-body);
+  }
+
   :where(button:not(:disabled):not([aria-disabled='true']), a[href]:not([aria-disabled='true']), summary, select:not(:disabled), input[type='checkbox']:not(:disabled), input[type='radio']:not(:disabled), input[type='button']:not(:disabled), input[type='submit']:not(:disabled), [role='button']:not([aria-disabled='true']), [role='option']:not([aria-disabled='true'])) {
     cursor: pointer;
   }
@@ -70,7 +76,13 @@ html[lang='vi'] {
   }
 }
 
-/* English editorial typography; Vietnamese keeps its existing weights and labels. */
+/* Reference typography: Vietnamese Lora uses regular editorial headings. */
+html[lang='vi'] .font-display {
+  font-weight: 400;
+  font-optical-sizing: auto;
+}
+
+/* English editorial typography. */
 html[lang='en'] .font-display {
   font-weight: 500;
   font-optical-sizing: auto;

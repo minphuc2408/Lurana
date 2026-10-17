@@ -21,7 +21,7 @@ export function ProductDetailView(model: ProductDetailModel) {
     ...(model.variant ? [{ label: 'Product code', value: model.variant.sku }, { label: 'Selected size', value: model.variant.size_code }] : []),
     { label: 'Availability', value: common.t(stock) },
   ];
-  return <main className="mx-auto max-w-[1400px] px-4 pt-5 pb-16 font-body text-lunara-body sm:px-6 lg:px-10">
+  return <main className="mx-auto max-w-[1240px] px-5 pt-6 pb-16 font-body text-lunara-body sm:px-8 sm:pt-10">
     {model.loading ? <div role="status" className="grid min-h-[60vh] place-items-center rounded-3xl bg-lunara-surface p-8">{t('Loading product')}</div>
       : model.error || !product ? <section className="mx-auto my-12 max-w-lg rounded-3xl bg-lunara-surface p-8 text-center shadow-sm">
         <h1 className="mb-3 font-display text-3xl text-lunara-ink">{t(model.notFound ? 'Product not found' : 'Product unavailable')}</h1>

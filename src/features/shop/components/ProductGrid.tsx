@@ -21,7 +21,7 @@ export function ProductGrid({
 }: ProductGridProps) {
   const { t } = useLocale("shop");
   if (!products.length) return <div className="py-20 text-center text-lunara-body" role="status">{t("No flowers found matching your search.")}</div>;
-  return <div className="grid grid-cols-1 gap-5 min-[390px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+  return <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 sm:gap-y-12 lg:grid-cols-4">
     {products.map(product => <ProductCard key={product.id} product={product} liked={false} added={added.includes(selectedVariants?.[product.id] || product.variants?.find(variant => variant.in_stock)?.id || 0)} onLike={onLike} onAdd={onAdd} selectedVariantId={selectedVariants?.[product.id]} onSelectVariant={onSelectVariant} />)}
   </div>;
 }

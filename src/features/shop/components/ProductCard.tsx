@@ -23,7 +23,7 @@ export function ProductCard({ product, added, onAdd, selectedVariantId, onSelect
   const description = language === 'vi' ? product.description_vi || product.description_en : product.description_en || product.description_vi;
   const detailPath = product.slug ? `/shop/${encodeURIComponent(product.slug)}` : '/shop';
   return <article data-product-id={product.id} className="group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl bg-lunara-surface shadow-sm shadow-lunara-ink/5 transition-[transform,box-shadow] duration-300 ease-out hover:shadow-lg hover:shadow-lunara-rose-strong/10 motion-safe:hover:-translate-y-1 motion-reduce:transition-none">
-    <Link to={detailPath} data-product-image-link aria-label={t('View {{name}}', { name: getLocalizedName(product, language) })} className="block aspect-[4/3] overflow-hidden bg-lunara-blush">
+    <Link to={detailPath} data-product-image-link aria-label={t('View {{name}}', { name: getLocalizedName(product, language) })} className="block aspect-[4/5] overflow-hidden bg-lunara-blush">
       <ImageWithFallback src={product.image} alt={getLocalizedName(product, language)} loading="lazy" className="h-full w-full object-cover transition-transform duration-300 motion-safe:group-hover:scale-105" />
     </Link>
     <div className="flex flex-1 flex-col p-3 sm:p-5">

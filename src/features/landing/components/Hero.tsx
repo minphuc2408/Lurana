@@ -6,11 +6,11 @@ import bouquetMedium from '@/assets/hero/lunara-bouquet-960.webp';
 import bouquetLarge from '@/assets/hero/lunara-bouquet-1440.webp';
 export function Hero() {
   const { t } = useLocale("landing");
-  return <section data-home-hero className="overflow-hidden rounded-[28px] border border-lunara-border bg-lunara-cream">
-    <div className="grid lg:min-h-[440px] lg:grid-cols-12">
-      <div className="flex min-w-0 flex-col justify-center px-6 py-10 sm:p-10 lg:col-span-5 lg:px-12 lg:py-10">
+  return <section data-home-hero className="bg-lunara-cream pt-10 pb-16 sm:py-20">
+    <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-14">
+      <div className="flex min-w-0 flex-col justify-center lg:col-span-5">
         <span className="mb-4 text-[0.68rem] font-semibold tracking-[0.18em] text-lunara-rose-strong uppercase sm:text-xs">{t("✦ Premium Floral Studio")}</span>
-        <h1 className="mb-5 font-display text-[clamp(2.15rem,4.2vw,3.5rem)] leading-[1.12] font-semibold tracking-tight text-lunara-ink">
+        <h1 className="mb-5 font-display text-4xl leading-[1.14] sm:text-5xl lg:text-[54px] font-semibold tracking-tight text-lunara-ink">
           {t("Where Flowers")}<br /><span className="text-lunara-rose-strong italic">{t("Tell Your Story")}</span>
         </h1>
         <p className="mb-8 max-w-md text-sm leading-7 text-lunara-body sm:text-base">{t("Handcrafted with love and intention, each arrangement at Lunara is a living work of art designed to express what words cannot.")}</p>
@@ -18,13 +18,13 @@ export function Hero() {
           {t("Shop Flowers")}<ArrowRight size={16} aria-hidden="true" />
         </Link></div>
       </div>
-      <div data-hero-visual aria-hidden="true" className="relative aspect-[4/3] min-w-0 overflow-hidden bg-lunara-cream lg:col-span-7 lg:aspect-auto">
+      <div data-hero-visual aria-hidden="true" className="relative h-[400px] min-w-0 overflow-hidden rounded-[2px] bg-lunara-cream sm:h-[480px] lg:col-span-7 lg:h-[520px]">
         <picture className="absolute inset-0 block">
           <img
             data-hero-image
             src={bouquetMedium}
             srcSet={`${bouquetSmall} 640w, ${bouquetMedium} 960w, ${bouquetLarge} 1440w`}
-            sizes="(min-width: 1400px) 770px, (min-width: 1024px) 55vw, (min-width: 640px) calc(100vw - 48px), calc(100vw - 32px)"
+            sizes="(min-width: 1240px) 663px, (min-width: 1024px) calc((100vw - 104px) * 7 / 12), (min-width: 640px) calc(100vw - 64px), calc(100vw - 40px)"
             width={1440}
             height={1080}
             alt=""
