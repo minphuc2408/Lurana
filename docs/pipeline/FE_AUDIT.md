@@ -1,5 +1,11 @@
 # Frontend Phase 5 — audit 15/10/2026
 
+> Tra cứu đơn local17/10: OrderDetail/API DTO không đổi; OrderLookupResult tách giao diện public khỏi admin, tiến trình5mốc và nhánh hủy theo lịch sử thực. Mã đơn + điện thoại + Turnstile vẫn bắt buộc; PII chỉ memory. Browser72ca dùng API/challenge giả lập, không dữ liệu khách/ghi đơn. Xem [trạng thái](../PROJECT_STATUS.md).
+
+
+> UI local17/10: /cart → /checkout → review → API confirmation; context memory-only giữ draft khi sửa giỏ, không PII storage. Phí ẩn trước chọn địa chỉ; COD/thiệp chung/API contract giữ nguyên. Browser18nhóm có mock order intercept, không thay acceptance backend/remote/Phase6(5/7). Xem [Checkout UI](../CHECKOUT_UI.md) và [trạng thái](../PROJECT_STATUS.md).
+
+
 > Rà soát 16/10/2026: [hiện trạng chuẩn](../PROJECT_STATUS.md), [contract hiện tại](API_CONTRACT.md). Phase 0–5 DONE local, Phase 6 IN PROGRESS5/7. Local170 tests/215 source files/40 smoke; staging đã deploy bản mới13:31 ngày 16/10, production vẫn bản 15/10. Output/checklist ghi ngày cũ bên dưới là lịch sử, không phải trạng thái cloud hiện tại.
 
 

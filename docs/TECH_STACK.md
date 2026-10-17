@@ -1,5 +1,25 @@
 # Tech stack Lunarra
 
+> Bàn giao source17/10/2026: owner đã cho phép chia commit theo chức năng và push GitHub trong lượt này; không bao gồm deploy hoặc DB remote. Kiểm tra trước push: typecheck, architecture234source,191/191tests và build PASS. Đã sửa test i18n nhận namespace với cả nháy đơn/kép. Đơn SMOKE thử tra cứu chỉ ở DB local (1đơn/1item/3history), không đưa dữ liệu hoặc SQL thử vào Git; db:verify13/13 PASS. Local5173 hiện thiếu cấu hình Turnstile và trả503 TURNSTILE_NOT_CONFIGURED; owner đã yêu cầu dừng, không thêm bypass hoặc thay cấu hình. Browser UI72ca trước đó dùng API/challenge giả lập, không đồng nghĩa lookup thật đã hoạt động. Remote/Phase6 vẫn giữ nguyên.
+
+
+> Tra cứu đơn17/10/2026 (local5173, chưa push/deploy): /orders/track theo project ref, bỏ breadcrumb/eyebrow/đoạn hướng dẫn theo yêu cầu. Năm mốc trạng thái thực với icon, đơn hủy hiển thị riêng và chỉ đánh dấu các bước có trong lịch sử API. Hotline0987656789. Giữ bắt buộc mã đơn + điện thoại + Turnstile, không dữ liệu đơn mẫu trong ứng dụng. Không đổi API/Worker/DB/dependency hoặc màn hình admin. Typecheck, architecture234source,191tests, build và72ca responsive EN/VI PASS; kiểm tra browser dùng phản hồi API/challenge giả lập, không thay nghiệm thu provider/remote. Phase6 vẫn5/7.
+
+
+> Câu chuyện17/10/2026 (local5173, chưa công bố/push/deploy): section theo ref ngay sau sản phẩm nổi bật, menu Câu chuyện và /about dạng article không breadcrumb. Owner cho dùng bài/ảnh/giờ mở cửa mẫu, địa chỉ dùng chung footer và link ngoài đại diện Lunarra. /about có metadata riêng/noindex, không sitemap; không CMS/API/DB mới. Typecheck/architecture232source/190tests/build và28ca browser EN/VI/7widths PASS,7vị trí ảnh ref tải thật,0exceptions.
+
+
+> Giỏ hàng/Đặt hoa theo ref17/10/2026 (local5173, chưa push/deploy): /cart chỉ sản phẩm+tóm tắt; “Tiến hành đặt hàng” mở /checkout. Form5khối người đặt/người nhận/lịch giao/thiệp chung/thanh toán, sidebar đơn hoa, giữ review rồi xác nhận. Chưa chọn địa chỉ thì ẩn phí; COD mặc định/chuyển khoản thông báo. CheckoutFlowProvider giữ draft trong memory khi sửa giỏ, reload/rời nhóm route xóa draft. API/DB không đổi. Chi tiết và kiểm chứng tại CHECKOUT_UI.md.
+
+
+> Kích thước theo ref17/10/2026 (local, chưa commit/push/deploy): đã bỏ mục Cart trong menu chính/mobile, giữ nút giỏ bên phải. Header72px dưới640px/80px từ640px; container storefront1240px, padding20/32px. Hero ảnh400/480/520px, grid5/7 gap40/56px; sản phẩm2cột dưới1024px/4cột từ1024px, ảnh4:5. Dev đang dùng cổng5173. Xem PROJECT_STATUS để biết kiểm chứng và remote.
+
+
+> Header 17/10/2026 (local, chưa commit/push/deploy): nút Tìm kiếm mở ô nhập theo project ref, desktop inline từ1280px/mobile mở dưới header; Enter/nút kính lúp tìm qua /shop?q=, Escape/Đóng trả focus. Nút Giỏ hàng icon nét1.5 + nhãn + badge inline khi có hàng, dùng CartProvider và link /cart. EN/VI, không đổi checkout/API/DB. Kiểm chứng:190tests, architecture225, typecheck/build; Edge24ca responsive và tương tác PASS,0exceptions/0POSTorder.
+
+
+> Typography 17/10/2026 (local, chưa commit/push/deploy): đã đối chiếu source tham chiếu `D:/Download/lunara`; project hiện tại tải đủ Lora và Be Vietnam Pro cùng weight/style mẫu dùng. VI dùng Lora Regular 400 cho heading/logo (kể cả italic), Be Vietnam Pro cho body/form; thêm fallback Georgia/system-ui, font kế thừa từ html và đồng bộ utility font-sans/font-serif với token locale, bao gồm portal. EN vẫn Fraunces 500/Inter. Xem PROJECT_STATUS.md để biết kiểm chứng và phạm vi remote.
+
 > Hiện hành 16/10/2026 — Đã nhập danh mục D1 Hà Nội 1 tỉnh/126 phường vào local + staging bằng migration0003 (12 bảng); không nhập TP.HCM. Admin chọn/tìm tỉnh-phường, nhập phí; checkout chỉ hiện zone active thuộc danh mục, server không fallback tỉnh. Checkout gộp, thiệp NONE, terms nội bộ và bank rollback COD được giữ. Staging đã deploy version 27c3d24e-f3df-42e1-8d18-8b8299427062; zones0 nên checkout chưa có nơi giao cho tới khi admin cấu hình phí. Local190tests/225source/typecheck/build, schema13/13, smoke40/40, browser admin7nhóm PASS. Owner đã yêu cầu commit/push sau deploy; production không đổi, Phase6 giữ5/7. [Địa chỉ](DELIVERY_ADDRESS.md), [Checkout](CHECKOUT_UI.md). Các mốc dưới đây là lịch sử khi khác hiện trạng này.
 
 Cập nhật **16/10/2026**. Repo `Lurana`; branding UI **Lunarra**. **Phase 0–5 DONE local; Phase 6 IN PROGRESS (5/7)**. [Hiện trạng và snapshot live](PROJECT_STATUS.md).
@@ -15,7 +35,7 @@ Giữ phiên bản trong package.json/package-lock.json, cài bằng `npm ci`; k
 | Validation | Zod 4.6.7; root `shared/` chứa API schemas/constants, frontend bật jitless trước load schemas để chạy dưới CSP |
 | Database | D1/SQLite, binding DB; 12 bảng local/staging: `0001_mvp.sql` base10bảng bất biến + `0002_category_images.sql` + `0003_hanoi_administrative_areas.sql` (1tỉnh/126phường); production vẫn0001; custom_requests deferred |
 | i18n | i18next/react-i18next, `src/shared/i18n/`; preference → browser EN/VI → English fallback; VND/Asia/Ho_Chi_Minh không đổi theo locale |
-| UI | cream/rose, font EN Fraunces 500/500 Italic (optical sizing auto) + Inter, VI Lora/Be Vietnam Pro; Button/Input/Dialog/Dropdown (Radix Select)/Combobox tìm không dấu và Lucide |
+| UI | cream/rose, font EN Fraunces 500/500 Italic (optical sizing auto) + Inter, VI Lora Regular 400/Be Vietnam Pro, html và sans/serif kế thừa token locale; Button/Input/Dialog/Dropdown (Radix Select)/Combobox tìm không dấu và Lucide |
 | Media | Cloudinary signed direct upload, cookie admin + same-origin JSON, SHA-256 params server-owned; browser upload rồi Save image.url |
 | Auth | Một admin từ secret, SHA-256/timingSafeEqual, hono/jwt HS256 cookie HttpOnly/Strict/12h; Secure trên HTTPS; không credentials/JWT trong browser storage |
 | Chống bot | Turnstile fail-closed checkout/lookup/admin-login; thiếu secret503, controlled loopback opt-in only; kiểm action/hostname; RateLimit bindings riêng prod/staging; cap 3 PENDING/SĐT trong INSERT atomic |

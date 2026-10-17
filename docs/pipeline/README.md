@@ -1,5 +1,8 @@
 # Pipeline Lunara MVP — hiện trạng và kế hoạch
 
+> UI local17/10: /cart → /checkout → review → API confirmation; context memory-only giữ draft khi sửa giỏ, không PII storage. Phí ẩn trước chọn địa chỉ; COD/thiệp chung/API contract giữ nguyên. Browser18nhóm có mock order intercept, không thay acceptance backend/remote/Phase6(5/7). Xem [Checkout UI](../CHECKOUT_UI.md) và [trạng thái](../PROJECT_STATUS.md).
+
+
 > Rà soát 16/10/2026: [hiện trạng chuẩn](../PROJECT_STATUS.md), [contract hiện tại](API_CONTRACT.md). Phase 0–5 DONE local, Phase 6 IN PROGRESS5/7. Local190 tests/225 source files/40 smoke/schema13nhóm; staging đã áp0003 Hà Nội126/12bảng và deploy27c3d24e ngày16/10, production giữ0001/bản15/10. Browser admin7/địa chỉ8/checkout12nhóm PASS; staging chưa có zone phí, không tự mở toàn Hà Nội. Output/checklist ghi ngày cũ bên dưới là lịch sử, không phải trạng thái cloud hiện tại.
 
 
