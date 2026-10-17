@@ -1,12 +1,14 @@
 import { Link } from 'react-router';
-import { BadgeCheck, CheckCircle2, CircleX, Clock, Flower2, Truck } from 'lucide-react';
+import { BadgeCheck, CheckCircle2, CircleX, Clock, Flower2, Heart, Sprout, Truck } from 'lucide-react';
 import { useLocale, getLocalizedName } from '@/shared/i18n';
 import { formatVND, formatVietnamDate } from '@/shared/lib/format';
 import { orderProgress } from '../order-progress';
 import type { OrderDetail } from '../order-api.types';
 
 const milestoneIcons = { PENDING: Clock, CONFIRMED: BadgeCheck, PREPARING: Flower2, IN_TRANSIT: Truck, DELIVERED: CheckCircle2 };
-const milestoneDescriptions = { PENDING: 'Order request received', CONFIRMED: 'Order details confirmed', PREPARING: 'Preparing flowers and the selected card', IN_TRANSIT: 'Flowers are on their way', DELIVERED: 'Flower delivery completed' };
+const progressIcons = { ...milestoneIcons, CONFIRMED: Sprout, PREPARING: Heart };
+const milestoneLabels = { PENDING: 'Request received', CONFIRMED: 'Conditioning flowers', PREPARING: 'Arranging flowers & writing your card', IN_TRANSIT: 'On the way', DELIVERED: 'Delivered to your hands' };
+const milestoneDescriptions = { PENDING: 'Your flower request is received', CONFIRMED: 'Selecting the freshest buds', PREPARING: 'Our florists carefully craft every stem', IN_TRANSIT: 'Delivered gently to protect every petal', DELIVERED: 'Flower delivery completed' };
 const statusIcons = { ...milestoneIcons, CANCELLED: CircleX };
 const hotline = '0987656789';
 export function OrderLookupResult({ order }: { order: OrderDetail }) {
@@ -22,17 +24,25 @@ export function OrderLookupResult({ order }: { order: OrderDetail }) {
       <span data-order-status data-status-code={order.status_code} className="inline-flex items-center gap-2 self-start rounded-[2px] border border-lunara-rose-strong/40 bg-lunara-blush px-3.5 py-1.5 text-xs font-medium text-lunara-ink sm:self-center"><StatusIcon size={15} strokeWidth={1.8} aria-hidden="true" />{t(order.status_code)}</span>
     </header>
     {cancelled && <section data-order-cancellation className="flex items-start gap-3 rounded-[2px] border border-lunara-border bg-lunara-cream p-4 text-xs leading-relaxed"><CircleX size={20} className="shrink-0 text-lunara-rose-strong" aria-hidden="true" /><div><h3 className="text-xs font-medium text-lunara-ink">{t('CANCELLED')}</h3>{cancellation && <p className="mt-1">{formatVietnamDate(cancellation.occurred_at, language)}</p>}{cancellation?.note && <p className="mt-1 whitespace-pre-wrap">{cancellation.note}</p>}</div></section>}
-    <section aria-labelledby="lookup-progress-title" className="py-2">
-      <h3 id="lookup-progress-title" className="mb-6 text-xs font-semibold tracking-wider text-lunara-ink uppercase">{t('Order progress')}</h3>
-      <div className="relative"><div aria-hidden="true" className="absolute top-5 right-[10%] left-[10%] hidden h-0.5 bg-lunara-border md:block" />
-        <ol data-order-progress className="relative grid grid-cols-1 gap-6 md:grid-cols-5">{progress.map(step => {
-          const Icon = milestoneIcons[step.code];
-          return <li key={step.code} data-progress-code={step.code} data-reached={step.reached} aria-current={step.current ? 'step' : undefined} className={'flex min-w-0 items-center gap-4 rounded-[2px] p-3 md:flex-col md:gap-2 md:p-0 md:text-center ' + (step.current ? 'border border-lunara-rose-strong bg-lunara-cream md:border-0 md:bg-transparent' : '')}>
-            <div className={'relative flex size-10 shrink-0 items-center justify-center rounded-full border ' + (step.reached ? 'border-lunara-rose-strong bg-lunara-rose-strong text-white' : 'border-lunara-border bg-lunara-cream text-lunara-body')}><Icon size={16} strokeWidth={1.8} aria-hidden="true" /></div>
-            <div><span className="block text-xs font-medium text-lunara-ink">{t(step.code)}</span><span className="block text-[11px] leading-snug">{t(milestoneDescriptions[step.code])}</span></div>
-          </li>;
-        })}</ol>
-      </div>
+    <section aria-labelledby="lookup-progress-title" className="py-3 md:py-5">
+      <h3 id="lookup-progress-title" className="font-display text-xl text-lunara-ink uppercase sm:text-2xl">{t('Order progress')}</h3>
+      <div aria-hidden="true" className="mt-4 mb-8 h-0.5 w-9 bg-lunara-rose md:mb-10" />
+      <ol data-order-progress className="grid grid-cols-1 gap-7 md:grid-cols-5 md:gap-0">{progress.map((step, index) => {
+        const Icon = progressIcons[step.code];
+        return <li key={step.code} data-progress-code={step.code} data-reached={step.reached} aria-current={step.current ? 'step' : undefined} className="relative flex min-w-0 items-center gap-5 md:flex-col md:gap-0 md:text-center">
+          {index < progress.length - 1 && <span aria-hidden="true" className="absolute top-20 bottom-[-28px] left-10 w-px bg-lunara-rose/60 md:top-12 md:bottom-auto md:left-[calc(50%+60px)] md:h-px md:w-[calc(100%-120px)]" />}
+          <div className="relative mb-3 shrink-0 md:mb-8">
+            <div className={'flex size-20 items-center justify-center rounded-full md:size-24 ' + (step.current ? 'bg-lunara-rose-strong text-white ring-8 ring-lunara-rose/15 outline-8 outline-lunara-rose/5' : 'bg-lunara-blush/70 text-lunara-rose-strong')}>
+              <Icon className="size-9 md:size-11" strokeWidth={1.6} aria-hidden="true" />
+            </div>
+            <span aria-hidden="true" className="absolute -bottom-3 left-1/2 flex size-6 -translate-x-1/2 items-center justify-center rounded-full bg-lunara-rose-strong font-display text-sm text-white md:-bottom-5 md:size-7 md:text-base">{index + 1}</span>
+          </div>
+          <div className="min-w-0 md:px-1.5">
+            <span className="block font-display text-lg leading-snug text-lunara-ink md:text-base">{t(milestoneLabels[step.code])}</span>
+            <span className="mt-2 block text-sm leading-relaxed md:text-xs md:leading-relaxed">{t(milestoneDescriptions[step.code])}</span>
+          </div>
+        </li>;
+      })}</ol>
     </section>
     <div className="grid grid-cols-1 gap-6 border-t border-lunara-border pt-6 text-xs md:grid-cols-2">
       <div className="min-w-0 space-y-4">
