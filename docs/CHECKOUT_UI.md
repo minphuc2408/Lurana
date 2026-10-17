@@ -1,12 +1,13 @@
 # Giỏ hàng và đặt hoa theo project ref
 
-Cập nhật17/10/2026, **main77bdfdc đã deploy staging17/10 versionc29141be-740e-4908-b369-179d7631356e; local tại127.0.0.1:5173**. Trang mẫu đọc từ D:/Download/lunara/src/pages/CartPage.tsx và CheckoutPage.tsx; không chạy/copy ứng dụng demo. Hiện trạng remote và Phase6 xem [PROJECT_STATUS](PROJECT_STATUS.md). Mô tả checkout gộp16/10 trong lịch sử đã được thay bằng luồng dưới đây.
+Cập nhật 17/10/2026. Tài liệu này mô tả giao diện và state của hai trang `/cart` và `/checkout`; bố cục tham chiếu từ `D:/Download/lunara`. Trạng thái triển khai và kiểm chứng ở [PROJECT_STATUS](PROJECT_STATUS.md).
 
 ## Quyết định của chủ shop
 
 - /cart chỉ hiện sản phẩm và tóm tắt. Bấm **Tiến hành đặt hàng** mới mở /checkout; lúc đó hiện người đặt, người nhận, lịch giao, thiệp và phương thức thanh toán.
 - Chưa chọn địa chỉ thì **không hiện dòng phí giao**, không áp phí mẫu30.000đ. Tạm tính lấy giá catalog/quote; tổng trước địa chỉ ghi rõ **Tổng tạm tính**. Sau khi chọn đủ tỉnh/phường, hiển thị phí/tổng từ quote API hiện hành.
 - COD mặc định. Chuyển khoản mở thông báo Sắp ra mắt; đóng bằng Escape/nút/backdrop trả COD. Không VietQR, ngân hàng thật hoặc cam kết đã thanh toán.
+- Bật “Người đặt cũng là người nhận” sao chép và đồng bộ tên/SĐT người đặt; hai field người nhận chỉ đọc tới khi bỏ chọn. Điều khoản mở Dialog nội bộ “Cập nhật sau”; consent vẫn mặc định false.
 - **Một thiệp cho cả đơn** theo API. Khối Thiệp nằm sau Lịch giao hoa; yêu cầu khác nhập Ghi chú. NONE ẩn/xóa message; GREETING_CARD/BANNER cần message không trắng, giữ nguyên nội dung khách.
 - Giữ **xem lại → xác nhận gửi**. Không gửi trực tiếp từ form mẫu; giữ schema, consent mặc định false, quote hiện hành, Turnstile và UUID/retry.
 
@@ -27,12 +28,10 @@ Checkout không có breadcrumb hoặc nhãn “Bước cuối cùng”; tiêu đ
 - App CheckoutLayout là nhóm route không path gồm /cart và /checkout. Feature CheckoutFlowProvider gọi useCodCheckout một lần; hai page mỏng dùng context và render CartView/CheckoutView. Chuyển giữa hai trang giữ draft và idempotency intent trong memory; rời nhóm route/reload sẽ mất draft. CartProvider ngoài nhóm vẫn giữ shared variant cart.
 - localStorage lunara.cart.v1 vẫn chỉ version/variantId/quantity. CartItem thêm slug/sizeCode từ catalog để link và hiển thị; không lưu chúng hoặc PII/thiệp/note/intent/session vào storage.
 - useQuoteCart giữ debounce350ms và chỉ quote khi chọn địa chỉ active hợp catalog. Gõ name/phone/address/message/note, đổi consent/payment hoặc chuyển cart↔checkout không tự tạo quote mới nếu dữ liệu định giá không đổi.
-- Payload, shared Zod schemas, POST /api/orders, order lookup, Worker/D1 và idempotency contract **không đổi**. Giữ cùng UUID trên retry payload không đổi; response lỗi không xóa cart/không báo thành công. Cart chỉ xóa sau API thành công. /checkout có metadata EN/VI/noindex, không thêm sitemap.
+- Giữ cùng UUID trên retry payload không đổi; token xác minh nằm ngoài fingerprint. Response lỗi không xóa cart/không báo thành công; cart chỉ xóa sau API thành công. Hợp đồng đặt đơn ở [API_CONTRACT](pipeline/API_CONTRACT.md#post-apiorders); chức năng tra đơn có [tài liệu riêng](ORDER_TRACKING.md). `/checkout` có metadata EN/VI/noindex, không thêm sitemap.
 
 ## Kiểm chứng local
 
-Typecheck, architecture229source,190tests và build PASS. [Browser runner](../scripts/check-ui-cart-checkout.mjs):18nhóm, cart EN/VI320/390/640/768/1024/1440px; checkout EN/VI320/390/768/1440px; không tràn ngang, form chỉ mở sau CTA, chỉnh quantity/xóa/empty, card NONE-reset/required, cùng người nhận, invalid phone, consent, bank rollback, terms nội bộ, review/edit, draft khi quay lại giỏ, direct checkout/reload xóa draft và noindex.1quote sau chọn địa chỉ,0quote khi gõ; hai POSTorder được intercept trước D1 (503→201) để kiểm cùng idempotency key, cart giữ khi lỗi/xóa sau response;0API order writes,0runtime exceptions. Font thật được bật ở lượt --fonts; ảnh remote vẫn bị host allowlist chặn.
+[Browser runner](../scripts/check-ui-cart-checkout.mjs) kiểm responsive EN/VI, quantity/xóa/empty, card NONE-reset/required, đồng bộ người nhận, validation/consent, bank rollback, terms, review/edit và draft qua hai route. Kiểm quote chỉ khi dữ liệu định giá đổi; các POST đặt đơn được intercept trước D1 để kiểm retry cùng UUID và chỉ xóa giỏ sau response thành công.
 
-Chạy: node scripts/check-ui-cart-checkout.mjs http://127.0.0.1:5173 --fonts. Script chỉ chấp nhận127.0.0.1 và dùng browser profile riêng, Turnstile callback synthetic; mọi order request bị intercept/không forward. Không đọc mật khẩu thật, không bypass server, không ghi local D1/remote. Screenshot/results ở .security-review/ ignored. Provider, đơn thật, Cron/quota và full legacy UI suite chưa được nghiệm thu lại; targeted PASS không thay lịch sử Phase5/6.
-
-Tinh chỉnh theo owner17/10: bỏ breadcrumb Trang chủ/Giỏ hàng/Đặt hoa và nhãn Bước cuối cùng trên /checkout; căn giữa h1 cả details/review. Sidebar thêm hai dòng có icon dưới CTA (cả review và xác nhận): “Chụp ảnh hoa thực tế gửi bạn trước khi giao.” và “Giao hoa nhẹ nhàng, giữ dáng cánh hoa nguyên vẹn.”, có EN fallback. Đây là nội dung giao diện owner yêu cầu, không thêm API/chức năng tự chụp/gửi ảnh.
+Chạy: `node scripts/check-ui-cart-checkout.mjs http://127.0.0.1:5173 --fonts`. Script chỉ chấp nhận loopback, dùng browser profile riêng và callback Turnstile tổng hợp; không forward order request hoặc ghi D1. Screenshot/results ở `.security-review/` ignored. Đây là kiểm UI với response giả lập; kết quả và giới hạn nghiệm thu hiện tại xem [PROJECT_STATUS](PROJECT_STATUS.md).

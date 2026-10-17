@@ -563,3 +563,6 @@
 !/src/features/orders/components/OrderLookupResult.tsx
 !/tests/order-progress.test.mjs
 !/scripts/check-ui-order-lookup.mjs
+
+# Reviewed concise order tracking feature handover and endpoints.
+!/docs/ORDER_TRACKING.md

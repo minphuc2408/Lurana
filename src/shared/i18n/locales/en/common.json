@@ -247,6 +247,7 @@
   "Delivery method": "Delivery method",
   "Surcharge {{fee}}": "Surcharge: {{fee}}",
   "Feature unavailable": "Coming soon",
+  "Footer feature coming soon": "{{feature}} is currently being developed. Please check back later.",
   "Feature pending API": "This feature is temporarily hidden while its service is being built. Browse our collection and preview a cart quote.",
   "Browse collection": "Browse collection",
   "No featured products": "No featured flowers are available.",

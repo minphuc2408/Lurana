@@ -1,22 +1,25 @@
-export const customerCareLinks = [
+type FooterLink = { label: string; href?: string };
+
+// Only published destinations have a URL; the rest open a coming-soon notice.
+export const customerCareLinks: FooterLink[] = [
   { label: 'About Us', href: '/about' },
-  { label: 'Contact Us', href: 'https://www.lunarra.vn/thong-tin/lien-he' },
-  { label: 'Shipping Policy', href: 'https://www.lunarra.vn/thong-tin/chinh-sach-van-chuyen' },
-  { label: 'Frequently Asked Questions', href: 'https://www.lunarra.vn/thong-tin/cau-hoi-thuong-gap' },
-  { label: 'Payment Methods', href: 'https://www.lunarra.vn/thong-tin/hinh-thuc-thanh-toan' },
-  { label: 'Privacy Policy', href: 'https://www.lunarra.vn/thong-tin/bao-mat-thong-tin' },
-  { label: 'Refund Policy', href: 'https://www.lunarra.vn/thong-tin/chinh-sach-doi-tra' },
-  { label: 'Complaint Resolution', href: 'https://www.lunarra.vn/thong-tin/khieu-nai' },
-  { label: 'Why Choose Lurana.vn', href: 'https://www.lunarra.vn/thong-tin/tai-sao-nen-chon-lunarra' },
-  { label: 'Blog', href: 'https://blog.lunarra.vn/' },
+  { label: 'Contact Us' },
+  { label: 'Shipping Policy' },
+  { label: 'Frequently Asked Questions' },
+  { label: 'Payment Methods' },
+  { label: 'Privacy Policy' },
+  { label: 'Refund Policy' },
+  { label: 'Complaint Resolution' },
+  { label: 'Why Choose Lurana.vn' },
+  { label: 'Blog' },
 ];
 
-export const socialLinks = [
-  { label: 'Facebook', href: 'https://www.facebook.com/lunarra.vn/' },
-  { label: 'Twitter', href: 'https://twitter.com/Lunarra' },
-  { label: 'Instagram', href: 'https://www.instagram.com/lunarra.vn/' },
-  { label: 'Linkedin', href: 'https://www.linkedin.com/company/lunarra/' },
-  { label: 'Youtube', href: 'https://www.youtube.com/lunarra' },
+export const socialLinks: FooterLink[] = [
+  { label: 'Facebook' },
+  { label: 'Twitter' },
+  { label: 'Instagram' },
+  { label: 'Linkedin' },
+  { label: 'Youtube' },
 ];
 
 export const storeLocations = [

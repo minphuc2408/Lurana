@@ -1,35 +1,10 @@
 # Phase 5 — Nối frontend với API thật
 
-> Hiện hành 16/10/2026 — Đã nhập danh mục D1 Hà Nội 1 tỉnh/126 phường vào local + staging bằng migration0003 (12 bảng); không nhập TP.HCM. Admin chọn/tìm tỉnh-phường, nhập phí; checkout chỉ hiện zone active thuộc danh mục, server không fallback tỉnh. Checkout gộp, thiệp NONE, terms nội bộ và bank rollback COD được giữ. Staging đã deploy version 27c3d24e-f3df-42e1-8d18-8b8299427062; zones0 nên checkout chưa có nơi giao cho tới khi admin cấu hình phí. Local190tests/225source/typecheck/build, schema13/13, smoke40/40, browser admin7nhóm PASS. Owner đã yêu cầu commit/push sau deploy; production không đổi, Phase6 giữ5/7. [Địa chỉ](../DELIVERY_ADDRESS.md), [Checkout](../CHECKOUT_UI.md). Các mốc dưới đây là lịch sử khi khác hiện trạng này.
-
-> UI16/10 local mới nhất: Lunarra branding, Home/Shop copy và shared Radix dropdown/cursor;172 tests/216source,4 nhóm browser tập trung PASS,0exceptions. Chưa push/deploy; full UI checker vẫn vướng assertion quote-before-zone cũ. Không thay nghiệm thu Phase5 lịch sử; xem [trạng thái chuẩn](../PROJECT_STATUS.md).
-
-> Rà soát 16/10/2026: [hiện trạng chuẩn](../PROJECT_STATUS.md), [contract hiện tại](API_CONTRACT.md). Phase 0–5 DONE local, Phase 6 IN PROGRESS5/7. Local170 tests/215 source files/40 smoke; staging đã deploy bản mới13:31 ngày 16/10, production vẫn bản 15/10. Output/checklist ghi ngày cũ bên dưới là lịch sử, không phải trạng thái cloud hiện tại.
-
-
-B2/B3 sau nghiệm thu (15/10/2026, local/chưa deploy): widget Turnstile cho checkout/lookup/login, lỗi/hết hạn/thử lại/EN/VI và compact ở form hẹp; retry token mới giữ UUID đơn. Admin hủy giao thất bại có lý do và checkbox restock mặc định false. Tại mốc B2/B3:160 tests và40 smoke PASS; UI 10/10 MVP + CRUD/B3 + widget targeted PASS, nhóm responsive rộng còn báo `/shop` tràn 320px. Không thay bằng chứng lịch sử 136 tests/2 nhóm mở rộng bên dưới. Phase 6 hiện IN PROGRESS 5/7. [Evidence/cấu hình mới](../BOT_PROTECTION.md).
+Nghiệm thu local **15/10/2026**. File giữ checklist và bằng chứng tại mốc Phase 5; không phải đặc tả UI hiện hành. Các thay đổi sau đó tra ở [CHECKOUT_UI](../CHECKOUT_UI.md), [ORDER_TRACKING](../ORDER_TRACKING.md), [DELIVERY_ADDRESS](../DELIVERY_ADDRESS.md), [CLOUDINARY](../CLOUDINARY.md); trạng thái deploy/checks ở [PROJECT_STATUS](../PROJECT_STATUS.md).
 
 **Mục tiêu:** các luồng MVP trong frontend dùng API thật, hiển thị VND, không còn fixture/₱ ở luồng MVP. Tham chiếu: [API_CONTRACT.md](API_CONTRACT.md), [FRONTEND_ENTITIES.md](../FRONTEND_ENTITIES.md). Phase này lớn nhất; làm theo thứ tự dưới đây để luôn có bản chạy được.
 
 **Trạng thái:** DONE local · **6/6 tiêu chí**, 15/10/2026. Đã hoàn thiện theo thứ tự 5.0 → 5.16: giữ catalog/variant cart/localStorage/delivery/quote/VND, nối Checkout COD, gửi/retry/xác nhận, tra đơn và admin thật từ API Phase 3–4. English mặc định/fallback và giờ Việt Nam giữ nguyên. Nghiệm thu **136/136 tests, 40/40 smoke, 10/10 kịch bản UI + 2/2 nhóm mở rộng**, không có JS exception. Nghiệm thu trên là mốc local 15/10; Phase 6 hiện IN PROGRESS5/7, snapshot deployment riêng ở PROJECT_STATUS. [Backup/audit/evidence](FE_AUDIT.md) · [Hiện trạng](../PROJECT_STATUS.md).
-
-## Tiến độ từng phần sau nghiệm thu Phase 5
-
-| Bước | Đã có / còn lại |
-| --- | --- |
-| 5.0 | DONE: cập nhật FE_AUDIT trước khi sửa; giữ backup demo local và source deferred |
-| 5.1 | DONE: English mặc định/fallback; EN/VI không đổi VND/Asia/Ho_Chi_Minh hoặc dữ liệu khách |
-| 5.2 | DONE: dùng lại apiRequest/ApiError, timeout 20 giây, mapping lỗi; crypto.randomUUID cho intent, cùng payload dùng lại key khi retry |
-| 5.3–5.5 | DONE: giữ catalog adapter/provider, variant cart/storage; dùng chung formatter VND và ngày giờ VN, kiểm storage hỏng và giới hạn giỏ |
-| 5.6 | DONE: sender/recipient, tỉnh/phường/đường, method/date/slot/card/note, ẩn danh và email tùy chọn; chỉ COD, tổng từ quote |
-| 5.7–5.8 | DONE: details → review → server confirmation, chặn bấm đúp; giữ form/giỏ khi lỗi, đổi payload tạo key mới. `/orders/track` đọc API snapshot/timeline, có link footer/xác nhận |
-| 5.9 | DONE: AuthProvider /me/login/logout bằng cookie; `/admin/login`, guard `/admin/*`, không session demo |
-| 5.10 | DONE: filters/paging/detail/note/timeline, đúng transitions, dialog xác nhận hủy và thông báo INVALID_TRANSITION |
-| 5.11 | DONE: product×variant, dirty-field price/compare/threshold/active và stock_delta; tạo S/M/L + URL ảnh; phí giao thêm/sửa/tắt. Ghi tồn chưa rõ kết quả khóa gửi lại đến khi GET đối chiếu thành công |
-| 5.12 | DONE: dashboard từ summary + 10 đơn mới nhất; không chart/KPI fixture |
-| 5.13–5.16 | DONE: deferred source ẩn theo cờ/API readiness; EN/VI, loading/empty/error/retry; required checks và toàn bộ kịch bản bên dưới pass |
-
-> Tài liệu này mô tả theo cấu trúc `src/features/*` trong [FRONTEND_ENTITIES.md](../FRONTEND_ENTITIES.md). Tên file thực tế có thể khác: bước 5.0 là kiểm kê trước khi sửa.
 
 ## Nguyên tắc
 
@@ -39,12 +14,12 @@ B2/B3 sau nghiệm thu (15/10/2026, local/chưa deploy): widget Turnstile cho ch
 - Mọi chuỗi UI qua i18n (vi/en); thêm khóa mới vào cả hai file.
 - "Thành công" chỉ hiện khi server trả 2xx.
 
-## Nội dung đã thực hiện (theo thứ tự)
+## Nội dung đã thực hiện — 15/10/2026
 
 | # | Ai | Việc |
 | --- | --- | --- |
 | 5.0 | AGENT — DONE | **Cập nhật kiểm kê đã có:** CodeGraph trước để tìm services/hooks; sau đó `rg -n -e "₱" -e "PHP" -e "Asia/Manila" -e "toLocaleString" -e "name_vn" src`. Cập nhật `docs/pipeline/FE_AUDIT.md` cho các flow còn lại; giữ backup demo local |
-| 5.1 | ĐÃ CHỐT | Giữ **English** mặc định/fallback và EN/VI theo chỉ dẫn chủ dự án; VND/Asia/Ho_Chi_Minh không đổi theo locale. Không hỏi lại hoặc tự đổi thành `vi` |
+| 5.1 | ĐÃ CHỐT | Giữ **English** fallback và EN/VI theo chỉ dẫn chủ dự án; hiện chọn ngôn ngữ lưu trước, rồi browser, sau đó EN; VND/Asia/Ho_Chi_Minh không đổi theo locale. Không hỏi lại hoặc tự đổi thành `vi` |
 | 5.2 | AGENT — DONE | Dùng `src/shared/api/client.ts` đã có: apiRequest `/api`, credentials same-origin, đọc `{data}`/`{error}`, `ApiError(code, message, status, details)`. Bổ sung helper/lifecycle `Idempotency-Key` bằng crypto.randomUUID cho gửi đơn, không tạo wrapper thứ hai |
 | 5.3 | AGENT — DONE | Dùng formatter VND hiện có trong `src/shared/lib/format.ts` cho phần checkout/admin còn lại, tránh thêm helper trùng chức năng. Preview đã format EN/VI với currency VND không có số lẻ; ngày giao giữ Asia/Ho_Chi_Minh |
 | 5.4 | AGENT — DONE (giữ preview) | **Shop:** giữ Shop service/CatalogProvider và adapter DTO D1 hiện có: giá variant thấp nhất, ảnh chính, badge, chọn variant_id, disable hết hàng, ratings/reviews ẩn. Giữ filter/search/category code/sort (≤100 products); không tạo lại fixture hoặc adapter song song |
@@ -65,7 +40,7 @@ B2/B3 sau nghiệm thu (15/10/2026, local/chưa deploy): widget Turnstile cho ch
 
 1. Mở trang chủ → shop: 8 sản phẩm, giá dạng `450.000 ₫`; đổi vi/en vẫn hiển thị VND.
 2. Chọn size M, thêm giỏ, tải lại trang → giỏ còn nguyên; sửa `localStorage` thành giá trị hỏng → app không vỡ, giỏ rỗng.
-3. Hiện hành16/10: admin cấu hình/bật phường → checkout hiện và quote đúng; chưa cấu hình/tắt → ẩn, direct quote422; không fallback tỉnh. Checklist15/10 trước đây có province-default, đã được thay theo yêu cầu owner.
+3. Tại mốc 15/10 kiểm phí phường/mặc định tỉnh. Coverage hiện đã bỏ fallback tỉnh; tiêu chí thay thế và kiểm chứng ở DELIVERY_ADDRESS, không sửa kết quả lịch sử bên dưới.
 4. Bấm "Đặt hàng" hai lần liên tiếp nhanh → chỉ có một đơn.
 5. Tắt mạng/giả lỗi 500 → giỏ và form vẫn còn, có thể bấm thử lại; thử lại cùng nội dung không tạo đơn thứ hai.
 6. Đặt đơn thành công → trang xác nhận có mã đơn; tra đơn bằng mã + SĐT thấy đúng món/tổng/timeline; sai SĐT → "không tìm thấy".
@@ -85,7 +60,7 @@ B2/B3 sau nghiệm thu (15/10/2026, local/chưa deploy): widget Turnstile cho ch
 
 ## Kết quả 10 kịch bản — 15/10/2026
 
-Checklist thủ công ở trên được thực thi bằng thao tác trình duyệt Edge headless/CDP trên frontend đã build, Worker source hiện tại và D1 workerd cô lập. Đây là kiểm chứng UI local, không phải một lượt người kiểm thử thủ công hoặc nghiệm thu remote.
+Checklist thủ công ở trên được thực thi bằng thao tác trình duyệt Edge headless/CDP trên frontend đã build, Worker source tại mốc nghiệm thu và D1 workerd cô lập. Đây là kiểm chứng UI local, không phải một lượt người kiểm thử thủ công hoặc nghiệm thu remote.
 
 | # | Kết quả | Bằng chứng |
 | --- | --- | --- |
@@ -114,14 +89,4 @@ npm run check:ui:phase5                    PASS — 10/10 + 2/2, 0 exceptions
 
 Evidence local/ignored: `.security-review/phase5-ui-results.json` (07:34:46Z / 14:34 VN), `phase5-*.png`, `phase5-tests.txt`, `phase5-build.txt`, `phase5-smoke.txt`, `phase5-preview-ui.txt`. Guard đọc SQL readonly xác nhận nội dung schema/bảng D1 persisted không đổi; không so byte WAL/cache/observability có thể đổi do runtime. Mọi ghi UI/API dùng `persist:false`, `remoteBindings:false`, `.dev.vars.example` và secret tổng hợp; không đọc secret thật cho tests. Bridge Node dùng shim timingSafeEqual; bằng chứng auth native workerd Phase 4 được giữ riêng. Không đổi pin/dependency/lockfile/DDL, không deploy hoặc đổi D1 remote; Turnstile thật, dữ liệu/policy bán hàng và CPU cloud thuộc Phase 6.
 
-M1–M9 local 15/10/2026: locale chọn preference rồi browser EN/VI (English fallback); metadata theo route, public HTML SEO, staging noindex, CSP và Zod jitless. UI 10/10 MVP +CRUD/B3/mock widget PASS dưới CSP mới; không chạy lại nhóm responsive rộng. Native preview SDK thật bằng test key nhận token, fonts/images tải thành công,0CSP/JS errors. [Bằng chứng hiện tại](../HARDENING.md); không thay nghiệm thu cloud.
-
-Trang sản phẩm16/10 local: /shop/:slug nối endpoint detail hiện có, card links, gallery/zoom, size/price/SKU và Đặt hoa ngay dùng shared cart.174tests/220source/typecheck/build,6 nhóm browser PASS,0exceptions,persisted D1 unchanged. Không sửa lịch sử nghiệm thu Phase5 hay trạng thái remote; xem PROJECT_STATUS.
-
-Gallery 16/10 local (chưa deploy): admin hỗ trợ multi-upload tối đa 8 ảnh, cover, thứ tự và gỡ liên kết; public list trả cover, detail trả đầy đủ ảnh. Typecheck/build, 179 tests, architecture 221 source, smoke 40 và 5 nhóm browser đạt, 0 exception, persisted D1 không đổi. Cloudinary provider được mock; nghiệm thu provider thật vẫn tách riêng, không nâng trạng thái Phase 6.
-
-
-Checkout16/10 local sau nghiệm thu: Combobox chọn/tìm2city/294ward từ Open Admin Data, debounce quote350ms, không request theo ký tự.182tests/architecture223/typecheck/build và8targeted browser groups PASS,0exceptions. Full UI cũ vẫn chứa quote-before-zone/datalist assumptions; chưa coi full suite đã pass. Không deploy/đổi nghiệm thu Phase5 lịch sử; [chi tiết](../DELIVERY_ADDRESS.md).
-
-
-Checkout3khối16/10 local sau nghiệm thu: thêm auto-copy/live-sync người nhận, payment dưới Total, COD mặc định, bank-transfer WIP Dialog và consent/form gate; không note cọc theo owner.186tests/225source/typecheck/build và10nhóm browser mới +8địa chỉ PASS,0exceptions,0POST order (Turnstile synthetic). Full UI legacy chưa thích ứng, không thay nghiệm thu lịch sử; chưa push/deploy. [Chi tiết](../CHECKOUT_UI.md).
+Những lượt UI/hardening tiếp theo được ghi trong tài liệu chức năng và PROJECT_STATUS; không cộng chúng vào nghiệm thu 136 tests/10+2 kịch bản lịch sử này.

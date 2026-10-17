@@ -36,6 +36,7 @@ Mở địa chỉ Vite hiển thị trong terminal, mặc định [127.0.0.1:517
 | Phạm vi và các giai đoạn triển khai | [Pipeline](docs/pipeline/README.md) |
 | Giao diện và luồng giỏ hàng–đặt hoa | [Checkout UI](docs/CHECKOUT_UI.md) |
 | Cấu trúc dữ liệu | [Database](docs/DATABASE_DESIGN.md) · [Frontend entities](docs/FRONTEND_ENTITIES.md) |
+| Tra đơn: chức năng và endpoint | [Tra đơn](docs/ORDER_TRACKING.md) |
 | API | [API contract](docs/pipeline/API_CONTRACT.md) |
 | Triển khai và vận hành | [Staging](docs/STAGING.md) · [Operations](docs/OPERATIONS.md) |
 

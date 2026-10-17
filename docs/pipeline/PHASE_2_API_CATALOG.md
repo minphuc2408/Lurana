@@ -1,13 +1,12 @@
 # Phase 2 — API nền và catalog
 
-> Rà soát 16/10/2026: [hiện trạng chuẩn](../PROJECT_STATUS.md), [contract hiện tại](API_CONTRACT.md). Phase 0–5 DONE local, Phase 6 IN PROGRESS5/7. Local170 tests/215 source files/40 smoke; staging đã deploy bản mới13:31 ngày 16/10, production vẫn bản 15/10. Output/checklist ghi ngày cũ bên dưới là lịch sử, không phải trạng thái cloud hiện tại.
-
+> Các mô tả fallback tỉnh trong checklist/output 14/10 bên dưới là lịch sử; code hiện chỉ giao từng phường active thuộc danh mục.
 
 **Mục tiêu:** khung Hono chuẩn (lỗi, validate, middleware), các API đọc: danh mục, sản phẩm, tùy chọn giao hàng, báo giá giỏ. Hợp đồng: [API_CONTRACT.md](API_CONTRACT.md).
 
-**Trạng thái:** DONE · 8/8 tiêu chí local, **14/10/2026**. Đây là phạm vi/nghiệm thu catalog/quote tại mốc Phase 2, chưa bao gồm order/admin. Phase 3 COD/tồn/idempotency/lookup/transition và [Phase 4 auth/admin](PHASE_4_ADMIN.md) đã DONE local; 125 tests/40 smoke là số liệu lịch sử tại mốc backend Phase 4. **Phase 5 đã DONE local (6/6 tiêu chí)**, nối đủ UI checkout/lookup/login/admin: [nghiệm thu hiện tại](PHASE_5_FRONTEND.md) · [FE_AUDIT/backup](FE_AUDIT.md). Các output Phase 2 bên dưới giữ nguyên làm bằng chứng lịch sử. Phase 6 hiện IN PROGRESS5/7; xem PROJECT_STATUS. [Tiến độ chung](README.md).
+**Trạng thái:** DONE · 8/8 tiêu chí local, **14/10/2026**. Checklist và output giữ phạm vi nghiệm thu Phase 2 tại mốc đó. Danh mục ảnh và coverage sau các migration được mô tả trong [API_CONTRACT](API_CONTRACT.md), [CATEGORY_IMAGES](../CATEGORY_IMAGES.md), [DELIVERY_ADDRESS](../DELIVERY_ADDRESS.md); số liệu/deployment hiện hành ở [PROJECT_STATUS](../PROJECT_STATUS.md).
 
-## Việc cần làm
+## Checklist đã thực hiện — 14/10/2026
 
 | # | Ai | Việc |
 | --- | --- | --- |
@@ -44,29 +43,22 @@
 - [x] Mọi lỗi trả JSON theo contract, không lộ stack trace.
 - [x] Unit test pass; `npm run typecheck` pass.
 
-## Triển khai và phạm vi kiểm chứng
+## Triển khai và phạm vi kiểm chứng — 14/10/2026
 
 - Hằng số/schema dùng chung: [constants.ts](../../shared/constants.ts), [schemas.ts](../../shared/schemas.ts). Hono dùng validator hook + Zod, secureHeaders, request ID, cache theo route/status, lỗi AppError/INTERNAL an toàn. Middleware đọc hết payload bị bỏ qua bằng stream để chuỗi POST 404 → GET tiếp theo không gặp lỗi socket của proxy Miniflare.
 - [Catalog](../../worker/services/catalog.ts): sản phẩm có dữ liệu dùng 3 statements; rỗng/404 dùng 1. Danh sách tối đa 100, bind mỗi truy vấn con ≤100, không N+1. Lọc sản phẩm/category/variant inactive và chỉ trả DTO trong contract.
-- [Delivery](../../worker/services/delivery.ts)/[pricing](../../worker/services/pricing.ts): một query variants và một query phí; ưu tiên phường rồi mặc định tỉnh đang active; miễn phí phần base, giữ surcharge. Bỏ mọi giá/tổng client gửi; gộp ID trùng, kiểm raw lines và quantity sau gộp. Quote luôn read-only, issue không tạo đơn hoặc giữ tồn.
+- Nghiệm thu 14/10 của [Delivery](../../worker/services/delivery.ts)/[pricing](../../worker/services/pricing.ts): một query variants và một query phí; khi đó ưu tiên phường rồi mặc định tỉnh active (hành vi này đã bị thay bằng JOIN danh mục/zone phường active, không fallback); miễn phí phần base, giữ surcharge. Bỏ mọi giá/tổng client gửi; gộp ID trùng, kiểm raw lines và quantity sau gộp. Quote luôn read-only, issue không tạo đơn hoặc giữ tồn.
 - [Config](../../worker/config.ts): phụ phí 0/30000/50000, cutoff 16:00, chuẩn bị 120 phút; TIME_SLOTS 08:00–20:00, giỏ 15/20, ngày +30, Asia/Ho_Chi_Minh. Các chính sách/phí/khung giờ là giả định cần chủ shop chỉnh trước mở bán. Helper ngày/SĐT dựng sẵn để Phase 3 sử dụng; quote không có ngày/slot.
 - Node runner tại mốc Phase 2: 35 test mới (catalog 8, delivery/pricing 14, validation 6, Hono 6, D1 thật 1), tổng repo 53. Ca thay trạng thái/tồn chỉ ghi vào SQLite in-memory hoặc workerd D1 `persist:false`, `remoteBindings:false`; seed persisted không bị sửa. Không thêm dependency/framework hay sửa DDL. Source sau Phase 3 đã nghiệm thu 92 tests; giữ output 53 bên dưới làm lịch sử.
 - [smoke.mjs](../../scripts/smoke.mjs) tại Phase 2: 16 nhóm HTTP, health/JSON 404/SPA; URL positional, local-only và không redirect. Source sau Phase 3 giữ 16 nhóm catalog, đổi assertion deferred orders thành validation 400, thêm 10 ca order qua HTTP/D1 cô lập + đối chiếu tồn/query budget; tổng 27/27.
 
 ## Test thủ công trên host 5173
 
-Chạy `npm run dev`, dùng đúng URL `http://127.0.0.1:5173` Vite in ra; nếu port bận thì dùng port thực tế. Server chỉ bind loopback, không phải hosting public. `npm run smoke` hiện chạy 16 nhóm catalog trên server đó và 11 nhóm Phase 3 trên HTTP + D1 cô lập (`persist:false`); không ghi seed persisted. URL khác dùng `npm.cmd run smoke -- http://127.0.0.1:<port>` trên PowerShell.
+Chạy `npm run dev`, dùng URL loopback Vite in ra (thường `http://127.0.0.1:5173`). `npm.cmd run smoke -- http://127.0.0.1:<port>` kiểm catalog trên server đó; ca order/admin ghi vào HTTP server + workerd D1 cô lập, không sửa DB persisted. Smoke hiện có 40 nhóm, xem [OPERATIONS](../OPERATIONS.md).
 
-| Cách test | Chức năng đã xong / kết quả seed |
-| --- | --- |
-| Mở `/api/health` | Worker liveness, `data.ok = true`; không phải check DB |
-| Mở `/api/categories` | 4 danh mục song ngữ đang active |
-| Mở `/api/products` | 8 sản phẩm, mỗi sản phẩm S/M/L và 1 ảnh chính, giá VND, thông tin khả dụng tồn |
-| Mở `/api/products?category=bouquets&featured=1` | Lọc theo category code và featured |
-| Mở `/api/products/blush-peony-bouquet` | Chi tiết sản phẩm; slug thiếu hoặc sản phẩm ẩn → JSON 404 |
-| Mở `/api/delivery/options` | 2 tỉnh, 2 phường riêng và phí mặc định, methods/surcharges/slots/limits |
-| POST `/api/checkout/quote` qua PowerShell/Postman | Giá DB, gộp variant trùng, phí phường/mặc định tỉnh, ngưỡng miễn phí, issues khi thiếu tồn/variant không bán, lỗi validate/cart limit |
-| Mở `/`, `/shop`, `/cart`, `/admin` | Hiện chỉ Home/Shop/Cart active, dùng catalog/quote D1 và VND; route chưa có API hiện sắp ra mắt. Xem FE_AUDIT.md cho preview nối sớm một phần Phase 5 |
+- GET health kiểm liveness; categories/products/detail lấy dữ liệu D1 hiện có, không bảo đảm số seed cố định.
+- GET delivery/options chỉ trả zone active thuộc danh mục; quote dùng đúng phường đó, không fallback tỉnh. Đây là thay đổi sau nghiệm thu 14/10, không còn hành vi fallback ở code hiện tại.
+- Luồng frontend và routes hiện hành tra ở [PROJECT_GUIDE](../../PROJECT_GUIDE.md); API payload/errors ở API_CONTRACT.
 
 Ví dụ PowerShell lấy variant ID thực từ catalog và cố gửi giá 1 để kiểm server không tin giá client:
 
@@ -83,7 +75,7 @@ $body = @{
 Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:5173/api/checkout/quote' -ContentType 'application/json; charset=utf-8' -Body $body | ConvertTo-Json -Depth 8
 ```
 
-Seed cho kết quả `unit_price = subtotal = 450000`, `delivery_fee = 20000`, `grand_total = 470000`, `issues = []`. Quote không tạo đơn hoặc trừ tồn. Preview hiện lưu giỏ variant/quantity trong localStorage; reload giữ số lượng và lấy lại giá/phí qua API.
+Với product/variant và zone mẫu còn active tương ứng, ví dụ cho `unit_price = subtotal = 450000`, `delivery_fee = 20000`, `grand_total = 470000`, `issues = []`; ID/tồn/coverage thực tế có thể khác seed. Quote không tạo đơn hoặc trừ tồn. Preview hiện lưu giỏ variant/quantity trong localStorage; reload giữ số lượng và lấy lại giá/phí qua API.
 
 ## Bằng chứng lệnh — 14/10/2026
 
