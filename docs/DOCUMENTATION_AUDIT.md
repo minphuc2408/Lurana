@@ -1,57 +1,67 @@
-# Rà soát tài liệu — 16/10/2026
+# Audit tài liệu — 17/10/2026
 
-Phạm vi: **26 file Markdown đã có trong Git**, 4 file SQL tham chiếu/seed/deferred trong docs và canonical migration. Báo cáo này là file Markdown thứ27. Không chỉnh runtime, dependency, DDL, seed hoặc dữ liệu; không commit/push/deploy trong lượt rà soát tài liệu.
+Phạm vi: **32 file Markdown được Git quản lý**, hai SQL schema pointers và SQL seed/deferred/migrations làm nguồn đối chiếu. Đã đọc tài liệu và source liên quan trước khi chỉnh; không thay source, SQL, dependency, cấu hình triển khai hoặc dữ liệu. Không chạy lại tests/build, đọc cấu hình/DB cloud hoặc commit/push/deploy. Chỉ có HTTP công khai để kiểm liên kết, không dùng làm nghiệm thu chức năng.
 
-## Nguồn đối chiếu
+## Phân công nội dung tài liệu
 
-- Source đã push tới `1fecd26`; package.json/lockfile, wrangler.jsonc, env public, script staging và CodeGraph current source.
-- Bằng chứng local gần nhất cùng phiên: typecheck, architecture 215, tests 166, build/dry-run2 env PASS; bundle keys/targets/canonical/noindex riêng; smoke 40/40 PASS, persisted D1 giữ nguyên. Lượt tài liệu không chạy lại suite runtime.
-- Cloudflare chỉ đọc16/10: production version `26d0811c-f2f0-4f7f-a0fa-7cb175035d06` (15/10 19:52VN); staging `e984d962-076f-492c-b2e3-c5cac5f52ec3` (16/10 13:31VN). Đối chiếu version/binding metadata, tên secrets và HTTP public. Không đọc secret values hoặc đơn khách.
-- [Workers limits](https://developers.cloudflare.com/workers/platform/limits/), [D1 limits](https://developers.cloudflare.com/d1/platform/limits/), [D1 pricing](https://developers.cloudflare.com/d1/platform/pricing/), [Workers Logs](https://developers.cloudflare.com/workers/observability/logs/workers-logs/) được đối chiếu lại 16/10; account quotas/billing thực tế chưa được owner xác nhận.
-
-## Các nội dung đã sửa
-
-| Tài liệu | Kết quả |
+| Tài liệu | Nội dung thuộc phạm vi |
 | --- | --- |
-| [README](../README.md) | Branding Lunara Shop, current checks, hai lệnh deploy và secret setup một lần; bỏ các đoạn trạng thái staging cũ lặp lại |
-| [PROJECT_GUIDE](../PROJECT_GUIDE.md) | Đúng ownership features/admin/inventory/orders, MetadataLayout/Turnstile, admin query windows, chẩn đoán log; trạng thái current tách lịch sử |
-| [AGENTS](../AGENTS.md), [repo skill](../.agents/skills/lunara-flower-shop/SKILL.md) | Đồng bộ trạng thái cloud, keys/build modes, local evidence và nguyên tắc không suy diễn counts/provider acceptance |
-| [PROJECT_STATUS](PROJECT_STATUS.md) | Nguồn trạng thái chuẩn; bảng riêng local/production/staging, version/timestamp/counts public và những việc chưa nghiệm thu |
-| [TECH_STACK](TECH_STACK.md) | Phiên bản pinned, kiến trúc/ownership/stock_delta/storage, two-environment build và limits đã đối chiếu |
-| [STAGING](STAGING.md) | Sửa chưa deploy/chưa migrate/secrets; đúng `.env.staging`/Vite mode, target guard, không full seed lại, chưa có delivery zones |
-| [CLOUDINARY](CLOUDINARY.md) | Staging có config/secrets names/deployment; production thiếu; không khẳng định preset/credentials hoặc upload thật đã pass |
-| [BOT_PROTECTION](BOT_PROTECTION.md), [HARDENING](HARDENING.md) | Hai widget/key riêng, TURNSTILE_SECRET còn thiếu, staging có hardening/bindings/TTL/handler; Cron execution và cloud CPU/quota chưa xác minh |
-| [OPERATIONS](OPERATIONS.md) | Target prod/staging, đúng cặp key/secret, restock có điều kiện, quota date và giới hạn snapshot |
-| [DATABASE_DESIGN](DATABASE_DESIGN.md) | D1 remote đã migrate cả hai; counts cũ ghi lịch sử, upload signed đã có; không đổi canonical DDL |
-| [FRONTEND_ENTITIES](FRONTEND_ENTITIES.md) | Admin date filters/period_days, tự sinh slug/upload flow, API 1–5 variants so với UI 3 size |
-| [Design guidelines](../guidelines/Guidelines.md) | Bỏ trạng thái Phase 5 PARTIAL/UI chưa nối; đồng bộ branding và trạng thái MVP |
-| [Pipeline index](pipeline/README.md) | Current phase/source/cloud, conditional restock, signed upload và từng môi trường |
-| [Phase 0](pipeline/PHASE_0_PREPARE.md), [Phase 1](pipeline/PHASE_1_DATABASE.md) | Mẫu config/checklist local được đánh dấu lịch sử, không hướng dẫn ghi đè cấu hình mới hoặc migrate lại |
-| [Phase 2](pipeline/PHASE_2_API_CATALOG.md) | Phase 6/current UI state, ≤3 catalog queries và safe diagnostics; giữ nguyên output nghiệm thu cũ |
-| [Phase 3](pipeline/PHASE_3_CHECKOUT_ORDERS.md), [Phase 4](pipeline/PHASE_4_ADMIN.md) | Context current, token3 form/login8192, conditional restock; giữ nguyên output cũ theo ngày |
-| [Phase 5](pipeline/PHASE_5_FRONTEND.md), [FE_AUDIT](pipeline/FE_AUDIT.md) | Phase 5 DONE/Phase 6 IN PROGRESS; preview chưa checkout được ghi rõ là thời điểm trước tích hợp |
-| [Phase 6](pipeline/PHASE_6_DEPLOY.md) | Local checks mới, snapshot cloud mới và việc còn thiếu; acceptance vẫn5/7, không biến public read thành nghiệm thu write |
-| [API_CONTRACT](pipeline/API_CONTRACT.md) | Contract code hiện tại, lỗi rate-limit/cap PENDING, conditional Turnstile, state/TTL và upload deployment scope |
-| [BACKLOG](pipeline/BACKLOG.md) | Bỏ đề xuất unsigned upload/public_id persistence; phân biệt metadata đã có với product page/prerender còn thiếu |
-| [ATTRIBUTIONS](../ATTRIBUTIONS.md) | Đã rà: attribution shadcn/ui/Unsplash vẫn phù hợp; giữ nguyên |
-| [SQL pointer1](sql/MVP_SCHEMA.sql), [SQL pointer2](pipeline/MVP_SCHEMA.sql) | Đúng link canonical, không chứa bản DDL thứ hai; giữ nguyên |
-| [Seed](sql/MVP_SEED_DEV.sql), [Deferred](sql/deferred/0002_custom_requests.sql) | Seed mẫu/deferred vẫn đúng phạm vi; giữ nguyên, không áp remote |
-| [Canonical migration](../migrations/0001_mvp.sql) | SHA256 vẫn `9ee756750b15b50f902e17db41a3ef75a2c0e5437c9eb56b7a9253a83c9aa4e0`; không chỉnh |
+| [README](../README.md) | Giới thiệu, cách chạy và mục lục, contributors; không làm deployment log |
+| [PROJECT_GUIDE](../PROJECT_GUIDE.md) | Bản đồ module/routes, ownership, component/design system và quy trình phát triển |
+| [AGENTS](../AGENTS.md) | Quy tắc làm việc và các ràng buộc cần giữ; không tích lũy biên bản từng lượt |
+| [Repo skill](../.agents/skills/lunara-flower-shop/SKILL.md), [design skill](../.agents/skills/lunarra-design/SKILL.md) | Quy trình trợ lý theo phạm vi skill; tham chiếu hướng dẫn/chính sách dự án |
+| [TECH_STACK](TECH_STACK.md) | Công nghệ, phiên bản/package lock, build/types/tooling và ranh giới kiến trúc |
+| [PROJECT_STATUS](PROJECT_STATUS.md) | Nghiệm thu, deployment/snapshot đã ghi nhận theo ngày, bằng chứng local/remote và việc còn thiếu |
+| [API_CONTRACT](pipeline/API_CONTRACT.md) | Endpoint, payload/DTO, validation/lỗi và tác dụng phía server; không liệt kê route đề xuất như đã có |
+| [DATABASE_DESIGN](DATABASE_DESIGN.md) | Schema/migrations, quan hệ/ràng buộc và quyết định dữ liệu |
+| [FRONTEND_ENTITIES](FRONTEND_ENTITIES.md) | DTO/model, nguồn dữ liệu, state/storage và source deferred |
+| [ORDER_TRACKING](ORDER_TRACKING.md) | UX Tra đơn, tiến trình, trạng thái lỗi và memory-only privacy; dẫn contract và trạng thái nghiệm thu |
+| [CHECKOUT_UI](CHECKOUT_UI.md) | Luồng giỏ/checkout/review/xác nhận và state giữa routes |
+| [DELIVERY_ADDRESS](DELIVERY_ADDRESS.md) | Provenance danh mục, coverage/fee và cách chọn/chuẩn hóa địa chỉ |
+| [CATEGORY_IMAGES](CATEGORY_IMAGES.md) | Asset danh mục, migration/gán URL và rollback |
+| [CLOUDINARY](CLOUDINARY.md) | Cấu hình provider, signed-upload/gallery, giới hạn/lỗi và lifecycle asset |
+| [BOT_PROTECTION](BOT_PROTECTION.md) | Turnstile/rate-limit/cap đơn chờ/hủy/restock/expiry và điều kiện nghiệm thu |
+| [HARDENING](HARDENING.md) | Headers/CSP/SEO/log/query/image constraints; dẫn cơ chế bảo vệ sang BOT_PROTECTION |
+| [STAGING](STAGING.md), [OPERATIONS](OPERATIONS.md) | Target/build/deploy; thao tác smoke/backup/rollback/secrets/quota/reconciliation |
+| [Pipeline index](pipeline/README.md), [Phase0](pipeline/PHASE_0_PREPARE.md), [Phase1](pipeline/PHASE_1_DATABASE.md), [Phase2](pipeline/PHASE_2_API_CATALOG.md), [Phase3](pipeline/PHASE_3_CHECKOUT_ORDERS.md), [Phase4](pipeline/PHASE_4_ADMIN.md), [Phase5](pipeline/PHASE_5_FRONTEND.md), [Phase6](pipeline/PHASE_6_DEPLOY.md) | Scope/đầu vào/tiêu chí nghiệm thu phase; bằng chứng lịch sử gắn đúng ngày, không thay current status |
+| [FE_AUDIT](pipeline/FE_AUDIT.md), [BACKLOG](pipeline/BACKLOG.md) | Ranh giới dữ liệu/fixture/privacy và backup frontend; ý tưởng chưa triển khai |
+| [Guidelines](../guidelines/Guidelines.md), [ATTRIBUTIONS](../ATTRIBUTIONS.md) | Quy ước thiết kế; nguồn/license tài nguyên |
+| Báo cáo này | Kết quả audit và ranh giới xác minh, không thêm bản sao trạng thái chức năng |
 
-## Ranh giới bằng chứng
+## Nội dung đã hợp nhất và dọn dẹp
 
-Staging hiện4 categories/1 active product/0delivery provinces; production public4 categories/8 active products/2delivery provinces. Các số đơn/tồn/FK15/10 không được coi là hiện tại. Staging có config/secret names không chứng minh upload thật; scheduled handler/TTL không chứng minh Cron tick đã thực chạy; cả hai Worker chưa có TURNSTILE_SECRET.
+- Bỏ thông báo Tra đơn được chép đồng loạt lên tài liệu database, provider, operations, phase và skill. Liên kết tính năng chỉ giữ ở mục lục/route hoặc nơi thật sự liên quan.
+- Giữ mô tả UX tại ORDER_TRACKING; payload/lỗi tại API_CONTRACT. Đưa phần ghi nhận deploy/test về PROJECT_STATUS, không chép toàn bộ log sang tài liệu khác.
+- Gộp lịch sử local/remote rải trong guide/instructions/status thành bảng bằng chứng và snapshot có ngày. Giữ nghiệm thu production/phase, giới hạn provider và provenance; bỏ preview port đã hết tác dụng, permission một lần, checkpoint đang làm và kết quả lặp đã được thay thế.
+- Bỏ khẳng định “hiện tại chưa deploy/thiếu secret/không có vùng giao” suy từ snapshot cũ. Không lấy source config làm bằng chứng cloud; các snapshot cần giữ được ghi rõ lịch sử.
+- Giữ hướng dẫn backup/rollback, source/license và migration bất biến; không tạo file archive, không chạy SQL hoặc sửa log test để giả chạy lại.
 
-Giữ output lịch sử 125/136/143/148/150/158/160 tests trong phase đúng mốc, không sửa log để giả chạy lại. Browser Phase 5 và hardening targeted khác phạm vi responsive toàn bộ; lỗi Shop320px chưa được xác nhận đã hết. Phase 6 vẫn còn dữ liệu mở bán thật và xác nhận operator quota.
+## Sai khác với source đã xử lý
 
-Các audit/evidence riêng tư đang ignored như SECURITY_REVIEW.md, .security-review/, backup, browser profiles và secrets không phải tài liệu current dùng chung; không đưa vào Git hoặc sửa bằng chứng để thay lịch sử. [PROJECT_STATUS](PROJECT_STATUS.md) là nơi tra current state.
+| Nhóm | Sửa tài liệu |
+| --- | --- |
+| Tra đơn | Public dùng OrderLookupResult, admin giữ OrderDetailView; mô tả snapshot tra theo yêu cầu, không suy thành polling/tracking thời gian thực |
+| Contract/gallery | Category có image_url; admin gallery/public IDs và list-cover/detail-gallery đã có; loại customer-cancel đề xuất khỏi danh sách API active |
+| Địa chỉ | D1 administrative catalog và zone active, không JSON hai-city runtime hay fallback mặc định tỉnh |
+| Routing/storage | /cart và /checkout tách routes, draft chung memory-only; sửa route/detail/entity và deferred ownership |
+| Typography/UI | Fraunces/Inter cho EN, Lora/Be Vietnam Pro cho VI; có Dropdown/Combobox; sửa kích thước hero/grid và placeholder footer theo source |
+| Config/SEO | Phân biệt public vars trong source với Worker đã deploy, client product metadata với sitemap/metadata HTML; about noindex không phải access control |
+| Vận hành | Sửa mẫu backup theo schema10/12bảng, smoke token stdin và đối chiếu lỗi ghi; giữ hướng dẫn đúng target |
+| Nguồn dữ liệu | Bổ sung credit Open Admin Data/CC BY4.0; tránh lặp commit/dataset metadata giữa attribution và domain reference |
 
-## Thay đổi tiếp theo sau lượt rà docs-only
+## Kiểm tra sau chỉnh sửa
 
-Người dùng tiếp tục yêu cầu sửa fail-closed Turnstile và kiểm headers live. Source hiện có patch local chưa commit/deploy; current170tests/215files/40smoke, native verifier3cấu hình và22phản hồi header live đã kiểm. Các mô tả docs-only/166tests bên trên là phạm vi mốc rà tài liệu trước patch runtime này. [Bằng chứng mới](HARDENING.md#turnstile-fail-closed-và-header-live-16102026).
+- **32 Markdown đã rà, 30 file sửa**; giữ README và design skill vì đang đúng phạm vi. Không thêm/xóa file tài liệu. Bảng phân công ở trên liệt kê toàn bộ tài liệu và vai trò.
+- **387 liên kết/anchor nội bộ: PASS**, không thiếu path, heading hoặc reference. Hai SQL pointers vẫn dẫn đúng chuỗi migrations;0001–0003 không đổi so với HEAD sau chuẩn hóa newline.
+- **67 tham chiếu URL ngoài** đã kiểm cú pháp;49 URL HTTP duy nhất được thử truy cập công khai (không tính local127.0.0.1).45 trả2xx/3xx;Figma cần GET vì HEAD trả404.
+- **4 URL chưa xác minh được:** hai link PR1/PR2 trả404 khi truy cập ẩn danh, Unsplash và trang license trả401 cả HEAD/GET. Giữ URL nguồn/credit vì phản hồi thiếu quyền không chứng minh link sai. Kiểm authenticated GitHub bằng kho credential bị automatic approval review từ chối; không đọc credential hoặc thử lách giới hạn. Không suy ra nội dung nguồn/license đã được tái thẩm định chỉ từ HTTP200.
+- `git diff --check`: PASS. Toàn bộ diff chỉ là Markdown;source/config/SQL/dependency không đổi. Không còn đoạn prose dài bị chép nguyên giữa các file. Tests/build không chạy lại cho thay đổi docs-only.
 
-## Kiểm tra tài liệu tại mốc docs-only trước patch runtime
+## Chưa thể xác minh từ source
 
-Rà đường dẫn/link Markdown nội bộ, anchor, schema pointers, inclusion allowlist và `git diff --check`. Chỉ tài liệu và exception chính xác cho báo cáo này trong .gitignore được thay đổi; không cần chạy lại tests/build cho thay đổi chỉ gồm tài liệu.
+- Secret values, provider preset/hostname đúng, Turnstile/Cloudinary success flow, Cron cloud thực chạy, quota/billing/CPU và counts DB hiện tại.
+- Trạng thái production mới hơn các mốc đã ghi; không tái kiểm cloud hoặc suy trạng thái live từ config local.
+- Tính pháp lý/chính xác kinh doanh của địa chỉ/map, MST001, hotline, nội dung story/giờ mở cửa, chính sách và dữ liệu bán hàng.
+- Kết quả tests/browser cũ chỉ là evidence có ngày. Audit tài liệu không thay nghiệm thu runtime và không nâng mức hoàn tất phase.
 
-Kết quả rà soát: **PASS 27 Markdown, 369 link/anchor nội bộ, 2 SQL schema pointers, SHA256 canonical migration không đổi và git diff --check**. Output fenced Phase0–5 giữ nguyên; không có file runtime hoặc dữ liệu bị thay đổi. Link ngoài được giữ nguồn; chưa kiểm HTTP toàn bộ URL ngoài.
+Báo cáo audit16/10 đã lỗi thời về counts/deployment được thay bằng báo cáo này; bằng chứng phase và các snapshot còn giá trị được giữ tại tài liệu sở hữu tương ứng. Không bổ sung file tài liệu mới.

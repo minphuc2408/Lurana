@@ -18,7 +18,7 @@ export function OrderLookupResult({ order }: { order: OrderDetail }) {
   const StatusIcon = statusIcons[order.status_code];
   const cancellation = cancelled ? [...order.timeline].reverse().find(event => event.to_status === 'CANCELLED') : undefined;
   const method = order.delivery.method_code === 'STANDARD' ? 'Standard Delivery' : order.delivery.method_code === 'EXPRESS' ? 'Express Delivery' : 'Same-Day Delivery';
-  return <article data-order-detail data-lookup-result className="max-w-4xl space-y-8 rounded-[2px] border border-lunara-border bg-lunara-surface p-6 text-lunara-body sm:p-10">
+  return <article data-order-detail data-lookup-result className="w-full min-w-0 space-y-8 rounded-[2px] border border-lunara-border bg-lunara-surface p-5 text-lunara-body sm:p-10">
     <header className="flex flex-col justify-between gap-3 border-b border-lunara-border pb-6 sm:flex-row sm:items-center">
       <div className="min-w-0"><span className="text-[11px] font-medium tracking-wider text-lunara-rose-strong uppercase">{t('Order number')}</span><h2 data-detail-order-number className="font-display text-2xl break-all text-lunara-ink sm:text-3xl">{order.order_number}</h2><p className="mt-0.5 text-xs">{t('Placed at')}: {formatVietnamDate(order.placed_at, language)}</p></div>
       <span data-order-status data-status-code={order.status_code} className="inline-flex items-center gap-2 self-start rounded-[2px] border border-lunara-rose-strong/40 bg-lunara-blush px-3.5 py-1.5 text-xs font-medium text-lunara-ink sm:self-center"><StatusIcon size={15} strokeWidth={1.8} aria-hidden="true" />{t(order.status_code)}</span>

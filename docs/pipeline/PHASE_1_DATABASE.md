@@ -1,13 +1,10 @@
 # Phase 1 — Database D1 (local): migration, seed, kiểm tra
 
-> Rà soát 16/10/2026: [hiện trạng chuẩn](../PROJECT_STATUS.md), [contract hiện tại](API_CONTRACT.md). Phase 0–5 DONE local, Phase 6 IN PROGRESS5/7. Local170 tests/215 source files/40 smoke; staging đã deploy bản mới13:31 ngày 16/10, production vẫn bản 15/10. Output/checklist ghi ngày cũ bên dưới là lịch sử, không phải trạng thái cloud hiện tại.
-
-
 **Mục tiêu:** schema MVP áp lên D1 **local**, có dữ liệu mẫu, kiểm tra ràng buộc. Chưa đụng D1 remote.
 
-**Trạng thái:** DONE · 5/5 tiêu chí, nghiệm thu D1 local ngày **14/10/2026**. [Hiện trạng](../PROJECT_STATUS.md). Phạm vi nghiệm thu14/10 chỉ dùng D1 local; current Phase 6 đã migrate cả hai D1 remote. Không áp deferred/0002 hoặc sửa migration0001 đã áp remote.
+**Trạng thái:** DONE · 5/5 tiêu chí, nghiệm thu D1 local ngày **14/10/2026**. [Hiện trạng](../PROJECT_STATUS.md). File giữ nghiệm thu base 0001/seed tại mốc đó; các mở rộng sau đó xem [DATABASE_DESIGN](../DATABASE_DESIGN.md), migration từng môi trường xem PROJECT_STATUS. Không áp SQL deferred hoặc sửa base đã áp remote.
 
-**Quyết định trước migration:** đã đối chiếu v1 và v2, chốt nguyên DDL v2 theo phạm vi 10 bảng và seed hiện có. [Bảng khác biệt và lý do](../DATABASE_DESIGN.md#đối-chiếu-canonical-v1--v2-đã-chốt). [`migrations/0001_mvp.sql`](../../migrations/0001_mvp.sql) là nguồn DDL duy nhất; hai file schema trong docs chỉ chứa chú thích dẫn về migration. Sau khi chốt không phát hiện lỗi schema qua test, nên **không sửa DDL**. SHA-256 khi nghiệm thu: `9ee756750b15b50f902e17db41a3ef75a2c0e5437c9eb56b7a9253a83c9aa4e0`.
+**Quyết định trước migration:** đã đối chiếu v1 và v2, chốt nguyên DDL v2 theo phạm vi 10 bảng và seed hiện có. [Bảng khác biệt và lý do](../DATABASE_DESIGN.md#quyết-định-base-schema-v1--v2-tại-phase-1). [`migrations/0001_mvp.sql`](../../migrations/0001_mvp.sql) là base DDL canonical; hai file schema trong docs chỉ chứa chú thích dẫn về migration. Sau khi chốt không phát hiện lỗi schema qua test, nên **không sửa DDL**. SHA-256 khi nghiệm thu: `9ee756750b15b50f902e17db41a3ef75a2c0e5437c9eb56b7a9253a83c9aa4e0`.
 
 ## 10 bảng của MVP
 
@@ -15,7 +12,7 @@
 
 `custom_requests` nằm ở [`../sql/deferred/0002_custom_requests.sql`](../sql/deferred/0002_custom_requests.sql) — **không áp dụng** ở MVP.
 
-## Việc cần làm
+## Checklist đã thực hiện — 14/10/2026
 
 | # | Ai | Việc |
 | --- | --- | --- |
@@ -26,7 +23,7 @@
 | 1.5 | AGENT | Cập nhật tài liệu cũ cho khớp schema mới (xem mục "Tài liệu cần sửa") |
 | 1.6 | NGƯỜI | Điền **khu vực giao thật** vào `delivery_zones` (tỉnh/thành, phường, phí, ngưỡng miễn phí). Seed hiện chỉ là ví dụ. Có thể làm sau ở Phase 4 qua trang admin hoặc ở Phase 6 trước khi mở bán |
 
-## Truy vấn kiểm tra nhanh
+## Truy vấn kiểm tra nhanh tại mốc base 0001
 
 ```sql
 SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%' ORDER BY 1;   -- kỳ vọng 10 bảng (+ d1_migrations)
@@ -55,7 +52,7 @@ Mỗi mục là một trường hợp phải **bị từ chối** (trừ khi ghi
 12. Xóa category còn sản phẩm bị chặn.
 13. Áp `0001` hai lần không lỗi (`IF NOT EXISTS`); seed chạy hai lần không nhân đôi dữ liệu.
 
-Verifier đọc database D1 local được Wrangler migrate/seed để kiểm đúng 10 bảng, một migration, số dòng, FK và DDL khớp canonical. Các ca cố tình ghi/xóa dùng binding D1 local riêng qua `getPlatformProxy({ persist: false, remoteBindings: false })`; database đã seed chỉ được đọc. Nhóm 5 gọi `.batch()` thật và kiểm không còn order/items/history, tồn giữ nguyên khi lỗi CHECK. Nhóm 13 chạy lại raw DDL rồi seed hai lần và so sánh toàn bộ dòng nghiệp vụ, kể cả 8 ảnh.
+Tại mốc Phase 1, verifier đọc D1 local đã migrate/seed để kiểm 10 bảng, một migration, counts, FK và DDL. Verifier hiện tại cũng kiểm các migration mở rộng; không dùng counts lịch sử dưới đây làm kết quả hiện tại. Các ca cố tình ghi/xóa dùng binding D1 local riêng qua `getPlatformProxy({ persist: false, remoteBindings: false })`; database đã seed chỉ được đọc. Nhóm 5 gọi `.batch()` thật và kiểm không còn order/items/history, tồn giữ nguyên khi lỗi CHECK. Nhóm 13 chạy lại raw DDL rồi seed hai lần và so sánh toàn bộ dòng nghiệp vụ, kể cả 8 ảnh.
 
 Verifier Python in-memory cũ đã bỏ để không duy trì hai suite và tránh tự áp deferred/0002. Không dùng kết quả 28/28 cũ để tick tiêu chí. Khi phát triển verifier, `PRAGMA integrity_check` bị D1 binding trả `SQLITE_AUTH`; bỏ phép kiểm bổ sung không thuộc tiêu chí này, giữ `PRAGMA foreign_key_check` được D1 hỗ trợ. Đây là thay đổi verifier, không phải lỗi hoặc thay đổi schema.
 
@@ -67,7 +64,7 @@ Verifier Python in-memory cũ đã bỏ để không duy trì hai suite và trá
 - `datetime('now')` là UTC, định dạng `YYYY-MM-DD HH:MM:SS` (không có `T`/`Z`). API chuyển sang ISO-8601 khi trả ra.
 - Không đặt `PRAGMA foreign_keys` trong migration (D1 đã bật FK).
 
-## Tài liệu cần sửa cho khớp
+## Tài liệu đã đồng bộ tại mốc Phase 1
 
 - `docs/DATABASE_DESIGN.md`: đã ghi 10 bảng, đối chiếu đầy đủ v1/v2 và lý do; các cột idempotency/COD/hoàn tồn/actor, CHECK, unique, index và giới hạn thực tế. JSON chỉ thuộc wizard deferred.
 - `docs/TECH_STACK.md`: đã cập nhật trạng thái database local; giữ auth admin MVP secret + JWT cookie, quota là sizing kế hoạch cần kiểm tra lại trước deploy.

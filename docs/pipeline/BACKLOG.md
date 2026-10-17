@@ -1,27 +1,22 @@
 # Backlog sau MVP và rủi ro đã biết
 
-> Rà soát 16/10/2026: [hiện trạng chuẩn](../PROJECT_STATUS.md), [contract hiện tại](API_CONTRACT.md). Phase 0–5 DONE local, Phase 6 IN PROGRESS5/7. Local170 tests/215 source files/40 smoke; staging đã deploy bản mới13:31 ngày 16/10, production vẫn bản 15/10. Output/checklist ghi ngày cũ bên dưới là lịch sử, không phải trạng thái cloud hiện tại.
-
-
-**Trạng thái backlog (16/10/2026):** PLANNED · Phase 0–5 DONE local: backend Phase 4 đạt 9/9 và frontend Phase 5 đạt 6/6 tiêu chí, 10/10 kịch bản bắt buộc +2/2 mở rộng. Phase 6 IN PROGRESS5/7; production đã deploy và kiểm API/public browser, chưa đủ điều kiện mở bán. [Hiện trạng](../PROJECT_STATUS.md) · [Bằng chứng frontend](PHASE_5_FRONTEND.md). Bảng dưới tách phần đã có trong code khỏi phần còn thiếu; mức deploy của từng control xem PROJECT_STATUS. Quota/giá/cloud policy cần kiểm tra lại trước deploy.
+Rà soát **17/10/2026**. Chỉ ghi phần chưa triển khai hoặc chưa nghiệm thu; hành vi đang có tra ở [API_CONTRACT](API_CONTRACT.md), phiên bản remote và acceptance ở [PROJECT_STATUS](../PROJECT_STATUS.md). Các đề xuất không tự cho phép triển khai hay phát sinh chi phí.
 
 ## Ưu tiên cao (tuần đầu sau khi mở bán)
 
-B2/B3 cập nhật local 15/10/2026 bên dưới chưa deploy. Phase 6 hiện IN PROGRESS (5/7), đã deploy phiên bản trước và nghiệm thu API/browser; các số/mô tả đầu trang là mốc lịch sử trước triển khai. Xem [chống bot và COD](../BOT_PROTECTION.md).
-
 | Hạng mục | Ghi chú |
 | --- | --- |
-| **Thông báo đơn mới cho chủ shop** | MVP dự kiến chỉ có admin nên dễ bỏ sót đơn. Worker gọi webhook trong `ctx.waitUntil()` sau khi tạo đơn; lỗi gửi không làm hỏng đơn. Chọn provider và kiểm tra quota/chi phí khi triển khai |
-| Trạng thái `DELIVERY_FAILED` riêng | B3 đã xử lý local bằng IN_TRANSIT → CANCELLED, bắt buộc lý do, restock mặc định false/opt-in true; không cần migration. Trạng thái riêng/thống kê nâng cao vẫn deferred |
-| Trang chính sách | Quyền riêng tư (thu thập tên/SĐT/địa chỉ), đổi/trả hoa tươi, liên hệ. Là yêu cầu vận hành, không phải code |
-| Upload ảnh từ admin | Signed direct upload đã code và có staging deployment/config/secrets names; Save product chỉ lưu image.url, chưa lưu public_id hay tự xóa asset. Còn nghiệm thu preset/upload thật, cấu hình production, gallery/cleanup nếu có nhu cầu. Không dùng unsigned preset; [hướng dẫn](../CLOUDINARY.md) |
-| Chống bot và vận hành COD | B2 local đã có Turnstile checkout/lookup/login, rate-limit bindings, 3 PENDING/SĐT và Cron TTL 24 giờ, chạy mỗi giờ trong cấu hình local. Owner cấu hình khóa/deploy; Cron đã chốt 24 giờ/mỗi giờ; WAF/custom domain và bảo vệ các route admin mở rộng còn chờ nhu cầu. [Hướng dẫn](../BOT_PROTECTION.md) |
+| **Thông báo đơn mới cho chủ shop** | Hiện chỉ có danh sách admin nên dễ bỏ sót đơn. Worker gọi webhook trong `ctx.waitUntil()` sau khi tạo đơn; lỗi gửi không làm hỏng đơn. Chọn provider và kiểm tra quota/chi phí khi triển khai |
+| Trạng thái `DELIVERY_FAILED` riêng | Đã xử lý bằng IN_TRANSIT → CANCELLED, bắt buộc lý do, restock mặc định false/opt-in true; không cần migration. Trạng thái riêng/thống kê nâng cao vẫn deferred |
+| Trang chính sách | Quyền riêng tư (thu thập tên/SĐT/địa chỉ), đổi/trả hoa tươi, liên hệ. Nội dung pháp lý/kinh doanh chưa được chủ shop duyệt; footer hiện mở thông báo Sắp ra mắt, chưa có trang chính sách |
+| Upload ảnh từ admin | Signed direct upload và gallery tối đa 8 ảnh đã có; Save lưu URL/public ID, sắp thứ tự/chọn cover/gỡ liên kết. Còn nghiệm thu preset/upload thật và cấu hình production; xóa asset tại provider chưa triển khai. Không dùng unsigned preset; [hướng dẫn](../CLOUDINARY.md) |
+| Chống bot và vận hành COD | Code đã có Turnstile checkout/lookup/login, rate-limit bindings, cap 3 PENDING/SĐT và Cron TTL 24 giờ/mỗi giờ. Còn nghiệm thu provider/hostname/Cron cloud, đo quota/CPU và cập nhật production; WAF/custom domain/bảo vệ route admin mở rộng theo nhu cầu. [Hướng dẫn](../BOT_PROTECTION.md) |
 
 ## Ưu tiên trung bình
 
 | Hạng mục | Ghi chú |
 | --- | --- |
-| Đặt hoa theo yêu cầu (wizard) | Áp `docs/sql/deferred/0002_custom_requests.sql` làm migration `0002`; thêm API công khai + admin; gộp `AdminRequests` với dữ liệu thật; cân nhắc bảng ảnh tham khảo |
+| Đặt hoa theo yêu cầu (wizard) | Dùng `docs/sql/deferred/0002_custom_requests.sql` làm tài liệu tham khảo, chọn số migration mới sau các migration đã áp; không dùng lại số 0002. Thêm API công khai + admin; gộp `AdminRequests` với dữ liệu thật; cân nhắc bảng ảnh tham khảo |
 | Đăng ký/đăng nhập khách | `users`/`user_addresses` đã nằm trong canonical 10 bảng và migrate local Phase 1, nhưng chưa có customer auth/profile API; chưa có bảng `wishlist`. Source customer giữ ẩn bằng cờ; `VITE_ENABLE_CUSTOMER_AUTH` mặc định false và customer API-ready gate false ngăn bật fixture. Admin cookie auth đã nối thật ở Phase 5. Chọn customer auth/provider sau, đối chiếu schema riêng và CPU/quota thật trước triển khai |
 | Lọc theo dịp / loại hoa | Thêm `occasions`, `flower_types`, `product_occasions`, `product_flower_types` (đề xuất ở thiết kế trước); dùng chung với wizard |
 | Coupon thật | Bảng/rules `coupons` chưa có; `orders.coupon_code`/`discount_total` đã migrate local. Phase 3 không nhận coupon client, discount_total luôn 0; coupon thật làm sau MVP |
@@ -38,7 +33,7 @@ B2/B3 cập nhật local 15/10/2026 bên dưới chưa deploy. Phase 6 hiện IN
 - Nhiều chi nhánh (`stores`, `orders.store_id`).
 - Tìm kiếm không dấu bằng FTS5; phân trang catalog khi vượt 100 sản phẩm.
 - Nguyên liệu/công thức/nhà cung cấp (`materials`, `product_recipe_items`, `suppliers`).
-- SEO: metadata Home/Shop, robots/sitemap/OG và staging noindex đã có. Còn trang chi tiết sản phẩm và prerender/SSR nội dung catalog, ảnh/font tối ưu theo đo đạc; không làm lại phần metadata đã triển khai.
+- SEO: metadata Home/Shop, robots/sitemap/OG và staging noindex đã có. Trang `/shop/:slug` và metadata client đã có; còn prerender/SSR nội dung catalog, product sitemap và tối ưu ảnh/font theo đo đạc; không làm lại phần metadata đã triển khai.
 - CI/CD: GitHub Actions hoặc Workers Builds với API token phân quyền tối thiểu.
 - Observability/log D1 allowlist đã có trong code; mở rộng cảnh báo/truy vấn lỗi khi cần, đưa dữ liệu sang PostgreSQL (Supabase/Neon) nếu cần truy vấn phức tạp.
 
@@ -54,4 +49,4 @@ B2/B3 cập nhật local 15/10/2026 bên dưới chưa deploy. Phase 6 hiện IN
 | Hoa tươi làm theo đơn nhưng tồn kho theo số lượng | Trung bình | Dùng tồn như "số suất nhận mỗi size"; chỉnh bằng `stock_delta` hằng ngày; khi ghi mất phản hồi, UI xóa delta/khóa dòng và yêu cầu GET tải tồn trước lần chỉnh tiếp. Không tự retry delta; cân nhắc sức chứa theo ngày ở giai đoạn sau |
 | Không có thông báo đơn mới | Cao | Làm hạng mục "Thông báo đơn mới" ngay sau MVP |
 | Lộ dữ liệu khách qua file backup | Trung bình | Không commit; lưu riêng tư; mã hóa ổ lưu trữ |
-| Sai khác tên tỉnh/phường giữa danh sách giao và địa chỉ khách nhập | Trung bình | Form Phase 5 chọn tỉnh/ward DB và cho nhập ward khác để dùng mặc định tỉnh; server khớp ward trước, fallback tỉnh sau. Rà soát dữ liệu hành chính định kỳ và nhập khu vực thật trước mở bán |
+| Sai khác tên tỉnh/phường giữa danh sách giao và địa chỉ khách nhập | Trung bình | Admin chọn tỉnh/phường từ danh mục D1; checkout/quote/order chỉ nhận phường có zone active thuộc danh mục, không fallback tỉnh. Rà soát danh mục định kỳ và nhập phí/khu vực thật trước mở bán |

@@ -2,9 +2,26 @@ import { Flower } from 'lucide-react';
 import { Link } from 'react-router';
 import { useLocale } from '@/shared/i18n';
 import { customerCareLinks, socialLinks, storeLocations } from '@/shared/config/storefront-footer';
+import { FeatureUnavailable } from '@/shared/components/FeatureUnavailable';
+import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription, DialogClose } from '@/shared/ui/dialog';
 
 const linkClass = 'text-sm leading-7 text-[#F5DDD5] no-underline transition-colors hover:text-white hover:underline underline-offset-4 break-words';
 const headingClass = 'font-display text-sm sm:text-base font-semibold tracking-[0.05em] uppercase text-[#F5DDD5] mb-4 leading-relaxed';
+
+function FooterDestination({ label, href }: { label: string; href?: string }) {
+  const { t } = useLocale('common');
+  if (href) return <Link to={href} className={linkClass}>{t(label)}</Link>;
+  const description = t('Footer feature coming soon', { feature: t(label) });
+  return <Dialog>
+    <DialogTrigger asChild><button type="button" data-footer-coming-soon className={'text-left ' + linkClass}>{t(label)}</button></DialogTrigger>
+    <DialogContent className="rounded-[2px] border-lunara-border bg-lunara-cream font-body">
+      <DialogTitle className="sr-only">{t(label)}</DialogTitle>
+      <DialogDescription className="sr-only">{description}</DialogDescription>
+      <FeatureUnavailable inline description={description} />
+      <DialogClose asChild><button type="button" className="rounded-[2px] bg-lunara-rose-strong px-6 py-3 text-white">{t('Close')}</button></DialogClose>
+    </DialogContent>
+  </Dialog>;
+}
 
 export function StorefrontFooter() {
   const { t } = useLocale('common');
@@ -24,13 +41,13 @@ export function StorefrontFooter() {
         <ul className="flex flex-col gap-2">
           <li><Link to="/orders/track" className={linkClass}>{t('Track order')}</Link></li>
           <li><Link to="/admin/login" className={linkClass}>{t('Admin login')}</Link></li>
-          {customerCareLinks.map(link => <li key={link.href}>{link.href.startsWith('/') ? <Link to={link.href} className={linkClass}>{t(link.label)}</Link> : <a href={link.href} target="_blank" rel="noopener noreferrer" className={linkClass}>{t(link.label)}</a>}</li>)}
+          {customerCareLinks.map(link => <li key={link.label}><FooterDestination {...link} /></li>)}
         </ul>
       </nav>
       <nav aria-label={t('Follow Us')} className="min-w-0">
         <h4 className={headingClass}>{t('Follow Us')}</h4>
         <ul className="flex flex-col gap-2">
-          {socialLinks.map(link => <li key={link.href}><a href={link.href} target="_blank" rel="noopener noreferrer" className={linkClass}>{link.label}</a></li>)}
+          {socialLinks.map(link => <li key={link.label}><FooterDestination {...link} /></li>)}
         </ul>
       </nav>
       <div className="col-span-2 lg:col-span-1 min-w-0">

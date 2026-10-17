@@ -247,6 +247,7 @@
   "Delivery method": "Phương thức giao hàng",
   "Surcharge {{fee}}": "Phụ phí: {{fee}}",
   "Feature unavailable": "Sắp ra mắt",
+  "Footer feature coming soon": "Mục {{feature}} đang được phát triển. Vui lòng quay lại sau.",
   "Feature pending API": "Tính năng này đang được tạm ẩn để hoàn thiện dịch vụ. Bạn có thể xem bộ sưu tập và báo giá giỏ hàng.",
   "Browse collection": "Xem bộ sưu tập",
   "No featured products": "Chưa có hoa nổi bật.",

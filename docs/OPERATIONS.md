@@ -1,6 +1,6 @@
 # Vận hành Lunara trên Cloudflare
 
-Cập nhật **16/10/2026**. Runbook production `lunara`/`lunara-db`; staging riêng `lunara-staging`/`lunara-staging-db` theo [STAGING](STAGING.md); trạng thái nghiệm thu và bằng chứng thực thi nằm tại [Phase 6](pipeline/PHASE_6_DEPLOY.md). Có runbook hoặc chạy tốt local không đồng nghĩa deployment đã nghiệm thu. Chỉ mở bán sau khi đủ toàn bộ tiêu chí Phase 6, gồm dữ liệu thật và kiểm thử trên URL đã deploy.
+Đối chiếu source **17/10/2026**. Runbook production `lunara`/`lunara-db`; staging riêng `lunara-staging`/`lunara-staging-db` theo [STAGING](STAGING.md); trạng thái nghiệm thu và bằng chứng thực thi nằm tại [Phase 6](pipeline/PHASE_6_DEPLOY.md). Có runbook hoặc chạy tốt local không đồng nghĩa deployment đã nghiệm thu. Chỉ mở bán sau khi đủ toàn bộ tiêu chí Phase 6, gồm dữ liệu thật và kiểm thử trên URL đã deploy.
 
 ## 1. Đúng môi trường và quyền thao tác
 
@@ -12,7 +12,7 @@ Giữ dev/preview trên `127.0.0.1`, `remoteBindings: false`; `npm run db:reset:
 
 ## 2. Migration, deploy và dữ liệu mở bán
 
-Current16/10: hai D1 đã migrate0001; staging đã có dữ liệu thử. Không chạy lại full seed/migration đã áp chỉ để đồng bộ môi trường. Các lệnh khởi tạo dưới đây dùng khi đã có authorization và đúng nhu cầu; snapshot hiện tại ở PROJECT_STATUS.
+Kiểm migration/deployment được ghi nhận tại [PROJECT_STATUS](PROJECT_STATUS.md) trước thao tác. Không chạy lại full seed hoặc sửa migration đã áp để đồng bộ môi trường. Các lệnh sau là ví dụ cho target production, chỉ chạy đúng bước còn thiếu và đã được owner cho phép.
 
 Đầu tiên đối chiếu account/database, quota và quyền áp dụng migration. Các lệnh sau là kế hoạch có điều kiện; kiểm tra từng kết quả trước bước kế tiếp:
 
@@ -23,7 +23,7 @@ npx wrangler d1 execute lunara-db --remote --command "SELECT name FROM sqlite_ma
 npx wrangler d1 execute lunara-db --remote --command "SELECT name, applied_at FROM d1_migrations ORDER BY id"
 ```
 
-`migrations list` liệt kê migration **chưa áp dụng**. Danh sách trống cần đi cùng dòng `0001_mvp.sql` trong `d1_migrations` và đủ 10 bảng nghiệp vụ: `users`, `user_addresses`, `categories`, `products`, `product_variants`, `product_images`, `delivery_zones`, `orders`, `order_items`, `order_status_history`; không đếm bảng nội bộ Cloudflare/SQLite vào số 10. [Cloudflare D1 migrations](https://developers.cloudflare.com/d1/reference/migrations/).
+`migrations list` liệt kê migration **chưa áp dụng**. Danh sách trống cần đi cùng dòng `0001_mvp.sql` trong `d1_migrations` và đủ bảng theo migrations đã áp. Base0001 có10bảng: `users`, `user_addresses`, `categories`, `products`, `product_variants`, `product_images`, `delivery_zones`, `orders`, `order_items`, `order_status_history`; 0002 thêm cột ảnh danh mục,0003 thêm administrative_provinces/administrative_wards thành12bảng; không đếm bảng nội bộ Cloudflare/SQLite. Không suy từ source migrations sang trạng thái remote đã áp. [Cloudflare D1 migrations](https://developers.cloudflare.com/d1/reference/migrations/).
 
 Seed mẫu chỉ chạy một lần để nghiệm thu trước mở bán, sau khi xác nhận database chưa có dữ liệu thật; không chạy lại seed để sửa dữ liệu production:
 
@@ -31,13 +31,13 @@ Seed mẫu chỉ chạy một lần để nghiệm thu trước mở bán, sau k
 npx wrangler d1 execute lunara-db --remote --file=./docs/sql/MVP_SEED_DEV.sql
 ```
 
-Chủ dự án thực hiện deploy đầu tiên bằng `npm run deploy`, chọn subdomain `workers.dev` khi được hỏi và cung cấp URL chính xác. Không đưa secrets vào `wrangler.jsonc`, `VITE_*`, source, Git, nội dung chat hay ảnh chụp. Đặt hai secrets riêng biệt qua prompt của Wrangler theo mục 6. Sau deploy kiểm tra HTTPS, refresh trực tiếp `/shop` và `/orders/track`, catalog/quote, cookie/Origin và [10 kịch bản MVP](pipeline/README.md#8-định-nghĩa-mvp-xong).
+Dùng lệnh target theo [STAGING](STAGING.md#build-và-deploy); xác nhận origin chính xác trước nghiệm thu. Không deploy lại chỉ để cập nhật tài liệu. Không đưa secrets vào `wrangler.jsonc`, `VITE_*`, source, Git, nội dung chat hay ảnh chụp. Đặt hai secrets riêng biệt qua prompt của Wrangler theo mục 6. Sau deploy kiểm tra HTTPS, refresh trực tiếp `/shop` và `/orders/track`, catalog/quote, cookie/Origin và [10 kịch bản MVP](pipeline/README.md#8-định-nghĩa-mvp-xong).
 
 Trước mở bán, chủ shop cung cấp/nhập sản phẩm, giá VND, tồn từng variant, ảnh có quyền sử dụng, khu vực/phí/ngưỡng miễn phí và chính sách giao. Ẩn (`HIDDEN`) sản phẩm mẫu; tắt khu vực mẫu thay vì xóa dữ liệu có tham chiếu. Các giá trị hiện tại trong [worker/config.ts](../worker/config.ts) là giả định: phụ phí Standard/Express/Same-day `0/30.000/50.000`, cutoff `16:00`, thời gian chuẩn bị `120` phút; khung giờ được re-export từ [shared/constants.ts](../shared/constants.ts). Chốt và kiểm thử local trước khi deploy cấu hình đã sửa.
 
 ## 3. Smoke trên deployment và cleanup
 
-Chỉ định đầy đủ HTTPS origin thuộc dự án, không có path/query/fragment. Lệnh đọc không nhận secret và không tạo đơn:
+Chỉ định đầy đủ HTTPS origin thuộc dự án, không có path/query/fragment. Chế độ đọc chỉ kiểm các nhóm public/anonymous, không nhận secret, không lookup đơn hoặc chỉnh tồn. Origin không nhận IP/port tùy chỉnh/path/query/fragment:
 
 ```powershell
 node scripts/smoke.mjs --base-url https://TEN.SUBDOMAIN.workers.dev
@@ -48,6 +48,8 @@ Nghiệm thu ghi cần chủ dự án cung cấp URL, variant được phép th�
 ```powershell
 node scripts/smoke.mjs --base-url https://TEN.SUBDOMAIN.workers.dev --allow-remote-writes --confirm-origin https://TEN.SUBDOMAIN.workers.dev --variant-id ID_DA_DUYET --exclusive-test-window
 ```
+
+Khi Turnstile đã cấu hình, runner cần token mới đúng action/hostname cho từng login/create/replay/lookup; nó không tạo challenge. Prompt TTY chỉ hỏi mật khẩu; token được cấp qua stdin JSON `{admin_password,turnstile_tokens}` (tối đa16token). Không lưu JSON/token vào file, args, log hay chat. Thứ tự và thời hạn token theo [BOT_PROTECTION](BOT_PROTECTION.md); không tắt bảo vệ remote để chạy suite.
 
 Write smoke tạo ba đơn `SMOKE`: COD giao xong/PAID, đơn kiểm giá đã sửa trên request rồi hủy, đơn thắng cuộc đua món cuối rồi hủy. Script chỉ chỉnh variant được chỉ định, tạm đưa tồn về 1 để kiểm race và phục hồi qua admin delta khi GET xác nhận đúng tồn dự kiến. Khi write mơ hồ, script dừng việc tự phục hồi và yêu cầu đối chiếu; không coi script fail là database chưa thay đổi. Sau run phải kiểm tồn và báo cáo riêng trước cleanup, tránh hoàn thêm lần nữa.
 
@@ -112,13 +114,16 @@ try {
   if (integrity.length !== 1 || Object.values(integrity[0])[0] !== 'ok' || foreignKeys.length) {
     throw new Error('Backup không qua integrity/FK check; chưa nghiệm thu.');
   }
-  const tables = ['users', 'user_addresses', 'categories', 'products', 'product_variants',
+  const baseTables = ['users', 'user_addresses', 'categories', 'products', 'product_variants',
     'product_images', 'delivery_zones', 'orders', 'order_items', 'order_status_history'];
+  const existing = new Set(db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all().map(row => row.name));
+  const tables = [...baseTables, ...['administrative_provinces', 'administrative_wards'].filter(name => existing.has(name))];
+  if (tables.length === 11) throw new Error('Danh mục hành chính thiếu một bảng; kiểm migration0003.');
   for (const table of tables) {
     const row = db.prepare(`SELECT COUNT(*) AS count FROM "${table}"`).get();
     console.log(`${table}: ${row.count}`);
   }
-  console.log('PASS: 10 bảng đọc được, integrity=ok, FK violations=0.');
+  console.log(`PASS: ${tables.length} bảng nghiệp vụ đọc được, integrity=ok, FK violations=0.`);
 } finally {
   db.close();
 }
@@ -176,7 +181,7 @@ npx wrangler secret list
 
 ## 7. Khu vực giao và tồn kho
 
-Admin → **Phí giao** (`/admin/delivery-zones`) → tạo/sửa khu vực: tỉnh/thành, phường/xã, phí VND, ngưỡng miễn phí, ETA và active. `ward_name` rỗng là mặc định tỉnh; dòng phường active khớp sẽ ưu tiên. Không có cả dòng phường và mặc định tỉnh active thì checkout báo `NO_DELIVERY_ZONE`. Tắt dòng ví dụ, kiểm quote mới ở ba trường hợp (phường riêng/mặc định/ngoài vùng), rồi owner xác nhận phí thật. Dùng form admin đã có để tạo khu vực; không tự thêm SQL production ngoài Phase 6.
+Admin → **Phí giao** (`/admin/delivery-zones`) → chọn tỉnh/phường từ danh mục D1, nhập phí VND/ngưỡng miễn phí/ETA/active. Chỉ zone active hợp danh mục được công bố; không có zone phù hợp thì quote/order trả `NO_DELIVERY_ZONE`, không fallback tỉnh. Dòng legacy mặc định tỉnh hoặc ngoài danh mục được giữ để tắt, không dùng mở coverage. Kiểm quote cho phường active, phường đã tắt và ngoài vùng; không tự thêm phí/SQL ngoài phạm vi được duyệt. [Quy tắc địa chỉ](DELIVERY_ADDRESS.md).
 
 Admin → **Kho** (`/admin/stock`): GET tồn hiện tại, đối chiếu tồn thực tế, nhập **delta**, không nhập nhầm số tồn đích vào delta. Khi ghi lỗi `NETWORK`, `TIMEOUT`, `BAD_RESPONSE` hoặc `INTERNAL`, request có thể đã áp dụng: UI xóa delta vừa nhập, khóa hàng; bấm tải lại/kiểm lại để GET thành công, đối chiếu rồi mới nhập delta mới. Không lặp tự động delta cũ. Nếu GET vẫn lỗi, giữ hàng bị khóa và xử lý kết nối trước. Hủy ở trạng thái sớm mặc định hoàn tồn một lần; IN_TRANSIT hủy cần lý do, restock mặc định false và chỉ hoàn khi owner chọn true vì hoa còn bán được. CANCELLED luôn terminal. Không hoàn tay thêm sau khi service đã hoàn.
 
@@ -207,13 +212,9 @@ Khi lỗi tăng: xác nhận URL/deployment và request_id, xem metrics/log đã
 
 ## 9. Turnstile và domain
 
-Thiếu/rỗng/whitespace TURNSTILE_SECRET trả503 TURNSTILE_NOT_CONFIGURED trước D1/auth/Siteverify. Chỉ bypass khi cờ server TURNSTILE_ALLOW_LOCAL_BYPASS=true và hostname chính xác localhost/127.0.0.1/[::1]; mặc định local cũng đóng. Có secret thì luôn xác minh token, kể cả bật cờ. Không khai báo cờ trong Wrangler prod/staging, không nhận cờ từ body/header/client. Harness test cô lập tự bật rõ ràng; không đọc ambient .dev.vars. Bản sửa16/10 hiện local/chưa deploy. Phối hợp deployment và secret setup; không xử lý lỗi503 bằng cách bật bypass trên remote.
+Cấu hình widget/secret và cơ chế Turnstile/rate-limit/TTL tại [BOT_PROTECTION](BOT_PROTECTION.md). Phối hợp deploy UI/Site key và secret đúng cặp cho từng hostname; secret đã tồn tại không cần nhập lại sau mỗi deploy. Không gửi secret/token qua chat/log và không bật local bypass trên remote. Giá trị đã khai báo trong source không chứng minh deployment đã nhận hoặc provider/Cron đã chạy; xem [PROJECT_STATUS](PROJECT_STATUS.md) cho mốc kiểm thực tế.
 
-Kiểm header HTML/static và API độc lập: staging static có CSP/DENY/nosniff, production static còn thiếu; API cảhai có secureHeaders trên200/401/404. [Kết quả22phản hồi](HARDENING.md#header-kiểm-độc-lập-trên-live).
-
-Code có Turnstile checkout/lookup/login, action/hostname verifier, rate-limit bindings và cap3 PENDING/SĐT. Snapshot 16/10: staging đã deploy bản mới với key staging/CSP/RateLimit/TTL 24h/scheduled handler; production vẫn bản cũ. Cả hai thiếu TURNSTILE_SECRET. Site keys riêng trong `.env.production` và `.env.staging`; hai widget chỉ cho hostname tương ứng. Deploy UI mới trước khi nhập secret đúng cặp một lần cho từng Worker; secret tồn tại qua deploy. Có bindings không chứng minh Cron đã thực chạy. [Hướng dẫn cấu hình và quy trình COD](BOT_PROTECTION.md).
-
-Không gửi secret/token trong chat hoặc log. Rate-limit bindings đi cùng deploy, không cần custom domain; không coi Turnstile thay thế rate limit hoặc bảo đảm quota toàn cầu. Shop gọi/Zalo xác nhận trước CONFIRMED/PREPARING. Hủy IN_TRANSIT cần lý do; mặc định không hoàn hoa đã làm, chỉ chọn restock khi còn bán được. Owner đã chốt TTL 24 giờ và Cron mỗi giờ (0 * * * *), cấu hình local đã có cho production/staging, chờ deploy để có hiệu lực. Batch nguyên tử xử lý toàn bộ PENDING quá hạn, hoàn tồn đúng một lần và giữ nguyên đơn đã xác nhận. [Cloudflare Siteverify](https://developers.cloudflare.com/turnstile/get-started/server-side-validation/).
+Kiểm header HTML/static và API độc lập: `_headers` chỉ áp assets, API dùng middleware. Dùng request_id để đối chiếu lỗi, xem cấu hình và giới hạn tại [HARDENING](HARDENING.md). Shop xác nhận đơn qua liên hệ đã được owner duyệt; quyết định hủy/restock theo tình trạng hoa, không suy ra restock mặc định từ trạng thái terminal.
 
 Domain riêng là tùy chọn. Chủ dự án cung cấp domain và đồng ý chi phí/authorization; sau gắn Custom Domain kiểm HTTPS, refresh SPA, asset/API cùng origin, login/logout/cookie Secure và write Origin trên domain mới. Cookie cũ của `workers.dev` không chuyển sang domain mới; đăng nhập lại. Dùng HTTPS origin mới khi chạy smoke và cấu hình hostname Turnstile nếu đã bật. [Cloudflare Custom Domains](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/).
 
@@ -223,10 +224,6 @@ Trạng thái current và counts public mới nhất ở [PROJECT_STATUS](PROJEC
 
 Giữ trong [Phase 6](pipeline/PHASE_6_DEPLOY.md) các bằng chứng **đã thực thi**: ngày giờ, target, migration applied, số smoke pass, 10 ca MVP trên deployment, cleanup/tồn, backup remote mở offline, dữ liệu thật và owner xác nhận cách xem quota mỗi ngày. Không ghi URL giả hoặc tick mục đang chờ owner.
 
-Đợt kiểm ngày **15/10/2026**: API smoke trên `https://lunara.minphuc2408.workers.dev`, chỉ variant `1` trong cửa sổ độc quyền được owner cho phép, đạt **7/7 nhóm**. Owner nhập mật khẩu production qua terminal ẩn, chỉ giữ trong bộ nhớ runner; không đọc/dùng `.dev.vars` hoặc mật khẩu local. Đây là bằng chứng API live, không phải xác nhận checkout/admin UI đã kiểm remote hay dữ liệu mở bán đã hoàn tất.
-
 Đầu vào cần owner cung cấp/xác nhận trước bước phụ thuộc: đúng account/database và quyền ghi; quyền deploy đầu tiên/URL; secrets thật do owner nhập; variant/cửa sổ thử độc quyền; sản phẩm/tồn/khu vực/phí/chính sách thật; lựa chọn Turnstile/domain; người kiểm hạn mức hằng ngày. Các mục tùy chọn không tự chặn deploy cơ bản, nhưng lựa chọn bật chúng cần tích hợp/kiểm thử tương ứng.
 
-Cloudinary 15/10/2026: đã tích hợp local signed direct upload (SHA-256, cookie admin/same-origin, JPEG/PNG/WebP, client 5 MB, prefix local/staging/prod). Typecheck/build/architecture 208 source files PASS; tests 148/148, smoke local 40/40 PASS. Browser mock EN/VI 390px PASS: file sai, thành công/preview, Save URL, thiếu config giữ URL; 0 JS exceptions. Chưa tạo preset/đặt keys/upload thật/deploy tính năng, không ghi D1 remote; Phase 6 vẫn 5/7. Không thêm migration/dependency hoặc tự xóa asset. [Cấu hình Cloudinary](CLOUDINARY.md).
-
-M1–M9 local: log lấy mẫu10%, tắt invocation URL logs; khi tra lỗi dùng request_id và diagnostic_code/constraint/constraint_target đã allowlist. Không có raw SQL/binds/message; lỗi ngoài mẫu có thể không lưu. Kiểm thêm Workers & Pages → lunara → Logs mỗi ngày và đối chiếu hạn mức Workers Logs. Rate limit bên trong Worker không tránh phí/quota invocation; Cache-Control30giây không cam kết bảo vệ account. Summary admin chỉ30 ngày, tra lịch sử qua bộ lọc ngày đặt (mặc định90/tối đa366 ngày). [Cấu hình, giới hạn SEO/ảnh và bằng chứng](HARDENING.md).
+Upload/gallery theo [CLOUDINARY](CLOUDINARY.md); chẩn đoán log/query/SEO theo HARDENING. Hướng dẫn vận hành không ghi kết quả test/deploy mới; bằng chứng thực thi phải có ngày, target và phạm vi ở PROJECT_STATUS/Phase6.

@@ -147,6 +147,21 @@ try {
       for(const width of [320,390,640,768,1024,1440]) {
         await send('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:width<768});
         await assert('document.documentElement.scrollWidth <= innerWidth','Lookup overflow '+status+'/'+language+'/'+width);
+        await assert(`(() => {
+          const centered = selector => {
+            const rect = document.querySelector(selector).getBoundingClientRect();
+            return Math.abs(rect.left + rect.width / 2 - document.documentElement.clientWidth / 2) < 2;
+          };
+          const header = document.querySelector('[data-order-lookup-page] > header');
+          const form = document.querySelector('[data-lookup-form-panel]').getBoundingClientRect();
+          const result = document.querySelector('[data-lookup-result]').getBoundingClientRect();
+          return centered('[data-lookup-form-panel]') && centered('[data-lookup-result]')
+            && Math.abs(form.width - result.width) < 2
+            && Math.abs(form.width - (Math.min(document.documentElement.clientWidth, 1240) - (innerWidth < 640 ? 40 : 64))) < 2
+            && header.getBoundingClientRect().width === document.documentElement.clientWidth
+            && getComputedStyle(header.firstElementChild).textAlign === 'center'
+            && getComputedStyle(header).backgroundColor === 'rgb(249, 237, 233)';
+        })()`, 'Lookup centered full-width panels and collection header '+status+'/'+language+'/'+width);
         await assert("getComputedStyle(document.querySelector('[data-order-progress]')).gridTemplateColumns.split(' ').length==="+(width<768?1:5),'Progress responsive columns');
         results.push({status,language,width});
       }
@@ -169,6 +184,7 @@ try {
     await evaluate("document.querySelector('[data-lookup-submit]').click()");
     await waitFor("Boolean(document.querySelector('[role=alert]')) && !document.querySelector('[data-lookup-submit]').disabled");
     await assert("!document.querySelector('[data-order-detail]')",'Failure must not show stale/private/demo order');
+    await assert("(() => {const r=document.querySelector('[role=alert]').getBoundingClientRect();const f=document.querySelector('[data-lookup-form-panel]').getBoundingClientRect();return Math.abs(r.width-f.width)<2 && Math.abs(r.left+r.width/2-document.documentElement.clientWidth/2)<2;})()",'Error panel must fill centered content');
   }
   scenario='SLOW';
   await evaluate("document.querySelector('[data-lookup-submit]').click()");

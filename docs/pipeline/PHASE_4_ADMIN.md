@@ -1,15 +1,12 @@
 # Phase 4 — Admin: đăng nhập và API quản trị
 
-> Rà soát 16/10/2026: [hiện trạng chuẩn](../PROJECT_STATUS.md), [contract hiện tại](API_CONTRACT.md). Phase 0–5 DONE local, Phase 6 IN PROGRESS5/7. Local170 tests/215 source files/40 smoke; staging đã deploy bản mới13:31 ngày 16/10, production vẫn bản 15/10. Output/checklist ghi ngày cũ bên dưới là lịch sử, không phải trạng thái cloud hiện tại.
-
-
-B2/B3 sau nghiệm thu Phase 4 (15/10/2026, local/chưa deploy): login thêm Turnstile action/hostname và rate-limit binding, body limit 8192 byte để chứa token. Status API nhận restock boolean; IN_TRANSIT hủy cần lý do, mặc định giữ tồn đã tiêu thụ. Không đổi auth cookie, bảng hoặc dependency. [Contract hiện tại](API_CONTRACT.md) · [Cấu hình/evidence B2/B3](../BOT_PROTECTION.md). Mô tả/output tại mốc nghiệm thu dưới đây là lịch sử.
+File giữ thiết kế và nghiệm thu backend admin **14/10/2026**. Checklist/output tại mốc này chưa gồm gallery nhiều ảnh, danh mục hành chính và hardening sau đó; contract hiện hành ở [API_CONTRACT](API_CONTRACT.md). Deployment/provider acceptance ở [PROJECT_STATUS](../PROJECT_STATUS.md).
 
 **Mục tiêu:** chủ shop đăng nhập an toàn, quản lý đơn, sản phẩm/tồn kho, phí giao. Hợp đồng: [API_CONTRACT.md](API_CONTRACT.md) (mục Admin).
 
 **Trạng thái:** DONE local · **9/9 tiêu chí**, 14/10/2026. Auth cookie và toàn bộ API admin đã triển khai/nghiệm thu local. Cập nhật ngữ cảnh **15/10/2026:** frontend Phase 5 cũng DONE local (6/6 tiêu chí), AuthProvider/AdminRoute và login/orders/products/stock/delivery/summary UI đã nối cookie/API; customer fixture/sessionStorage source vẫn giữ ẩn. [Hiện trạng](../PROJECT_STATUS.md) · [Nghiệm thu frontend Phase 5](PHASE_5_FRONTEND.md). Secret trong `.dev.vars.example` chỉ là demo; không phải credentials production. [Output backend lịch sử](#bằng-chứng-lệnh--14102026).
 
-**Đầu vào đã có:** `worker/services/orders.ts` export createOrder, lookupOrder và `transitionOrder(db, orderNumber, newStatus, actorLabel = 'ADMIN', note?)`; máy trạng thái/PAID/hoàn tồn một lần và các race đã kiểm D1 local cô lập. Phase 4 bổ sung authorization và routes quản trị gọi lại service này, không viết lại thuật toán hoàn tồn. lookupOrder public không trả admin_note/stock_released; admin detail cần projection có quyền riêng. [Nghiệm thu Phase 3](PHASE_3_CHECKOUT_ORDERS.md#bằng-chứng-lệnh--14102026).
+**Đầu vào đã có:** `worker/services/orders.ts` export createOrder, lookupOrder và `transitionOrder(db, orderNumber, newStatus, actorLabel = 'ADMIN', note?, options?)`; máy trạng thái/PAID/hoàn tồn một lần và các race đã kiểm D1 local cô lập. Phase 4 bổ sung authorization và routes quản trị gọi lại service này, không viết lại thuật toán hoàn tồn. lookupOrder public không trả admin_note/stock_released; admin detail cần projection có quyền riêng. [Nghiệm thu Phase 3](PHASE_3_CHECKOUT_ORDERS.md#bằng-chứng-lệnh--14102026).
 
 ## Thiết kế đăng nhập — đã triển khai local
 
@@ -29,7 +26,7 @@ Sizing pipeline giả định **10 ms CPU/request**; kiểm tra gói/runtime th�
 - JSON response không chứa credentials/JWT/secret; JWT được trả đúng qua header HttpOnly `Set-Cookie`. Log unexpected error có request_id/error_name và chẩn đoán D1/SQLite/constraint/target allowlist khi nhận diện được, không dump error message/stack/cookie/request. Cookie logout được xóa; JWT đã sao chép vẫn có hiệu lực tới exp vì MVP stateless, xoay JWT_SECRET vô hiệu hóa toàn bộ session.
 - Khi cần nhiều tài khoản/vai trò: chuyển sang Better Auth hoặc dịch vụ ngoài (xem [BACKLOG](BACKLOG.md)); đừng tự viết băm mật khẩu trong Worker Free.
 
-## Việc cần làm
+## Checklist đã thực hiện — 14/10/2026
 
 | # | Ai | Việc |
 | --- | --- | --- |
@@ -62,7 +59,7 @@ Các việc AGENT 4.1–4.11 đã xong. Không tạo bảng/migration, không đ
 
 ## Bằng chứng lệnh — 14/10/2026
 
-Output dưới đây giữ nguyên tại mốc backend Phase 4 (**125 tests, architecture 178 source files**). Source hiện tại đã có frontend Phase 5: **136 tests, architecture 207 source files, smoke 40/40, UI 17 routes/0 exceptions và Phase 5 10/10+2/2 kịch bản**; xem [bằng chứng hiện tại](PHASE_5_FRONTEND.md). Các kết quả local không thay nghiệm thu remote Phase 6.
+Output giữ nguyên tại mốc backend Phase 4 (**125 tests, architecture 178 source files**). Nghiệm thu frontend nằm ở [PHASE_5_FRONTEND](PHASE_5_FRONTEND.md), checks hiện hành ở PROJECT_STATUS; không dùng số lịch sử làm số hiện tại.
 
 ```text
 npm run typecheck
@@ -112,12 +109,4 @@ Final sync: Modified: 2; index up to date; files=234
 | Delivery | phí admin20000→23000, quote kế tiếp23000; default zone mới17000; deactivate→NO_DELIVERY_ZONE, dòng vẫn còn |
 | Privacy/integrity | mọi JSON smoke quét credentials/JWT/secret/SQL/stack; FK sạch; không tồn âm; persisted snapshot không đổi |
 
-Đây là nghiệm thu backend local tại mốc Phase 4; admin UI đã được nối và nghiệm thu riêng trong Phase 5 sau đó. Tại mốc nghiệm thu backend chưa có rate-limit/widget login; code hiện đã có, staging deploy 16/10; production bản cũ và Turnstile secret thật còn chờ. Sau nghiệm thu backend, chủ dự án đã cấu hình secret local riêng và đã kiểm điều kiện độ dài/khác nhau; tests/UI acceptance dùng synthetic secrets cô lập, không lưu secret thật trong tài liệu/Git. Không băm mật khẩu nặng; 10ms CPU là giới hạn thiết kế, chưa đo/khẳng định CPU trên cloud. Secrets thật do [NGƯỜI] quản lý; tests/smoke vẫn dùng demo riêng và không cần secret thật để đạt các tiêu chí local trên.
-
-### Chỉnh storefront trước khi kết Phase 4 — 15/10/2026
-
-- Zalo giữ icon tự vẽ sau rollback logo widget theo yêu cầu; cố định bên phải, mặc định icon. Viền xanh summary animate trực tiếp chiều rộng 60→208px khi hover/focus/bấm mở trong 400ms (reduced motion 200ms), thu ngược khi đóng/rời nút; bỏ fade/slide riêng của chữ. Popup chờ link thật căn phải, giữ keyboard/touch access.
-- Footer tên cửa hàng/địa chỉ/map URL chuyển sang `src/shared/i18n/locales/en/common.json` và `vi/common.json`; config TS chỉ giữ ID/thứ tự/khóa locale. English fallback và ba URL bản đồ giữ theo yêu cầu chủ dự án.
-- Typecheck/architecture/build pass; suite 125/125 pass. UI preview mặc định 15 routes/0 exceptions; kiểm riêng icon tự vẽ, hover/focus/click/góc phải/popup và nội dung JSON EN/VI ở 320/390/768/1024/1440px; đo chiều rộng viền giữa transition mở và đóng, xác nhận 60→giữa→208px, cả normal và reduced motion (20 trường hợp). Evidence screenshot giữ local trong `.security-review/`.
-- Hai test D1 Phase 2/3 được giới hạn `envFiles` về `.dev.vars.example` để không nạp ambient secret thật; focused 10/10 pass, giữ `persist:false`/`remoteBindings:false`.
-- Trạng thái tại mốc chỉnh storefront này: Phase 4 DONE local 9/9; Phase 5 khi đó PARTIAL, Phase 6 IN PROGRESS5/7. Hiện tại Phase 5 đã DONE local theo nghiệm thu riêng ở [PHASE_5_FRONTEND.md](PHASE_5_FRONTEND.md); Phase 6 hiện IN PROGRESS5/7; xem PROJECT_STATUS.
+Đây là nghiệm thu backend local; auth native workerd và shim Node là hai loại bằng chứng riêng, chưa đo CPU cloud. Tests/smoke dùng credentials tổng hợp, không dùng secret thật. Các chỉnh storefront sau mốc này thuộc PROJECT_GUIDE/PROJECT_STATUS, không thuộc nghiệm thu admin backend.

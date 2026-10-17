@@ -8,9 +8,10 @@ import { TurnstileChallenge } from '@/shared/components/TurnstileChallenge';
 export function OrderLookupView(model: OrderLookupModel) {
   const { t } = useLocale('orders');
   const notFound = model.error instanceof ApiError && model.error.code === 'NOT_FOUND';
-  return <main data-order-lookup-page className="mx-auto max-w-[1240px] px-5 py-6 font-body sm:px-8 sm:py-10 [--lunara-ink:#4B2432] [--lunara-body:#746B69] [--lunara-border:#E7DCD3] [--lunara-surface:#FAF7F2] [--lunara-blush:#F3E7DF]">
-    <header className="mb-8 border-b border-lunara-border pb-8"><h1 className="font-display text-3xl tracking-tight text-lunara-ink sm:text-4xl">{t('Track flower delivery progress')}</h1></header>
-    <div className="mb-10 max-w-3xl rounded-[2px] border border-lunara-border bg-lunara-surface p-6 sm:p-8">
+  return <main data-order-lookup-page className="w-full font-body [--lunara-ink:#4B2432] [--lunara-body:#746B69] [--lunara-border:#E7DCD3] [--lunara-surface:#FAF7F2]">
+    <header className="bg-lunara-blush px-5 pt-6 pb-8 sm:px-8 sm:pt-10"><div className="mx-auto max-w-[1176px] text-center"><h1 className="mt-2 font-display text-[clamp(2.2rem,5vw,3.5rem)] text-lunara-ink">{t('Track flower delivery progress')}</h1></div></header>
+    <div data-lookup-content className="mx-auto w-full max-w-[1240px] px-5 py-6 sm:px-8 sm:py-10">
+    <div data-lookup-form-panel className="mb-10 w-full rounded-[2px] border border-lunara-border bg-lunara-surface p-5 sm:p-8">
       <form data-order-lookup onSubmit={event => { event.preventDefault(); model.search(); }} className="grid grid-cols-1 items-end gap-4 sm:grid-cols-12">
         <label className="block min-w-0 text-xs font-medium text-lunara-body sm:col-span-5">{t('Order number')}<input name="orderNumber" required maxLength={100} autoComplete="off" placeholder="LN-…" value={model.orderNumber} onChange={event => model.setOrderNumber(event.target.value)} className="mt-1.5 min-h-11 w-full rounded-[2px] border border-lunara-border bg-lunara-cream p-2.5 text-xs font-normal text-lunara-ink" /></label>
         <label className="block min-w-0 text-xs font-medium text-lunara-body sm:col-span-4">{t('Sender or recipient phone')}<input name="phone" type="tel" required maxLength={30} autoComplete="tel" placeholder="09…" value={model.phone} onChange={event => model.setPhone(event.target.value)} className="mt-1.5 min-h-11 w-full rounded-[2px] border border-lunara-border bg-lunara-cream p-2.5 text-xs font-normal text-lunara-ink" /></label>
@@ -19,7 +20,8 @@ export function OrderLookupView(model: OrderLookupModel) {
       </form>
     </div>
     {model.loading && <p role="status" className="mb-6 text-xs text-lunara-body">{t('Looking up order')}</p>}
-    {Boolean(model.error) && <section role="alert" className={'mb-6 space-y-3 rounded-[2px] border border-lunara-border bg-lunara-surface p-6 text-lunara-ink ' + (notFound ? 'mx-auto max-w-xl p-10 text-center' : 'max-w-3xl')}><AlertCircle size={32} strokeWidth={1.5} aria-hidden="true" className={notFound ? 'mx-auto text-lunara-rose-strong' : 'text-lunara-rose-strong'} /><h2 className="font-display text-xl">{notFound ? t('No matching order') : t(apiErrorKey(model.error))}</h2>{notFound && <p className="text-xs leading-relaxed text-lunara-body">{t('Order not found')}</p>}</section>}
+    {Boolean(model.error) && <section role="alert" className={'mb-6 w-full space-y-3 rounded-[2px] border border-lunara-border bg-lunara-surface p-6 text-lunara-ink ' + (notFound ? 'sm:p-10 text-center' : '')}><AlertCircle size={32} strokeWidth={1.5} aria-hidden="true" className={notFound ? 'mx-auto text-lunara-rose-strong' : 'text-lunara-rose-strong'} /><h2 className="font-display text-xl">{notFound ? t('No matching order') : t(apiErrorKey(model.error))}</h2>{notFound && <p className="text-xs leading-relaxed text-lunara-body">{t('Order not found')}</p>}</section>}
     {model.order && <OrderLookupResult order={model.order} />}
+    </div>
   </main>;
 }

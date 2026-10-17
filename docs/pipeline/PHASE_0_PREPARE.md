@@ -1,15 +1,12 @@
 # Phase 0 — Chuẩn bị repo và môi trường local
 
-> Rà soát 16/10/2026: [hiện trạng chuẩn](../PROJECT_STATUS.md), [contract hiện tại](API_CONTRACT.md). Phase 0–5 DONE local, Phase 6 IN PROGRESS5/7. Local170 tests/215 source files/40 smoke; staging đã deploy bản mới13:31 ngày 16/10, production vẫn bản 15/10. Output/checklist ghi ngày cũ bên dưới là lịch sử, không phải trạng thái cloud hiện tại.
-
-
 **Mục tiêu:** repo chạy được frontend và Worker (Hono) cùng lúc ở local, có D1 local. **Không cần tài khoản Cloudflare** ở phase này.
 
-**Trạng thái:** DONE · 6/6 tiêu chí · lệnh thật + Edge headless. [Hiện trạng](../PROJECT_STATUS.md). Các bước dưới là checklist đã thực hiện, không yêu cầu cài lại hoặc tạo D1 remote.
+**Trạng thái:** DONE · 6/6 tiêu chí · 14/10/2026, lệnh thật + Edge headless. Mẫu config/scripts bên dưới là lịch sử; dùng file nguồn hiện tại khi thao tác. [Hiện trạng](../PROJECT_STATUS.md). Các bước dưới là checklist đã thực hiện, không yêu cầu cài lại hoặc tạo D1 remote.
 
-Phiên bản được kiểm chứng trong repo: Node `24.11.1`, npm `11.6.3`, Vite `6.4.4`, React Router `7.18.4`; plugin `1.63.2`, Wrangler `4.150.0`, Hono `4.13.13`, Zod `4.6.7`, `@cloudflare/workers-types` `5.20261006.1`. Build/typecheck thực tế pass với Vite đã pin, không nâng frontend. Clone/cài lại bằng `npm ci` theo lockfile.
+Phiên bản được kiểm chứng tại mốc Phase 0: Node `24.11.1`, npm `11.6.3`, Vite `6.4.4`, React Router `7.18.4`; plugin `1.63.2`, Wrangler `4.150.0`, Hono `4.13.13`, Zod `4.6.7`, `@cloudflare/workers-types` `5.20261006.1`. Build/typecheck thực tế pass với Vite đã pin, không nâng frontend. Clone/cài lại bằng `npm ci` theo lockfile.
 
-## Việc cần làm
+## Checklist đã thực hiện — 14/10/2026
 
 | # | Ai | Việc |
 | --- | --- | --- |
@@ -52,7 +49,7 @@ Không dùng mẫu rút gọn dưới để ghi đè cấu hình hiện tại: r
 
 Ghi chú: `@cloudflare/vite-plugin` quản lý `assets.directory`; bỏ trường này khỏi config nguồn. Build đã kiểm chứng sinh frontend `dist/client/`, Worker `dist/lunara/index.js` và `dist/lunara/wrangler.json`; `wrangler deploy` đọc config do plugin tạo. `compatibility_date` `2026-10-06` khớp workerd local được pin; không dùng ngày mới hơn runtime hỗ trợ. Trong Vite dùng `cloudflare({ remoteBindings: false })` để các bindings chạy local, dù source config chứa D1 ID thật đã được chủ dự án cung cấp. Không gọi login, create, migration hoặc seed remote trong Phase 0.
 
-## Scripts `package.json`
+## Scripts `package.json` tại mốc Phase 0
 
 ```jsonc
 {
