@@ -35,6 +35,7 @@ export function seoPlugin(site) {
       const html = bundle['index.html'];
       if (!html || html.type !== 'asset') return; // Skip the Worker build.
       this.emitFile({ type: 'asset', fileName: 'shop/index.html', source: renderSeoHtml(String(html.source), '/shop', site) });
+      this.emitFile({ type: 'asset', fileName: 'about/index.html', source: renderSeoHtml(String(html.source), '/about', site) });
       this.emitFile({ type: 'asset', fileName: 'robots.txt', source: site.indexable
         ? `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /cart\nDisallow: /orders/\nSitemap: ${site.origin}/sitemap.xml\n`
         : 'User-agent: *\nDisallow: /\n' });

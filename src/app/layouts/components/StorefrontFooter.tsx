@@ -9,7 +9,7 @@ const headingClass = 'font-display text-sm sm:text-base font-semibold tracking-[
 export function StorefrontFooter() {
   const { t } = useLocale('common');
   return <footer className="mt-24 bg-lunara-ink text-[#F5DDD5]" data-storefront-footer>
-    <div data-footer-grid className="max-w-7xl mx-auto px-6 py-10 lg:py-16 grid grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,0.65fr)_minmax(0,1.3fr)] gap-x-6 gap-y-9 lg:gap-10">
+    <div data-footer-grid className="max-w-[1240px] mx-auto px-5 sm:px-8 py-10 lg:py-16 grid grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,0.65fr)_minmax(0,1.3fr)] gap-x-6 gap-y-9 lg:gap-10">
       <div className="col-span-2 lg:col-span-1 min-w-0">
         <div className="flex items-center gap-2 mb-4">
           <Flower size={20} className="text-lunara-rose-light" />
@@ -24,7 +24,7 @@ export function StorefrontFooter() {
         <ul className="flex flex-col gap-2">
           <li><Link to="/orders/track" className={linkClass}>{t('Track order')}</Link></li>
           <li><Link to="/admin/login" className={linkClass}>{t('Admin login')}</Link></li>
-          {customerCareLinks.map(link => <li key={link.href}><a href={link.href} target="_blank" rel="noopener noreferrer" className={linkClass}>{t(link.label)}</a></li>)}
+          {customerCareLinks.map(link => <li key={link.href}>{link.href.startsWith('/') ? <Link to={link.href} className={linkClass}>{t(link.label)}</Link> : <a href={link.href} target="_blank" rel="noopener noreferrer" className={linkClass}>{t(link.label)}</a>}</li>)}
         </ul>
       </nav>
       <nav aria-label={t('Follow Us')} className="min-w-0">

@@ -109,6 +109,10 @@ test('SEO provides crawlable public metadata and keeps private and staging pages
   assert.equal(pageMetadata('/shop', 'vi', production).robots, 'index, follow');
   assert.match(pageMetadata('/shop', 'vi', production).title, /Bộ sưu tập/);
   assert.match(pageMetadata('/shop', 'en', production).title, /Shop flowers/);
+  assert.match(pageMetadata('/about', 'vi', production).title, /Câu chuyện Lunarra/);
+  assert.match(pageMetadata('/about', 'en', production).title, /Lunarra story/);
+  assert.equal(pageMetadata('/about', 'vi', production).robots, 'noindex, nofollow');
+  assert.equal(pageMetadata('/about', 'en', production).canonical, production.origin + '/about');
   for (const route of ['/cart', '/checkout', '/orders/track', '/admin/login', '/not-found']) {
     const meta = pageMetadata(route, 'vi', production);
     assert.equal(meta.robots, 'noindex, nofollow');

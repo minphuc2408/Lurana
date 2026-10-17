@@ -5,10 +5,11 @@ import { useLocale, getLocalizedName } from "@/shared/i18n";
 import { FeaturedCollection } from "./FeaturedCollection";
 import { Benefits } from "./Benefits";
 import { Hero } from "./Hero";
+import { OurStory } from "./OurStory";
 import type { HomeModel } from "../hooks/useHome";
 export function HomeView(model: HomeModel) {
   const { t, language } = useLocale("landing");
-  return <main data-home-layout className="mx-auto max-w-[1400px] space-y-7 px-4 pt-5 pb-16 font-body sm:space-y-8 sm:px-6 lg:space-y-9 lg:px-10">
+  return <main data-home-layout className="mx-auto max-w-[1240px] space-y-8 px-5 pb-16 font-body sm:space-y-10 sm:px-8">
     <Hero />
     {!model.loading && !model.error && model.categories.length > 0 && <nav aria-label={t('Shop by Category')} data-home-categories className="grid grid-cols-1 min-[390px]:grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
       {model.categories.map(category => <Link key={category.id} to={`/shop?category=${encodeURIComponent(category.code)}`} className="group flex min-h-24 min-w-0 items-center gap-3 rounded-2xl border border-lunara-border bg-lunara-blush/70 p-3 transition-colors hover:border-lunara-rose-strong sm:p-4">
@@ -24,5 +25,6 @@ export function HomeView(model: HomeModel) {
     </nav>}
     <Benefits />
     <FeaturedCollection {...model} />
+    <OurStory />
   </main>;
 }

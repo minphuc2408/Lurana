@@ -1,22 +1,22 @@
 export const customerCareLinks = [
-  { label: 'About Us', href: 'https://www.lurana.vn/thong-tin/gioi-thieu' },
-  { label: 'Contact Us', href: 'https://www.lurana.vn/thong-tin/lien-he' },
-  { label: 'Shipping Policy', href: 'https://www.lurana.vn/thong-tin/chinh-sach-van-chuyen' },
-  { label: 'Frequently Asked Questions', href: 'https://www.lurana.vn/thong-tin/cau-hoi-thuong-gap' },
-  { label: 'Payment Methods', href: 'https://www.lurana.vn/thong-tin/hinh-thuc-thanh-toan' },
-  { label: 'Privacy Policy', href: 'https://www.lurana.vn/thong-tin/bao-mat-thong-tin' },
-  { label: 'Refund Policy', href: 'https://www.lurana.vn/thong-tin/chinh-sach-doi-tra' },
-  { label: 'Complaint Resolution', href: 'https://www.lurana.vn/thong-tin/khieu-nai' },
-  { label: 'Why Choose Lurana.vn', href: 'https://www.lurana.vn/thong-tin/tai-sao-nen-chon-lurana' },
-  { label: 'Blog', href: 'https://blog.lurana.vn/' },
+  { label: 'About Us', href: '/about' },
+  { label: 'Contact Us', href: 'https://www.lunarra.vn/thong-tin/lien-he' },
+  { label: 'Shipping Policy', href: 'https://www.lunarra.vn/thong-tin/chinh-sach-van-chuyen' },
+  { label: 'Frequently Asked Questions', href: 'https://www.lunarra.vn/thong-tin/cau-hoi-thuong-gap' },
+  { label: 'Payment Methods', href: 'https://www.lunarra.vn/thong-tin/hinh-thuc-thanh-toan' },
+  { label: 'Privacy Policy', href: 'https://www.lunarra.vn/thong-tin/bao-mat-thong-tin' },
+  { label: 'Refund Policy', href: 'https://www.lunarra.vn/thong-tin/chinh-sach-doi-tra' },
+  { label: 'Complaint Resolution', href: 'https://www.lunarra.vn/thong-tin/khieu-nai' },
+  { label: 'Why Choose Lurana.vn', href: 'https://www.lunarra.vn/thong-tin/tai-sao-nen-chon-lunarra' },
+  { label: 'Blog', href: 'https://blog.lunarra.vn/' },
 ];
 
 export const socialLinks = [
-  { label: 'Facebook', href: 'https://www.facebook.com/lurana.vn/' },
-  { label: 'Twitter', href: 'https://twitter.com/Lurana' },
-  { label: 'Instagram', href: 'https://www.instagram.com/lurana.vn/' },
-  { label: 'Linkedin', href: 'https://www.linkedin.com/company/lurana/' },
-  { label: 'Youtube', href: 'https://www.youtube.com/lurana' },
+  { label: 'Facebook', href: 'https://www.facebook.com/lunarra.vn/' },
+  { label: 'Twitter', href: 'https://twitter.com/Lunarra' },
+  { label: 'Instagram', href: 'https://www.instagram.com/lunarra.vn/' },
+  { label: 'Linkedin', href: 'https://www.linkedin.com/company/lunarra/' },
+  { label: 'Youtube', href: 'https://www.youtube.com/lunarra' },
 ];
 
 export const storeLocations = [

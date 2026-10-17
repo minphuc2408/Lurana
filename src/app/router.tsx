@@ -7,6 +7,7 @@ import { MetadataLayout } from './layouts/MetadataLayout';
 import { AdminRoute } from '@/features/auth';
 import { RouteError } from '@/shared/components/RouteError';
 import HomePage from '@/pages/HomePage';
+import StoryPage from '@/pages/StoryPage';
 import ShopPage from '@/pages/ShopPage';
 import ProductDetailPage from '@/pages/ProductDetailPage';
 import CartPage from '@/pages/CartPage';
@@ -25,6 +26,7 @@ export const router = createBrowserRouter([{ Component: MetadataLayout, children
   children: [
     { index: true, Component: HomePage }, { path: 'shop', Component: ShopPage }, { Component: CheckoutLayout, children: [{ path: 'cart', Component: CartPage }, { path: 'checkout', Component: CheckoutPage }] },
     { path: 'shop/:slug', Component: ProductDetailPage },
+    { path: 'about', Component: StoryPage },
     { path: 'orders/track', Component: TrackOrderPage },
     ...['request', 'orders', 'profile', 'login', 'signup'].map(path => ({ path, Component: UnavailablePage })),
     { path: '*', Component: UnavailablePage },
