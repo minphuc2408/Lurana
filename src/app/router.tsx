@@ -10,6 +10,8 @@ import HomePage from '@/pages/HomePage';
 import ShopPage from '@/pages/ShopPage';
 import ProductDetailPage from '@/pages/ProductDetailPage';
 import CartPage from '@/pages/CartPage';
+import CheckoutPage from '@/pages/CheckoutPage';
+import { CheckoutLayout } from './layouts/CheckoutLayout';
 import TrackOrderPage from '@/pages/TrackOrderPage';
 import LoginPage from '@/pages/LoginPage';
 import UnavailablePage from '@/pages/UnavailablePage';
@@ -21,7 +23,7 @@ const AdminDeliveryZonesPage = lazy(() => import('@/pages/admin/AdminDeliveryZon
 export const router = createBrowserRouter([{ Component: MetadataLayout, children: [{
   path: '/', Component: MainLayout, errorElement: <RouteError />,
   children: [
-    { index: true, Component: HomePage }, { path: 'shop', Component: ShopPage }, { path: 'cart', Component: CartPage },
+    { index: true, Component: HomePage }, { path: 'shop', Component: ShopPage }, { Component: CheckoutLayout, children: [{ path: 'cart', Component: CartPage }, { path: 'checkout', Component: CheckoutPage }] },
     { path: 'shop/:slug', Component: ProductDetailPage },
     { path: 'orders/track', Component: TrackOrderPage },
     ...['request', 'orders', 'profile', 'login', 'signup'].map(path => ({ path, Component: UnavailablePage })),

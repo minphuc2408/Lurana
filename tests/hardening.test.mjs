@@ -109,7 +109,7 @@ test('SEO provides crawlable public metadata and keeps private and staging pages
   assert.equal(pageMetadata('/shop', 'vi', production).robots, 'index, follow');
   assert.match(pageMetadata('/shop', 'vi', production).title, /Bộ sưu tập/);
   assert.match(pageMetadata('/shop', 'en', production).title, /Shop flowers/);
-  for (const route of ['/cart', '/orders/track', '/admin/login', '/not-found']) {
+  for (const route of ['/cart', '/checkout', '/orders/track', '/admin/login', '/not-found']) {
     const meta = pageMetadata(route, 'vi', production);
     assert.equal(meta.robots, 'noindex, nofollow');
     assert.equal(meta.canonical, 'https://shop.example.test/');

@@ -1,43 +1,45 @@
-import { useLocale, getLocalizedName } from "@/shared/i18n";
-import { Minus, Plus, X } from "lucide-react";
-import type { QuoteCartModel as CartModel } from '../hooks/useQuoteCart';
+import { Link } from 'react-router';
+import { Minus, Plus, Trash2 } from 'lucide-react';
+import { useLocale, getLocalizedName } from '@/shared/i18n';
 import { formatVND } from '@/shared/lib/format';
 import { ImageWithFallback } from '@/shared/components/ImageWithFallback';
-export function CartItemList(model: CartModel) {
-  const { t, language } = useLocale("cart");
-  const {
-    items,
-    updateQty,
-    removeItem
-  } = model;
-  return <div className="flex flex-col gap-4">
-                  {items.map(item => <div key={item.id} className="flex gap-3 p-4 sm:gap-4 sm:p-5 rounded-2xl bg-white [border:1px_solid_#F0DDD5]">
-                      <ImageWithFallback src={item.image} alt={getLocalizedName(item, language) || t('Unavailable')} className="rounded-xl w-[72px] h-[88px] sm:w-[100px] sm:h-[120px] object-cover shrink-0" />
-                      <div className="min-w-0 flex-1 flex flex-col justify-between">
-                        <div className="flex justify-between items-start gap-2">
-                          <div className="min-w-0 [overflow-wrap:anywhere]">
-                            <h3 className="font-display [font-size:1.1rem] text-lunara-ink [font-weight:500]">{getLocalizedName(item, language) || t('Unavailable')}</h3>
-                            <span className="[font-size:0.78rem] text-lunara-body">{t("Size:")}{" "}{t(item.size)}</span>
-                          </div>
-                          <button onClick={() => removeItem(item.id)} className="shrink-0 bg-transparent [border:none] [cursor:pointer] text-lunara-body" aria-label={t("Remove {{value0}}", { value0: getLocalizedName(item, language) })}>
-                            <X size={18} />
-                          </button>
-                        </div>
-                        <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between mt-3">
-                          <div className="flex items-center gap-3 rounded-full px-1 py-1 [border:1px_solid_#F0DDD5]">
-                            <button disabled={item.qty <= 1} onClick={() => updateQty(item.id, -1)} className="w-7 h-7 rounded-full flex items-center justify-center bg-transparent [border:none] [cursor:pointer] text-lunara-body disabled:opacity-40" aria-label={t("Decrease quantity")}>
-                              <Minus size={14} />
-                            </button>
-                            <span className="[font-size:0.9rem] text-lunara-ink [min-width:20px] [text-align:center]">{item.qty}</span>
-                            <button disabled={item.qty >= (item.maxQuantity ?? 20)} onClick={() => updateQty(item.id, 1)} className="w-7 h-7 rounded-full flex items-center justify-center bg-transparent [border:none] [cursor:pointer] text-lunara-body disabled:opacity-40" aria-label={t("Increase quantity")}>
-                              <Plus size={14} />
-                            </button>
-                          </div>
-                          <span className="font-display [font-size:1.1rem] [font-weight:600] text-lunara-rose-strong">
-                            {item.name ? formatVND(item.price * item.qty, language) : t('Unavailable')}
-                          </span>
-                        </div>
-                      </div>
-                    </div>)}
-                </div>;
+import type { QuoteCartModel } from '../hooks/useQuoteCart';
+
+export function CartItemList({ items, updateQty, removeItem, sending = false }: QuoteCartModel & { sending?: boolean }) {
+  const { t, language } = useLocale('cart');
+  return <div>
+    <div aria-hidden="true" className="hidden grid-cols-12 border-b border-lunara-border pb-3 text-xs tracking-wider text-lunara-body uppercase sm:grid">
+      <span className="col-span-6">{t('Flower products')}</span>
+      <span className="col-span-2 text-center">{t('Unit price')}</span>
+      <span className="col-span-2 text-center">{t('Quantity')}</span>
+      <span className="col-span-2 text-right">{t('Line subtotal')}</span>
+    </div>
+    <ul className="divide-y divide-lunara-border">
+      {items.map(item => {
+        const name = getLocalizedName(item, language) || t('Unavailable');
+        const path = item.slug ? '/shop/' + encodeURIComponent(item.slug) : '/shop';
+        return <li key={item.id} data-cart-item={item.variantId} className="grid grid-cols-1 items-center gap-4 py-5 sm:grid-cols-12">
+          <div className="flex min-w-0 items-start gap-4 sm:col-span-6">
+            <Link to={path} className="block aspect-[4/5] w-20 shrink-0 overflow-hidden rounded-[2px] bg-lunara-blush">
+              <ImageWithFallback src={item.image} alt={name} className="h-full w-full object-cover" />
+            </Link>
+            <div className="min-w-0 space-y-1">
+              <h3 className="font-display text-base leading-snug break-words text-lunara-ink"><Link to={path} className="transition-colors hover:text-lunara-rose-strong">{name}</Link></h3>
+              <p className="text-xs text-lunara-body">{t('Size:')} {item.sizeCode || t(item.size)}</p>
+              <button type="button" onClick={() => removeItem(item.id)} disabled={sending} aria-label={t('Remove {{value0}}', { value0: name })} className="inline-flex min-h-8 items-center gap-1 pt-1 text-xs text-lunara-rose-strong hover:text-lunara-ink"><Trash2 size={12} aria-hidden="true" />{t('Remove item')}</button>
+            </div>
+          </div>
+          <p className="min-w-0 text-xs break-words text-lunara-ink sm:col-span-2 sm:text-center"><span className="mr-2 text-lunara-body sm:hidden">{t('Unit price')}:</span>{item.name ? formatVND(item.price, language) : t('Unavailable')}</p>
+          <div className="flex items-center sm:col-span-2 sm:justify-center">
+            <div className="inline-flex items-center rounded-[2px] border border-lunara-border bg-lunara-surface">
+              <button type="button" disabled={sending || item.qty <= 1} onClick={() => updateQty(item.id, -1)} aria-label={t('Decrease quantity')} className="flex min-h-8 w-7 items-center justify-center text-lunara-body hover:text-lunara-ink disabled:opacity-40"><Minus size={12} aria-hidden="true" /></button>
+              <span data-cart-quantity className="min-w-6 px-1 text-center text-xs font-medium text-lunara-ink">{item.qty}</span>
+              <button type="button" disabled={sending || item.qty >= (item.maxQuantity ?? 20)} onClick={() => updateQty(item.id, 1)} aria-label={t('Increase quantity')} className="flex min-h-8 w-7 items-center justify-center text-lunara-body hover:text-lunara-ink disabled:opacity-40"><Plus size={12} aria-hidden="true" /></button>
+            </div>
+          </div>
+          <p data-cart-line-total className="min-w-0 text-xs font-medium break-words text-lunara-ink sm:col-span-2 sm:text-right"><span className="mr-2 text-lunara-body sm:hidden">{t('Line subtotal')}:</span>{item.name ? formatVND(item.price * item.qty, language) : t('Unavailable')}</p>
+        </li>;
+      })}
+    </ul>
+  </div>;
 }

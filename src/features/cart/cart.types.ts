@@ -4,6 +4,8 @@ import type { LocalizedNameFields } from "@/shared/i18n/language";
 export interface CartItem extends LocalizedNameFields {
   id: string;
   productId: number;
+  slug?: string;
+  sizeCode?: string;
   name: string;
   price: number;
   qty: number;

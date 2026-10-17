@@ -71,6 +71,11 @@ export function useCodCheckout() {
     updateForm: <K extends keyof CodForm>(key: K, value: CodForm[K]) => { setForm(previous => updateCheckoutForm(previous, key, value, sameRecipient)); setInvalidFields([]); },
     setMethod: (value: Parameters<typeof cart.setMethod>[0]) => { const method = typeof value === 'function' ? value(cart.method) : value; cart.setMethod(method); if (method !== 'STANDARD') setForm(previous => ({ ...previous, date: vietnamDate() })); },
     editDetails: () => { if (!sendingRef.current) setStep('details'); },
+    startCheckout: () => {
+      if (sendingRef.current) return;
+      if (step === 'success') { setOrder(null); intentRef.current = null; setTermsAccepted(false); }
+      setStep('details'); setError(null); setInvalidFields([]);
+    },
     review, placeOrder,
   };
 }

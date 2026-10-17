@@ -16,7 +16,8 @@ export function pageMetadata(pathname: string, language: string, site = siteConf
   const routes: Record<string, [string, string, string, string]> = {
     '/': ['Hoa tươi và quà tặng | Lunarra', 'Gửi trọn yêu thương với hoa tươi và quà tặng từ Lunarra. Khám phá bộ sưu tập và đặt hoa giao tận nơi.', 'Fresh flowers and gifts | Lunarra', 'Send thoughtful flowers and gifts with Lunarra. Explore our collection and order flowers for delivery.'],
     '/shop': ['Bộ sưu tập hoa tươi | Lunarra', 'Khám phá các mẫu hoa tươi tại Lunarra, chọn kích thước và xem giá, khu vực giao hàng trước khi đặt hoa.', 'Shop flowers | Lunarra', 'Explore fresh flowers at Lunarra, choose your bouquet size and check prices and delivery areas.'],
-    '/cart': ['Giỏ hàng và đặt hoa | Lunarra', 'Kiểm tra giỏ hàng, thông tin giao hoa và xác nhận đơn COD.', 'Cart and checkout | Lunarra', 'Review your flowers, delivery details and COD order.'],
+    '/cart': ['Giỏ hoa của bạn | Lunarra', 'Kiểm tra sản phẩm và số lượng trước khi tiến hành đặt hoa.', 'Your flower cart | Lunarra', 'Review your flowers and quantities before checkout.'],
+    '/checkout': ['Thông tin giao hoa và thanh toán | Lunarra', 'Điền thông tin giao hoa, chọn thiệp và kiểm tra đơn COD trước khi xác nhận.', 'Flower delivery and payment | Lunarra', 'Enter delivery details, choose your card and review your COD order.'],
     '/orders/track': ['Tra cứu đơn hoa | Lunarra', 'Tra cứu đơn hoa bằng mã đơn và số điện thoại.', 'Track your order | Lunarra', 'Look up your flower order using its number and phone.'],
   };
   const fallback: [string, string, string, string] = path.startsWith('/admin')

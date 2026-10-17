@@ -8,6 +8,7 @@ function makeItem(products: Product[], variantId: number, qty = 1): CartItem {
   const product = products.find(item => item.variants?.some(variant => variant.id === variantId));
   const variant = product?.variants?.find(item => item.id === variantId);
   return { id: 'variant:' + variantId, variantId, productId: product?.id || 0, name: product?.name || '', name_en: product?.name_en, name_vi: product?.name_vi,
+    slug: product?.slug, sizeCode: variant?.size_code,
     price: variant?.price || 0, image: product?.image || '', size: sizes[variant?.size_code || 'S'], qty, maxQuantity: variant?.max_quantity ?? 20 };
 }
 export function useCartState() {

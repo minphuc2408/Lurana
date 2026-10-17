@@ -1,39 +1,36 @@
-# Checkout: giỏ hàng và form gộp
+# Giỏ hàng và đặt hoa theo project ref
 
-Cập nhật 16/10/2026: checkout gộp và địa chỉ đã deploy staging version `27c3d24e-f3df-42e1-8d18-8b8299427062`, owner đã yêu cầu commit/push source sau deploy; production không đổi. Hiện trạng ở đây thay cho bố cục checkout trước đó cùng ngày.
+Cập nhật17/10/2026, **local tại127.0.0.1:5173, chưa commit/push/deploy**. Trang mẫu đọc từ D:/Download/lunara/src/pages/CartPage.tsx và CheckoutPage.tsx; không chạy/copy ứng dụng demo. Hiện trạng remote và Phase6 xem [PROJECT_STATUS](PROJECT_STATUS.md). Mô tả checkout gộp16/10 trong lịch sử đã được thay bằng luồng dưới đây.
 
-## Luồng và bố cục
+## Quyết định của chủ shop
 
-Mở /cart có hàng sẽ thấy ngay sản phẩm, form, tổng tiền và phương thức thanh toán. Không cần chọn thành phố/phường rồi bấm tiếp để mở form. Hook bắt đầu ở details, sau đó review → API confirmation; vẫn có bước xem lại trước khi tạo đơn thật. Giỏ trống/loading/error giữ trạng thái riêng.
+- /cart chỉ hiện sản phẩm và tóm tắt. Bấm **Tiến hành đặt hàng** mới mở /checkout; lúc đó hiện người đặt, người nhận, lịch giao, thiệp và phương thức thanh toán.
+- Chưa chọn địa chỉ thì **không hiện dòng phí giao**, không áp phí mẫu30.000đ. Tạm tính lấy giá catalog/quote; tổng trước địa chỉ ghi rõ **Tổng tạm tính**. Sau khi chọn đủ tỉnh/phường, hiển thị phí/tổng từ quote API hiện hành.
+- COD mặc định. Chuyển khoản mở thông báo Sắp ra mắt; đóng bằng Escape/nút/backdrop trả COD. Không VietQR, ngân hàng thật hoặc cam kết đã thanh toán.
+- **Một thiệp cho cả đơn** theo API. Khối Thiệp nằm sau Lịch giao hoa; yêu cầu khác nhập Ghi chú. NONE ẩn/xóa message; GREETING_CARD/BANNER cần message không trắng, giữ nguyên nội dung khách.
+- Giữ **xem lại → xác nhận gửi**. Không gửi trực tiếp từ form mẫu; giữ schema, consent mặc định false, quote hiện hành, Turnstile và UUID/retry.
 
-Ba khối thông tin luôn xếp theo một cột dọc:
+## Giao diện
 
-1. Người đặt: tên và SĐT cùng hàng từ640px; hai checkbox cùng người nhận và ẩn tên người gửi cùng hàng, nhãn tự xuống dòng khi hẹp.
-2. Người nhận: tên và SĐT cùng hàng từ640px, địa chỉ riêng, thành phố và phường cùng hàng từ640px. Mobile hẹp xếp trường dọc để nhập liệu dễ. Nhãn phường chỉ **Phường / Xã**, không thêm quận/huyện. Chỉ hiện tỉnh/phường đang active trong delivery-zones và thuộc danh mục D1 Hà Nội; xem [địa chỉ và phạm vi giao](DELIVERY_ADDRESS.md).
-3. Thiệp và yêu cầu giao: ngày/slot, loại thiệp, phương thức giao, thông điệp có điều kiện và ghi chú.
+Khung1240px, padding20/32px và py24/40px, breadcrumb chỉ trên Cart, tiêu đề serif, nền cream/surface, viền mảnh, góc2px như mẫu. Token màu riêng của hai trang lấy ink#4B2432/body#746B69/border#E7DCD3/surface#FAF7F2/blush#F3E7DF; CTA#9D586B. Giữ typography EN Fraunces/Inter và VI Lora/Be Vietnam Pro đã duyệt.
 
-Bật cùng người nhận sao chép tên/SĐT và tiếp tục sync khi sửa người đặt; hai ô nhận read-only. Tắt giữ nội dung và cho sửa riêng. Không sao chép/thay địa chỉ. Email optional còn tương thích model/API nhưng không có ô nhập trong layout này.
+Cart desktop chia8/4trên grid12, gap40px; ảnh80×100, dòng sản phẩm6/2/2/2 cho thông tin/đơn giá/số lượng/tạm tính. Mobile xếp dọc; links ảnh/tên tới detail, quantity giữ giới hạn shared cart, xóa bằng nút. Empty/loading/error/retry dùng dữ liệu thật, không fixture.
 
-Mặc định NONE (không dùng thiệp) ẩn nội dung thông điệp. Chọn GREETING_CARD/BANNER mới hiện textarea bắt buộc. Chọn lại NONE xóa nội dung, ẩn textarea và không gửi message trong payload. Không còn tự chọn loại thiệp khi nhập nội dung ẩn.
+Checkout chia7/5, gap40/56px từ1024px. Cột trái5khối: người đặt; địa chỉ người nhận; lịch giao; thiệp; thanh toán/ghi chú. Cặp field từ640px; cột phải sticky top112px trên desktop, liệt kê ảnh56×64/nội dung/size/quantity, subtotal/phí/tổng, consent và CTA. Không đưa mức phí, lịch giao, quận/huyện hoặc cam kết dịch vụ giả của mẫu vào vận hành: địa chỉ tỉnh/phường, methods/surcharge, slots/limits lấy API hiện có. Tên người đặt vẫn bắt buộc theo schema. Thông tin chưa có trong response xác nhận không được giả làm dữ liệu server.
 
-## Thanh toán và điều khoản
+Review đổi style theo mẫu, tiếp tục hiển thị dữ liệu nhập để kiểm, Turnstile, edit/retry và consent. Xác nhận chỉ dùng OrderSummary từ API; không tạo mã đơn bằng random hoặc hiển thị thành công trước response.
 
-Payment nằm dưới Total từ lần mở form đầu tiên. COD mặc định, ghi chú chỉ “Thanh toán khi nhận hàng”; không cọc50%, không thông tin tài khoản hoặc hạn chế COD cho cùng người nhận.
+## Kiến trúc và dữ liệu
 
-Chọn chuyển khoản mở Dialog + FeatureUnavailable inline. Trong lúc thông báo mở, BANK_TRANSFER không đủ điều kiện đi tiếp. Khi đóng bằng Escape, nút đóng hoặc backdrop, hook trả payment về COD. Không tạo đơn/khởi tạo thanh toán chuyển khoản; state form/consent giữ nguyên.
+- App CheckoutLayout là nhóm route không path gồm /cart và /checkout. Feature CheckoutFlowProvider gọi useCodCheckout một lần; hai page mỏng dùng context và render CartView/CheckoutView. Chuyển giữa hai trang giữ draft và idempotency intent trong memory; rời nhóm route/reload sẽ mất draft. CartProvider ngoài nhóm vẫn giữ shared variant cart.
+- localStorage lunara.cart.v1 vẫn chỉ version/variantId/quantity. CartItem thêm slug/sizeCode từ catalog để link và hiển thị; không lưu chúng hoặc PII/thiệp/note/intent/session vào storage.
+- useQuoteCart giữ debounce350ms và chỉ quote khi chọn địa chỉ active hợp catalog. Gõ name/phone/address/message/note, đổi consent/payment hoặc chuyển cart↔checkout không tự tạo quote mới nếu dữ liệu định giá không đổi.
+- Payload, shared Zod schemas, POST /api/orders, order lookup, Worker/D1 và idempotency contract **không đổi**. Giữ cùng UUID trên retry payload không đổi; response lỗi không xóa cart/không báo thành công. Cart chỉ xóa sau API thành công. /checkout có metadata EN/VI/noindex, không thêm sitemap.
 
-Điều khoản là button mở Dialog nội bộ với tiêu đề “Điều khoản & Điều kiện” và nội dung **“Cập nhật sau”** (EN: To be updated). Không link/navigate đến Trạm Hoa hoặc website khác. Không tự viết điều khoản; chờ owner gửi. Mở/đóng popup không tự tích hoặc bỏ tích đồng ý; checkbox mặc định false.
+## Kiểm chứng local
 
-Review chỉ bật khi schema chi tiết hợp lệ, ngày trong khoảng, slot thuộc options, quote mới không vấn đề, COD và đã đồng ý. Submit kiểm cùng điều kiện, token Turnstile sẵn sàng và không đang gửi. Bỏ tích tại review khóa gửi ngay; UUID/retry và response server vẫn là nguồn xác nhận.
+Typecheck, architecture229source,190tests và build PASS. [Browser runner](../scripts/check-ui-cart-checkout.mjs):18nhóm, cart EN/VI320/390/640/768/1024/1440px; checkout EN/VI320/390/768/1440px; không tràn ngang, form chỉ mở sau CTA, chỉnh quantity/xóa/empty, card NONE-reset/required, cùng người nhận, invalid phone, consent, bank rollback, terms nội bộ, review/edit, draft khi quay lại giỏ, direct checkout/reload xóa draft và noindex.1quote sau chọn địa chỉ,0quote khi gõ; hai POSTorder được intercept trước D1 (503→201) để kiểm cùng idempotency key, cart giữ khi lỗi/xóa sau response;0API order writes,0runtime exceptions. Font thật được bật ở lượt --fonts; ảnh remote vẫn bị host allowlist chặn.
 
-Consent/cùng người nhận/payment/popups chỉ ở memory; không field thanh toán/consent API hoặc D1 mới. Lượt địa chỉ bổ sung migration0003 cho hai bảng danh mục và cập nhật Worker kiểm phạm vi giao. Quote vẫn debounce350ms, chỉ khi chọn đủ địa chỉ hợp lệ hoặc đổi giỏ/phương thức giao; gõ liên hệ/ghi chú và mở popup/đổi consent/payment không gọi quote. Staging zones0 nên hiện trạng thái chưa cấu hình giao và khóa review cho đến khi có địa chỉ hợp lệ.
+Chạy: node scripts/check-ui-cart-checkout.mjs http://127.0.0.1:5173 --fonts. Script chỉ chấp nhận127.0.0.1 và dùng browser profile riêng, Turnstile callback synthetic; mọi order request bị intercept/không forward. Không đọc mật khẩu thật, không bypass server, không ghi local D1/remote. Screenshot/results ở .security-review/ ignored. Provider, đơn thật, Cron/quota và full legacy UI suite chưa được nghiệm thu lại; targeted PASS không thay lịch sử Phase5/6.
 
-## Kiểm chứng hiện tại
-
-Typecheck, architecture225source, build và190tests PASS. Lượt checkout trước có186tests; lượt mới bổ sung coverage/CRUD/validation server, giữ test thiệp/consent/payment.
-
-- check-ui-checkout-layout.mjs:12nhóm PASS,0exceptions, EN/VI,320/390/768/1440px. Kiểm form có trước địa chỉ,3khối dọc, cặp field/checkbox đúng hàng, sync/tắt sync, invalid phone, consent/review/edit, NONE→GREETING_CARD→NONE→BANNER, terms popup không navigate/đổi consent, bank rollback COD bằng Escape/nút đóng. Chỉ1quote khi chọn địa chỉ;0quote khi gõ form/thiệp/consent/payment;0POST order.
-- check-ui-delivery.mjs:8nhóm PASS,0exceptions, cùng locale/viewport; city/ward search, reset, keyboard, debounce số lượng vẫn đạt.
-- Browser profile riêng dùng Turnstile callback synthetic; order POST bị chặn trước local D1. Không coi đây là nghiệm thu provider hoặc tạo đơn thật. Runner browser không ghi D1 hoặc remote; migration danh mục được thực hiện riêng có authorization.
-
-Full UI legacy còn assumptions quote-before-zone/datalist/checkout-start và chưa được nghiệm thu lại; targeted PASS không thay full suite hoặc kết quả Phase5 lịch sử. Phase6 vẫn5/7. Staging đã deploy; production không đổi. Evidence/screenshot ở .security-review/ và không vào Git; kết quả chạy mới nhất ghi tại [PROJECT_STATUS](PROJECT_STATUS.md).
+Tinh chỉnh theo owner17/10: bỏ breadcrumb Trang chủ/Giỏ hàng/Đặt hoa và nhãn Bước cuối cùng trên /checkout; căn giữa h1 cả details/review. Sidebar thêm hai dòng có icon dưới CTA (cả review và xác nhận): “Chụp ảnh hoa thực tế gửi bạn trước khi giao.” và “Giao hoa nhẹ nhàng, giữ dáng cánh hoa nguyên vẹn.”, có EN fallback. Đây là nội dung giao diện owner yêu cầu, không thêm API/chức năng tự chụp/gửi ảnh.
