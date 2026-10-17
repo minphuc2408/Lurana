@@ -95,3 +95,6 @@ Story17/10 local: Home OurStory now renders immediately after FeaturedCollection
 
 
 Public lookup17/10 local: /orders/track uses OrderLookupResult (admin retains OrderDetailView), ref form/result without breadcrumb/eyebrow/introduction; five real status milestones, cancellation only marks actual visited timeline states. Hotline0987656789 is owner-approved. Keep BOTH code/phone + Turnstile, memory-only PII, existing API contract; no ref mock fallback. Local191tests/234source/build and72browser layout cases pass with intercepted API/synthetic challenge; not provider/remote acceptance. No push/deploy/API/DB changes.
+
+
+Staging17/10 supersedes prior local-only notes: main77bdfdc merges minphuc8042 commits4821a53(README) and7dac1bb(lookup progress), merged by minphuc2408 via PR1/PR2. Owner deployed c29141be-740e-4908-b369-179d7631356e at16:42:38 Vietnam time,100% traffic. Public asset matches local artifact; five storefront routes200/CSP/noindex; public catalog4categories/1product, delivery1Hanoi province/1ward. Version metadata now includes TURNSTILE_SECRET name; never read its value or infer provider acceptance. No remote DB/private counts read, no writes/deploy in audit; production not re-audited, Phase6 remains5/7. README stays concise with both contributors. See docs/PROJECT_STATUS.md for evidence and historical overrides.

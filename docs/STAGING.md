@@ -1,6 +1,6 @@
 # Lunara Shop — staging và production
 
-Cập nhật **16/10/2026**. Hai môi trường dùng chung source/canonical migration, tách Worker, D1, secrets và rate-limit namespaces. Snapshot live được kiểm chỉ đọc tại [PROJECT_STATUS](PROJECT_STATUS.md#snapshot-remote-chỉ-đọc--16102026).
+Cập nhật **17/10/2026**. Hai môi trường dùng chung source/canonical migration, tách Worker, D1, secrets và rate-limit namespaces. Snapshot hiện hành được kiểm chỉ đọc tại [PROJECT_STATUS](PROJECT_STATUS.md#staging-và-hai-pr-đã-merge--17102026).
 
 | Môi trường | Worker | D1 / UUID | Public frontend config |
 | --- | --- | --- | --- |
@@ -8,11 +8,11 @@ Cập nhật **16/10/2026**. Hai môi trường dùng chung source/canonical mig
 | Staging | `lunara-staging` | `lunara-staging-db` / `ed391b18-0bcf-41b3-8315-389807ace7f2` | `.env.staging`, staging widget/origin, luôn noindex |
 | Local | Vite dev/preview loopback | D1 local, `remoteBindings: false` | Test key hoặc override local khi cần |
 
-Production đang chạy version cũ ngày 15/10. Staging hiện chạy version `27c3d24e-f3df-42e1-8d18-8b8299427062` (16/10,19:21 giờ Việt Nam), gồm danh mục Hà Nội/admin Combobox/checkout active-only và toàn bộ source local lúc deploy. Version75fcbb54 là mốc ảnh category trước đó;CSP/SEO,key staging,RateLimit/TTL=24 và scheduled handler được giữ.Version e984d962 lúc13:31 là lịch sử trước lượt ảnh category. Cả hai có tên secrets admin; staging có thêm Cloudinary secrets; cả hai chưa có TURNSTILE_SECRET. Không suy ra nghiệm thu upload/Cron/checkout cloud từ sự hiện diện bindings.
+Staging hiện chạy version **c29141be-740e-4908-b369-179d7631356e**,100% traffic, owner deploy17/10 lúc16:42:38 giờ Việt Nam. Source main77bdfdc đã merge hai PR của@minphuc8042 bởi@minphuc2408. Public JS mới khớp artifact local; storefront200/CSP/noindex. Metadata có TURNSTILE_SECRET cùng admin/Cloudinary secrets; chưa nghiệm thu challenge/login/lookup/đặt đơn thật. Bản27c3d24e và kết luận thiếu secret16/10 là lịch sử. Production không rà lại trong lượt này.
 
-D1 staging hiện đã áp0001+0002+0003;12bảng,1tỉnh/126phường Hà Nội,HCM0,FK sạch. Aggregate sau0003: zones0/products1/variants3/tổng tồn30/orders0/items0/history0, không thay counts nghiệp vụ. [Thao tác và bằng chứng](DELIVERY_ADDRESS.md).
+Theo lần kiểm DB16/10, D1 staging đã áp0001+0002+0003;12bảng,1tỉnh/126phường Hà Nội,HCM0,FK sạch. Aggregate lịch sử16/10 sau0003: zones0/products1/variants3/tổng tồn30/orders0/items0/history0, không thay counts nghiệp vụ. [Thao tác và bằng chứng](DELIVERY_ADDRESS.md).
 
-Lịch sử: D1 staging đã áp migration0001 ngày15/10. Lượt chỉ đọc 16/10 thấy 4 categories, 1 sản phẩm active, 0 tỉnh giao. Counts 0 sản phẩm/variants/orders ghi ngày 15/10 là lịch sử. Chưa có delivery zones nên chưa nghiệm thu checkout staging; không nạp full seed để bù thiếu dữ liệu.
+Lịch sử: D1 staging đã áp migration0001 ngày15/10. Lượt chỉ đọc 16/10 thấy 4 categories, 1 sản phẩm active, 0 tỉnh giao. Counts 0 sản phẩm/variants/orders ghi ngày 15/10 là lịch sử. Ngày17/10 public options đã trả1tỉnh Hà Nội/1phường; chưa nghiệm thu checkout. Không nạp full seed để bù dữ liệu.
 
 ## Build và deploy
 

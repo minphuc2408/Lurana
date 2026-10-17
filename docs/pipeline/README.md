@@ -1,5 +1,8 @@
 # Pipeline Lunara MVP — hiện trạng và kế hoạch
 
+> Cập nhật staging17/10: owner deploy c29141be, main77bdfdc đã merge hai PR của@minphuc8042 bởi@minphuc2408. Public UI200/CSP/noindex, metadata có TURNSTILE_SECRET, coverage1tỉnh Hà Nội/1phường. Chưa nghiệm thu provider/đơn thật; kết luận thiếu secret/zones0/chưa deploy16/10 bên dưới là lịch sử. [Hiện trạng và bằng chứng](../PROJECT_STATUS.md#staging-và-hai-pr-đã-merge--17102026).
+
+
 > UI local17/10: /cart → /checkout → review → API confirmation; context memory-only giữ draft khi sửa giỏ, không PII storage. Phí ẩn trước chọn địa chỉ; COD/thiệp chung/API contract giữ nguyên. Browser18nhóm có mock order intercept, không thay acceptance backend/remote/Phase6(5/7). Xem [Checkout UI](../CHECKOUT_UI.md) và [trạng thái](../PROJECT_STATUS.md).
 
 

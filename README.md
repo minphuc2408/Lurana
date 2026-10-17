@@ -1,8 +1,5 @@
 # Lunarra
 
-> Tiến trình Tra đơn17/10/2026 (local): chỉ chỉnh section tiến trình theo ảnh owner — tiêu đề serif/gạch rose,5icon tròn/đường nối/số bước, nhấn riêng bước hiện tại; nhãn Tiếp nhận/Dưỡng hoa/Cắm hoa & chép thiệp/Đang vận chuyển/Đã trao tận tay và EN tương ứng. Giữ mapping trạng thái API và lịch sử đơn hủy; desktop ngang/mobile dọc. Typecheck, architecture234source,191/191tests, build và72ca browser EN/VI PASS (API/challenge giả lập,0exceptions/0order writes). Không đổi phần tra cứu khác/API/Worker/DB/dependency. Owner cho phép commit/push lên nhánh feature trong lượt này; chưa deploy.
-
-
 Lunarra là website bán hoa với giao diện mua sắm và trang quản trị dành cho cửa hàng. Dự án hỗ trợ tiếng Việt và tiếng Anh, hiển thị giá bằng VND.
 
 ## Chức năng chính

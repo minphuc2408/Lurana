@@ -1,6 +1,8 @@
 # Sổ tay dự án Lunara Flower Shop
 
-> Tiến trình Tra đơn17/10/2026 (local): chỉ chỉnh section tiến trình theo ảnh owner — tiêu đề serif/gạch rose,5icon tròn/đường nối/số bước, nhấn riêng bước hiện tại; nhãn Tiếp nhận/Dưỡng hoa/Cắm hoa & chép thiệp/Đang vận chuyển/Đã trao tận tay và EN tương ứng. Giữ mapping trạng thái API và lịch sử đơn hủy; desktop ngang/mobile dọc. Typecheck, architecture234source,191/191tests, build và72ca browser EN/VI PASS (API/challenge giả lập,0exceptions/0order writes). Không đổi phần tra cứu khác/API/Worker/DB/dependency. Owner cho phép commit/push lên nhánh feature trong lượt này; chưa deploy.
+> **Hiện hành 17/10/2026:** main **77bdfdc**; owner deploy staging **c29141be-740e-4908-b369-179d7631356e** lúc **16:42:38 giờ Việt Nam**, 100% traffic. @minphuc8042 thực hiện README (4821a53) và tiến trình tra đơn (7dac1bb); @minphuc2408 merge PR#1(d36519b) và PR#2(77bdfdc). Public JS khớp artifact local; 5 route storefront200/CSP/noindex. Staging có tên secret TURNSTILE_SECRET; chưa nghiệm thu challenge/login/đặt đơn thật. Catalog công khai4categories/1product, coverage1tỉnh Hà Nội/1phường. Các ghi chú chưa push/deploy, thiếu secret hoặc coverage0 bên dưới là lịch sử khi khác mốc này. Không đọc DB riêng tư/đổi cloud; production không rà lại; Phase6 vẫn5/7.
+
+
 
 
 > Bàn giao source17/10/2026: owner đã cho phép chia commit theo chức năng và push GitHub trong lượt này; không bao gồm deploy hoặc DB remote. Kiểm tra trước push: typecheck, architecture234source,191/191tests và build PASS. Đã sửa test i18n nhận namespace với cả nháy đơn/kép. Đơn SMOKE thử tra cứu chỉ ở DB local (1đơn/1item/3history), không đưa dữ liệu hoặc SQL thử vào Git; db:verify13/13 PASS. Local5173 hiện thiếu cấu hình Turnstile và trả503 TURNSTILE_NOT_CONFIGURED; owner đã yêu cầu dừng, không thêm bypass hoặc thay cấu hình. Browser UI72ca trước đó dùng API/challenge giả lập, không đồng nghĩa lookup thật đã hoạt động. Remote/Phase6 vẫn giữ nguyên.

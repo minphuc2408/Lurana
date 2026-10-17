@@ -1,5 +1,18 @@
 # Lunarra — trạng thái hiện tại
 
+## Staging và hai PR đã merge — 17/10/2026
+
+- Local/main và origin/main cùng **77bdfdc**. **@minphuc8042** là tác giả4821a53 (rút gọn README, thêm hai người thực hiện) và7dac1bb (giao diện tiến trình tra đơn). **@minphuc2408** merge [PR#1](https://github.com/minphuc2408/Lurana/pull/1) ởd36519b và [PR#2](https://github.com/minphuc2408/Lurana/pull/2) ở77bdfdc. Người thực hiện và người merge được ghi riêng.
+- Owner deploy **lunara-staging**, version **c29141be-740e-4908-b369-179d7631356e**, 100% traffic; deployment54ad979d-50af-412d-8e4c-9298e60b27b9 lúc **17/10/2026,16:42:38 giờ Việt Nam**. Versionb95d739e lúc16:38 cùng ngày và27c3d24e ngày16/10 là lịch sử. Metadata không chứa Git SHA nên không khẳng định ánh xạ toàn bộ Worker tới commit chỉ từ version.
+- Public GET: /, /about, /cart, /checkout, /orders/track đều200/CSP/noindex; /api/health200. Asset **/assets/index-DzKDn3E3.js**, SHA256 **69bed88c55cf154f2769d9fb1047698a7add75ade351927e4643dc87681864e0**, khớp artifact local; có nhãn Dưỡng hoa, Cắm hoa & chép thiệp, Đã trao tận tay. Xác nhận bundle giao diện mới đã live; không thay nghiệm thu thao tác browser/đơn thật.
+- Tiến trình mới: Clock/Sprout/Heart/Truck/CheckCircle2; nhãn Tiếp nhận/Dưỡng hoa/Cắm hoa & chép thiệp/Đang vận chuyển/Đã trao tận tay, số bước và đường nối theo ref; chỉ bước hiện tại nhấn rose. Mapping API và logic đơn hủy không đổi. Mô tả icon/nhãn cũ bên dưới là lịch sử trước7dac1bb.
+- Metadata version có tên secrets admin/Cloudinary/**TURNSTILE_SECRET**, DB staging đúng UUID, RateLimit240811/240812, TTL24 và scheduled handler. Không đọc giá trị secrets; chưa kiểm action/hostname/provider/login/lookup/checkout thật. Kết luận staging thiếu secret16/10 không áp cho version này.
+- Public catalog200:4categories/1product; delivery options200:**1tỉnh Thành phố Hà Nội/1phường khả dụng**. Không đọc D1 remote hoặc suy ra tổng zone/stock/orders từ public response; snapshot coverage0 ngày16/10 là lịch sử.
+- Evidence ignored:.security-review/staging-doc-audit-2026-10-17.json. Chỉ đọc metadata/GET công khai và sửa Markdown; không deploy/migrate/seed/đặt đơn/đổi secret. Không chạy lại test/build cho tài liệu;191tests/234source/72ca UI là bằng chứng local ghi ở7dac1bb, không phải nghiệm thu cloud mới. Production không rà lại; **Phase6 vẫn5/7**.
+- Các ghi chú local/chưa push/chưa deploy bên dưới là lịch sử khi khác mốc này. README giữ giới thiệu/liên kết và cả hai contributors, không dùng làm deployment log.
+
+
+
 > Tiến trình Tra đơn17/10/2026 (local): chỉ chỉnh section tiến trình theo ảnh owner — tiêu đề serif/gạch rose,5icon tròn/đường nối/số bước, nhấn riêng bước hiện tại; nhãn Tiếp nhận/Dưỡng hoa/Cắm hoa & chép thiệp/Đang vận chuyển/Đã trao tận tay và EN tương ứng. Giữ mapping trạng thái API và lịch sử đơn hủy; desktop ngang/mobile dọc. Typecheck, architecture234source,191/191tests, build và72ca browser EN/VI PASS (API/challenge giả lập,0exceptions/0order writes). Không đổi phần tra cứu khác/API/Worker/DB/dependency. Owner cho phép commit/push lên nhánh feature trong lượt này; chưa deploy.
 
 

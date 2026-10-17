@@ -1,5 +1,8 @@
 # Chống bot/spam và vận hành COD
 
+> Cập nhật staging17/10: owner deploy c29141be, main77bdfdc đã merge hai PR của@minphuc8042 bởi@minphuc2408. Public UI200/CSP/noindex, metadata có TURNSTILE_SECRET, coverage1tỉnh Hà Nội/1phường. Chưa nghiệm thu provider/đơn thật; kết luận thiếu secret/zones0/chưa deploy16/10 bên dưới là lịch sử. [Hiện trạng và bằng chứng](PROJECT_STATUS.md#staging-và-hai-pr-đã-merge--17102026).
+
+
 Cập nhật 16/10/2026: code có B2/B3; staging đã deploy 13:31 với key staging/RateLimit/TTL 24h và scheduled handler, production vẫn bản 15/10. Cả hai thiếu TURNSTILE_SECRET. Lượt rà tài liệu chỉ đọc remote, không thay secrets/D1/domain; Phase 6 vẫn5/7. [Snapshot](PROJECT_STATUS.md).
 
 ## Các lớp đã có trong code

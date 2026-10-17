@@ -1,6 +1,6 @@
 # Giỏ hàng và đặt hoa theo project ref
 
-Cập nhật17/10/2026, **local tại127.0.0.1:5173, chưa commit/push/deploy**. Trang mẫu đọc từ D:/Download/lunara/src/pages/CartPage.tsx và CheckoutPage.tsx; không chạy/copy ứng dụng demo. Hiện trạng remote và Phase6 xem [PROJECT_STATUS](PROJECT_STATUS.md). Mô tả checkout gộp16/10 trong lịch sử đã được thay bằng luồng dưới đây.
+Cập nhật17/10/2026, **main77bdfdc đã deploy staging17/10 versionc29141be-740e-4908-b369-179d7631356e; local tại127.0.0.1:5173**. Trang mẫu đọc từ D:/Download/lunara/src/pages/CartPage.tsx và CheckoutPage.tsx; không chạy/copy ứng dụng demo. Hiện trạng remote và Phase6 xem [PROJECT_STATUS](PROJECT_STATUS.md). Mô tả checkout gộp16/10 trong lịch sử đã được thay bằng luồng dưới đây.
 
 ## Quyết định của chủ shop
 
@@ -19,6 +19,8 @@ Cart desktop chia8/4trên grid12, gap40px; ảnh80×100, dòng sản phẩm6/2/2
 Checkout chia7/5, gap40/56px từ1024px. Cột trái5khối: người đặt; địa chỉ người nhận; lịch giao; thiệp; thanh toán/ghi chú. Cặp field từ640px; cột phải sticky top112px trên desktop, liệt kê ảnh56×64/nội dung/size/quantity, subtotal/phí/tổng, consent và CTA. Không đưa mức phí, lịch giao, quận/huyện hoặc cam kết dịch vụ giả của mẫu vào vận hành: địa chỉ tỉnh/phường, methods/surcharge, slots/limits lấy API hiện có. Tên người đặt vẫn bắt buộc theo schema. Thông tin chưa có trong response xác nhận không được giả làm dữ liệu server.
 
 Review đổi style theo mẫu, tiếp tục hiển thị dữ liệu nhập để kiểm, Turnstile, edit/retry và consent. Xác nhận chỉ dùng OrderSummary từ API; không tạo mã đơn bằng random hoặc hiển thị thành công trước response.
+
+Checkout không có breadcrumb hoặc nhãn “Bước cuối cùng”; tiêu đề “Thông tin giao hoa & Thanh toán” căn giữa. Dưới CTA ở form và bước xem lại có hai dòng: “Chụp ảnh hoa thực tế gửi bạn trước khi giao.” và “Giao hoa nhẹ nhàng, giữ dáng cánh hoa nguyên vẹn.”
 
 ## Kiến trúc và dữ liệu
 
