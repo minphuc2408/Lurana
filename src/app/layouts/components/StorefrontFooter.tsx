@@ -5,8 +5,8 @@ import { customerCareLinks, socialLinks, storeLocations } from '@/shared/config/
 import { FeatureUnavailable } from '@/shared/components/FeatureUnavailable';
 import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription, DialogClose } from '@/shared/ui/dialog';
 
-const linkClass = 'text-sm leading-7 text-[#F5DDD5] no-underline transition-colors hover:text-white hover:underline underline-offset-4 break-words';
-const headingClass = 'font-display text-sm sm:text-base font-semibold tracking-[0.05em] uppercase text-[#F5DDD5] mb-4 leading-relaxed';
+const linkClass = 'text-sm leading-7 text-lunara-footer-foreground no-underline transition-colors hover:text-lunara-footer-hover hover:underline underline-offset-4 break-words';
+const headingClass = 'font-display text-sm sm:text-base font-semibold tracking-[0.05em] uppercase text-lunara-footer-foreground mb-4 leading-relaxed';
 
 function FooterDestination({ label, href }: { label: string; href?: string }) {
   const { t } = useLocale('common');
@@ -25,14 +25,14 @@ function FooterDestination({ label, href }: { label: string; href?: string }) {
 
 export function StorefrontFooter() {
   const { t } = useLocale('common');
-  return <footer className="mt-24 bg-lunara-ink text-[#F5DDD5]" data-storefront-footer>
+  return <footer className="mt-24 bg-lunara-footer-background text-lunara-footer-foreground" data-storefront-footer>
     <div data-footer-grid className="max-w-[1240px] mx-auto px-5 sm:px-8 py-10 lg:py-16 grid grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,0.65fr)_minmax(0,1.3fr)] gap-x-6 gap-y-9 lg:gap-10">
       <div className="col-span-2 lg:col-span-1 min-w-0">
         <div className="flex items-center gap-2 mb-4">
           <Flower size={20} className="text-lunara-rose-light" />
-          <span className="font-display [font-size:1.6rem] [font-weight:600] [letter-spacing:0.1em] text-[#F5DDD5]">{t('Lunara Shop')}</span>
+          <span className="font-display [font-size:1.6rem] [font-weight:600] [letter-spacing:0.1em] text-lunara-footer-foreground">{t('Lunara Shop')}</span>
         </div>
-        <p className="[font-size:0.88rem] [line-height:1.8] text-lunara-body [max-width:300px]">
+        <p className="[font-size:0.88rem] [line-height:1.8] text-lunara-footer-muted [max-width:300px]">
           {t("Crafting nature's most beautiful moments into timeless floral arrangements. Bringing joy, one bloom at a time.")}
         </p>
       </div>
@@ -58,13 +58,13 @@ export function StorefrontFooter() {
             <a href={t(store.mapUrlKey)} target="_blank" rel="noopener noreferrer" className={linkClass}>{t(store.addressKey)}</a>
           </p>)}
         </address>
-        <div className="mt-6 pt-5 border-t border-[#5A3540] text-sm leading-7">
+        <div className="mt-6 pt-5 border-t border-lunara-footer-border text-sm leading-7">
           <p className="font-semibold">CÔNG TY TNHH LUNARA</p>
           <p>{t('Tax ID')}: 001</p>
         </div>
       </div>
     </div>
-    <div className="[border-top:1px_solid_#5A3540] [padding:16px_24px] [text-align:center] [font-size:0.78rem] text-[#8A6070]">
+    <div className="[border-top:1px_solid_var(--lunara-footer-border)] [padding:16px_24px] [text-align:center] [font-size:0.78rem] text-lunara-footer-copyright">
       {t('© 2026 Lunara Flower Shop. All rights reserved. Made with love & flowers.')}
     </div>
   </footer>;

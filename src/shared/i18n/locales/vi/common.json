@@ -1,4 +1,6 @@
 {
+  "Theme": "Giao diện",
+  "Theme, current: {{name}}": "Giao diện, đang chọn: {{name}}",
   "API timeout": "Yêu cầu quá thời gian chờ. Thông tin vẫn được giữ; hãy thử lại.",
   "API bad response": "Hệ thống trả về dữ liệu không hợp lệ. Vui lòng thử lại.",
   "API delivery slot": "Ngày hoặc khung giờ giao không còn phù hợp. Vui lòng chọn lại.",

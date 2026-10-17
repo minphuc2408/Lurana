@@ -18,6 +18,19 @@
   --lunara-warning: #D4A020;
   --lunara-info: #5B8DD9;
   --lunara-danger: #E8453C;
+  --lunara-control-border: #F0DDD5;
+  --lunara-control-surface: #FFFFFF;
+  --lunara-editorial-ink: #4B2432;
+  --lunara-editorial-body: #746B69;
+  --lunara-editorial-border: #E7DCD3;
+  --lunara-editorial-blush: #F3E7DF;
+  --lunara-editorial-surface: #FAF7F2;
+  --lunara-footer-background: #3D2228;
+  --lunara-footer-foreground: #F5DDD5;
+  --lunara-footer-muted: #6B4C55;
+  --lunara-footer-copyright: #8A6070;
+  --lunara-footer-border: #5A3540;
+  --lunara-footer-hover: #FFFFFF;
 }
 
 /* i18n updates the root language; utilities inherit these fonts in dialogs too. */
@@ -47,6 +60,58 @@ html[lang='vi'] {
   --color-lunara-warning: var(--lunara-warning);
   --color-lunara-info: var(--lunara-info);
   --color-lunara-danger: var(--lunara-danger);
+  --color-lunara-control-border: var(--lunara-control-border);
+  --color-lunara-control-surface: var(--lunara-control-surface);
+  --color-lunara-footer-background: var(--lunara-footer-background);
+  --color-lunara-footer-foreground: var(--lunara-footer-foreground);
+  --color-lunara-footer-muted: var(--lunara-footer-muted);
+  --color-lunara-footer-copyright: var(--lunara-footer-copyright);
+  --color-lunara-footer-border: var(--lunara-footer-border);
+  --color-lunara-footer-hover: var(--lunara-footer-hover);
+}
+
+/* The original generic/shadcn palette remains intact until a new light theme is selected. */
+html[data-lunara-theme]:not([data-lunara-theme='original']) {
+  color-scheme: light;
+  --background: var(--lunara-cream);
+  --foreground: var(--lunara-ink);
+  --card: var(--lunara-surface);
+  --surface: var(--lunara-surface);
+  --surface-muted: var(--lunara-blush);
+  --card-foreground: var(--lunara-ink);
+  --popover: var(--lunara-surface);
+  --popover-foreground: var(--lunara-ink);
+  --primary: var(--lunara-rose-strong);
+  --primary-hover: var(--lunara-primary-hover);
+  --primary-foreground: #FFFFFF;
+  --secondary: var(--lunara-surface);
+  --secondary-foreground: var(--lunara-ink);
+  --muted: var(--lunara-blush);
+  --muted-foreground: var(--lunara-body);
+  --muted-text: var(--lunara-body);
+  --accent: var(--lunara-blush);
+  --accent-foreground: var(--lunara-ink);
+  --border: var(--lunara-border);
+  --input: var(--lunara-control-border);
+  --input-background: var(--lunara-surface);
+  --ring: var(--lunara-focus-ring);
+  --focus-ring: var(--lunara-focus-ring);
+}
+
+html[data-lunara-theme]:not([data-lunara-theme='original']) :is(input:not([type='checkbox']):not([type='radio']), textarea, [data-dropdown]) {
+  border-color: var(--lunara-control-border);
+}
+html[data-lunara-theme]:not([data-lunara-theme='original']) :focus-visible {
+  outline-color: var(--lunara-focus-ring);
+}
+html[data-lunara-theme]:not([data-lunara-theme='original']) [role='option'][data-highlighted] {
+  outline: 2px solid var(--lunara-focus-ring);
+  outline-offset: -2px;
+}
+/* The newly added theme menu also needs a clear focus indicator in Original. */
+[role='option'][data-highlighted]:has([data-theme-option]) {
+  outline: 2px solid var(--lunara-focus-ring, var(--lunara-ink));
+  outline-offset: -2px;
 }
 
 @layer base {

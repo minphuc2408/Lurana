@@ -5,10 +5,11 @@ import { Outlet, Link } from 'react-router';
 import { ShoppingBag, Menu, X, Search } from 'lucide-react';
 import { StorefrontFooter } from './components/StorefrontFooter';
 import { ZaloContact } from './components/ZaloContact';
+import { ThemeSwitcher } from './components/ThemeSwitcher';
 export function MainLayout() {
   const { t } = useLocale("common");
   const { searchOpen, searchTerm, setSearchTerm, searchInputRef, searchButtonRef, openSearch, closeSearch, submitSearch,
-    itemCount, menuOpen, toggleMenu, setMenuOpen, navLinks, isActive } = useMainLayout();
+    itemCount, menuOpen, toggleMenu, setMenuOpen, navLinks, isActive, theme, setTheme } = useMainLayout();
   return <div className="min-h-screen bg-lunara-cream font-body" data-d1-storefront>
     <header data-storefront-header className="sticky top-0 z-50 h-[72px] border-b border-lunara-border bg-lunara-cream sm:h-20">
       <div className="relative mx-auto flex h-full max-w-[1240px] items-center justify-between gap-1 px-5 sm:gap-3 sm:px-8">
@@ -28,6 +29,7 @@ export function MainLayout() {
           <Link to="/cart" data-header-cart aria-label={t('Cart, items: {{count}}', { count: itemCount })} className="inline-flex min-h-11 min-w-6 items-center justify-center gap-1.5 text-xs whitespace-nowrap sm:gap-2 text-lunara-body transition-colors hover:text-lunara-ink"><ShoppingBag size={16} strokeWidth={1.5} aria-hidden="true" /><span className="hidden sm:inline">{t('Cart')}</span>{itemCount > 0 && <span data-header-cart-count className="min-w-4 rounded-full bg-lunara-rose-strong px-1.5 py-0.5 text-center text-[10px] font-semibold text-white">{itemCount}</span>}</Link>
           <button type="button" data-header-menu-toggle aria-label={t(menuOpen ? 'Close' : 'Open menu')} aria-expanded={menuOpen} onClick={toggleMenu} className="inline-flex min-h-11 min-w-6 items-center justify-center text-lunara-ink lg:hidden">{menuOpen ? <X size={20} /> : <Menu size={20} />}</button>
           <LanguageSwitcher />
+          <ThemeSwitcher theme={theme} onThemeChange={setTheme} />
         </div>
       </div>
       {menuOpen && <div className="absolute inset-x-0 top-full flex flex-col gap-4 border-y border-lunara-border bg-lunara-cream px-5 py-5 lg:hidden">{navLinks.map(link => <Link key={link.to} to={link.to} onClick={() => setMenuOpen(false)} className="text-sm uppercase tracking-wider text-lunara-ink">{t(link.label)}</Link>)}</div>}

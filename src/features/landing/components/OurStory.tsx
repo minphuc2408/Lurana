@@ -6,7 +6,7 @@ import { storyPhotos } from '../data/story.data';
 
 export function OurStory() {
   const { t } = useLocale('landing');
-  return <section id="cau-chuyen-lunarra" data-home-story aria-labelledby="home-story-title" className="border-t border-lunara-border bg-lunara-cream py-16 sm:py-24 [--lunara-ink:#4B2432] [--lunara-body:#746B69] [--lunara-border:#E7DCD3] [--lunara-blush:#F3E7DF]">
+  return <section id="cau-chuyen-lunarra" data-home-story aria-labelledby="home-story-title" className="border-t border-lunara-border bg-lunara-cream py-16 sm:py-24 [--lunara-ink:var(--lunara-editorial-ink)] [--lunara-body:var(--lunara-editorial-body)] [--lunara-border:var(--lunara-editorial-border)] [--lunara-blush:var(--lunara-editorial-blush)]">
     <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-16">
       <div className="min-w-0 lg:col-span-5">
         <span className="mb-4 block text-[11px] font-medium tracking-[0.18em] text-lunara-rose-strong uppercase">{t('The Lunarra story')}</span>

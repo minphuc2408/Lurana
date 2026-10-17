@@ -1,4 +1,6 @@
 {
+  "Theme": "Theme",
+  "Theme, current: {{name}}": "Theme, current: {{name}}",
   "API timeout": "The request timed out. Your details are preserved; try again.",
   "API bad response": "The server returned an invalid response. Please try again.",
   "API delivery slot": "That delivery date or time is unavailable. Choose another date or time.",

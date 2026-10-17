@@ -3,8 +3,10 @@ import { useLocation, useNavigate } from 'react-router';
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { featureFlags } from '@/shared/config/features';
+import { useTheme } from '@/shared/theme/theme-store';
 export function useMainLayout() {
   const { itemCount } = useCart();
+  const { theme, setTheme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -28,5 +30,5 @@ export function useMainLayout() {
     ...(featureFlags.customerAuth ? [{ to: '/orders', label: 'My Orders' }, { to: '/profile', label: 'Profile' }] : [])];
   const isActive = (path: string) => path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
   return { searchQuery, searchOpen, searchTerm, setSearchTerm, searchInputRef, searchButtonRef, openSearch, closeSearch, submitSearch,
-    itemCount, menuOpen, toggleMenu: () => { setSearchOpen(false); setMenuOpen(!menuOpen); }, setMenuOpen, navLinks, isActive };
+    itemCount, menuOpen, toggleMenu: () => { setSearchOpen(false); setMenuOpen(!menuOpen); }, setMenuOpen, navLinks, isActive, theme, setTheme };
 }

@@ -8,7 +8,7 @@ import { TurnstileChallenge } from '@/shared/components/TurnstileChallenge';
 export function OrderLookupView(model: OrderLookupModel) {
   const { t } = useLocale('orders');
   const notFound = model.error instanceof ApiError && model.error.code === 'NOT_FOUND';
-  return <main data-order-lookup-page className="w-full font-body [--lunara-ink:#4B2432] [--lunara-body:#746B69] [--lunara-border:#E7DCD3] [--lunara-surface:#FAF7F2]">
+  return <main data-order-lookup-page className="w-full font-body [--lunara-ink:var(--lunara-editorial-ink)] [--lunara-body:var(--lunara-editorial-body)] [--lunara-border:var(--lunara-editorial-border)] [--lunara-surface:var(--lunara-editorial-surface)]">
     <header className="bg-lunara-blush px-5 pt-6 pb-8 sm:px-8 sm:pt-10"><div className="mx-auto max-w-[1176px] text-center"><h1 className="mt-2 font-display text-[clamp(2.2rem,5vw,3.5rem)] text-lunara-ink">{t('Track flower delivery progress')}</h1></div></header>
     <div data-lookup-content className="mx-auto w-full max-w-[1240px] px-5 py-6 sm:px-8 sm:py-10">
     <div data-lookup-form-panel className="mb-10 w-full rounded-[2px] border border-lunara-border bg-lunara-surface p-5 sm:p-8">

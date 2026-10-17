@@ -18,7 +18,7 @@ const gallery = [
 export function StoryView() {
   const { t } = useLocale('landing');
   const common = useLocale('common');
-  return <main data-story-page className="mx-auto max-w-[1240px] px-5 py-6 font-body sm:px-8 sm:py-10 [--lunara-ink:#4B2432] [--lunara-body:#746B69] [--lunara-border:#E7DCD3] [--lunara-blush:#F3E7DF] [--lunara-surface:#FAF7F2]">
+  return <main data-story-page className="mx-auto max-w-[1240px] px-5 py-6 font-body sm:px-8 sm:py-10 [--lunara-ink:var(--lunara-editorial-ink)] [--lunara-body:var(--lunara-editorial-body)] [--lunara-border:var(--lunara-editorial-border)] [--lunara-blush:var(--lunara-editorial-blush)] [--lunara-surface:var(--lunara-editorial-surface)]">
     <article aria-labelledby="story-title">
       <header className="grid grid-cols-1 items-center gap-10 border-b border-lunara-border pt-4 pb-12 lg:grid-cols-12 sm:pb-16">
         <div className="min-w-0 space-y-4 lg:col-span-6"><span className="block text-[11px] font-medium tracking-[0.18em] text-lunara-rose-strong uppercase">{t('About us')}</span><h1 id="story-title" className="font-display text-3xl leading-[1.18] tracking-tight text-lunara-ink sm:text-5xl">{t('Sincere things begin with a flower')}</h1><p className="pt-2 text-sm leading-relaxed text-lunara-body sm:text-base">{t('Lunarra begins with gentle moonlight')}</p></div>

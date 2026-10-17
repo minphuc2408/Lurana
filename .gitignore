@@ -566,3 +566,13 @@
 
 # Reviewed concise order tracking feature handover and endpoints.
 !/docs/ORDER_TRACKING.md
+
+# Reviewed light-theme registry, header control and regression checks.
+!/src/shared/theme/
+!/src/shared/theme/themes.ts
+!/src/shared/theme/theme-store.ts
+!/src/app/layouts/components/ThemeSwitcher.tsx
+!/tests/themes.test.mjs
+!/scripts/check-ui-themes.mjs
+!/docs/ui-ux/
+!/docs/ui-ux/LUNARA_MULTI_THEME_SPEC.md
