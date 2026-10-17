@@ -538,3 +538,28 @@
 !/worker/services/administrative-areas.ts
 !/tests/delivery-areas.test.mjs
 !/scripts/check-ui-delivery-admin.mjs
+
+# Reviewed project-only design skill; explicit invocation required.
+!/.agents/skills/lunarra-design/
+!/.agents/skills/lunarra-design/agents/
+!/.agents/skills/lunarra-design/SKILL.md
+!/.agents/skills/lunarra-design/agents/openai.yaml
+
+# Reviewed reference cart/checkout pages; shared memory-only checkout state.
+!/src/features/cart/CheckoutContext.tsx
+!/src/app/layouts/CheckoutLayout.tsx
+!/src/pages/CheckoutPage.tsx
+!/src/features/cart/components/CheckoutView.tsx
+!/scripts/check-ui-cart-checkout.mjs
+
+# Reviewed local story article and approved reference photo URLs.
+!/src/pages/StoryPage.tsx
+!/src/features/landing/components/StoryView.tsx
+!/src/features/landing/data/story.data.ts
+!/scripts/check-ui-story.mjs
+
+# Reviewed public lookup progress UI; API and admin detail remain unchanged.
+!/src/features/orders/order-progress.ts
+!/src/features/orders/components/OrderLookupResult.tsx
+!/tests/order-progress.test.mjs
+!/scripts/check-ui-order-lookup.mjs
