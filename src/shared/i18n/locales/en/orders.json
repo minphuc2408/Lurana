@@ -66,5 +66,16 @@
   "Write a Review": "Write a Review",
   "Reviewed": "Reviewed",
   "Reorder": "Reorder",
-  "Get Receipt": "Get Receipt"
+  "Get Receipt": "Get Receipt",
+  "Track flower delivery progress": "Track flower delivery progress",
+  "Order progress": "Order progress",
+  "Order request received": "Order request received",
+  "Order details confirmed": "Order details confirmed",
+  "Preparing flowers and the selected card": "Preparing flowers and the selected card",
+  "Flowers are on their way": "Flowers are on their way",
+  "Flower delivery completed": "Flower delivery completed",
+  "Flowers in this order": "Flowers in this order",
+  "Delivery changes hotline": "Need to change the delivery time or leave instructions? Shop hotline:",
+  "Order more flowers": "Order more flowers →",
+  "No matching order": "Order not found"
 }
