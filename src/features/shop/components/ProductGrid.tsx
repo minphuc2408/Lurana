@@ -2,7 +2,7 @@ import { useLocale } from "@/shared/i18n";
 import type { Product } from "../shop.types";
 import { ProductCard } from "./ProductCard";
 interface ProductGridProps {
-  appearance?: 'default' | 'featured';
+  appearance?: 'default' | 'featured' | 'recommendation';
   products: Product[];
   liked?: number[];
   added: number[];

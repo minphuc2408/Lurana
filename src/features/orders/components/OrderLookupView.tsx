@@ -8,9 +8,9 @@ import { TurnstileChallenge } from '@/shared/components/TurnstileChallenge';
 export function OrderLookupView(model: OrderLookupModel) {
   const { t } = useLocale('orders');
   const notFound = model.error instanceof ApiError && model.error.code === 'NOT_FOUND';
-  return <main data-order-lookup-page className="w-full font-body [--lunara-ink:var(--lunara-editorial-ink)] [--lunara-body:var(--lunara-editorial-body)] [--lunara-border:var(--lunara-editorial-border)] [--lunara-surface:var(--lunara-editorial-surface)]">
-    <header className="bg-lunara-blush px-5 pt-6 pb-8 sm:px-8 sm:pt-10"><div className="mx-auto max-w-[1176px] text-center"><h1 className="mt-2 font-display text-[clamp(2.2rem,5vw,3.5rem)] text-lunara-ink">{t('Track flower delivery progress')}</h1></div></header>
-    <div data-lookup-content className="mx-auto w-full max-w-[1240px] px-5 py-6 sm:px-8 sm:py-10">
+  return <main data-order-lookup-page className="mx-auto w-full max-w-[1240px] px-5 py-6 font-body sm:px-8 sm:py-10 [--lunara-ink:var(--lunara-editorial-ink)] [--lunara-body:var(--lunara-editorial-body)] [--lunara-border:var(--lunara-editorial-border)] [--lunara-surface:var(--lunara-editorial-surface)]">
+    <header data-lookup-header className="mb-8 border-b border-lunara-border pb-6 text-center"><h1 className="font-display text-3xl tracking-tight text-lunara-ink sm:text-4xl">{t('Track flower delivery progress')}</h1></header>
+    <div data-lookup-content className="w-full">
     <div data-lookup-form-panel className="mb-10 w-full rounded-[2px] border border-lunara-border bg-lunara-surface p-5 sm:p-8">
       <form data-order-lookup onSubmit={event => { event.preventDefault(); model.search(); }} className="grid grid-cols-1 items-end gap-4 sm:grid-cols-12">
         <label className="block min-w-0 text-xs font-medium text-lunara-body sm:col-span-5">{t('Order number')}<input name="orderNumber" required maxLength={100} autoComplete="off" placeholder="LN-…" value={model.orderNumber} onChange={event => model.setOrderNumber(event.target.value)} className="mt-1.5 min-h-11 w-full rounded-[2px] border border-lunara-border bg-lunara-cream p-2.5 text-xs font-normal text-lunara-ink" /></label>

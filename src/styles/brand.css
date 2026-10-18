@@ -7,6 +7,11 @@
   --lunara-rose: #527E75;
   --lunara-rose-strong: #4D756E;
   --lunara-rose-light: #9DB6B1;
+  --lunara-accent-secondary: var(--lunara-rose-light);
+  --lunara-accent-secondary-strong: var(--lunara-rose-strong);
+  --lunara-accent-tertiary: var(--lunara-rose-light);
+  --lunara-campaign-surface: transparent;
+  --lunara-campaign-foreground: var(--lunara-rose-strong);
   --lunara-cream: #F8FBFA;
   --lunara-surface: #F1F7F5;
   --lunara-blush: #EDF4F6;
@@ -55,6 +60,9 @@ html[lang='vi'] {
   --color-lunara-rose: var(--lunara-rose);
   --color-lunara-rose-strong: var(--lunara-rose-strong);
   --color-lunara-rose-light: var(--lunara-rose-light);
+  --color-lunara-accent-secondary-strong: var(--lunara-accent-secondary-strong);
+  --color-lunara-campaign: var(--lunara-campaign-surface);
+  --color-lunara-on-campaign: var(--lunara-campaign-foreground);
   --color-lunara-cream: var(--lunara-cream);
   --color-lunara-surface: var(--lunara-surface);
   --color-lunara-card-surface: var(--lunara-card-surface);
@@ -129,6 +137,12 @@ html[data-lunara-theme]:not([data-lunara-theme='original']) {
 html[data-lunara-theme]:not([data-lunara-theme='original']) :is(input:not([type='checkbox']):not([type='radio']), textarea, [data-dropdown]) {
   border-color: var(--lunara-control-border);
 }
+[data-checkout-form][data-focus-method='pointer'] :is(input:not([type='checkbox']):not([type='radio']), textarea):focus {
+  outline: none;
+  box-shadow: none;
+  border-color: var(--lunara-border);
+}
+
 html[data-lunara-theme]:not([data-lunara-theme='original']) :focus-visible {
   outline-color: var(--lunara-focus-ring);
 }

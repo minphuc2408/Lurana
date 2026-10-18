@@ -20,10 +20,11 @@ const browser=spawn('C:/Program Files (x86)/Microsoft/Edge/Application/msedge.ex
   '--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1, EXCLUDE fonts.googleapis.com, EXCLUDE fonts.gstatic.com','about:blank',
 ],{windowsHide:true,stdio:'ignore'});
 const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-let ws,nextId=0,orderWrites=0,routeName='',activeOrigin=baseUrl;
+let ws,nextId=0,orderWrites=0,routeName='',activeOrigin=baseUrl,adminPreview=false;
 const pending=new Map(),exceptions=[],layoutCases=[],routeCases=[],baseline={};
 const checkedFonts=new Set();
 const navigationCases=[],homePaletteCases=[],originalRoundTrips=[];
+const adminCases=[];
 if(baselineFile)Object.assign(baseline,JSON.parse(readFileSync(baselineFile,'utf8')));
 async function send(method,params={}) {
   const id=++nextId, result=new Promise((resolve,reject)=>pending.set(id,{resolve,reject}));
@@ -51,7 +52,10 @@ async function navigate(route){
 async function key(key,code=key){await send('Input.dispatchKeyEvent',{type:'keyDown',key,code});await send('Input.dispatchKeyEvent',{type:'keyUp',key,code});await frame();}
 async function choose(id){
   await evaluate("document.querySelector('#header-theme').click()");
-  await waitFor("document.querySelectorAll('[role=option] [data-theme-option]').length===16");
+  await waitFor("document.querySelectorAll('[role=option] [data-theme-option]').length==="+themes.length);
+  const preview=await evaluate("[...document.querySelector('[data-theme-option=\""+id+"\"] svg').children].map(rect=>rect.getAttribute('fill'))");
+  const theme=themes.find(item=>item.id===id);
+  assertNode.deepEqual(preview,'secondaryAccent' in theme?[theme.background,theme.secondary,theme.accent,theme.secondaryAccent,theme.tertiaryAccent,theme.foreground]:[theme.background,theme.secondary,theme.softSurface,theme.accent,theme.foreground],'Theme preview '+id);
   await evaluate("document.querySelector('[role=option][data-value=\""+id+"\"]').click()");
   await waitFor("document.documentElement.dataset.lunaraTheme==='"+id+"' && !document.querySelector('[role=listbox]')");
 }
@@ -66,11 +70,11 @@ async function checkHomePalette(theme) {
     const root=getComputedStyle(document.documentElement);
     const token=name=>{const e=document.createElement('span');e.style.color=root.getPropertyValue('--lunara-'+name);document.body.append(e);const color=getComputedStyle(e).color;e.remove();return color};
     const targets={page:['[data-home-layout]','backgroundColor','cream'],header:['[data-storefront-header]','backgroundColor','card-surface'],navbarBody:['[data-header-main]','backgroundColor','card-surface'],navigation:['[data-main-navigation]','backgroundColor','card-surface'],searchSurface:['#header-search','backgroundColor','card-surface'],utility:['[data-header-utility]','backgroundColor','utility-background'],logo:['[data-storefront-logo]','color','ink'],heading:['h1','color','ink'],accent:['h1 span','color','rose-strong'],cta:['[data-home-hero] a','backgroundColor','rose-strong'],copy:['[data-home-hero] p','color','body'],input:['#header-search input','color','ink'],heroFrame:['[data-hero-visual]','backgroundColor','blush'],featured:['#featured','backgroundColor','cream'],productFrame:['[data-product-image-link]','backgroundColor','blush'],productAdd:['[data-product-add]','backgroundColor','card-surface'],price:['[data-product-price]','color','ink'],journey:['[data-home-journey]','backgroundColor','section-secondary'],story:['[data-home-story]','backgroundColor','card-surface'],storyHeading:['[data-home-story] h2','color','ink'],storyCopy:['[data-home-story] p','color','body'],storyLink:['[data-story-link]','color','rose-strong'],footer:['[data-storefront-footer]','backgroundColor','footer-background']};
-    Object.assign(targets,{footerText:['[data-storefront-footer]','color','body'],footerTitle:['[data-storefront-footer] h4','color','ink'],footerLink:['[data-storefront-footer] a[href="/shop"]','color','body'],footerBorder:['[data-footer-bottom]','borderTopColor','border']});
+    Object.assign(targets,{footerText:['[data-storefront-footer]','color','body'],footerTitle:['[data-storefront-footer] h4','color','ink'],footerLink:['[data-storefront-footer] a[href="/shop"]','color','body'],footerBorder:['[data-footer-bottom]','borderTopColor','border'],serviceIcon:['[data-home-services] svg','color','accent-secondary-strong'],journeyIcon:['[data-home-journey] li svg','color','accent-secondary-strong'],journeyMarker:['[data-home-journey] li > span','color','campaign-foreground'],journeyMarkerSurface:['[data-home-journey] li > span','backgroundColor','campaign-surface']});
     const actual={},expected={};for(const [name,[selector,property,color]] of Object.entries(targets)){actual[name]=getComputedStyle(document.querySelector(selector))[property];expected[name]=token(color)};
     const image=document.querySelector('[data-product-id] [data-image-fallback]'),r=image.getBoundingClientRect(),fallback={color:getComputedStyle(image).backgroundColor,mask:getComputedStyle(image).maskImage,alt:image.alt,width:r.width,height:r.height};
     const logoColors=[...document.querySelectorAll('[data-storefront-logo-art] path')].flatMap(path=>{const style=getComputedStyle(path);return [style.fill,style.stroke]});
-    return {actual,expected,fallback,logoColors,allowedLogoColors:['none',token('rose'),token('rose-strong'),token('rose-light')],language:document.documentElement.lang,width:innerWidth};
+    return {actual,expected,fallback,logoColors,allowedLogoColors:['none',token('rose'),token('rose-strong'),token('rose-light'),token('accent-secondary'),token('accent-tertiary')],language:document.documentElement.lang,width:innerWidth};
   })()`);
   assertNode.equal(colors.expected.heading,rgb(theme.foreground),'Registered heading '+theme.id);
   assertNode.equal(colors.expected.page,rgb(theme.background),'Registered background '+theme.id);
@@ -80,6 +84,13 @@ async function checkHomePalette(theme) {
   assertNode.equal(colors.actual.utility,rgb(theme.softSurface),'Utility stays within the active palette: '+theme.id);
   assertNode.equal(colors.actual.footer,rgb(theme.secondary),'Footer stays within the active palette: '+theme.id);
   assertNode.ok(colors.logoColors.length>0&&colors.logoColors.every(color=>colors.allowedLogoColors.includes(color)),'Logo illustration follows the active palette: '+theme.id);
+  if('secondaryAccent' in theme){
+    assertNode.ok(colors.logoColors.includes(rgb(theme.secondaryAccent))&&colors.logoColors.includes(rgb(theme.tertiaryAccent)),'Logo renders both distinct accents: '+theme.id);
+    assertNode.equal(colors.actual.journeyMarkerSurface,rgb(theme.tertiaryAccent),'Campaign marker preserves the tertiary accent: '+theme.id);
+  }else{
+    assertNode.equal(colors.actual.serviceIcon,colors.expected.accent,'Legacy service icon color: '+theme.id);
+    assertNode.equal(colors.actual.journeyMarkerSurface,'rgba(0, 0, 0, 0)','Legacy marker remains transparent: '+theme.id);
+  }
   assertNode.equal(colors.fallback.color,colors.expected.accent,'Failed image icon follows the active palette: '+theme.id);
   assertNode.notEqual(colors.fallback.mask,'none','Failed image retains its visible icon');
   assertNode.deepEqual({alt:colors.fallback.alt,width:colors.fallback.width,height:colors.fallback.height},fallbackBefore,'Failed image retains its label and dimensions');
@@ -97,6 +108,28 @@ const contrastExpression=`(()=>{
   const ratios=controls.map(e=>({text:(e.innerText||e.getAttribute('aria-label')||e.tagName).slice(0,60),ratio:contrast(rgba(getComputedStyle(e).color),back(e))}));
   return {minimum:Math.min(...ratios.map(x=>x.ratio)),failing:ratios.filter(x=>x.ratio<4.5)};
 })()`;
+async function checkAdminPalettes(product) {
+  // Synthetic read responses exercise shared admin colors without credentials or server writes.
+  adminPreview=true;
+  apiCache['/api/admin/products']={data:{items:[{...product,category_id:apiCache['/api/categories'].data[0].id,status:'ACTIVE',archived_at:null,variants:product.variants.map(variant=>({...variant,product_id:product.id,stock_quantity:variant.in_stock?10:0,low_stock_threshold:2,is_active:true}))}]}};
+  for(const theme of themes.filter(item=>'secondaryAccent' in item))for(const language of ['en','vi'])for(const width of [390,1440]){
+    await evaluate("localStorage.setItem('lunara.theme.v1',"+JSON.stringify(theme.id)+");localStorage.setItem('lunara_language',"+JSON.stringify(language)+")");
+    await send('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:width<768});
+    routeName='/admin/stock';await send('Page.navigate',{url:baseUrl+routeName});
+    await waitFor("document.querySelector('[data-testid=admin-products] table input[name=price]')");await frame();
+    await assert("document.documentElement.dataset.lunaraTheme==='"+theme.id+"'&&document.documentElement.lang==='"+language+"'",'Admin keeps preference');
+    await assert("document.documentElement.scrollWidth<=innerWidth",'Admin contains table scrolling');
+    await assert("getComputedStyle(document.querySelector('[data-testid=admin-products]')).color==='"+rgb(theme.foreground)+"'",'Admin text palette');
+    const ratios=await evaluate(contrastExpression);assertNode.deepEqual(ratios.failing,[],'Admin control contrast '+theme.id);
+    await evaluate("document.querySelector('[data-testid=product-create]').click()");await waitFor("document.querySelector('[data-testid=product-form] input[name=name_en]')");
+    await assert("getComputedStyle(document.querySelector('[role=dialog]')).color==='"+rgb(theme.foreground)+"'",'Admin modal text palette');
+    await assert("getComputedStyle(document.querySelector('[role=dialog]')).backgroundColor==='rgb(255, 255, 255)'",'Admin retains readable white modal');
+    await assert("(()=>{const r=document.querySelector('[role=dialog]').getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+1&&r.top>=0&&r.bottom<=innerHeight+1})()",'Admin modal fits viewport');
+    await key('Escape');await waitFor("!document.querySelector('[role=dialog]')");
+    adminCases.push({theme:theme.id,language,width});
+  }
+  console.log('PASS creative admin table/form '+adminCases.length+' cases');
+}
 try {
   let target;
   for(let i=0;i<200;i++){try{const port=readFileSync(path.join(profile,'DevToolsActivePort'),'utf8').split('\n')[0].trim();target=(await(await fetch('http://127.0.0.1:'+port+'/json')).json()).find(t=>t.type==='page');}catch{}if(target)break;await delay(50);}
@@ -109,8 +142,8 @@ try {
       const response=cached ? send('Fetch.fulfillRequest',{requestId,responseCode:200,responseHeaders:[{name:'Content-Type',value:cached.mime},{name:'Access-Control-Allow-Origin',value:'*'}],body:cached.body}) : send('Fetch.failRequest',{requestId,errorReason:'Failed'});
       response.catch(()=>{});
     } else if(request.method==='GET'&&(apiCache[url.pathname]||url.pathname==='/api/admin/me')) {
-      const body=apiCache[url.pathname]||{error:{code:'UNAUTHORIZED'}};
-      send('Fetch.fulfillRequest',{requestId,responseCode:url.pathname==='/api/admin/me'?401:200,responseHeaders:[{name:'Content-Type',value:'application/json'}],body:Buffer.from(JSON.stringify(body)).toString('base64')}).catch(()=>{});
+      const body=adminPreview&&url.pathname==='/api/admin/me'?{data:{role:'ADMIN'}}:apiCache[url.pathname]||{error:{code:'UNAUTHORIZED'}};
+      send('Fetch.fulfillRequest',{requestId,responseCode:url.pathname==='/api/admin/me'&&!adminPreview?401:200,responseHeaders:[{name:'Content-Type',value:'application/json'}],body:Buffer.from(JSON.stringify(body)).toString('base64')}).catch(()=>{});
     } else if(request.method!=='GET'&&url.pathname!=='/api/checkout/quote'){orderWrites++;send('Fetch.failRequest',{requestId,errorReason:'BlockedByClient'}).catch(()=>{});}else send('Fetch.continueRequest',{requestId}).catch(()=>{});
   }});
   await send('Page.enable');await send('Runtime.enable');
@@ -124,6 +157,7 @@ try {
   await Promise.all(['/api/categories','/api/delivery/options','/api/products/'+product.slug].map(getSnapshot));
   const seed=`localStorage.setItem('lunara_language','en');localStorage.setItem('lunara.theme.v1','original');localStorage.setItem('lunara.cart.v1',JSON.stringify({version:1,lines:[{variantId:${variant.id},quantity:1}]}));`;
   const routes=['/','/shop','/shop/'+product.slug,'/cart','/checkout','/orders/track','/about'];
+  if(!process.argv.includes('--admin-only')){
   if(baselineUrl){activeOrigin=baselineUrl;await navigate('/');await evaluate(seed);for(const route of routes){await navigate(route);if(route==='/shop')await waitFor("Boolean(document.querySelector('[data-product-id]'))");baseline[route]=await evaluate(stylesExpression);}writeFileSync(path.join(root,'.security-review/themes-original-baseline.json'),JSON.stringify(baseline,null,2));activeOrigin=baseUrl;}
   await navigate('/');await evaluate(seed);await navigate('/');await waitFor("Boolean(document.querySelector('#header-theme'))");
   if(Object.keys(baseline).length){for(const route of routes){await navigate(route);const actual=await evaluate(stylesExpression);for(const [selector,expected] of Object.entries(baseline[route]))if(expected!==null)assertNode.deepEqual(actual[selector],expected,'Original style regression '+route+' '+selector);}}
@@ -134,10 +168,10 @@ try {
   await evaluate("document.querySelector('#header-theme').focus()");await key('ArrowDown');
   await waitFor("Boolean(document.querySelector('[role=listbox]'))");
   await assert("(()=>{const option=document.querySelector('[role=option][data-highlighted]');return option&&parseFloat(getComputedStyle(option).outlineWidth)>=2})()",'Theme menu keyboard focus indicator');
-  await key('End');await key('Enter');await waitFor("document.documentElement.dataset.lunaraTheme==='linen-olive'");
+  await key('End');await key('Enter');await waitFor("document.documentElement.dataset.lunaraTheme==='"+themes.at(-1).id+"'");
   await assert("document.activeElement.id==='header-theme'",'Restore trigger focus after keyboard choice');
   await evaluate("document.querySelector('#header-theme').click()");await waitFor("Boolean(document.querySelector('[role=listbox]'))");
-  await assert("Boolean(document.querySelector('[role=option][data-value=\"linen-olive\"][aria-selected=true]'))",'Checked option');
+  await assert("Boolean(document.querySelector('[role=option][data-value=\""+themes.at(-1).id+"\"][aria-selected=true]'))",'Checked option');
   await key('Escape');await waitFor("!document.querySelector('[role=listbox]')");
   await assert("document.activeElement.id==='header-theme'",'Escape focus');
   await evaluate("document.querySelector('#header-theme').click()");await waitFor("Boolean(document.querySelector('[role=listbox]'))");
@@ -158,7 +192,7 @@ try {
         await assert("(()=>{const e=document.querySelector('[data-header-utility] > div'),a=e.children[0].getBoundingClientRect(),b=e.children[1].getBoundingClientRect();return a.right<=b.left+1&&b.right<=innerWidth})()",'Utility row fits '+width);
         await checkHomePalette(theme);
         await evaluate("document.querySelector('#header-theme').click()");await waitFor("Boolean(document.querySelector('[role=listbox]'))");
-        await assert("(()=>{const list=document.querySelector('[role=listbox]'),r=list.getBoundingClientRect();return r.x>=0&&r.right<=innerWidth+1&&r.bottom<=innerHeight+1&&r.height<=340&&list.querySelectorAll('[data-theme-option]').length===16})()",'Theme popup bounds '+width);
+        await assert("(()=>{const list=document.querySelector('[role=listbox]'),r=list.getBoundingClientRect();return r.x>=0&&r.right<=innerWidth+1&&r.bottom<=innerHeight+1&&r.height<=340&&list.querySelectorAll('[data-theme-option]').length==="+themes.length+"})()",'Theme popup bounds '+width);
         await assert("getComputedStyle(document.querySelector('[role=listbox]')).backgroundColor==='"+rgb('#FFFFFF')+"'",'Theme popup surface-card role '+theme.id);
         await key('Escape');layoutCases.push({theme:theme.id,language,width});
       }
@@ -174,6 +208,12 @@ try {
         const ratios=await evaluate(contrastExpression);if(ratios.failing.length)throw new Error('Actual text contrast '+theme.id+' '+route+' '+JSON.stringify(ratios));
       }
       routeCases.push({theme:theme.id,route});
+    }
+    if('secondaryAccent' in theme){
+      await navigate('/');await evaluate("document.querySelector('[data-footer-coming-soon]').click()");await waitFor("Boolean(document.querySelector('[role=dialog]'))");
+      await assert("getComputedStyle(document.querySelector('[role=dialog]')).backgroundColor==='"+rgb(theme.background)+"'",'Creative dialog portal '+theme.id);await key('Escape');
+      await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});await navigate('/');await screenshot(theme.id+'-desktop');
+      await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});await screenshot(theme.id+'-mobile');
     }
     await navigate('/');await choose('original');await delay(200);await checkHomePalette(themes[0]);
     await assert("document.documentElement.style.length===0",'Original clears theme tokens after '+theme.id);
@@ -212,7 +252,14 @@ try {
     await assert("document.querySelector('[data-main-navigation] a[href*=gift-sets]').getAttribute('aria-current')==='page'",'Gift category active');
     await click('[data-header-tracking]');await waitFor("location.pathname==='/orders/track'");
     await assert("document.querySelector('[data-header-cart-count]').textContent==='1'",'Shared cart badge');
-    for(const selector of ['[data-header-wishlist]','[data-header-support]','[data-header-hotline]','[data-header-contact]']){
+    if(width>=768){
+      await evaluate("document.querySelector('[data-header-wishlist]').focus()");
+      await click('[data-header-wishlist]');await waitFor(visible('[data-wishlist-drawer]'));
+      await assert("location.pathname==='/orders/track'&&document.querySelector('[data-wishlist-empty]')",'Memory-only wishlist drawer');
+      await key('Escape');await waitFor("!document.querySelector('[role=dialog]')");
+      await assert("document.activeElement.matches('[data-header-wishlist]')",'Wishlist focus restoration');
+    }else await assert("document.querySelector('[data-header-wishlist]').getClientRects().length===0",'Wishlist deferred on mobile');
+    for(const selector of ['[data-header-support]','[data-header-hotline]','[data-header-contact]']){
       if(selector.includes('contact'))await openMenu();
       await evaluate("document.querySelector("+JSON.stringify(selector)+").focus()");
       await click(selector);await waitFor(visible('[role=dialog]'));
@@ -235,12 +282,14 @@ try {
   }
   await navigate('/checkout');await waitFor("Boolean(document.querySelector('[name=senderName]'))");
   await evaluate("(()=>{const e=document.querySelector('[name=senderName]');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(e,'UI theme check');e.dispatchEvent(new Event('input',{bubbles:true}));})()");
-  await choose('mint-sorbet');await assert("document.querySelector('[name=senderName]').value==='UI theme check'",'Switch preserves in-memory form');
+  for(const theme of themes.filter(item=>'secondaryAccent' in item)){
+    await choose(theme.id);await assert("document.querySelector('[name=senderName]').value==='UI theme check'",'Switch preserves in-memory form '+theme.id);
+  }
   await assert("!localStorage.getItem('lunara.cart.v1').includes('UI theme check')",'No form storage');
-  await navigate('/shop');await choose('sea-glass');
+  await navigate('/shop');await choose('ocean-confetti');
   const boot=await send('Page.addScriptToEvaluateOnNewDocument',{source:"window.__themeBoot=[];new MutationObserver(()=>{if(document.querySelector('[data-d1-storefront]')&&!window.__themeBoot.length)window.__themeBoot.push(document.documentElement.dataset.lunaraTheme);}).observe(document,{subtree:true,childList:true});"});
   await send('Page.reload');await waitFor("Boolean(document.querySelector('#header-theme'))");
-  await assert("document.documentElement.dataset.lunaraTheme==='sea-glass' && window.__themeBoot[0]==='sea-glass'",'Saved theme before first render');
+  await assert("document.documentElement.dataset.lunaraTheme==='ocean-confetti' && window.__themeBoot[0]==='ocean-confetti'",'Saved theme before first render');
   await send('Page.removeScriptToEvaluateOnNewDocument',{identifier:boot.identifier});
   await evaluate("localStorage.setItem('lunara.theme.v1','invalid')");await navigate('/');
   await assert("document.documentElement.dataset.lunaraTheme==='original' && !document.documentElement.style.getPropertyValue('--lunara-cream')",'Invalid ID fallback');
@@ -255,8 +304,11 @@ try {
   await navigate('/');await assert("document.documentElement.dataset.lunaraTheme==='original'",'Blocked storage fallback');await choose('coral-shell');
   await assert("document.documentElement.dataset.lunaraTheme==='coral-shell'",'Blocked storage in-memory choice');
   await send('Page.removeScriptToEvaluateOnNewDocument',{identifier:blocked.identifier});
+  }else await navigate('/');
+  await checkAdminPalettes(product);
   if(exceptions.length||orderWrites)throw new Error(JSON.stringify({exceptions,orderWrites}));
-  const result={themes:themes.length,homePaletteCases:homePaletteCases.length,originalRoundTrips:originalRoundTrips.length,navigationCases:navigationCases.length,layoutCases:layoutCases.length,routeCases:routeCases.length,originalBaselineRoutes:Object.keys(baseline).length,fonts:[...checkedFonts],apiMode:'Public GET snapshots; browser catalog/delivery reads intercepted',keyboard:true,escape:true,outsideClick:true,portal:true,boot:true,persistence:true,blockedStorage:true,formPreserved:true,orderWrites,exceptions};
-  writeFileSync(path.join(root,'.security-review/themes-results.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result));
+  const result={themes:themes.length,homePaletteCases:homePaletteCases.length,originalRoundTrips:originalRoundTrips.length,navigationCases:navigationCases.length,layoutCases:layoutCases.length,routeCases:routeCases.length,adminCases:adminCases.length,originalBaselineRoutes:Object.keys(baseline).length,fonts:[...checkedFonts],apiMode:'Public GET snapshots; catalog/delivery intercepted; admin reads synthetic',keyboard:true,escape:true,outsideClick:true,portal:true,boot:true,persistence:true,blockedStorage:true,formPreserved:true,orderWrites,exceptions};
+  if(process.argv.includes('--admin-only'))for(const key of ['keyboard','escape','outsideClick','portal','boot','persistence','blockedStorage','formPreserved'])delete result[key];
+  writeFileSync(path.join(root,'.security-review',process.argv.includes('--admin-only')?'themes-admin-results.json':'themes-results.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result));
 }catch(error){try{await screenshot('failure');writeFileSync(path.join(root,'.security-review/themes-failure.json'),JSON.stringify({message:error.message,routeName,state:await evaluate("({lang:document.documentElement.lang,theme:document.documentElement.dataset.lunaraTheme,width:innerWidth,text:document.body.innerText.slice(0,1200)})"),exceptions},null,2));}catch{}throw error;}
 finally{if(ws?.readyState===WebSocket.OPEN){try{await send('Browser.close');}catch{}ws.close();}browser.kill();}

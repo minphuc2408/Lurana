@@ -158,10 +158,13 @@ try {
           return centered('[data-lookup-form-panel]') && centered('[data-lookup-result]')
             && Math.abs(form.width - result.width) < 2
             && Math.abs(form.width - (Math.min(document.documentElement.clientWidth, 1240) - (innerWidth < 640 ? 40 : 64))) < 2
-            && header.getBoundingClientRect().width === document.documentElement.clientWidth
-            && getComputedStyle(header.firstElementChild).textAlign === 'center'
-            && getComputedStyle(header).backgroundColor === 'rgb(249, 237, 233)';
-        })()`, 'Lookup centered full-width panels and collection header '+status+'/'+language+'/'+width);
+            && Math.abs(header.getBoundingClientRect().width - form.width) < 2
+            && getComputedStyle(header).textAlign === 'center'
+            && getComputedStyle(header).borderBottomWidth === '1px'
+            && getComputedStyle(header).paddingBottom === '24px'
+            && getComputedStyle(header).marginBottom === '32px'
+            && getComputedStyle(header.firstElementChild).fontSize === (innerWidth < 640 ? '30px' : '36px');
+        })()`, 'Lookup centered panels and checkout-style heading '+status+'/'+language+'/'+width);
         await assert("getComputedStyle(document.querySelector('[data-order-progress]')).gridTemplateColumns.split(' ').length==="+(width<768?1:5),'Progress responsive columns');
         results.push({status,language,width});
       }

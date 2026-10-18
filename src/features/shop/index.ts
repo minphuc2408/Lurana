@@ -14,3 +14,5 @@ export type { Category, ProductVariant, ProductApiDto } from './shop.types';
 
 export { ProductDetailView } from './components/ProductDetailView';
 export { useProductDetail } from './hooks/useProductDetail';
+export { WishlistProvider, useWishlist } from './WishlistProvider';
+export { WishlistDrawer } from './components/WishlistDrawer';

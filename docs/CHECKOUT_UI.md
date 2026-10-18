@@ -1,6 +1,6 @@
 # Giỏ hàng và đặt hoa theo project ref
 
-Cập nhật 17/10/2026. Tài liệu này mô tả giao diện và state của hai trang `/cart` và `/checkout`; bố cục tham chiếu từ `D:/Download/lunara`. Trạng thái triển khai và kiểm chứng ở [PROJECT_STATUS](PROJECT_STATUS.md).
+Cập nhật 18/10/2026. Tài liệu này mô tả giao diện và state của hai trang `/cart` và `/checkout`; bố cục tham chiếu từ `D:/Download/lunara`. Trạng thái triển khai và kiểm chứng ở [PROJECT_STATUS](PROJECT_STATUS.md).
 
 ## Quyết định của chủ shop
 
@@ -13,7 +13,9 @@ Cập nhật 17/10/2026. Tài liệu này mô tả giao diện và state của h
 
 ## Giao diện
 
-Khung1240px, padding20/32px và py24/40px, breadcrumb chỉ trên Cart, tiêu đề serif, nền cream/surface, viền mảnh, góc2px như mẫu. Token màu riêng của hai trang lấy ink#4B2432/body#746B69/border#E7DCD3/surface#FAF7F2/blush#F3E7DF; CTA#9D586B. Giữ typography EN Fraunces/Inter và VI Lora/Be Vietnam Pro đã duyệt.
+Khung1240px, padding20/32px và py24/40px, breadcrumb chỉ trên Cart, tiêu đề serif, nền cream/surface, viền mảnh, góc2px như mẫu. Màu dùng semantic tokens hiện hành của Original/16theme trong brand.css; không khóa các mã rose cũ. Giữ typography EN Fraunces/Inter và VI Lora/Be Vietnam Pro đã duyệt.
+
+Owner18/10 chỉ yêu cầu bỏ viền/vòng nhấn khi click vào ô nhập checkout. `useCheckoutFieldFocus` phân biệt pointer/Tab; CSS chỉ tắt outline/shadow và giữ viền mảnh cho input/textarea trong form khi dùng pointer. Tab vẫn có dấu focus; validation/checkbox/radio, input ở admin/route khác giữ nguyên.
 
 Cart desktop chia8/4trên grid12, gap40px; ảnh80×100, dòng sản phẩm6/2/2/2 cho thông tin/đơn giá/số lượng/tạm tính. Mobile xếp dọc; links ảnh/tên tới detail, quantity giữ giới hạn shared cart, xóa bằng nút. Empty/loading/error/retry dùng dữ liệu thật, không fixture.
 

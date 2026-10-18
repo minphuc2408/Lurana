@@ -2,12 +2,12 @@ import type { ReactNode } from "react";
 import { I18nextProvider } from "react-i18next";
 import { i18n } from "@/shared/i18n/config";
 import { CartProvider } from "@/features/cart";
-import { CatalogProvider } from '@/features/shop';
+import { CatalogProvider, WishlistProvider } from '@/features/shop';
 import { AuthProvider } from '@/features/auth';
 export function AppProviders({
   children
 }: {
   children: ReactNode;
 }) {
-  return <I18nextProvider i18n={i18n}><AuthProvider><CatalogProvider><CartProvider>{children}</CartProvider></CatalogProvider></AuthProvider></I18nextProvider>;
+  return <I18nextProvider i18n={i18n}><AuthProvider><CatalogProvider><WishlistProvider><CartProvider>{children}</CartProvider></WishlistProvider></CatalogProvider></AuthProvider></I18nextProvider>;
 }

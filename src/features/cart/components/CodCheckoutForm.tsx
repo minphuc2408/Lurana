@@ -5,12 +5,14 @@ import { vietnamDate } from '@/shared/lib/format';
 import { DeliveryOptions, DeliveryMethods } from './DeliveryOptions';
 import { CheckoutPayment } from './CheckoutPayment';
 import type { CodCheckoutModel, CodForm } from '../hooks/useCodCheckout';
+import { useCheckoutFieldFocus } from '../hooks/useCheckoutFieldFocus';
 
 const inputClass = 'mt-1 min-h-11 w-full min-w-0 rounded-[2px] border border-lunara-border bg-lunara-cream p-2.5 text-xs text-lunara-ink';
 const sectionClass = 'min-w-0 space-y-4 rounded-[2px] border border-lunara-border bg-lunara-surface p-5 sm:p-6';
 const headingClass = 'border-b border-lunara-border pb-2 font-display text-lg text-lunara-ink';
 export function CodCheckoutForm(model: CodCheckoutModel) {
   const { t, language } = useLocale('cart');
+  const formRef = useCheckoutFieldFocus();
   const fields: { key: keyof CodForm; path: string; label: string; type?: string; max: number; min?: number; autoComplete: string; placeholder: string }[] = [
     { key: 'senderName', path: 'sender.name', label: 'Orderer name', max: 100, autoComplete: 'section-sender name', placeholder: 'Your full name' },
     { key: 'senderPhone', path: 'sender.phone', label: 'Orderer phone', type: 'tel', max: 30, autoComplete: 'section-sender tel', placeholder: 'Your phone number' },
@@ -22,7 +24,7 @@ export function CodCheckoutForm(model: CodCheckoutModel) {
     <input name={field.key} type={field.type || 'text'} value={String(model.form[field.key])} onChange={event => model.updateForm(field.key, event.target.value)} readOnly={model.sameRecipient && (field.key === 'recipientName' || field.key === 'recipientPhone')} required minLength={field.min} maxLength={field.max} autoComplete={field.autoComplete} placeholder={t(field.placeholder)} aria-invalid={model.invalidFields.includes(field.path)} aria-describedby={model.invalidFields.includes(field.path) ? 'error-' + field.key : undefined} className={inputClass + ' read-only:bg-lunara-blush'} />
     {model.invalidFields.includes(field.path) && <span id={'error-' + field.key} className="mt-2 block text-xs text-lunara-ink">{t('Check this field')}</span>}
   </label>;
-  return <form id="cod-checkout" data-checkout-form onSubmit={event => { event.preventDefault(); model.review(); }}>
+  return <form ref={formRef} id="cod-checkout" data-checkout-form onSubmit={event => { event.preventDefault(); model.review(); }}>
     <fieldset disabled={model.sending} className="space-y-8">
       <section data-checkout-block="sender" className={sectionClass}>
         <h2 className={headingClass}>1. {t('Orderer information')}</h2>

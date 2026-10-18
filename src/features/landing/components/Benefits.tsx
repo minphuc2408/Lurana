@@ -21,14 +21,14 @@ export function Benefits({ variant = 'services' }: { variant?: 'services' | 'jou
     </div>
     <ol className="grid grid-cols-1 gap-8 text-center md:grid-cols-3 lg:gap-12">
       {journey.map(({ title, detail }, index) => <li key={title} className="flex min-w-0 flex-col items-center">
-        <div className="mb-4 flex size-12 items-center justify-center text-lunara-rose-strong">
+        <div className="mb-4 flex size-12 items-center justify-center text-lunara-accent-secondary-strong">
           <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             {index === 0 ? <><path d="M12 22v-9" /><path d="M12 13c-2.5 0-5-2-5-4.5a5 5 0 0 1 10 0c0 2.5-2.5 4.5-5 4.5z" /><path d="M12 8.5V4" /><path d="M9.5 5.5c1.5-1.5 3.5-1.5 5 0" /><path d="M12 17c-2 0-4-1-4-2" /><path d="M12 19c2 0 4-1 4-2" /></>
               : index === 1 ? <><rect x="3" y="5" width="18" height="14" rx="1" /><path d="m3 7 9 6 9-6" /><path d="M8 14h4" /><path d="M8 11h2" /></>
                 : <><path d="M12 2v20" /><path d="M20 12a8 8 0 0 0-16 0" /><path d="M4 12v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6" /><path d="M12 6a2.5 2.5 0 0 0-2.5-2.5c-1.5 0-2.5 1-2.5 2.5 0 2 5 3 5 3s5-1 5-3c0-1.5-1-2.5-2.5-2.5A2.5 2.5 0 0 0 12 6z" /></>}
           </svg>
         </div>
-        <span aria-hidden="true" className="mb-1 font-display text-xs font-semibold tracking-widest text-lunara-rose-strong">{String(index + 1).padStart(2, '0')}</span>
+        <span aria-hidden="true" className="mb-1 bg-lunara-campaign font-display text-xs font-semibold tracking-widest text-lunara-on-campaign">{String(index + 1).padStart(2, '0')}</span>
         <h3 className="mb-2 font-display text-lg text-lunara-ink">{t(title)}</h3>
         <p className="max-w-xs text-xs leading-relaxed text-lunara-body sm:text-sm">{t(detail)}</p>
       </li>)}
@@ -38,7 +38,7 @@ export function Benefits({ variant = 'services' }: { variant?: 'services' | 'jou
   return <section data-home-services aria-label={t('The Lunara Experience')} className="rounded-[2px] border border-lunara-border bg-lunara-section-secondary px-5 py-6 sm:px-6">
     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
       {benefits.map(({ icon: Icon, title, detail }) => <div key={title} className="flex min-w-0 items-center gap-3 lg:border-l lg:border-lunara-border lg:pl-5 lg:first:border-0 lg:first:pl-0">
-        <Icon size={23} strokeWidth={1.5} aria-hidden="true" className="shrink-0 text-lunara-rose-strong" />
+        <Icon size={23} strokeWidth={1.5} aria-hidden="true" className="shrink-0 text-lunara-accent-secondary-strong" />
         <div><h3 className="text-xs leading-5 font-semibold text-lunara-ink">{t(title)}</h3><p className="mt-0.5 text-[0.7rem] leading-5 text-lunara-body">{t(detail)}</p></div>
       </div>)}
     </div>

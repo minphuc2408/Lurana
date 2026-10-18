@@ -1,6 +1,6 @@
 # Tra cứu đơn hàng
 
-Cập nhật 17/10/2026: chức năng đã hoàn thiện giao diện EN/VI tại `/orders/track`. Tiêu đề căn giữa trên nền blush; form, lỗi và kết quả cùng khung tối đa 1240px, xếp lại theo màn hình.
+Cập nhật 18/10/2026: giao diện EN/VI tại `/orders/track`. Header dùng cùng khung1240px, padding24/40px, tiêu đề30/36px căn giữa và divider1px như checkout; bỏ dải nền blush toàn viewport. Form, lỗi và kết quả cùng chiều rộng, xếp lại theo màn hình. API/privacy và tiến trình giữ nguyên.
 
 - Trang: [local /orders/track](http://127.0.0.1:5173/orders/track) · [staging /orders/track](https://lunara-staging.minphuc2408.workers.dev/orders/track).
 - API: `POST /api/orders/lookup`; [payload, response và lỗi](pipeline/API_CONTRACT.md#post-apiorderslookup). Mở URL API trong trình duyệt không thực hiện được yêu cầu POST.

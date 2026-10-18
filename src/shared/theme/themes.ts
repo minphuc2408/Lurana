@@ -16,10 +16,21 @@ export const themes = [
   { id: 'periwinkle-milk', name: 'Periwinkle Milk', background: '#FAFAFE', secondary: '#F1F2FC', softSurface: '#E1E5F7', accent: '#626C99', foreground: '#3E4565' },
   { id: 'coral-shell', name: 'Coral Shell', background: '#FDFAF9', secondary: '#FCF1EF', softSurface: '#F5DDD8', accent: '#936158', foreground: '#5E423D' },
   { id: 'linen-olive', name: 'Linen Olive', background: '#FBFAF6', secondary: '#F4F3E9', softSurface: '#E8E7D1', accent: '#6E7253', foreground: '#424637' },
+  { id: 'wildflower-pop', name: 'Wildflower Pop', background: '#FBFAF6', secondary: '#FFF3ED', softSurface: mix('#7DB9C4', '#FBFAF6', 0.88), accent: '#B94E66', secondaryAccent: '#7DB9C4', tertiaryAccent: '#D4D877', foreground: '#383943' },
+  { id: 'cobalt-citrus', name: 'Cobalt Citrus', background: '#FAFAF7', secondary: '#EEF0FF', softSurface: mix('#F4B65B', '#FAFAF7', 0.88), accent: '#3D57AB', secondaryAccent: '#F4B65B', tertiaryAccent: '#A8CFA0', foreground: '#293250' },
+  { id: 'orchid-picnic', name: 'Orchid Picnic', background: '#FCFAF9', secondary: '#F2EBF8', softSurface: mix('#E47558', '#FCFAF9', 0.88), accent: '#954F9D', secondaryAccent: '#E47558', tertiaryAccent: '#D8DD8B', foreground: '#4A3A4F' },
+  { id: 'ocean-confetti', name: 'Ocean Confetti', background: '#F8FBFA', secondary: '#E9F5F3', softSurface: mix('#F18EAD', '#F8FBFA', 0.88), accent: '#147A81', secondaryAccent: '#F18EAD', tertiaryAccent: '#F3CF70', foreground: '#27464B' },
+  { id: 'folk-bloom', name: 'Folk Bloom', background: '#FBF9F3', secondary: '#F3E6D7', softSurface: mix('#8EA7D2', '#FBF9F3', 0.88), accent: '#A64740', secondaryAccent: '#8EA7D2', tertiaryAccent: '#96B06A', foreground: '#4B3736' },
 ] as const;
 export type ThemeId = typeof themes[number]['id'];
 export type Theme = typeof themes[number];
 export const themeStorageKey = 'lunara.theme.v1';
+/** Legacy previews keep five swatches; creative palettes show all six approved colors. */
+export function themeSwatches(theme: Theme): string[] {
+  return 'secondaryAccent' in theme
+    ? [theme.background, theme.secondary, theme.accent, theme.secondaryAccent, theme.tertiaryAccent, theme.foreground]
+    : [theme.background, theme.secondary, theme.softSurface, theme.accent, theme.foreground];
+}
 export function normalizeTheme(value: unknown): ThemeId {
   return themes.find(theme => theme.id === value)?.id ?? 'original';
 }
@@ -70,5 +81,13 @@ export function themeTokens(theme: Theme): Record<string, string> {
     '--lunara-footer-background': secondary, '--lunara-footer-foreground': foreground,
     '--lunara-footer-muted': body, '--lunara-footer-copyright': body,
     '--lunara-footer-border': border, '--lunara-footer-hover': primary,
+    // Omit these overrides for legacy palettes so their CSS fallbacks keep exactly the same colors.
+    ...('secondaryAccent' in theme ? {
+      '--lunara-accent-secondary': theme.secondaryAccent,
+      '--lunara-accent-secondary-strong': accessibleColor(theme.secondaryAccent, foreground, surfaces, 4.6),
+      '--lunara-accent-tertiary': theme.tertiaryAccent,
+      '--lunara-campaign-surface': theme.tertiaryAccent,
+      '--lunara-campaign-foreground': accessibleColor(foreground, '#000000', [theme.tertiaryAccent], 4.6),
+    } : {}),
   };
 }

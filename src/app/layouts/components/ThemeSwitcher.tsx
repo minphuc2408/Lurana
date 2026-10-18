@@ -1,7 +1,7 @@
 import { Palette } from 'lucide-react';
 import { Dropdown } from '@/shared/ui/dropdown';
 import { useLocale } from '@/shared/i18n';
-import { themes, type ThemeId } from '@/shared/theme/themes';
+import { themes, themeSwatches, type ThemeId } from '@/shared/theme/themes';
 
 export function ThemeSwitcher({ theme, onThemeChange }: { theme: ThemeId; onThemeChange: (value: string) => void }) {
   const { t } = useLocale('common');
@@ -13,7 +13,7 @@ export function ThemeSwitcher({ theme, onThemeChange }: { theme: ThemeId; onThem
     {themes.map(item => <option key={item.id} value={item.id}>
       <span className="flex items-center gap-3" data-theme-option={item.id}>
         <svg aria-hidden="true" width={60} height={20} viewBox="0 0 60 20" className="shrink-0 overflow-hidden rounded-sm border border-lunara-control-border">
-          {[item.background, item.secondary, item.softSurface, item.accent, item.foreground].map((color, index) => <rect key={index} x={index * 12} width={12} height={20} fill={color} />)}
+          {themeSwatches(item).map((color, index, colors) => <rect key={index} x={index * 60 / colors.length} width={60 / colors.length} height={20} fill={color} />)}
         </svg><span>{item.name}</span>
       </span>
     </option>)}

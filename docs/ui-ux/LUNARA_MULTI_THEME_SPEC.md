@@ -1,6 +1,6 @@
 # Lunara Shop — Multi-Theme Implementation Specification
 
-> **Mục tiêu:** Website có **16 light themes** thông qua một Theme Switcher trên Header, giữ chức năng/luồng vận hành. Owner ngày18/10 yêu cầu Home/ảnh/Original theo ref, sau đó yêu cầu bỏ tình trạng UI xanh trộn hồng. Footer giữ bố cục/copy, màu đi theo theme; logo và placeholder cũng dùng token của theme.
+> **Hiện tại:** Website có **21 light themes** qua một Theme Switcher trên Header:16palette nền trong tài liệu này và5creative theo [Extend Lunara Multi Theme](Extend_Lunara_Multi_Theme.md). Phần mở rộng giữ nguyên16palette cũ; quy tắc/mapping3accent thuộc tài liệu Extend. Owner ngày18/10 yêu cầu Home/ảnh/Original theo ref, sau đó yêu cầu bỏ tình trạng UI xanh trộn hồng. Footer giữ bố cục/copy, màu đi theo theme; logo và placeholder cũng dùng token của theme.
 
 ## 1. Quy tắc thực thi theo hiện trạng repository
 
@@ -49,8 +49,8 @@ Các cột màu là **base palette**, theo thứ tự `background`, `secondary`,
 ## 4. Theme Switcher trong Header
 
 - Chỉ **một** nút `Theme` trên Header hiện có (nếu đã có thì **giữ và mở rộng**, không tạo nút thứ hai).
-- Dropdown/popover hiển thị đủ 16 tên theme, kèm 3–5 ô màu preview và dấu check của lựa chọn hiện tại.
-- Giữ bố cục header; với 16 mục, thêm chiều cao tối đa + cuộn hoặc phân nhóm `Existing` / `New` khi cần, đảm bảo desktop/mobile.
+- Dropdown/popover hiển thị đủ21tên theme, kèm5ô màu preview cho palette cũ/6ô cho creative và dấu check của lựa chọn hiện tại.
+- Giữ bố cục header, chiều cao tối đa + cuộn của Radix, đảm bảo desktop/mobile.
 - Chọn theme đổi màu ngay, không reload. Hỗ trợ keyboard, Escape, click ngoài, accessible name và focus indicator.
 - Giữ key `localStorage` hiện tại; chỉ khởi tạo key mới nếu repository chưa có; fallback về Original nếu dữ liệu không hợp lệ.
 - Đồng nhất theme khi đổi route, refresh và quay lại website; hạn chế flash sai theme khi tải lần đầu.
@@ -63,8 +63,8 @@ Các cột màu là **base palette**, theo thứ tự `background`, `secondary`,
 
 ## 6. Kiểm thử và kết quả bàn giao
 
-1. Đúng **16 theme**, không trùng ID; Original theo ref,15palette khác và hành vi giữ nguyên.
-2. Đủ semantic tokens ở 10 theme mới; không trộn màu khi đổi theme/route hoặc quay về Original.
+1. Đúng **21 theme**, không trùng ID; Original theo ref,15palette cũ khác và hành vi giữ nguyên;5creative theo tài liệu Extend.
+2. Đủ semantic tokens ở mọi theme; creative có secondary/tertiary riêng, palette cũ dùng fallback; không sót override khi đổi theme/route hoặc quay về Original.
 3. Dropdown usable trên desktop/mobile; chọn/check, Escape, click ngoài, keyboard hoạt động.
 4. Refresh/điều hướng vẫn giữ lựa chọn đã lưu; fallback đúng; hạn chế flash màu khi boot.
 5. Kiểm tra Home, các route chính, card, button, input, modal, footer và các trạng thái tương tác; kiểm tương phản thực tế trên UI, đặc biệt chữ trên primary button.

@@ -588,6 +588,7 @@
 !/scripts/check-ui-themes.mjs
 !/docs/ui-ux/
 !/docs/ui-ux/LUNARA_MULTI_THEME_SPEC.md
+!/docs/ui-ux/Extend_Lunara_Multi_Theme.md
 
 # Reviewed storefront navigation using shared catalog and existing Radix menus.
 !/src/app/layouts/components/StorefrontNavigation.tsx
@@ -597,3 +598,9 @@
 
 # Reviewed browser regression checks for storefront layout, scrolling and filters.
 !/scripts/check-ui-storefront.mjs
+
+# Reviewed memory-only wishlist UI and checkout pointer-focus behavior.
+!/src/features/shop/WishlistProvider.tsx
+!/src/features/shop/components/WishlistDrawer.tsx
+!/src/features/cart/hooks/useCheckoutFieldFocus.ts
+!/scripts/check-ui-product-detail.mjs
