@@ -187,7 +187,15 @@ export async function runRemoteSmoke(config, { fetchImpl = fetch, log = console.
     stage = 'health, SPA and public catalog';
     ensure((await api('/api/health')).data.ok === true, 'Health did not report liveness.');
     for (const route of ['/', '/shop', '/orders/track']) {
-      const response = await fetchImpl(new URL(route, origin), { headers: { accept: 'text/html', 'sec-fetch-mode': 'navigate' }, redirect: 'error', signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(20_000)]) : AbortSignal.timeout(20_000) });
+      const request = target => fetchImpl(target, { headers: { accept: 'text/html', 'sec-fetch-mode': 'navigate' }, redirect: 'manual', signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(20_000)]) : AbortSignal.timeout(20_000) });
+      const url = new URL(route, origin);
+      let response = await request(url);
+      if ([301, 302, 307, 308].includes(response.status)) {
+        const destination = new URL(response.headers.get('location') || '', url);
+        ensure(destination.href === origin + route + '/', 'Unexpected SPA redirect.');
+        await response.body?.cancel();
+        response = await request(destination);
+      }
       ensure(response.status === 200 && /text\/html/i.test(response.headers.get('content-type') || ''), 'SPA fallback failed.');
       const html = await response.text();
       ensure(/id="root"/.test(html), 'SPA root is missing.');

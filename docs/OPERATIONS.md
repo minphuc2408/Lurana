@@ -43,6 +43,8 @@ Chỉ định đầy đủ HTTPS origin thuộc dự án, không có path/query/
 node scripts/smoke.mjs --base-url https://TEN.SUBDOMAIN.workers.dev
 ```
 
+Kiểm reload SPA cho phép tối đa một redirect301/302/307/308 từ route sang đúng route thêm `/` trên cùng HTTPS origin (Cloudflare Assets phục vụ thư mục prerender). Redirect sang origin/path khác, có query/fragment hoặc lặp tiếp đều bị từ chối; API vẫn không theo redirect.
+
 Nghiệm thu ghi cần chủ dự án cung cấp URL, variant được phép thử và khoảng thời gian chỉ dùng để kiểm thử; không có đơn khách đồng thời. Chế độ ghi yêu cầu xác nhận origin và variant ID rõ ràng; nhập mật khẩu admin qua stdin/prompt ẩn, không truyền vào command line hoặc biến `VITE_*`:
 
 ```powershell

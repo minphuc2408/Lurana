@@ -177,3 +177,34 @@ test('a committed order with missing confirmation identity is ambiguous and cann
     assert.match(messages.join('\n'), /known_orders=0; ambiguous_write=true/);
   });
 });
+
+test('deployment smoke follows only one same-origin canonical trailing-slash SPA redirect', async () => {
+  await isolated(async ({ bridge }) => {
+    const config = parseRemoteArgs(['--base-url', origin]);
+    const destinations = [];
+    const canonical = async (url, init) => {
+      destinations.push(url.href);
+      if (url.pathname === '/shop') return new Response(null, { status: 307, headers: { location: '/shop/' } });
+      return bridge(url, init);
+    };
+    const result = await runRemoteSmoke(config, { fetchImpl: canonical, log: () => {} });
+    assert.equal(result.passed, 3);
+    assert.ok(destinations.includes(origin + '/shop/'));
+    for (const location of ['https://other.example.invalid/shop/', 'http://smoke.example.invalid/shop/', '/api/admin/me', '/shop/?private=x', '/shop/#fragment', 'https://user:password@smoke.example.invalid/shop/']) {
+      const followed = [];
+      const unsafe = async (url, init) => {
+        followed.push(url.href);
+        return url.pathname === '/shop' ? new Response(null, { status: 307, headers: { location } }) : bridge(url, init);
+      };
+      await assert.rejects(runRemoteSmoke(config, { fetchImpl: unsafe, log: () => {} }), /Deployment smoke failed/);
+      assert.equal(followed.some(href => href !== origin + '/shop' && ![origin+'/',origin+'/api/health'].includes(href)), false);
+    }
+    let redirects = 0;
+    const looping = async (url, init) => {
+      if (url.pathname.startsWith('/shop')) { redirects++; return new Response(null, { status: 307, headers: { location: '/shop/' } }); }
+      return bridge(url, init);
+    };
+    await assert.rejects(runRemoteSmoke(config, { fetchImpl: looping, log: () => {} }), /Deployment smoke failed/);
+    assert.equal(redirects, 2);
+  });
+});
