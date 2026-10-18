@@ -1,6 +1,6 @@
 /** Base palettes stay separate from accessible semantic colors. Original mirrors brand.css. */
 export const themes = [
-  { id: 'original', name: 'Original', background: '#FDF6F0', secondary: '#FDFBF9', softSurface: '#F9EDE9', accent: '#C17B8A', foreground: '#3D2228' },
+  { id: 'original', name: 'Original', background: '#F8FBFA', secondary: '#F1F7F5', softSurface: '#EDF4F6', accent: '#527E75', foreground: '#344B49' },
   { id: 'sage-green', name: 'Sage Green', background: '#FAFAF7', secondary: '#F2F5EF', softSurface: '#E5EBE0', accent: '#5B7164', foreground: '#37453D' },
   { id: 'champagne', name: 'Champagne', background: '#FAF9F6', secondary: '#F7F1E8', softSurface: '#EDE4D6', accent: '#786958', foreground: '#4F463E' },
   { id: 'powder-blue', name: 'Powder Blue', background: '#FAFBFC', secondary: '#F0F5F9', softSurface: '#E3ECF3', accent: '#5B7386', foreground: '#3B4E5C' },
@@ -53,12 +53,14 @@ export function themeTokens(theme: Theme): Record<string, string> {
   // Removing overrides restores every original token, including the legacy component palette.
   if (theme.id === 'original') return {};
   const { background, secondary, softSurface, accent, foreground } = theme;
-  const surfaces = [background, secondary, softSurface, '#FFFFFF'];
+  const cardSurface = '#FFFFFF';
+  const surfaces = [background, secondary, softSurface, cardSurface];
   const primary = accessibleColor(accent, foreground, surfaces, 4.6);
   const body = accessibleColor(mix(foreground, background, 0.2), foreground, surfaces, 4.6);
   const border = mix(accent, background, 0.72);
   return {
     '--lunara-cream': background, '--lunara-surface': secondary, '--lunara-blush': softSurface,
+    '--lunara-card-surface': cardSurface, '--lunara-section-secondary': secondary, '--lunara-utility-background': softSurface,
     '--lunara-rose': accent, '--lunara-rose-strong': primary, '--lunara-rose-light': mix(accent, background, 0.45),
     '--lunara-ink': foreground, '--lunara-body': body, '--lunara-muted': body, '--lunara-border': border,
     '--lunara-primary-hover': mix(primary, foreground, 0.45), '--lunara-focus-ring': primary,

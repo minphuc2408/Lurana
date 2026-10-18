@@ -1,6 +1,6 @@
 # Lunara Shop — Multi-Theme Implementation Specification
 
-> **Mục tiêu:** Website có **16 light themes** thông qua một Theme Switcher trên Header, **không thay đổi giao diện, bố cục, chức năng hay luồng vận hành hiện có**. Chỉ sửa code styling/theming thực sự cần thiết.
+> **Mục tiêu:** Website có **16 light themes** thông qua một Theme Switcher trên Header, giữ chức năng/luồng vận hành. Owner ngày18/10 yêu cầu Home/ảnh/Original theo ref, sau đó yêu cầu bỏ tình trạng UI xanh trộn hồng. Footer giữ bố cục/copy, màu đi theo theme; logo và placeholder cũng dùng token của theme.
 
 ## 1. Quy tắc thực thi theo hiện trạng repository
 
@@ -8,8 +8,8 @@
 2. **Nếu đã có hệ thống 6 theme:** chỉ **bổ sung 10 theme mới**, tái sử dụng Theme Provider, registry, CSS variables và nút Theme. **Không tái cấu trúc hoặc tạo hệ thống thứ hai.**
 3. **Nếu chưa có hệ thống theme:** triển khai tối giản bằng CSS custom properties + TypeScript theme registry + cơ chế lưu trạng thái phù hợp với kiến trúc React hiện tại; tạo đủ 16 theme và nút chọn theme trong Header.
 4. **Nếu đã có một phần hoặc hơn 6 theme:** chỉ thêm/sửa những phần còn thiếu, tránh ghi đè các cấu hình đang hoạt động.
-5. **Original:** lấy **chính xác** từ giao diện/code hiện tại; không dùng bảng màu ước lượng thay thế. Original là default/fallback khi chưa có theme hợp lệ.
-6. Giữ nguyên ID, mã HEX, key lưu trữ và hành vi của **mọi theme hiện có**. Không tự ý đổi tên/ID hoặc reset sở thích đã lưu.
+5. **Original:** theo quyết định mới18/10, dùng base palette của `D:/Download/lunara`, đồng bộ registry/`:root`; vẫn là default/fallback. Semantic CTA/body có biến thể đủ tương phản.
+6. Giữ16ID,15palette còn lại, key lưu trữ và hành vi; không reset sở thích đã lưu.
 
 ## 2. Danh sách 16 theme
 
@@ -17,7 +17,7 @@ Các cột màu là **base palette**, theo thứ tự `background`, `secondary`,
 
 | # | Theme | ID gợi ý nếu chưa tồn tại | Background | Secondary | Soft surface | Accent | Foreground |
 |---|---|---|---|---|---|---|---|
-| 1 | Original | *Giữ nguyên ID hiện tại* | *Đọc từ code* | *Đọc từ code* | *Đọc từ code* | *Đọc từ code* | *Đọc từ code* |
+| 1 | Original | `original` | `#F8FBFA` | `#F1F7F5` | `#EDF4F6` | `#527E75` | `#344B49` |
 | 2 | Sage Green | `sage-green` | `#FAFAF7` | `#F2F5EF` | `#E5EBE0` | `#5B7164` | `#37453D` |
 | 3 | Champagne | `champagne` | `#FAF9F6` | `#F7F1E8` | `#EDE4D6` | `#786958` | `#4F463E` |
 | 4 | Powder Blue | `powder-blue` | `#FAFBFC` | `#F0F5F9` | `#E3ECF3` | `#5B7386` | `#3B4E5C` |
@@ -42,7 +42,7 @@ Các cột màu là **base palette**, theo thứ tự `background`, `secondary`,
 - Không dùng `#FFFFFF` làm **nền chính toàn trang**; có thể dùng trắng cho chữ trên nút nếu đủ tương phản.
 - Không thêm mảng tối lớn, gradient mạnh, màu bão hòa hoặc shadow nặng; ưu tiên phân cấp surface/card/section bằng các sắc độ nhẹ.
 - Sử dụng **semantic design tokens** (tái dùng hệ thống hiện có): `background`, `foreground`, `surface`, `surface-muted`, `card`, `border`, `primary`, `primary-hover`, `primary-foreground`, `secondary`, `muted-text`, `input`, `focus-ring` và các token mà code đang phụ thuộc. Không hardcode HEX tại component khi đã có token.
-- Bổ sung hover/active/disabled/focus đủ rõ, đảm bảo **WCAG AA**: chữ thường tối thiểu 4.5:1, chữ lớn tối thiểu 3:1, ranh giới control/focus thiết yếu tối thiểu 3:1 khi áp dụng. **Nếu accent gốc không đủ cho CTA**, tạo biến thể semantic đậm hơn **chỉ cho theme mới**, giữ năm base HEX đã cung cấp.
+- Bổ sung hover/active/disabled/focus đủ rõ, đảm bảo **WCAG AA**: chữ thường tối thiểu 4.5:1, chữ lớn tối thiểu 3:1, ranh giới control/focus thiết yếu tối thiểu 3:1 khi áp dụng. Nếu accent/body gốc không đủ tương phản trên các surface, dùng biến thể semantic đậm hơn, giữ năm base HEX.
 - Màu `success`, `warning`, `error` tiếp tục biểu thị đúng trạng thái; không đổi ngẫu nhiên theo màu thương hiệu.
 - Không sao chép 16 bộ component/CSS riêng. Không thêm dependency lớn khi React + CSS đã đáp ứng.
 
@@ -59,11 +59,11 @@ Các cột màu là **base palette**, theo thứ tự `background`, `secondary`,
 
 **Áp dụng các trang/khối hiện có:** Header, Home/Hero, Catalog, Product Detail, Cart, Checkout, Form/Input, Footer, Modal, Toast, Dropdown và các route liên quan. Admin chỉ áp dụng nếu **đang dùng chung design system**; không ép admin dùng theme shop nếu đang tách biệt.
 
-**Không chỉnh sửa:** bố cục, kích thước, spacing, typography, responsive behavior, ảnh sản phẩm, logo, routing, APIs, Cloudflare Workers, D1, Cloudinary, Turnstile, authentication, validation, checkout, business logic; ngoại trừ sửa styling trực tiếp cần để các theme hoạt động đúng.
+**Không chỉnh sửa:** ảnh sản phẩm DB, routing, APIs, Cloudflare Workers, D1, Cloudinary, Turnstile, authentication, validation, checkout, business logic. UI Home/Header theo ngoại lệ owner18/10 bên dưới; các layout khác giữ hiện có.
 
 ## 6. Kiểm thử và kết quả bàn giao
 
-1. Đúng **16 theme**, không trùng ID. Original và mọi theme có sẵn giữ nguyên palette và hành vi.
+1. Đúng **16 theme**, không trùng ID; Original theo ref,15palette khác và hành vi giữ nguyên.
 2. Đủ semantic tokens ở 10 theme mới; không trộn màu khi đổi theme/route hoặc quay về Original.
 3. Dropdown usable trên desktop/mobile; chọn/check, Escape, click ngoài, keyboard hoạt động.
 4. Refresh/điều hướng vẫn giữ lựa chọn đã lưu; fallback đúng; hạn chế flash màu khi boot.
@@ -75,9 +75,17 @@ Các cột màu là **base palette**, theo thứ tự `background`, `secondary`,
 
 - Source trước thay đổi chưa có registry/switcher hoặc preference theme; đã triển khai Original + 15 palette trong bảng, không phải mở rộng một bộ 6 theme có sẵn. Registry: `src/shared/theme/themes.ts`; state/bootstrap: `theme-store.ts`, gọi trước `createRoot`.
 - Preference mới `lunara.theme.v1` chỉ lưu ID. ID không hợp lệ/storage bị chặn về Original; đổi theme vẫn dùng được trong bộ nhớ. Theme đi theo route và đồng bộ storage event; không thay key giỏ hàng/ngôn ngữ.
-- Header dùng lại `Dropdown`/Radix với preview 5 màu, check, scroll và keyboard. Theme mới ánh xạ token Lunara/generic, editorial, footer và control; màu trạng thái và token riêng của admin giữ nguyên. Original xóa override, giữ cả màu footer cũ cùng các hạn chế tương phản sẵn có.
+- Header dùng lại `Dropdown`/Radix với preview5màu, check, scroll và keyboard. Theme ánh xạ Lunara/generic/editorial/footer/control; status và token riêng admin giữ nguyên. Original xóa override về `:root` xanh/trắng sương. Footer sáng dùng nhóm token của theme, không khóa palette rose riêng cho Original.
 - Base HEX của 15 palette mới được giữ. CTA/body/control/focus được suy ra có kiểm tương phản; footer của theme mới dùng secondary sáng. Bằng chứng kiểm tra và giới hạn nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md).
+
+## Navigation theo yêu cầu mới — 18/10/2026
+
+Owner yêu cầu Home/Header theo ref cho cả16theme; sau đó xác nhận lấy cả ảnh và màu Original của ref. Original được đổi trong registry/`:root`, thay quyết định giữ cream/rose trước đó;16ID/15palette khác/`lunara.theme.v1` giữ nguyên. Header dùng minh họa hoa từ ref, wordmark Lunarra và menu catalog thật. [Sổ tay](../../PROJECT_GUIDE.md#bộ-nhận-diện-và-token-thiết-kế) sở hữu bố cục/mapping; [ATTRIBUTIONS](../../ATTRIBUTIONS.md) sở hữu ảnh; bằng chứng tại [PROJECT_STATUS](../PROJECT_STATUS.md).
+
+- Header dùng search cùng nền/không viền, shadow dưới, EN/VI compact và underline150ms; top36px/chữ10–12px. Footer sáng4cột giữ bố cục/dữ liệu, màu đồng bộ theme.
+- Home theo vai trò màu ref: Hero/Featured dùng page background; navbar chính/search/menu và Story dùng card-surface; Journey dùng section-secondary; khung ảnh dùng soft surface. Card-surface trắng trong cả16light themes đúng ref, khai báo trong engine; component không chốt HEX theo theme. Story dùng chung ink/body với Hero/navbar, khác nền Journey theo xác nhận mới của owner; ghi chú gộp hai nền trước đó sai.
+- Original lấy xanh/trắng sương của ref; theo yêu cầu mới, top bar dùng soft surface thay hồng, footer bỏ rose cũ, logo/ảnh lỗi dùng accent tokens. Giữ ảnh chụp, layout và copy đã duyệt. Runner kiểm độc lập màu top/footer, toàn bộ fill/stroke logo, ảnh lỗi/alt/kích thước và16lượt về Original/reload. Ma trận responsive rộng vẫn ở `check-ui-storefront.mjs --responsive`; bằng chứng từng lượt tại PROJECT_STATUS.
 
 ## Prompt gọi AI (ngắn)
 
-> Đọc kỹ file `LUNARA_MULTI_THEME_SPEC.md` và code thực tế của dự án Lunara trước khi sửa. Triển khai/hoàn thiện Theme Switcher trên Header để hỗ trợ tổng cộng 16 light themes đúng bảng màu và yêu cầu trong file. Nếu đã có 6 theme thì chỉ mở rộng thêm 10, giữ nguyên hoàn toàn 6 theme cũ, key localStorage, UI/UX, routing và business logic. Tái sử dụng kiến trúc theme hiện có, tránh refactor ngoài phạm vi. Sau khi sửa, kiểm tra responsive, persistence, accessibility; chạy typecheck/build/tests và báo cáo file thay đổi, kết quả kiểm thử. Không deploy.
+> Đọc spec, PROJECT_GUIDE và code hiện tại trước khi sửa. Giữ16ID/key preference; Original theo ref đã được owner duyệt18/10,15palette khác giữ nguyên. Dùng kiến trúc theme hiện có và semantic surface roles; Home theo ref trong phạm vi yêu cầu, giữ copy owner chỉ định, footer và toàn bộ API/business logic. Kiểm responsive, ảnh, persistence, accessibility; chạy các check bắt buộc và báo cáo bằng chứng cùng giới hạn. Không deploy khi chưa được yêu cầu.

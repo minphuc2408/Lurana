@@ -23,5 +23,5 @@ export interface ProductApiDto {
   description_vi: string|null; description_en: string|null; badge_code: 'BEST_SELLER'|'HOT'|'NEW'|null; is_featured: boolean;
   images: { url: string; alt_vi: string|null; alt_en: string|null; is_primary: boolean }[]; variants: ProductVariant[];
 }
-export interface ProductFilters { category: string; search: string; sort: string; }
+export interface ProductFilters { category: string; search: string; sort: string; priceRange?: string; }
 export type ProductDto = Omit<Product, "name"> & LocalizedNameFields;

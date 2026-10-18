@@ -495,6 +495,15 @@
 !/src/assets/hero/lunara-bouquet-960.webp
 !/src/assets/hero/lunara-bouquet-1440.webp
 
+# Reviewed Home reference photographs from the read-only design project (Unsplash).
+!/src/assets/home-reference/
+!/src/assets/home-reference/hero-640.jpg
+!/src/assets/home-reference/hero-960.jpg
+!/src/assets/home-reference/hero-1400.jpg
+!/src/assets/home-reference/story-florist-1000.jpg
+!/src/assets/home-reference/story-card-600.jpg
+!/src/assets/home-reference/story-wrapping-600.jpg
+
 # Reviewed category illustration migration, narrow data update and static assets.
 !/migrations/0002_category_images.sql
 !/docs/sql/CATEGORY_IMAGES.sql
@@ -579,3 +588,12 @@
 !/scripts/check-ui-themes.mjs
 !/docs/ui-ux/
 !/docs/ui-ux/LUNARA_MULTI_THEME_SPEC.md
+
+# Reviewed storefront navigation using shared catalog and existing Radix menus.
+!/src/app/layouts/components/StorefrontNavigation.tsx
+
+# Reviewed route scroll behavior for storefront/admin navigation.
+!/src/app/layouts/hooks/useRouteScroll.ts
+
+# Reviewed browser regression checks for storefront layout, scrolling and filters.
+!/scripts/check-ui-storefront.mjs

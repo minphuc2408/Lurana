@@ -2,7 +2,7 @@ import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import app from '../worker/index.ts';
 import { createTestDb } from './helpers/worker.mjs';
-import { getProduct, getProducts, loadCatalog, loadProductDetail, normalizeProduct, selectProducts } from '../src/features/shop/shop.service.ts';
+import { getProduct, getProducts, loadCatalog, loadProductDetail, normalizeProduct, selectProducts, smallestVariant } from '../src/features/shop/shop.service.ts';
 import { cartReducer, readCart, saveCart, CART_STORAGE_KEY } from '../src/features/cart/cart.service.ts';
 import { formatVND } from '../src/shared/lib/format.ts';
 import { apiRequest, ApiError } from '../src/shared/api/client.ts';
@@ -73,4 +73,32 @@ test('product-detail client reads the live slug endpoint, gallery and variants; 
  assert.deepEqual(product.variants.map(variant => variant.size_code), ['S', 'M', 'L']);
  assert.equal(product.variants.find(variant => variant.size_code === 'M').price, 650000);
  await assert.rejects(() => loadProductDetail('does-not-exist'), error => error instanceof ApiError && error.status === 404 && error.code === 'NOT_FOUND');
+});
+
+test('catalog cards choose the smallest size even when a larger size is cheaper or the smallest is sold out', () => {
+ const variants=[
+  {id:2,size_code:'M',price:300000,in_stock:true},
+  {id:3,size_code:'L',price:200000,in_stock:true},
+  {id:1,size_code:'S',price:700000,in_stock:false}
+ ];
+ assert.equal(smallestVariant(variants).id,1);
+ assert.equal(smallestVariant(variants).in_stock,false);
+ assert.deepEqual(variants.map(v=>v.id),[2,3,1]);
+ assert.equal(smallestVariant([{id:5,size_code:'DELUXE'},{id:4,size_code:'STANDARD'}]).id,4);
+ assert.equal(smallestVariant([]),undefined);
+});
+test('price filtering uses the same smallest-size price as cards and partitions price boundaries', () => {
+ const products=[499999,500000,999999,1000000,1999999,2000000].map((price,index)=>({
+  id:index+1,name:'Flower',name_vi:'Hoa',category:'Bouquets',category_code:'bouquets',price:1,
+  variants:[{id:index*2+1,size_code:'M',price:1},{id:index*2+2,size_code:'S',price}]
+ }));
+ const query={category:'bouquets',search:'hoa',sort:'low'};
+ const ids=priceRange=>selectProducts(products,{...query,priceRange}).map(p=>p.id);
+ assert.deepEqual(ids('under-500'),[1]);
+ assert.deepEqual(ids('500-1000'),[2,3]);
+ assert.deepEqual(ids('1000-2000'),[4,5]);
+ assert.deepEqual(ids('over-2000'),[6]);
+ assert.deepEqual(selectProducts(products,{...query,sort:'high'}).map(p=>p.id),[6,5,4,3,2,1]);
+ assert.deepEqual(selectProducts(products,{...query,category:'gift-sets',priceRange:'500-1000'}),[]);
+ assert.deepEqual(products.map(p=>p.id),[1,2,3,4,5,6]);
 });

@@ -11,11 +11,12 @@ function contrast(a, b) {
   const values = [luminance(a),luminance(b)].sort((x,y)=>y-x);
   return (values[0]+0.05)/(values[1]+0.05);
 }
-test('sixteen unique light themes retain the exact current Original colors and remove all overrides on return', () => {
+test('sixteen unique light themes use the approved reference Original palette and remove all overrides on return', () => {
   assert.equal(themes.length,16);
   assert.equal(new Set(themes.map(theme=>theme.id)).size,16);
   const original = themes[0];
   assert.equal(original.id,'original');
+  assert.deepEqual([original.background,original.secondary,original.softSurface,original.accent,original.foreground],['#F8FBFA','#F1F7F5','#EDF4F6','#527E75','#344B49']);
   const css = readFileSync(new URL('../src/styles/brand.css',import.meta.url),'utf8');
   for(const [name,token] of Object.entries({background:'cream',secondary:'surface',softSurface:'blush',accent:'rose',foreground:'ink'})) {
     assert.equal(original[name],css.match(new RegExp(`--lunara-${token}:\\s*(#[\\dA-Fa-f]{6});`))[1]);
@@ -32,6 +33,9 @@ test('every new theme supplies readable text/CTA/focus/control tokens on its act
     const tokens=themeTokens(theme);
     assert.equal(tokens['--lunara-rose'],theme.accent,'Preserve base accent');
     assert.equal(tokens['--lunara-footer-background'],theme.secondary,'New footers stay light');
+    assert.equal(tokens['--lunara-section-secondary'],theme.secondary,'Journey follows the active secondary color');
+    assert.equal(tokens['--lunara-card-surface'],'#FFFFFF','Reference card surface stays independent of pastel sections');
+    assert.notEqual(tokens['--lunara-card-surface'],tokens['--lunara-section-secondary'],'Story/navbar differ from Journey in every theme');
     for(const surface of [theme.background,theme.secondary,theme.softSurface,'#FFFFFF']) {
       for(const token of ['--lunara-rose-strong','--lunara-body','--lunara-ink','--lunara-footer-foreground']) assert.ok(contrast(tokens[token],surface)>=4.5,`${theme.id} ${token} / ${surface}`);
       assert.ok(contrast(tokens['--lunara-focus-ring'],surface)>=3,theme.id+' focus');

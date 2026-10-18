@@ -4,9 +4,22 @@ This Figma Make file includes components from [shadcn/ui](https://ui.shadcn.com/
 
 This Figma Make file includes photos from [Unsplash](https://unsplash.com) used under [license](https://unsplash.com/license).
 
-## Local hero photograph — 16/10/2026
+## Home reference photographs — 18/10/2026
 
-Created with the built-in imagegen tool using the owner's bouquet photograph as a visual reference, with the owner's permission. This is decorative campaign imagery, separate from DB-owned product photographs. No generated UI/text is baked into the image.
+The owner requested the imagery from the read-only design reference `D:/Download/lunara`. Home now imports local JPEG copies of those Unsplash photos; product images remain catalog-owned. Requests preserve the reference's `auto=format&fit=crop&q=85`, with width variants for the Hero. No generated replacement or color treatment is applied.
+
+| Local asset in `src/assets/home-reference/` | Reference source | Dimensions |
+| --- | --- | --- |
+| `hero-640.jpg`, `hero-960.jpg`, `hero-1400.jpg` | [Bouquet held in two hands](https://images.unsplash.com/photo-1526047932273-341f2a7631f9) | 640² / 960² / 1400² |
+| `story-florist-1000.jpg` | [Flowers outside a shop](https://images.unsplash.com/photo-1589244159943-460088ed5c92) | 1000 × 652 |
+| `story-card-600.jpg` | [Paper detail](https://images.unsplash.com/photo-1586075010923-2dd4570fb338) | 600 × 900 |
+| `story-wrapping-600.jpg` | [Gift detail](https://images.unsplash.com/photo-1513519245088-0e12902e5a38) | 600 × 400 |
+
+The header flower illustration and Journey line art are adapted from the same reference. The wordmark remains Lunarra. Footer artwork/layout is unchanged.
+
+## Previous local hero photograph — 16/10/2026
+
+Created with the built-in imagegen tool using the owner's bouquet photograph as a visual reference, with the owner's permission. Retained assets, superseded on Home by the reference photography above. This is decorative campaign imagery, separate from DB-owned product photographs. No generated UI/text is baked into the image.
 
 Reviewed assets:
 

@@ -6,7 +6,8 @@ import { ArrowRight } from "lucide-react";
 import type { HomeModel } from "../hooks/useHome";
 export function FeaturedCollection(model: HomeModel) {
   const { t } = useLocale("landing");
-  return <section id="featured" aria-labelledby="featured-title" className="space-y-8 border-t border-lunara-border py-12 sm:space-y-10 sm:py-16">
+  return <section id="featured" aria-labelledby="featured-title" className="border-t border-lunara-border bg-lunara-cream">
+    <div className="mx-auto max-w-[var(--lunara-content-max-width)] space-y-8 px-5 py-12 sm:space-y-10 sm:px-8 sm:py-16">
     <div className="flex flex-wrap items-end justify-between gap-x-5 gap-y-2 border-b border-lunara-border pb-3">
       <div className="min-w-0">
         <p className="mb-1 text-[11px] font-medium tracking-[0.16em] text-lunara-rose-strong uppercase">{t('Todays selection')}</p>
@@ -19,5 +20,6 @@ export function FeaturedCollection(model: HomeModel) {
       : !model.featuredProducts.length ? <p role="status" className="py-12 text-center text-lunara-body">{t('No featured products')}</p>
       : <ProductGrid appearance="featured" products={model.featuredProducts.slice(0, 4)} added={model.added} onAdd={model.addItem} selectedVariants={model.selectedVariants} onSelectVariant={model.selectVariant} />}
     {model.cartError && <p role="alert" className="text-sm text-lunara-ink">{t(model.cartError)}</p>}
+    </div>
   </section>;
 }

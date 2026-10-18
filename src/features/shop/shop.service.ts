@@ -1,4 +1,4 @@
-import type { Product, ProductDto, ProductApiDto, Category, ProductFilters } from "./shop.types.ts";
+import type { Product, ProductDto, ProductApiDto, Category, ProductFilters, ProductVariant } from "./shop.types.ts";
 import { apiRequest } from '../../shared/api/client.ts';
 import { getLocalizedName, normalizeSearch } from "../../shared/i18n/language.ts";
 let products: Product[] = [];
@@ -30,12 +30,19 @@ export function getProduct(id: number): Product | undefined {
   return product ? structuredClone(product) : undefined;
 }
 export function getCategories() { return ['All', ...categories.map(category => category.name_en)]; }
+const sizeRank: Record<ProductVariant['size_code'], number> = { S: 0, STANDARD: 0, M: 1, DELUXE: 1, L: 2 };
+export function smallestVariant(variants: ProductVariant[]) {
+  return variants.reduce<ProductVariant | undefined>((smallest, variant) => !smallest || sizeRank[variant.size_code] < sizeRank[smallest.size_code] ? variant : smallest, undefined);
+}
+export function catalogCardPrice(product: Product) { return smallestVariant(product.variants || [])?.price ?? product.price; }
+const priceRanges: Record<string, [number, number]> = { 'under-500': [0, 500000], '500-1000': [500000, 1000000], '1000-2000': [1000000, 2000000], 'over-2000': [2000000, Infinity] };
 export function selectProducts(items: Product[], filters: ProductFilters) {
   const search = normalizeSearch(filters.search);
-  const selected = items.filter(product => (filters.category === "All" || product.category_code === filters.category || product.category === filters.category) && [product.name, product.name_en, product.name_vi, product.name_vn].some(name => name && normalizeSearch(name).includes(search)));
+  const [minimum, maximum] = priceRanges[filters.priceRange || 'all'] || [0, Infinity];
+  const selected = items.filter(product => (filters.category === "All" || product.category_code === filters.category || product.category === filters.category) && catalogCardPrice(product) >= minimum && catalogCardPrice(product) < maximum && [product.name, product.name_en, product.name_vi, product.name_vn].some(name => name && normalizeSearch(name).includes(search)));
   return selected.sort((a, b) => {
-    if (filters.sort === "low") return a.price - b.price;
-    if (filters.sort === "high") return b.price - a.price;
+    if (filters.sort === "low") return catalogCardPrice(a) - catalogCardPrice(b);
+    if (filters.sort === "high") return catalogCardPrice(b) - catalogCardPrice(a);
     if (filters.sort === "rating") return (b.rating ?? 0) - (a.rating ?? 0);
     return Number(Boolean(b.is_featured)) - Number(Boolean(a.is_featured));
   });

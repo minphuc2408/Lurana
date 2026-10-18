@@ -1,6 +1,6 @@
 # Sổ tay dự án Lunara Flower Shop
 
-Tham chiếu cho chủ dự án và Codex về kiến trúc, giao diện, component và giới hạn demo. Quy tắc làm việc ở [AGENTS.md](AGENTS.md); workflow UI/nghiệp vụ ở [.agents/skills/lunara-flower-shop/SKILL.md](.agents/skills/lunara-flower-shop/SKILL.md). Đối chiếu source: **17/10/2026**. Code hiện tại là nguồn quyết định khi tài liệu khác với implementation.
+Tham chiếu cho chủ dự án và Codex về kiến trúc, giao diện, component và giới hạn demo. Quy tắc làm việc ở [AGENTS.md](AGENTS.md); workflow UI/nghiệp vụ ở [.agents/skills/lunara-flower-shop/SKILL.md](.agents/skills/lunara-flower-shop/SKILL.md). Đối chiếu source: **18/10/2026**. Code hiện tại là nguồn quyết định khi tài liệu khác với implementation.
 
 ## Cách sử dụng với Codex
 
@@ -109,7 +109,7 @@ Routes dưới đây cùng dùng một router. Các trang MVP đã nối API; c�
 | --- | --- | --- |
 | `/` | `HomePage` | Landing sections; featured products lấy từ catalog chung; section Câu chuyện ngay sau featured, CTA /about |
 | `/about` | `StoryPage` | Article tĩnh theo ref, không breadcrumb; bài/ảnh/giờ minh họa được owner duyệt, địa chỉ chung footer; static/noindex, chưa có CMS |
-| `/shop` | `ShopPage` | Catalog D1, search/category code/sort, chọn variant S/M/L và Add shared cart; wishlist/rating ẩn |
+| `/shop` | `ShopPage` | Catalog D1, search qua Header, danh mục/khoảng giá/sort; card Featured chọn size nhỏ nhất và Add shared cart; chọn size khác ở chi tiết |
 | `/shop/:slug` | `ProductDetailPage` | Gallery ảnh DB/zoom, mô tả/size/SKU/giá/tồn; Đặt hoa ngay thêm đúng variant rồi tới giỏ; loading/retry/404, EN/VI và mobile |
 | `/cart` | `CartPage` | Bảng sản phẩm/số lượng/xóa + tóm tắt; Tiến hành đặt hàng → /checkout |
 | `/checkout` | `CheckoutPage` | Thông tin người đặt/người nhận/lịch giao/thiệp chung/thanh toán → review → gửi/retry → xác nhận API; draft memory-only dùng chung với /cart |
@@ -132,6 +132,12 @@ CatalogProvider gọi Shop service để tải categories/products qua API cùng
 CartProvider dùng variant ID làm line identity, bắt đầu rỗng. localStorage lunara.cart.v1 chỉ lưu version/variantId/quantity, parse Zod và bỏ dữ liệu hỏng; reload dựng tên/ảnh/giá từ catalog và quote. Giỏ tối đa 15 dòng, 20 mỗi dòng và max_quantity từ API. useQuoteCart gọi delivery/options + checkout/quote, bỏ response cũ khi items/khu vực/method đổi. Giá, phí và tổng hiển thị VND từ DB; lỗi có i18n/retry, không thay bằng giá demo. Quote không giữ tồn; POST order tính lại giá/phí và kiểm tồn tại server.
 
 Checkout giữ sender/recipient/ngày/slot/thiệp/note trong memory; validate bằng shared schemas, có bước duyệt và khóa submit khi pending. Mỗi payload tạo UUID v4; retry payload không đổi giữ key để tránh tạo hai đơn, sửa payload tạo key mới. API trả order_number/tổng thật mới xác nhận và xóa giỏ. Không lưu PII, order detail hoặc intent vào localStorage/sessionStorage; reload giữa request chưa rõ kết quả cần tra đơn, không coi reload là retry an toàn. [Backup và kiểm chứng](docs/pipeline/FE_AUDIT.md).
+
+### Catalog và cuộn trang
+
+- Shop bỏ breadcrumb/search nội bộ; giữ nhãn Bộ sưu tập hoa tươi và tiêu đề/mô tả căn trái. Danh mục và2Dropdown Mức giá/Sắp xếp cùng hàng khi đủ chỗ, wrap trên mobile. Khoảng VND: [0,500k),[500k,1m),[1m,2m),[2m,+∞). `smallestVariant` chọn S trước M/L hoặc STANDARD trước DELUXE; `catalogCardPrice` dùng giá đó cho lọc/sort. DTO/API và `Product.price` adapter giữ nguyên.
+- `MetadataLayout` gọi `useRouteScroll`: route/search từ Header và Back/Forward về đầu, hash giữ đích trừ sticky header. Tắt native history scroll restoration và chạy lại sau1frame để focus menu không kéo xuống. Shop cập nhật category/q bằng URL REPLACE với `state.preserveScroll` để giữ vị trí; POP về URL đã lọc vẫn về đầu; modal/theme/locale không reset route.
+- Chỉ giữ border-top1px full viewport phía trên Tuyển chọn hôm nay. Featured và Hành trình trao gửi nối liền, không đường phân cách/khoảng hở; Journey và Story có nền full viewport, nội dung cùng khung co giãn1240–1600px.
 
 ### Auth admin, tồn kho và các feature deferred
 
@@ -159,17 +165,21 @@ Admin product/variant dùng dữ liệu thật từ API, chỉnh tồn bằng st
 
 | Vai trò | Token/utility | Giá trị |
 | --- | --- | --- |
-| Rose trang trí | `lunara-rose` | `#C17B8A` |
-| CTA chữ trắng/nhãn rose nhỏ | `lunara-rose-strong` | `#9D586B` |
-| Rose nhạt | `lunara-rose-light` | `#D4A0AC` |
-| Nền kem | `lunara-cream` | `#FDF6F0` |
-| Surface | `lunara-surface` | `#FDFBF9` |
-| Blush | `lunara-blush` | `#F9EDE9` |
-| Viền | `lunara-border` | `#F0DDD5` |
-| Chữ chính | `lunara-ink` | `#3D2228` |
-| Chữ body | `lunara-body` | `#6B4C55` |
+| Accent | `lunara-rose` | `#527E75` |
+| CTA/nhãn nhỏ đủ tương phản | `lunara-rose-strong` | `#4D756E` |
+| Accent nhạt | `lunara-rose-light` | `#9DB6B1` |
+| Nền trang | `lunara-cream` | `#F8FBFA` |
+| Surface phụ | `lunara-surface` | `#F1F7F5` |
+| Nền ảnh | `lunara-blush` | `#EDF4F6` |
+| Viền | `lunara-border` | `#E4EBE8` |
+| Chữ chính | `lunara-ink` | `#344B49` |
+| Chữ body đủ tương phản | `lunara-body` | `#5B6E6C` |
 | Sidebar admin | `lunara-sidebar` | `#1A0D12` |
 | Nền admin | `lunara-admin-background` | `#F8F4F2` |
+
+Owner yêu cầu Original theo ref `D:/Download/lunara` ngày18/10, sau đó xác nhận không trộn UI xanh/hồng. Registry/`:root` dùng xanh/trắng sương; tên utility rose/cream/blush giữ tương thích. CTA/body có biến thể đủ tương phản. Top bar dùng soft surface; footer giữ bố cục/copy nhưng màu theo theme qua nhóm `--lunara-footer-*`. Không khóa footer vào rose cũ hoặc giữ màu hồng cố định của ref.15palette khác/ID/preference không đổi.
+
+Logo minh họa dùng accent/light/strong tokens; `ImageWithFallback` dùng mask SVG với màu accent mạnh, giữ `<img>`, alt và kích thước khi ảnh lỗi. Màu logo/placeholder tự cập nhật theo CSS khi đổi theme, không gán HEX hồng trong asset dự phòng. Ảnh chụp vẫn là nội dung của ref/catalog, không đổi màu theo theme.
 
 | Locale | `font-display` — heading/logo | `font-body` — body/form |
 | --- | --- | --- |
@@ -180,15 +190,32 @@ Google Fonts qua stylesheet link trong `index.html`, preconnect Google APIs/Gsta
 
 Nguồn font: [Lora](https://github.com/google/fonts/tree/main/ofl/lora), [Be Vietnam Pro](https://github.com/google/fonts/tree/main/ofl/bevietnampro). Cả hai được phát hành theo SIL Open Font License. Kiểm tra typography bằng `node scripts/check-ui.mjs http://127.0.0.1:4173 --i18n-only --fonts` sau khi mở preview; chế độ `--fonts` cho phép tải Google Fonts để xác nhận font thật và dấu tiếng Việt, thay vì chỉ kiểm tra fallback offline.
 
-Theme Switcher trên Header dùng lại `Dropdown`/Radix: Original +15 light palettes, preview5màu/check/cuộn/keyboard. [Spec và quyết định](docs/ui-ux/LUNARA_MULTI_THEME_SPEC.md) sở hữu palette; registry/semantic colors ở `src/shared/theme/themes.ts`, preference `lunara.theme.v1` chỉ lưu ID. `theme-store.ts` áp dụng trước `createRoot`, duy trì qua route/reload, xử lý storage lỗi/ID sai bằng Original và đồng bộ storage event. Original xóa override để khôi phục chính xác màu cũ; theme mới ánh xạ Lunara + generic tokens, các override editorial của Story/Cart/Checkout/Tra đơn và footer sáng. Status và token riêng admin không đổi; locale/font/currency độc lập với theme. Runner local: `node scripts/check-ui-themes.mjs http://127.0.0.1:4173`; mặc định chặn font remote cho kết quả ổn định, tùy chọn `--font-cache=<JSON cache local>` kiểm font thật. Bằng chứng kiểm tra tại PROJECT_STATUS.
+Theme Switcher trên Header dùng lại `Dropdown`/Radix: Original +15 light palettes, preview5màu/check/cuộn/keyboard. [Spec và quyết định](docs/ui-ux/LUNARA_MULTI_THEME_SPEC.md) sở hữu palette; registry/semantic colors ở `src/shared/theme/themes.ts`, preference `lunara.theme.v1` chỉ lưu ID. `theme-store.ts` áp dụng trước `createRoot`, duy trì qua route/reload, xử lý storage lỗi/ID sai bằng Original và đồng bộ storage event. Original xóa override để về palette ref tại `:root`; các palette khác ánh xạ Lunara/generic/editorial/footer tokens. Story trên Home dùng ink/body chung với Hero/navbar. Status và token riêng admin không đổi; locale/font/currency độc lập với theme. Runner local: `node scripts/check-ui-themes.mjs http://127.0.0.1:4173`; mặc định chặn font remote cho kết quả ổn định, tùy chọn `--font-cache=<JSON cache local>` kiểm font thật. Bằng chứng kiểm tra tại PROJECT_STATUS.
 
-Home dùng Hero → danh mục DB → dải dịch vụ COD → FeaturedCollection → Hành trình trao gửi → OurStory. FeaturedCollection theo ref `D:/Download/lunara`: nhãn Tuyển chọn hôm nay, tiêu đề Sản phẩm nổi bật căn trái, Xem tất cả tới `/shop`; tối đa4sản phẩm `is_featured` từ catalog DB, giữ loading/error/retry/rỗng. `ProductGrid`/`ProductCard` có `appearance="featured"` riêng cho Home: ảnh4:5, thông tin một dòng, nút giỏ44px thêm variant còn hàng đầu tiên, hết hàng thì khóa; chọn size ở chi tiết. Shop dùng appearance mặc định với dropdown size. `Benefits variant="journey"` tái sử dụng component cho3bước Chọn hoa/Viết thiệp/Giao tận tay,1cột dưới768px và3cột từ768px; copy EN/VI trong namespace landing. Không chép fixture hoặc logic mẫu.
+Home dùng Hero → dải dịch vụ COD → FeaturedCollection → Hành trình trao gửi → OurStory. Dãy thẻ danh mục ảnh/All Flowers đã gỡ18/10 theo yêu cầu owner; danh mục ở navigation và Shop vẫn hoạt động. FeaturedCollection theo ref `D:/Download/lunara`: nhãn Tuyển chọn hôm nay, tiêu đề Sản phẩm nổi bật căn trái, Xem tất cả tới `/shop`; tối đa4sản phẩm `is_featured` từ catalog DB, giữ loading/error/retry/rỗng. `ProductGrid`/`ProductCard` có `appearance="featured"` dùng chung Home và Shop: ảnh4:5, thông tin một dòng, nút giỏ44px thêm variant còn hàng đầu tiên, hết hàng thì khóa; chọn size ở chi tiết. Shop chọn size nhỏ nhất, kể cả khi hết hàng, rồi khóa Add nếu cần; không tự đổi sang size lớn. Chọn size khác ở chi tiết. `Benefits variant="journey"` tái sử dụng component cho3bước Chọn hoa/Viết thiệp/Giao tận tay,1cột dưới768px và3cột từ768px; copy EN/VI trong namespace landing. Không chép fixture hoặc logic mẫu.
 
-Hero giữ ảnh owner-approved từ `src/assets/hero` qua Vite, WebP640/960/1440, srcset/sizes và eager/high priority; desktop ảnh phải với fade ngang, dưới1024px ảnh dưới chữ với fade trên. Khung ảnh cao400/480/520px theo breakpoint640/1024. Nguồn ảnh tại [ATTRIBUTIONS](ATTRIBUTIONS.md), thumbnail danh mục tại [CATEGORY_IMAGES](docs/CATEGORY_IMAGES.md). ProductGrid dùng2cột dưới1024px và4cột từ1024px; nội dung/variant/giá/tồn từ DB.
+Hero và3ảnh Story dùng đúng ảnh Unsplash của ref, lưu local ở `src/assets/home-reference`; Hero có JPEG640/960/1400 với srcset/sizes, eager/high priority, crop giữa và không gradient. Dưới1024px ảnh dưới chữ; từ1024px chia5/7cột. Chữ36/48/54px, ảnh cao400/480/520px theo ref; khung ultra vẫn co giãn tới1600px. Giữ nguyên nhãn/tiêu đề/mô tả Hero và8dòng dịch vụ owner chỉ định; CTA là Chọn hoa. Story ảnh lớn320/400px, cột nhỏ chia đều theo gap. [Nguồn ảnh và asset cũ giữ lại](ATTRIBUTIONS.md), [ảnh danh mục](docs/CATEGORY_IMAGES.md). ProductGrid giữ2cột dưới1024px/4cột từ1024px; ảnh sản phẩm/nội dung/variant/giá/tồn vẫn từ DB.
 
-Khung storefront max1240px với lề20px/mobile và32px/từ640px; header72/80px. Nav desktop từ1024px có Home/Shop/Story/Track order; giỏ là nút riêng dùng shared itemCount. Search mở inline từ1280px, dưới header ở màn hình nhỏ; query trim/encode tới `/shop?q=`, category tới `/shop?category=<code>`; Escape/Đóng trả focus. State/focus do `useMainLayout` sở hữu.
+- Responsive Home: `--lunara-content-max-width:clamp(1240px,80vw,1600px)` dùng chung Hero/services/Featured/Journey/Story; Header dùng1440–1600px. Giữ gutter20/32px; heading Featured/Journey24/30px, Story30/36px theo ref. Story dùng chung biến chiều cao ảnh/khoảng cách để hai cột ảnh luôn bằng nhau.
+- Menu mobile vẫn là con absolute trực tiếp của sticky Header; `max-height:calc(100dvh - 100%)` trừ đúng chiều cao Header đang hiển thị. Giữ quan hệ containing block này khi đổi markup; kiểm màn hình ngang thấp và cuộn/focus tới mục cuối. Footer, API và các breakpoint ngoài phần Home/Header không đổi.
 
-Giữ cream/rose floral, rounded cards, pill CTAs, shadow nhẹ, ảnh hoa và Lucide icons. Chữ trắng trên rose gốc không đủ contrast cho normal text; dùng rose-strong. Status labels nhỏ dùng màu tối hơn màu icon/chart. Giữ focus visible, labels, keyboard access và reduced motion khi thêm animation.
+- Home theo bố cục, ảnh, line art và vai trò màu ref `D:/Download/lunara`; Original đổi tại registry/`:root`, không override palette theo route. Story cùng nền navbar chính và khác Journey. Runner kiểm màu render top/footer/logo/ảnh lỗi, từng theme → Original → reload, portal, ảnh local/copy owner; footer đối chiếu layout/font/copy/link với baseline, màu so với theme hiện tại.
+
+| Vai trò màu trong ref | Token Lunara | Áp dụng trên Home |
+| --- | --- | --- |
+| `--bg-primary` | `--lunara-cream` | Hero, Featured |
+| `--surface-card` | `--lunara-card-surface` | Navbar chính/search/menu, Story; nền trắng của16light themes theo ref |
+| `--section-secondary` | `--lunara-section-secondary` | Journey và dải dịch vụ; khác Story |
+| `--surface-tertiary` | `--lunara-blush` | Khung ảnh |
+| Top bar (owner yêu cầu đồng bộ màu) | `--lunara-utility-background` | Soft surface của theme, gồm Original; bỏ màu hồng cố định của ref |
+
+Featured ProductCard dùng card-surface cho nền nút giỏ/ô Xem chi tiết; CTA Hero góc2px theo ref. Header của các route khác giữ thiết kế hiện có.
+
+- Header3tầng max1440–1600px, lề20/32px, nav desktop từ1024px; shadow dưới thay border. Top bar36px gồm border1px, chữ10px dưới640px/12px từ640px, control32px; EN/VI storefront cao26px qua prop compact. Admin giữ cỡ cũ. Search cùng nền nav, không viền/outline cứng khi nhập, dùng shadow focus. Gạch active mở từ trái150ms, tắt với reduced-motion. Logo minh họa hoa từ ref, wordmark Lunarra; favicon giữ nguyên. Mobile đóng menu bằng Escape/click ngoài/đổi route.
+- `StorefrontNavigation.tsx` dùng Radix DropdownMenu; danh mục lấy CatalogProvider, Quà tặng tới `/shop?category=gift-sets` khi có category. Search luôn hiện, trim/encode tới `/shop?q=` và sync URL; tra đơn/giỏ dùng route hiện có, badge dùng shared itemCount. Story còn ở Home/footer/`/about`.
+- Wishlist, lọc theo dịp, hỗ trợ, Hotline và Liên hệ mở Dialog + FeatureUnavailable; trả focus về nút mở, không chép hotline/badge mẫu. State/focus ở `useMainLayout`; semantic tokens áp dụng16theme, giữ registry/preference/palette.
+
+Home dùng phong cách editorial của ref: ảnh góc2px, CTA góc2px, shadow nhẹ, line art và ảnh hoa. Các flow khác giữ component/layout hiện có. Dùng rose-strong cho chữ nhỏ/CTA đủ tương phản theo theme; giữ focus visible, labels, keyboard access và reduced motion.
 
 `shared/lib/color-classes.ts` ánh xạ palette hữu hạn thành **class Tailwind đầy đủ** để các màu động của fixture được scan. Khi thêm màu mới, bổ sung class literal; không tạo `bg-[${color}]` lúc runtime. `shared/lib/format.ts` định dạng tiền tại ranh giới hiển thị.
 
@@ -198,9 +225,11 @@ Giữ cream/rose floral, rounded cards, pill CTAs, shadow nhẹ, ảnh hoa và L
 
 `src/shared/i18n/config.ts` tạo i18next instance; `AppProviders` gắn I18nextProvider. Resources JSON được bundle tại `src/shared/i18n/locales/en|vi/`, tách namespace common/admin/auth/cart/custom-order/inventory/landing/orders/profile/shop. Không gọi dịch vụ dịch hoặc backend để đổi UI. English text hiện tại được giữ làm key/value; keySeparator/nsSeparator tắt để copy có dấu chấm/dấu hai chấm hoạt động. Message có count dùng các suffix plural của i18next và interpolation, không nối hậu tố English `s` trong JSX.
 
-EN/VI nằm ở mép phải header storefront/admin và góc phải trên màn hình admin login. Ưu tiên preference `lunara_language` đã lưu; lần đầu chọn EN/VI từ navigator.languages, fallback English; khi storage bị chặn vẫn đổi được trong phiên. `document.documentElement.lang` cập nhật theo locale. Tiếng Việt thiếu key fallback English. Navbar chuyển sang menu mobile ở dưới breakpoint lg khi có thêm mục Câu chuyện để chứa nhãn Việt và language switch. Signup/customer auth source giữ ẩn.
+EN/VI nằm ở mép phải header storefront/admin và góc phải trên màn hình admin login. Ưu tiên preference `lunara_language` đã lưu; lần đầu chọn EN/VI từ navigator.languages, fallback English; khi storage bị chặn vẫn đổi được trong phiên. `document.documentElement.lang` cập nhật theo locale. Tiếng Việt thiếu key fallback English. Navbar dùng menu mobile dưới breakpoint lg; Theme và EN/VI nằm trong dải tiện ích trên cùng của header. Signup/customer auth source giữ ẩn.
 
-Footer storefront được tách thành `app/layouts/components/StorefrontFooter.tsx`: giữ khối thương hiệu Lunarra, hiển thị các địa chỉ/map URL hiện có, cùng các liên kết nội bộ theo luồng đang hỗ trợ. 14 mục chính sách/liên hệ/mạng xã hội chưa có đích mở hộp thoại Sắp ra mắt, không điều hướng sang URL đại diện. Footer hiện vẫn hiển thị tên pháp nhân và MST001 dạng placeholder; source không xác minh được tính pháp lý của các giá trị này. Tên cửa hàng, địa chỉ và URL bản đồ cấu hình trong `src/shared/i18n/locales/en/common.json` và `vi/common.json`: các khóa `Main Store`/`HCMC Store`/`Hanoi Branch`, cùng hậu tố `address` và `map URL`. `src/shared/config/storefront-footer.ts` giữ ID/thứ tự/khóa locale của cửa hàng; các mục chưa có đích chính thức không khai báo href và mở Dialog Sắp ra mắt; chỉ mục đã có trang mới dùng Link. English là fallback; địa danh giữ tên riêng, phần mô tả địa chỉ hiển thị theo locale. Các link bản đồ mở tab mới. Desktop từ 1024px dùng 4 cột; mobile/tablet đặt chăm sóc khách hàng và mạng xã hội cạnh nhau, khối thương hiệu và địa chỉ chiếm toàn hàng. `tailwind.css` đăng ký rõ thư mục layout components để Vite theo dõi cả file mới. `ZaloContact.tsx` portal vào body, dùng icon tự vẽ (đã rollback asset logo widget theo yêu cầu), mặc định chỉ hiện icon ở góc dưới phải, nâng lên trên CTA giỏ hàng dưới 1024px. Viền xanh của summary chuyển trực tiếp chiều rộng 60→208px về bên trái khi hover/focus hoặc bấm mở, rồi thu ngược khi đóng/rời nút: 400ms, giảm còn 200ms trong reduced motion. Chữ không có fade/slide riêng; popup căn phải và nằm trong viewport. Chưa có tài khoản Zalo: bấm nút chỉ mở thông báo sẽ cập nhật sớm, chưa mở chat hoặc hiển thị số tin nhắn. Kiểm trình duyệt EN/VI cho vị trí, hover/focus, hit-test, popup và nội dung JSON ở 320/390/768/1024/1440px.
+Footer ở `app/layouts/components/StorefrontFooter.tsx` dùng surface sáng cho16theme; desktop4cột thương hiệu/social, Mua hàng, Về Lunarra, Liên hệ. Mobile thương hiệu/địa chỉ chiếm toàn hàng,2nhóm link cạnh nhau; copyright và Privacy/Shipping ở dưới. Giữ3địa chỉ/maps, pháp nhân/MST001,14đích chưa có URL và link About/Tra đơn/Admin; không lấy hotline/email/địa chỉ từ ảnh ref. Pháp nhân/MST/nội dung shop vẫn chưa được xác minh. Copy/address/map trong EN/VI common.json; ID/thứ tự/link ở `shared/config/storefront-footer.ts`; đích thiếu href dùng Dialog + FeatureUnavailable, Escape/X/Đóng trả focus.
+
+`ZaloContact.tsx` vẫn portal vào body, icon tự vẽ ở góc phải, nâng trên CTA giỏ dưới1024px. Hover/focus/bấm mở giãn60→208px trong400ms(200ms khi reduced-motion). Chưa có tài khoản Zalo nên chỉ mở notice, chưa chat/badge.
 
 Catalog có `name_en/name_vi`; `name` giữ compatibility. `name_vn` là alias tiếng Việt tương thích dữ liệu legacy; API hiện trả `name_vi/name_en`. `getLocalizedName` ưu tiên vi → vn → en → legacy cho tiếng Việt; English ưu tiên en → legacy → vi → vn. Cart/order item giữ tên snapshot song ngữ; source inventory legacy có tên Anh và Việt riêng. Search catalog/stock/order mẫu chấp nhận tên Việt và bỏ dấu. Đổi ngôn ngữ không đổi ID, state cart, giá, VND hoặc Asia/Ho_Chi_Minh; tên khách, contact, notes và dữ liệu nhập giữ nguyên.
 
@@ -244,6 +273,7 @@ npm audit
 npm run preview
 # Trong terminal khác khi preview đang chạy:
 npm run check:ui -- http://127.0.0.1:4173
+node scripts/check-ui-storefront.mjs http://127.0.0.1:4173 --responsive
 npm run check:ui:phase5
 ```
 

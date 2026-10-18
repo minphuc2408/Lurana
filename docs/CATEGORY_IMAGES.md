@@ -4,7 +4,7 @@ Tài liệu quản lý bốn ảnh minh họa danh mục được owner phê duy
 
 ## Dữ liệu và nơi lưu
 
-Bốn mã hiện hữu: bouquets, arrangements, dried-flowers, gift-sets. Không thêm/đổi tên category, không chạy full seed. Ảnh AI chỉ minh họa collection, không là ảnh mô tả một sản phẩm đang bán. All Flowers là link UI, không tạo record DB/ảnh riêng.
+Bốn mã hiện hữu: bouquets, arrangements, dried-flowers, gift-sets. Không thêm/đổi tên category, không chạy full seed. Ảnh AI chỉ minh họa collection, không là ảnh mô tả một sản phẩm đang bán. Dãy thẻ danh mục Home và link All Flowers đã gỡ18/10/2026 theo yêu cầu owner; không xóa dữ liệu category/ảnh.
 
 - File WebP 256px: public/images/categories/<code>-v1.webp; 10–14 KB/tấm, revisioned filename.
 - DB chỉ lưu đường dẫn cùng origin `/images/categories/<code>-v1.webp` trong categories.image_url; không lưu bytes/base64.
@@ -30,7 +30,7 @@ Data script là một UPDATE atomic theo đúng 4 code, chạy lại cho cùng k
 
 ## API/UI và tương thích
 
-GET /api/categories thêm image_url nullable, cùng query active/sort/cache30s. Client mới chấp nhận field vắng trên Worker cũ và null; khi không có ảnh vẫn giữ khung tròn. Ảnh có loading lazy, width/height256, alt rỗng/aria-hidden do tên category đã nằm cạnh ảnh. Dùng ImageWithFallback nếu URL lỗi; click giữ category code trên Shop query. Source hiện không có admin CRUD/upload category.
+GET /api/categories giữ image_url nullable, query active/sort/cache30s và DTO tương thích field vắng/null. UI Home hiện không render dãy thẻ ảnh danh mục hoặc All Flowers; navigation và bộ lọc Shop vẫn dùng category code/name. Giữ các asset/URL/D1 hiện có; không chạy migration hoặc cập nhật dữ liệu để gỡ khối UI. Source chưa có admin CRUD/upload category.
 
 Worker đọc cột ảnh cần 0002 trước; DB có cột mới vẫn tương thích Worker cũ. Khi triển khai toàn bộ source hiện tại, phải áp đủ chuỗi migration được liệt kê trong [STAGING](STAGING.md), không chỉ 0002. `db:verify` so migration chain và chạy thử phá hủy trên D1 `persist:false`; không đổi dữ liệu đã seed.
 
@@ -42,4 +42,4 @@ Trước khi đổi URL, backup riêng categories của đúng môi trường v�
 
 ## Kiểm chứng ảnh
 
-Sau cập nhật, kiểm API trả đúng bốn URL, file trên đúng origin trả `image/webp` và checksum khớp asset; kiểm EN/VI, responsive, fallback và liên kết category tới Shop. Kết quả staging ngày 16/10/2026 được lưu trong [PROJECT_STATUS](PROJECT_STATUS.md); không dùng snapshot số sản phẩm/đơn ở lần đó làm số liệu hiện tại.
+Sau cập nhật, kiểm API trả đúng bốn URL, file trên đúng origin trả `image/webp` và checksum khớp asset; thumbnail/fallback/link category trên Home là bằng chứng của UI cũ trước18/10, không còn là kiểm bắt buộc cho Home hiện tại. Kết quả staging ngày 16/10/2026 được lưu trong [PROJECT_STATUS](PROJECT_STATUS.md); không dùng snapshot số sản phẩm/đơn ở lần đó làm số liệu hiện tại.

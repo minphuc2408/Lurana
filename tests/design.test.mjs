@@ -11,7 +11,9 @@ function contrast(a, b) { const values = [luminance(a), luminance(b)].sort((x, y
 
 test('essential text colors pass contrast on their actual brand backgrounds', () => {
   const css = fs.readFileSync(new URL('../src/styles/brand.css', import.meta.url), 'utf8');
-  const palette = Object.fromEntries([...css.matchAll(/--lunara-([\w-]+):\s*(#[\da-fA-F]{6});/g)].map(match => [match[1], match[2]]));
+  const root = css.match(/:root\s*\{([^}]+)\}/)?.[1];
+  assert.ok(root, 'Base brand palette is defined at :root');
+  const palette = Object.fromEntries([...root.matchAll(/--lunara-([\w-]+):\s*(#[\da-fA-F]{6});/g)].map(match => [match[1], match[2]]));
   const statusText = color => colorClass(color, 'color').match(/#[\da-fA-F]{6}/)?.[0];
   for (const [foreground, background] of [['#FFFFFF', palette['rose-strong']], [palette.body, palette.cream], [palette['rose-strong'], '#FFFFFF'], [palette['rose-light'], palette.sidebar], [statusText('#7A9E7E'), '#EDF7EF'], [statusText('#D4A020'), '#FDF8E8'], [statusText('#5B8DD9'), '#EDF3FC']]) {
     assert.ok(contrast(foreground, background) >= 4.5, `${foreground} on ${background}`);

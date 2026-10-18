@@ -1,34 +1,81 @@
 import { useCart } from '@/features/cart';
+import { useCatalog } from '@/features/shop';
 import { useLocation, useNavigate } from 'react-router';
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
-import { featureFlags } from '@/shared/config/features';
 import { useTheme } from '@/shared/theme/theme-store';
+
 export function useMainLayout() {
   const { itemCount } = useCart();
+  const catalog = useCatalog();
   const { theme, setTheme } = useTheme();
-  const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [unavailableFeature, setUnavailableFeature] = useState<string | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const searchButtonRef = useRef<HTMLButtonElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const navigationRef = useRef<HTMLElement>(null);
+  const noticeTriggerRef = useRef<HTMLElement | null>(null);
   const searchQuery = new URLSearchParams(location.search).get('q') || '';
-  useEffect(() => { setSearchOpen(false); setMenuOpen(false); }, [location.key]);
-  useEffect(() => { if (searchOpen) searchInputRef.current?.focus(); }, [searchOpen]);
-  const closeSearch = () => { setSearchOpen(false); requestAnimationFrame(() => searchButtonRef.current?.focus()); };
-  const openSearch = () => { setSearchTerm(searchQuery); setMenuOpen(false); setSearchOpen(true); };
+
+  useEffect(() => { setMenuOpen(false); setSearchTerm(searchQuery); }, [location.key, searchQuery]);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const dismiss = (event: PointerEvent) => {
+      const target = event.target as HTMLElement;
+      if (!navigationRef.current?.contains(target) && !menuButtonRef.current?.contains(target)
+        && !target.closest('[data-storefront-submenu]')) setMenuOpen(false);
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.defaultPrevented) return;
+      setMenuOpen(false);
+      menuButtonRef.current?.focus({ preventScroll: true });
+    };
+    const desktop = window.matchMedia('(min-width: 1024px)');
+    const collapse = () => { if (desktop.matches) setMenuOpen(false); };
+    document.addEventListener('pointerdown', dismiss);
+    document.addEventListener('keydown', escape);
+    desktop.addEventListener('change', collapse);
+    return () => {
+      document.removeEventListener('pointerdown', dismiss);
+      document.removeEventListener('keydown', escape);
+      desktop.removeEventListener('change', collapse);
+    };
+  }, [menuOpen]);
+
   const submitSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const query = searchTerm.trim();
     if (!query) { searchInputRef.current?.focus(); return; }
     navigate({ pathname: '/shop', search: '?' + new URLSearchParams({ q: query }).toString() });
-    closeSearch();
   };
-  const navLinks = [{ to: '/', label: 'Home' }, { to: '/shop', label: 'Shop' }, { to: '/about', label: 'Story' }, { to: '/orders/track', label: 'Track order' },
-    ...(featureFlags.customerAuth ? [{ to: '/orders', label: 'My Orders' }, { to: '/profile', label: 'Profile' }] : [])];
+  const showUnavailable = (feature: string) => {
+    // Menu items disappear on close; restore focus to the owning trigger instead.
+    const active = document.activeElement as HTMLElement | null;
+    const popup = active?.closest('[data-storefront-submenu]');
+    noticeTriggerRef.current = popup
+      ? document.getElementById(popup.getAttribute('aria-labelledby') || '') : active;
+    setMenuOpen(false);
+    setUnavailableFeature(feature);
+  };
+  const restoreNoticeFocus = () => {
+    const trigger = noticeTriggerRef.current;
+    if (trigger?.isConnected && trigger.getClientRects().length) trigger.focus({ preventScroll: true });
+    else menuButtonRef.current?.focus({ preventScroll: true });
+  };
+  const categoryHref = (code: string) => '/shop?' + new URLSearchParams({ category: code }).toString();
+  const giftCategory = catalog.categories.find(category => category.code === 'gift-sets');
+  const activeCategory = new URLSearchParams(location.search).get('category');
   const isActive = (path: string) => path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
-  return { searchQuery, searchOpen, searchTerm, setSearchTerm, searchInputRef, searchButtonRef, openSearch, closeSearch, submitSearch,
-    itemCount, menuOpen, toggleMenu: () => { setSearchOpen(false); setMenuOpen(!menuOpen); }, setMenuOpen, navLinks, isActive, theme, setTheme };
+  return {
+    searchTerm, setSearchTerm, searchInputRef, submitSearch, itemCount,
+    menuOpen, toggleMenu: () => setMenuOpen(previous => !previous), menuButtonRef, navigationRef,
+    categories: catalog.categories, catalogLoading: catalog.loading, catalogError: catalog.error, reloadCatalog: catalog.reload,
+    giftHref: giftCategory ? categoryHref(giftCategory.code) : undefined, categoryHref, activeCategory, isActive,
+    unavailableFeature, showUnavailable, closeUnavailable: () => setUnavailableFeature(null), restoreNoticeFocus,
+    theme, setTheme,
+  };
 }
+export type MainLayoutModel = ReturnType<typeof useMainLayout>;

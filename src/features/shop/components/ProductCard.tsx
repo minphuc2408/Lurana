@@ -27,7 +27,7 @@ export function ProductCard({ appearance = 'default', product, added, onAdd, sel
     <Link to={detailPath} data-product-image-link aria-label={t('View {{name}}', { name: getLocalizedName(product, language) })} className="relative mb-3 block aspect-[4/5] overflow-hidden rounded-[2px] bg-lunara-blush sm:mb-4">
       <ImageWithFallback src={product.image} alt={getLocalizedName(product, language)} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 motion-safe:group-hover:scale-[1.02] motion-reduce:transition-none" />
       <span aria-hidden="true" className="absolute inset-0 flex items-end bg-lunara-ink/10 p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100 motion-reduce:transition-none">
-        <span className="w-full rounded-[2px] bg-lunara-cream py-2 text-center text-xs font-medium text-lunara-ink">{t('View details')} →</span>
+        <span className="w-full rounded-[2px] border border-lunara-border bg-lunara-card-surface py-2 text-center text-xs font-medium text-lunara-ink shadow-xs">{t('View details')} →</span>
       </span>
     </Link>
     <div className="flex flex-1 flex-col justify-between">
@@ -38,7 +38,7 @@ export function ProductCard({ appearance = 'default', product, added, onAdd, sel
       </div>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 pt-2">
         <span data-product-price className="text-sm font-medium tracking-tight text-lunara-ink sm:text-base">{variant ? formatVND(variant.price, language) : t('Unavailable')}</span>
-        <Button type="button" data-product-add variant="outline" size="icon" disabled={!variant?.in_stock} onClick={() => onAdd(product.id, variant?.id)} aria-label={t("Add {{value0}} to cart", { value0: getLocalizedName(product, language) })} title={variant?.in_stock ? added ? t('Added') : t('Add to Cart') : t('Out of stock')} className={cn("size-11 rounded-full border-lunara-border bg-lunara-cream text-lunara-body hover:border-lunara-rose-strong hover:bg-lunara-rose-strong hover:text-white focus-visible:ring-lunara-rose-strong [&_svg]:size-3.5", added && "border-lunara-rose-strong text-lunara-rose-strong")}>
+        <Button type="button" data-product-add variant="outline" size="icon" disabled={!variant?.in_stock} onClick={() => onAdd(product.id, variant?.id)} aria-label={t("Add {{value0}} to cart", { value0: getLocalizedName(product, language) })} title={variant?.in_stock ? added ? t('Added') : t('Add to Cart') : t('Out of stock')} className={cn("size-11 rounded-full border-lunara-border bg-lunara-card-surface text-lunara-body hover:border-lunara-rose-strong hover:bg-lunara-rose-strong hover:text-white focus-visible:ring-lunara-rose-strong [&_svg]:size-3.5", added && "border-lunara-rose-strong text-lunara-rose-strong")}>
           {added ? <Check aria-hidden="true" strokeWidth={1.8} /> : <ShoppingBag aria-hidden="true" strokeWidth={1.8} />}
         </Button>
         <span role="status" className="sr-only">{!variant?.in_stock ? t('Out of stock') : added ? t('Added') : ''}</span>

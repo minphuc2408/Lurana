@@ -1,71 +1,77 @@
-import { Flower } from 'lucide-react';
+import { useRef } from 'react';
 import { Link } from 'react-router';
 import { useLocale } from '@/shared/i18n';
 import { customerCareLinks, socialLinks, storeLocations } from '@/shared/config/storefront-footer';
 import { FeatureUnavailable } from '@/shared/components/FeatureUnavailable';
 import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription, DialogClose } from '@/shared/ui/dialog';
 
-const linkClass = 'text-sm leading-7 text-lunara-footer-foreground no-underline transition-colors hover:text-lunara-footer-hover hover:underline underline-offset-4 break-words';
-const headingClass = 'font-display text-sm sm:text-base font-semibold tracking-[0.05em] uppercase text-lunara-footer-foreground mb-4 leading-relaxed';
+const linkClass = 'inline-block text-sm leading-6 text-lunara-body no-underline transition-colors hover:text-lunara-rose-strong hover:underline underline-offset-4 break-words';
+const headingClass = 'mb-5 text-sm font-medium tracking-[0.06em] uppercase text-lunara-ink';
+const bottomLabels = ['Privacy Policy', 'Shipping Policy'];
+const shoppingLabels = ['Frequently Asked Questions', 'Payment Methods'];
 
 function FooterDestination({ label, href }: { label: string; href?: string }) {
   const { t } = useLocale('common');
+  const triggerRef = useRef<HTMLButtonElement>(null);
   if (href) return <Link to={href} className={linkClass}>{t(label)}</Link>;
   const description = t('Footer feature coming soon', { feature: t(label) });
   return <Dialog>
-    <DialogTrigger asChild><button type="button" data-footer-coming-soon className={'text-left ' + linkClass}>{t(label)}</button></DialogTrigger>
-    <DialogContent className="rounded-[2px] border-lunara-border bg-lunara-cream font-body">
+    <DialogTrigger asChild><button ref={triggerRef} type="button" data-footer-coming-soon className={'text-left ' + linkClass}>{t(label)}</button></DialogTrigger>
+    <DialogContent onCloseAutoFocus={event => { event.preventDefault(); triggerRef.current?.focus({ preventScroll: true }); }} className="rounded-2xl border-lunara-border bg-lunara-cream font-body">
       <DialogTitle className="sr-only">{t(label)}</DialogTitle>
       <DialogDescription className="sr-only">{description}</DialogDescription>
       <FeatureUnavailable inline description={description} />
-      <DialogClose asChild><button type="button" className="rounded-[2px] bg-lunara-rose-strong px-6 py-3 text-white">{t('Close')}</button></DialogClose>
+      <DialogClose asChild><button type="button" className="rounded-full bg-lunara-rose-strong px-6 py-3 text-white">{t('Close')}</button></DialogClose>
     </DialogContent>
   </Dialog>;
 }
 
 export function StorefrontFooter() {
   const { t } = useLocale('common');
-  return <footer className="mt-24 bg-lunara-footer-background text-lunara-footer-foreground" data-storefront-footer>
-    <div data-footer-grid className="max-w-[1240px] mx-auto px-5 sm:px-8 py-10 lg:py-16 grid grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,0.65fr)_minmax(0,1.3fr)] gap-x-6 gap-y-9 lg:gap-10">
-      <div className="col-span-2 lg:col-span-1 min-w-0">
-        <div className="flex items-center gap-2 mb-4">
-          <Flower size={20} className="text-lunara-rose-light" />
-          <span className="font-display [font-size:1.6rem] [font-weight:600] [letter-spacing:0.1em] text-lunara-footer-foreground">{t('Lunara Shop')}</span>
+  const shoppingLinks = customerCareLinks.filter(link => shoppingLabels.includes(link.label));
+  const aboutLinks = customerCareLinks.filter(link => !shoppingLabels.includes(link.label) && !bottomLabels.includes(link.label));
+  return <footer className="mt-24 bg-lunara-surface font-body text-lunara-body" data-storefront-footer>
+    <div className="mx-auto max-w-[1440px] px-5 pt-12 pb-6 sm:px-8 lg:pt-16 lg:pb-8">
+      <div data-footer-grid className="grid grid-cols-2 gap-x-6 gap-y-10 pb-12 lg:grid-cols-[1.65fr_0.8fr_1fr_1.4fr] lg:gap-x-12 lg:pb-14">
+        <div className="col-span-2 min-w-0 lg:col-span-1">
+          <Link to="/" className="mb-5 inline-block font-display text-[32px] leading-none tracking-tight text-lunara-ink no-underline">{t('Lunara Shop')}</Link>
+          <p className="max-w-sm text-sm leading-7">{t("Crafting nature's most beautiful moments into timeless floral arrangements. Bringing joy, one bloom at a time.")}</p>
+          <nav aria-label={t('Follow Us')} className="mt-7">
+            <h4 className={headingClass}>{t('Follow Us')}</h4>
+            <ul className="flex max-w-sm flex-wrap gap-x-5 gap-y-2">{socialLinks.map(link => <li key={link.label}><FooterDestination {...link} /></li>)}</ul>
+          </nav>
         </div>
-        <p className="[font-size:0.88rem] [line-height:1.8] text-lunara-footer-muted [max-width:300px]">
-          {t("Crafting nature's most beautiful moments into timeless floral arrangements. Bringing joy, one bloom at a time.")}
-        </p>
-      </div>
-      <nav aria-label={t('Customer Care')} className="min-w-0">
-        <h4 className={headingClass}>{t('Customer Care')}</h4>
-        <ul className="flex flex-col gap-2">
-          <li><Link to="/orders/track" className={linkClass}>{t('Track order')}</Link></li>
-          <li><Link to="/admin/login" className={linkClass}>{t('Admin login')}</Link></li>
-          {customerCareLinks.map(link => <li key={link.label}><FooterDestination {...link} /></li>)}
-        </ul>
-      </nav>
-      <nav aria-label={t('Follow Us')} className="min-w-0">
-        <h4 className={headingClass}>{t('Follow Us')}</h4>
-        <ul className="flex flex-col gap-2">
-          {socialLinks.map(link => <li key={link.label}><FooterDestination {...link} /></li>)}
-        </ul>
-      </nav>
-      <div className="col-span-2 lg:col-span-1 min-w-0">
-        <h4 className={headingClass}>{t('Lunara Flower Shop')}</h4>
-        <address className="not-italic flex flex-col gap-5">
-          {storeLocations.map(store => <p key={store.id} className="text-sm leading-7">
-            <strong className="block font-semibold">{t(store.label)}:</strong>
-            <a href={t(store.mapUrlKey)} target="_blank" rel="noopener noreferrer" className={linkClass}>{t(store.addressKey)}</a>
-          </p>)}
-        </address>
-        <div className="mt-6 pt-5 border-t border-lunara-footer-border text-sm leading-7">
-          <p className="font-semibold">CÔNG TY TNHH LUNARA</p>
-          <p>{t('Tax ID')}: 001</p>
+        <nav aria-label={t('Shopping')} className="min-w-0">
+          <h4 className={headingClass}>{t('Shopping')}</h4>
+          <ul className="flex flex-col gap-3">
+            <li><Link to="/shop" className={linkClass}>{t('All flowers')}</Link></li>
+            <li><Link to="/orders/track" className={linkClass}>{t('Track order')}</Link></li>
+            {shoppingLinks.map(link => <li key={link.label}><FooterDestination {...link} /></li>)}
+            <li><Link to="/admin/login" className={linkClass}>{t('Admin login')}</Link></li>
+          </ul>
+        </nav>
+        <nav aria-label={t('About Lunarra')} className="min-w-0">
+          <h4 className={headingClass}>{t('About Lunarra')}</h4>
+          <ul className="flex flex-col gap-3">{aboutLinks.map(link => <li key={link.label}><FooterDestination {...link} /></li>)}</ul>
+        </nav>
+        <div className="col-span-2 min-w-0 lg:col-span-1">
+          <h4 className={headingClass}>{t('Contact Us')}</h4>
+          <address className="grid gap-5 not-italic sm:grid-cols-3 lg:grid-cols-1">
+            {storeLocations.map(store => <p key={store.id} className="text-sm leading-6">
+              <strong className="block font-medium text-lunara-ink">{t(store.label)}:</strong>
+              <a href={t(store.mapUrlKey)} target="_blank" rel="noopener noreferrer" className={linkClass}>{t(store.addressKey)}</a>
+            </p>)}
+          </address>
+          <div className="mt-6 text-xs leading-6">
+            <p className="font-medium text-lunara-ink">CÔNG TY TNHH LUNARA</p>
+            <p>{t('Tax ID')}: 001</p>
+          </div>
         </div>
       </div>
-    </div>
-    <div className="[border-top:1px_solid_var(--lunara-footer-border)] [padding:16px_24px] [text-align:center] [font-size:0.78rem] text-lunara-footer-copyright">
-      {t('© 2026 Lunara Flower Shop. All rights reserved. Made with love & flowers.')}
+      <div data-footer-bottom className="flex flex-col gap-5 border-t border-lunara-border pt-6 text-sm leading-6 lg:flex-row lg:items-center lg:justify-between lg:gap-8 lg:pt-8">
+        <p>{t('© 2026 Lunara Flower Shop. All rights reserved. Made with love & flowers.')}</p>
+        <nav aria-label={t('Customer Care')} className="flex shrink-0 flex-wrap gap-x-7 gap-y-2">{customerCareLinks.filter(link => bottomLabels.includes(link.label)).map(link => <FooterDestination key={link.label} {...link} />)}</nav>
+      </div>
     </div>
   </footer>;
 }
