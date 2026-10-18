@@ -1,12 +1,14 @@
 # Vận hành Lunara trên Cloudflare
 
-Đối chiếu source **17/10/2026**. Runbook production `lunara`/`lunara-db`; staging riêng `lunara-staging`/`lunara-staging-db` theo [STAGING](STAGING.md); trạng thái nghiệm thu và bằng chứng thực thi nằm tại [Phase 6](pipeline/PHASE_6_DEPLOY.md). Có runbook hoặc chạy tốt local không đồng nghĩa deployment đã nghiệm thu. Chỉ mở bán sau khi đủ toàn bộ tiêu chí Phase 6, gồm dữ liệu thật và kiểm thử trên URL đã deploy.
+Đối chiếu source **18/10/2026**. Runbook production `lunara`/`lunara-db`; staging riêng `lunara-staging`/`lunara-staging-db` theo [STAGING](STAGING.md); trạng thái nghiệm thu và bằng chứng thực thi nằm tại [Phase 6](pipeline/PHASE_6_DEPLOY.md). Có runbook hoặc chạy tốt local không đồng nghĩa deployment đã nghiệm thu. Chỉ mở bán sau khi đủ toàn bộ tiêu chí Phase 6, gồm dữ liệu thật và kiểm thử trên URL đã deploy.
 
 ## 1. Đúng môi trường và quyền thao tác
 
 Chạy từ root repository với Node/npm và Wrangler đã pin trong `package-lock.json`. Không đăng ký tài khoản, login hoặc tạo lại D1 đã có. Đối chiếu account trong dashboard trước mỗi đợt ghi; cấu hình hiện tại ở [wrangler.jsonc](../wrangler.jsonc): Worker `lunara`, binding `DB`, database `lunara-db`, ID `1796e7bf-d230-4bc1-a80a-f4be4d1eccc7`. ID database không phải secret. Không đổi ID để bỏ qua lỗi quyền hoặc lỗi migrate.
 
-Các lệnh `--remote` trong runbook này nhắm database production; staging dùng target riêng theo [STAGING](STAGING.md). Lệnh ghi remote, deploy, thay secrets, rollback và restore chỉ thực hiện khi chủ dự án đã cho phép đúng thao tác/target. Hướng dẫn dưới đây không tạo authorization mới. Trong Phase 6, SQL ghi trực tiếp chỉ gồm migration canonical, seed mẫu ở bước 6.5 và cleanup `SMOKE` ở bước 6.9 theo [danh sách đã duyệt](pipeline/PHASE_6_DEPLOY.md). Không reset D1 remote, truncate, xóa bảng hay cập nhật tồn hàng loạt.
+Các lệnh `--remote` trong runbook này nhắm database production; staging dùng target riêng theo [STAGING](STAGING.md). Lệnh ghi remote, deploy, thay secrets, rollback và restore chỉ thực hiện khi chủ dự án đã cho phép đúng thao tác/target. Hướng dẫn dưới đây không tạo authorization mới. Trong Phase 6, SQL ghi trực tiếp chỉ gồm migration canonical, seed mẫu ở bước 6.5 và cleanup `SMOKE` ở bước 6.9 theo [danh sách đã duyệt](pipeline/PHASE_6_DEPLOY.md). Quy trình thường lệ không reset D1 remote, truncate, xóa bảng hay cập nhật tồn hàng loạt.
+
+Ngoại lệ owner yêu cầu ngày18/10: backup rồi thay dữ liệu nghiệp vụ **chỉ staging** bằng [bộ mẫu 40 sản phẩm](DATABASE_DESIGN.md#bộ-dữ-liệu-staging-theo-quyết-định-owner). Trước ghi phải xuất SQL/mở thử offline, kiểm integrity/FK và đúng target, thử dataset trên D1 cô lập; sau ghi đối chiếu đủ bảng, migration và coverage. Giữ schema/bảng hệ thống/sequence/secrets; không mang quyền một lần này sang production hoặc lần reset tiếp theo. Trạng thái thực thi ở [PROJECT_STATUS](PROJECT_STATUS.md#dữ-liệu-staging-thay-mới-theo-owner--18102026).
 
 Giữ dev/preview trên `127.0.0.1`, `remoteBindings: false`; `npm run db:reset:local` chỉ dùng local. `/api/health` kiểm tra Worker còn chạy; catalog/quote và truy vấn bảng mới kiểm chứng D1 sẵn sàng.
 

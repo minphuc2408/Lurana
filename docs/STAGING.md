@@ -41,6 +41,8 @@ Remove-Item Env:VITE_TURNSTILE_SITE_KEY -ErrorAction SilentlyContinue
 
 Deploy dùng toàn bộ source local hiện tại, kể cả thay đổi chưa commit. Deploy không migrate/seed hoặc copy secrets/dữ liệu giữa hai môi trường. UI chưa có banner staging, kiểm hostname trước thao tác.
 
+Sau build đổi tên bundle, khởi động lại Vite preview đang chạy để nhận manifest asset mới. Đã tái hiện index HTML mới nhưng request JS mới trả `text/html` từ fallback khi preview giữ manifest cũ; restart cùng cổng loopback rồi kiểm lại MIME/bundle trước chạy browser tests. Không sửa code hoặc đổi asset URL để chữa trạng thái preview này.
+
 ## Secrets — nhập một lần riêng cho từng Worker
 
 Cấu hình và kiểm provider theo [BOT_PROTECTION](BOT_PROTECTION.md). Thiếu secret thì API được bảo vệ fail-closed; không bật bypass trên remote để chạy thử. Secret tồn tại không phải nhập lại sau mỗi deploy.
@@ -69,6 +71,8 @@ npm run db:migrate:staging
 ```
 
 `npm run db:seed:staging` nạp toàn bộ seed mẫu, không phải reset và không khôi phục tồn đã sửa. **Không chạy lại cho trạng thái staging hiện có** khi chỉ cần categories hoặc delivery zones. Canonical base là `migrations/0001_mvp.sql`, thêm `0002_category_images.sql` cho ảnh category và `0003_hanoi_administrative_areas.sql` cho danh mục Hà Nội; không áp deferred/0002, không sửa migration đã áp remote.
+
+Owner đã yêu cầu một lần thay dữ liệu staging ngày18/10 sau backup, bằng [bộ mẫu 40 sản phẩm](DATABASE_DESIGN.md#bộ-dữ-liệu-staging-theo-quyết-định-owner), không dùng lại seed dev. Ngoại lệ và điều kiện backup/kiểm chứng tại [OPERATIONS](OPERATIONS.md#1-đúng-môi-trường-và-quyền-thao-tác); kết quả thực tế tại [PROJECT_STATUS](PROJECT_STATUS.md#dữ-liệu-staging-thay-mới-theo-owner--18102026). Lệnh seed cũ không phải công cụ phục hồi bộ dữ liệu này.
 
 Smoke remote mặc định chỉ đọc; ghi cần origin/variant/exclusive window và credential/token qua hidden stdin. Không tự retry write có kết quả chưa rõ. [OPERATIONS](OPERATIONS.md).
 

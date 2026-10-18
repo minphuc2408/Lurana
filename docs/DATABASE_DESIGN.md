@@ -1,6 +1,6 @@
 # Database MVP — Cloudflare D1
 
-Đối chiếu source ngày **17/10/2026**. Tài liệu giữ quyết định schema, ràng buộc và bất biến dữ liệu. [API contract](pipeline/API_CONTRACT.md) mô tả giao tiếp; lịch sử migration/deploy và counts theo môi trường nằm ở [PROJECT_STATUS.md](PROJECT_STATUS.md).
+Đối chiếu source ngày **18/10/2026**. Tài liệu giữ quyết định schema, ràng buộc và bất biến dữ liệu. [API contract](pipeline/API_CONTRACT.md) mô tả giao tiếp; lịch sử migration/deploy và counts theo môi trường nằm ở [PROJECT_STATUS.md](PROJECT_STATUS.md).
 
 ## Một nguồn schema chuẩn
 
@@ -9,6 +9,13 @@
 Canonical Phase 1 chọn DDL v2 cho 10 bảng và [seed dev](sql/MVP_SEED_DEV.sql). Các mở rộng được yêu cầu sau đó dùng migration mới: 0002 thêm `categories.image_url` nullable; 0003 tạo `administrative_provinces`/`administrative_wards` và nhập Hà Nội (mã 01, 126 phường/xã). Không sửa migration đã áp hoặc áp [custom_requests deferred](sql/deferred/0002_custom_requests.sql) vào chuỗi MVP.
 
 File seed gồm **4 categories, 8 products, 24 variants, 8 images, 4 delivery zones**. Các câu `INSERT OR IGNORE` kết hợp khóa unique giúp chạy lại không nhân đôi. Ảnh placeholder, giá/tồn và khu vực giao là dữ liệu mẫu. Dòng tỉnh mặc định/ngoài danh mục vẫn có thể tồn tại trong DB nhưng không mở coverage ở service hiện tại.
+
+## Bộ dữ liệu staging theo quyết định owner
+
+- Owner yêu cầu thay toàn bộ dữ liệu nghiệp vụ staging sau backup; đây là bộ mẫu riêng, không đổi seed dev/schema. Có 40 thiết kế EN/VI, mã `LNR-STG-001`–`040`, 4 danh mục và 120 biến thể S/M/L; bao phủ ACTIVE/HIDDEN/ARCHIVED, featured, BEST_SELLER/HOT/NEW, tồn thường/thấp/hết và variant tắt.
+- `product_images` được owner cho phép trống; không chèn URL rỗng/ảnh giả. Ảnh danh mục và snapshot ảnh đơn cũng NULL. Quy tắc gallery khi lưu qua API vẫn giữ nguyên.
+- Khách/địa chỉ/đơn/timeline là dữ liệu tổng hợp có nhãn STAGING, email `example.test`, không kích hoạt customer auth. Mỗi trạng thái đơn có 3 mẫu; COD giao thành công là PAID, hủy đã hoàn tồn; tồn ban đầu trừ đúng lượng của các đơn chưa hủy. Pending vẫn chịu TTL/Cron hiện hành.
+- Giữ nguyên danh mục hành chính, coverage/phí hiện có, migration history và schema. ID số mới lớn hơn ID/sequence cũ; không reset `sqlite_sequence`, tránh giỏ đã lưu variant ID cũ nhận nhầm sản phẩm mới. Artifact SQL/CSV và backup chỉ nằm trong `.security-review/` ignored; bằng chứng/đường dẫn ở [PROJECT_STATUS](PROJECT_STATUS.md#dữ-liệu-staging-thay-mới-theo-owner--18102026).
 
 ## Quyết định base schema (v1 → v2 tại Phase 1)
 
