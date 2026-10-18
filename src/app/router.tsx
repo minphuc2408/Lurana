@@ -42,4 +42,4 @@ export const router = createBrowserRouter([{ Component: MetadataLayout, children
     { path: 'delivery-zones', Component: AdminDeliveryZonesPage },
     { path: '*', Component: UnavailablePage },
   ],
-}] }]);
+}] }], { basename: import.meta.env.BASE_URL.replace(/\/$/, '') || '/' });

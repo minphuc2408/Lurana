@@ -6,6 +6,9 @@
 # Allow traversal only through the current project directories.
 !/guidelines/
 !/scripts/
+!/.github/
+!/.github/workflows/
+!/.github/workflows/deploy-pages.yml
 
 # Reviewed source, public documentation, and reproducible build configuration.
 !/.gitignore

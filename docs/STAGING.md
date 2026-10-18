@@ -2,6 +2,13 @@
 
 Cấu hình target, build và triển khai cho hai môi trường. Version đang được ghi nhận, migrations đã áp và kết quả kiểm cloud xem [PROJECT_STATUS](PROJECT_STATUS.md); tài liệu này không phải deployment log.
 
+## GitHub Pages — static UI preview
+
+- **Cấu hình:** [workflow](../.github/workflows/deploy-pages.yml) dùng Node22, `npm ci`, build `dist/client` với base `/Lurana/`, rồi thêm `404.html`; chạy khi push `main` hoặc manual dispatch. Router dùng Vite `BASE_URL`; bản Worker vẫn dùng `/`. Base này dành cho project Pages tên repo `Lurana`, cần đổi nếu đổi tên repo hoặc dùng custom domain.
+- **Thiết lập GitHub:** chọn **Settings → Pages → Build and deployment → Source: GitHub Actions**, cho phép Actions và environment `github-pages` deploy từ nhánh mong muốn. Repo private cần gói GitHub hỗ trợ Pages. Workflow hiện là file untracked local tại lượt kiểm18/10; phải được commit/push mới có thể chạy. [Hướng dẫn GitHub](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
+- **Giới hạn:** chỉ phục vụ frontend tĩnh, không có Worker/D1/API; catalog, quote, checkout, tra đơn và admin không hoạt động. Dùng các target Cloudflare bên dưới cho luồng có API. `404.html` cho app render khi mở trực tiếp route chưa có file; HTTP vẫn404, không phải rewrite200. `/shop/` và `/about/` có HTML do SEO plugin sinh.
+- **SEO/headers:** workflow đặt `VITE_SITE_INDEXABLE=false` cho preview, sinh meta noindex, robots disallow và sitemap rỗng. Canonical/OG vẫn trỏ production theo `.env.production`; đây không phải cấu hình SEO cho domain Pages riêng. Pages không áp dụng file Cloudflare `_headers`, nên không suy CSP/security headers từ artifact. Build local hoặc thêm workflow không chứng minh deploy thành công; xem bằng chứng tại PROJECT_STATUS.
+
 | Môi trường | Worker | D1 / UUID | Public frontend config |
 | --- | --- | --- | --- |
 | Production | `lunara` | `lunara-db` / `1796e7bf-d230-4bc1-a80a-f4be4d1eccc7` | `.env.production`, production widget/origin, index Home/Shop |

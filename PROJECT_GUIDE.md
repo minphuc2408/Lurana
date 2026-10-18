@@ -86,7 +86,7 @@ src/
 | Middleware | Secure headers, X-Request-Id, IP/route rate-limit bindings trước D1/Siteverify; GET catalog thành công cache public 30 giây; API khác/lỗi no-store |
 | Config | `worker/config.ts`: VND, Asia/Ho_Chi_Minh; phụ phí 0/30.000/50.000, cutoff 16:00, chuẩn bị 120 phút và slot 08:00–20:00 là giả định chủ shop cần chỉnh |
 | Typecheck | `tsconfig.worker.json`: `worker/`, root `shared/` và declaration; tách globals frontend |
-| SPA/API routing | `wrangler.jsonc`: SPA fallback, `run_worker_first: ["/api/*"]` |
+| SPA/API routing | `src/app/router.tsx` dùng Vite `BASE_URL` làm basename; `wrangler.jsonc` có SPA fallback và chuyển `/api/*` tới Worker. GitHub Pages chỉ preview UI tĩnh với base `/Lurana/`, noindex và `404.html` (deep link vẫn HTTP404), không có Worker/API; [cấu hình và giới hạn](docs/STAGING.md#github-pages--static-ui-preview). |
 | Local bindings | Vite `remoteBindings: false`; plugin tự quản lý assets output |
 | Typegen | `npm run cf:typegen` → `worker-configuration.d.ts`; `--include-runtime=false` + Workers types |
 | Secrets | `.dev.vars` local; chỉ placeholder `.dev.vars.example` vào Git. [NGƯỜI] tự đặt secret thật trước real local use; production ở Phase 6 |
