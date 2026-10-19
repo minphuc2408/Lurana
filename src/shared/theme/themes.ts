@@ -65,10 +65,16 @@ export function themeTokens(theme: Theme): Record<string, string> {
   if (theme.id === 'original') return {};
   const { background, secondary, softSurface, accent, foreground } = theme;
   const cardSurface = '#FFFFFF';
-  const surfaces = [background, secondary, softSurface, cardSurface];
+  const creative = 'secondaryAccent' in theme ? theme : null;
+  const secondarySoft = creative ? mix(creative.secondaryAccent, background, 0.7) : softSurface;
+  const tertiarySoft = creative ? mix(creative.tertiaryAccent, background, 0.76) : secondary;
+  const surfaces = [background, secondary, softSurface, cardSurface, ...(creative ? [secondarySoft, tertiarySoft] : [])];
   const primary = accessibleColor(accent, foreground, surfaces, 4.6);
   const body = accessibleColor(mix(foreground, background, 0.2), foreground, surfaces, 4.6);
   const border = mix(accent, background, 0.72);
+  const secondaryStrong = creative ? accessibleColor(creative.secondaryAccent, '#000000', surfaces, 4.6) : primary;
+  const tertiaryStrong = creative ? accessibleColor(creative.tertiaryAccent, '#000000', [...surfaces, creative.tertiaryAccent], 4.6) : primary;
+  const adminActiveSurface = mix(accent, '#1A0D12', 0.82);
   return {
     '--lunara-cream': background, '--lunara-surface': secondary, '--lunara-blush': softSurface,
     '--lunara-card-surface': cardSurface, '--lunara-section-secondary': secondary, '--lunara-utility-background': softSurface,
@@ -82,12 +88,39 @@ export function themeTokens(theme: Theme): Record<string, string> {
     '--lunara-footer-muted': body, '--lunara-footer-copyright': body,
     '--lunara-footer-border': border, '--lunara-footer-hover': primary,
     // Omit these overrides for legacy palettes so their CSS fallbacks keep exactly the same colors.
-    ...('secondaryAccent' in theme ? {
-      '--lunara-accent-secondary': theme.secondaryAccent,
-      '--lunara-accent-secondary-strong': accessibleColor(theme.secondaryAccent, foreground, surfaces, 4.6),
-      '--lunara-accent-tertiary': theme.tertiaryAccent,
-      '--lunara-campaign-surface': theme.tertiaryAccent,
-      '--lunara-campaign-foreground': accessibleColor(foreground, '#000000', [theme.tertiaryAccent], 4.6),
+    ...(creative ? {
+      '--lunara-accent-secondary': creative.secondaryAccent,
+      '--lunara-accent-secondary-soft': secondarySoft,
+      '--lunara-accent-secondary-strong': secondaryStrong,
+      '--lunara-accent-tertiary': creative.tertiaryAccent,
+      '--lunara-accent-tertiary-soft': tertiarySoft,
+      '--lunara-accent-tertiary-strong': tertiaryStrong,
+      '--lunara-campaign-surface': creative.tertiaryAccent,
+      '--lunara-campaign-foreground': tertiaryStrong,
+      '--lunara-utility-background': creative.secondaryAccent,
+      '--lunara-utility-foreground': accessibleColor(foreground, '#000000', [creative.secondaryAccent], 4.6),
+      '--lunara-utility-ink': accessibleColor(foreground, '#000000', [creative.secondaryAccent], 4.6),
+      '--lunara-utility-focus': accessibleColor(primary, '#000000', [creative.secondaryAccent], 3.1),
+      '--lunara-utility-border': secondaryStrong,
+      '--lunara-secondary-link': secondaryStrong,
+      '--lunara-editorial-label': tertiaryStrong,
+      '--lunara-featured-rule': creative.secondaryAccent,
+      '--lunara-story-rule': creative.tertiaryAccent,
+      '--lunara-journey-surface': tertiarySoft,
+      '--lunara-journey-icon-surface': creative.tertiaryAccent,
+      '--lunara-journey-icon-foreground': tertiaryStrong,
+      '--lunara-product-action-surface': secondarySoft,
+      '--lunara-product-action-foreground': secondaryStrong,
+      '--lunara-product-action-border': secondaryStrong,
+      '--lunara-product-action-hover': secondaryStrong,
+      '--lunara-footer-link': secondaryStrong,
+      '--lunara-footer-heading': secondaryStrong,
+      '--lunara-footer-hover': secondaryStrong,
+      '--lunara-footer-border': creative.tertiaryAccent,
+      '--lunara-admin-active-surface': adminActiveSurface,
+      '--lunara-admin-active-foreground': accessibleColor(accent, '#FFFFFF', ['#1A0D12', adminActiveSurface], 4.6),
+      '--lunara-admin-active-border': accessibleColor(accent, '#FFFFFF', ['#1A0D12'], 3.1),
+      '--lunara-admin-header-border': border,
     } : {}),
   };
 }

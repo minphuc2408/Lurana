@@ -10,8 +10,32 @@
   --lunara-accent-secondary: var(--lunara-rose-light);
   --lunara-accent-secondary-strong: var(--lunara-rose-strong);
   --lunara-accent-tertiary: var(--lunara-rose-light);
+  --lunara-accent-secondary-soft: var(--lunara-blush);
+  --lunara-accent-tertiary-soft: var(--lunara-surface);
+  --lunara-accent-tertiary-strong: var(--lunara-rose-strong);
   --lunara-campaign-surface: transparent;
   --lunara-campaign-foreground: var(--lunara-rose-strong);
+  --lunara-secondary-link: var(--lunara-rose-strong);
+  --lunara-editorial-label: var(--lunara-rose-strong);
+  --lunara-featured-rule: var(--lunara-border);
+  --lunara-story-rule: var(--lunara-border);
+  --lunara-journey-surface: var(--lunara-section-secondary);
+  --lunara-journey-icon-surface: transparent;
+  --lunara-journey-icon-foreground: var(--lunara-accent-secondary-strong);
+  --lunara-product-action-surface: var(--lunara-card-surface);
+  --lunara-product-action-foreground: var(--lunara-body);
+  --lunara-product-action-border: var(--lunara-border);
+  --lunara-product-action-hover: var(--lunara-rose-strong);
+  --lunara-utility-foreground: var(--lunara-body);
+  --lunara-utility-ink: var(--lunara-ink);
+  --lunara-utility-focus: var(--lunara-focus-ring);
+  --lunara-utility-border: var(--lunara-border);
+  --lunara-footer-link: var(--lunara-body);
+  --lunara-footer-heading: var(--lunara-ink);
+  --lunara-admin-active-surface: rgba(193, 123, 138, 0.18);
+  --lunara-admin-active-foreground: #E8B0BC;
+  --lunara-admin-active-border: #C17B8A;
+  --lunara-admin-header-border: #F0DDD5;
   --lunara-cream: #F8FBFA;
   --lunara-surface: #F1F7F5;
   --lunara-blush: #EDF4F6;
@@ -63,6 +87,23 @@ html[lang='vi'] {
   --color-lunara-accent-secondary-strong: var(--lunara-accent-secondary-strong);
   --color-lunara-campaign: var(--lunara-campaign-surface);
   --color-lunara-on-campaign: var(--lunara-campaign-foreground);
+  --color-lunara-secondary-link: var(--lunara-secondary-link);
+  --color-lunara-editorial-label: var(--lunara-editorial-label);
+  --color-lunara-featured-rule: var(--lunara-featured-rule);
+  --color-lunara-story-rule: var(--lunara-story-rule);
+  --color-lunara-journey: var(--lunara-journey-surface);
+  --color-lunara-journey-icon: var(--lunara-journey-icon-surface);
+  --color-lunara-on-journey-icon: var(--lunara-journey-icon-foreground);
+  --color-lunara-product-action: var(--lunara-product-action-surface);
+  --color-lunara-on-product-action: var(--lunara-product-action-foreground);
+  --color-lunara-product-action-border: var(--lunara-product-action-border);
+  --color-lunara-product-action-hover: var(--lunara-product-action-hover);
+  --color-lunara-footer-link: var(--lunara-footer-link);
+  --color-lunara-footer-heading: var(--lunara-footer-heading);
+  --color-lunara-admin-active: var(--lunara-admin-active-surface);
+  --color-lunara-on-admin-active: var(--lunara-admin-active-foreground);
+  --color-lunara-admin-active-border: var(--lunara-admin-active-border);
+  --color-lunara-admin-header-border: var(--lunara-admin-header-border);
   --color-lunara-cream: var(--lunara-cream);
   --color-lunara-surface: var(--lunara-surface);
   --color-lunara-card-surface: var(--lunara-card-surface);
@@ -95,6 +136,14 @@ html:has([data-home-layout]) :is(
   [data-storefront-submenu], [role='listbox']:has([data-theme-option])
 ) {
   background-color: var(--lunara-card-surface);
+}
+
+/* Only the narrow utility strip uses the raw secondary accent; its text/focus are checked separately. */
+[data-header-utility] {
+  --lunara-body: var(--lunara-utility-foreground);
+  --lunara-ink: var(--lunara-utility-ink);
+  --lunara-border: var(--lunara-utility-border);
+  --lunara-focus-ring: var(--lunara-utility-focus);
 }
 
 /* Footer keeps its layout and follows the active theme through dedicated semantic roles. */

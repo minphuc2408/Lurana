@@ -586,6 +586,7 @@
 !/src/app/layouts/components/ThemeSwitcher.tsx
 !/tests/themes.test.mjs
 !/scripts/check-ui-themes.mjs
+!/scripts/check-ui-creative-colors.mjs
 !/docs/ui-ux/
 !/docs/ui-ux/LUNARA_MULTI_THEME_SPEC.md
 !/docs/ui-ux/Extend_Lunara_Multi_Theme.md

@@ -53,6 +53,26 @@ test('creative themes preserve all six approved colors and supply readable secon
     for(const surface of [theme.background,theme.secondary,theme.softSurface,'#FFFFFF']) assert.ok(contrast(tokens['--lunara-accent-secondary-strong'],surface)>=4.5,theme.id+' secondary text/icon');
   }
 });
+test('creative accents have fixed visible roles and AA text/focus on every surface where they appear', () => {
+  for(const theme of themes.slice(16)) {
+    const tokens=themeTokens(theme);
+    const secondary=tokens['--lunara-accent-secondary-strong'];
+    const tertiary=tokens['--lunara-accent-tertiary-strong'];
+    assert.equal(tokens['--lunara-utility-background'],theme.secondaryAccent);
+    assert.equal(tokens['--lunara-journey-icon-surface'],theme.tertiaryAccent);
+    for(const token of ['--lunara-secondary-link','--lunara-product-action-foreground','--lunara-footer-link','--lunara-footer-heading'])assert.equal(tokens[token],secondary,theme.id+' secondary role '+token);
+    assert.equal(tokens['--lunara-editorial-label'],tertiary);
+    for(const surface of [theme.background,theme.secondary,theme.softSurface,'#FFFFFF',tokens['--lunara-accent-secondary-soft'],tokens['--lunara-accent-tertiary-soft']]) {
+      for(const token of ['--lunara-body','--lunara-rose-strong','--lunara-accent-secondary-strong','--lunara-accent-tertiary-strong'])assert.ok(contrast(tokens[token],surface)>=4.5,theme.id+' '+token+' on '+surface);
+      assert.ok(contrast(tokens['--lunara-focus-ring'],surface)>=3,theme.id+' focus');
+    }
+    assert.ok(contrast(secondary,'#FFFFFF')>=4.5,theme.id+' secondary button hover');
+    assert.ok(contrast(tertiary,theme.tertiaryAccent)>=4.5,theme.id+' campaign text/icon');
+    assert.ok(contrast(tokens['--lunara-utility-foreground'],theme.secondaryAccent)>=4.5,theme.id+' utility text');
+    assert.ok(contrast(tokens['--lunara-utility-focus'],theme.secondaryAccent)>=3,theme.id+' utility focus');
+    assert.ok(contrast(tokens['--lunara-admin-active-foreground'],tokens['--lunara-admin-active-surface'])>=4.5,theme.id+' active admin text');
+  }
+});
 test('every new theme supplies readable text/CTA/focus/control tokens on its actual light surfaces', () => {
   for(const theme of themes.slice(1)) {
     const tokens=themeTokens(theme);

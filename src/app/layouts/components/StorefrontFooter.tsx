@@ -5,8 +5,8 @@ import { customerCareLinks, socialLinks, storeLocations } from '@/shared/config/
 import { FeatureUnavailable } from '@/shared/components/FeatureUnavailable';
 import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription, DialogClose } from '@/shared/ui/dialog';
 
-const linkClass = 'inline-block text-sm leading-6 text-lunara-body no-underline transition-colors hover:text-lunara-rose-strong hover:underline underline-offset-4 break-words';
-const headingClass = 'mb-5 text-sm font-medium tracking-[0.06em] uppercase text-lunara-ink';
+const linkClass = 'inline-block text-sm leading-6 text-lunara-footer-link no-underline transition-colors hover:text-lunara-rose-strong hover:underline underline-offset-4 break-words';
+const headingClass = 'mb-5 text-sm font-medium tracking-[0.06em] uppercase text-lunara-footer-heading';
 const bottomLabels = ['Privacy Policy', 'Shipping Policy'];
 const shoppingLabels = ['Frequently Asked Questions', 'Payment Methods'];
 

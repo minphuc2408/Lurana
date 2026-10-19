@@ -52,7 +52,7 @@ function SidebarContent({
         {navItems.map(item => {
         const active = location.pathname === item.path || item.path !== "/admin/dashboard" && location.pathname.startsWith(item.path);
         const Icon = item.icon;
-        return <Link key={item.path} to={item.path} onClick={onClose} title={collapsed ? t(item.label) : undefined} aria-label={collapsed ? t(item.label) : undefined} className={cn("flex items-center rounded-xl mb-0.5 [text-decoration:none] [transition:all_0.15s]", collapsed ? "justify-center px-3 py-2.5" : "gap-3 px-3 py-2.5", active ? "bg-[rgba(193,123,138,0.18)]" : "bg-transparent", active ? "text-[#E8B0BC]" : "text-lunara-rose-light", active ? "[border-left:3px_solid_#C17B8A]" : "[border-left:3px_solid_transparent]")}>
+        return <Link key={item.path} to={item.path} onClick={onClose} title={collapsed ? t(item.label) : undefined} aria-label={collapsed ? t(item.label) : undefined} className={cn("flex items-center rounded-xl mb-0.5 [text-decoration:none] [transition:all_0.15s]", collapsed ? "justify-center px-3 py-2.5" : "gap-3 px-3 py-2.5", active ? "bg-lunara-admin-active" : "bg-transparent", active ? "text-lunara-on-admin-active" : "text-lunara-rose-light", active ? "border-l-[3px] border-l-lunara-admin-active-border" : "[border-left:3px_solid_transparent]")}>
               <Icon size={17} />
               {!collapsed && <span className="[font-size:0.85rem] [letter-spacing:0.04em] [flex:1]">{t(item.label)}</span>}
               {!collapsed && active && <ChevronRight size={13} className="[opacity:0.5]" />}
@@ -120,7 +120,7 @@ export function AdminLayout() {
       {/* Main area */}
       <div className="flex-1 flex flex-col overflow-hidden bg-lunara-admin-background">
         {/* Top Bar */}
-        <header className="flex items-center justify-between gap-2 px-4 sm:px-6 flex-shrink-0 [height:62px] bg-white [border-bottom:1px_solid_#F0DDD5]">
+        <header className="flex items-center justify-between gap-2 px-4 sm:px-6 flex-shrink-0 [height:62px] border-b border-b-lunara-admin-header-border bg-white">
           <div className="flex min-w-0 items-center gap-3">
             <button onClick={() => setSidebarOpen(true)} className="md:hidden bg-transparent [border:none] [cursor:pointer] text-lunara-body [padding:4px]" aria-label={t("Open menu")}>
               <Menu size={22} />
@@ -147,7 +147,7 @@ export function AdminLayout() {
             </button>}
 
             {/* User chip */}
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-lunara-blush [border:1px_solid_#F0DDD5]">
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full border border-lunara-admin-header-border bg-lunara-blush">
               <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 bg-lunara-rose-strong [font-size:0.72rem] text-white [font-weight:700]">
                 {(user.name || t('Administrator')).charAt(0)}
               </div>

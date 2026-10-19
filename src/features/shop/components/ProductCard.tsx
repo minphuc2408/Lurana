@@ -43,7 +43,7 @@ export function ProductCard({ appearance = 'default', product, added, onAdd, sel
       </div>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 pt-2">
         <span data-product-price className="text-sm font-medium tracking-tight text-lunara-ink sm:text-base">{variant ? formatVND(variant.price, language) : t('Unavailable')}</span>
-        {appearance !== 'recommendation' && <Button type="button" data-product-add variant="outline" size="icon" disabled={!variant?.in_stock} onClick={() => onAdd(product.id, variant?.id)} aria-label={t("Add {{value0}} to cart", { value0: getLocalizedName(product, language) })} title={variant?.in_stock ? added ? t('Added') : t('Add to Cart') : t('Out of stock')} className={cn("size-11 rounded-full border-lunara-border bg-lunara-card-surface text-lunara-body hover:border-lunara-rose-strong hover:bg-lunara-rose-strong hover:text-white focus-visible:ring-lunara-rose-strong [&_svg]:size-3.5", added && "border-lunara-rose-strong text-lunara-rose-strong")}>
+        {appearance !== 'recommendation' && <Button type="button" data-product-add variant="outline" size="icon" disabled={!variant?.in_stock} onClick={() => onAdd(product.id, variant?.id)} aria-label={t("Add {{value0}} to cart", { value0: getLocalizedName(product, language) })} title={variant?.in_stock ? added ? t('Added') : t('Add to Cart') : t('Out of stock')} className={cn("size-11 rounded-full border-lunara-product-action-border bg-lunara-product-action text-lunara-on-product-action hover:border-lunara-product-action-hover hover:bg-lunara-product-action-hover hover:text-white focus-visible:ring-lunara-rose-strong [&_svg]:size-3.5", added && "border-lunara-rose-strong text-lunara-rose-strong")}>
           {added ? <Check aria-hidden="true" strokeWidth={1.8} /> : <ShoppingBag aria-hidden="true" strokeWidth={1.8} />}
         </Button>}
         <span role="status" className="sr-only">{!variant?.in_stock ? t('Out of stock') : added ? t('Added') : ''}</span>
@@ -56,7 +56,7 @@ export function ProductCard({ appearance = 'default', product, added, onAdd, sel
       <ImageWithFallback src={product.image} alt={getLocalizedName(product, language)} loading="lazy" className="h-full w-full object-cover transition-transform duration-300 motion-safe:group-hover:scale-105" />
     </Link>
     <div className="flex flex-1 flex-col p-3 sm:p-5">
-      {product.tag && <p className="mb-2 text-[0.6rem] font-semibold tracking-[0.12em] text-lunara-rose-strong uppercase">{t(product.tag)}</p>}
+      {product.tag && <p className="mb-2 bg-lunara-campaign text-[0.6rem] font-semibold tracking-[0.12em] text-lunara-on-campaign uppercase">{t(product.tag)}</p>}
       <h3 className="mb-2 font-display text-lg leading-snug font-medium text-lunara-ink"><Link to={detailPath} data-product-name-link className="transition-colors hover:text-lunara-rose-strong">{getLocalizedName(product, language)}</Link></h3>
       {description && <Link to={detailPath} data-product-description-link className="mb-4 block text-xs leading-5 text-lunara-body transition-colors hover:text-lunara-rose-strong"><p className="line-clamp-2">{description}</p></Link>}
       <label className="mt-auto block text-xs text-lunara-body">

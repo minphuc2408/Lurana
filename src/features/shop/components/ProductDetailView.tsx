@@ -35,7 +35,7 @@ export function ProductDetailView(model: ProductDetailModel) {
         <article data-product-detail={product.id} className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-12 xl:gap-14">
           <ProductGallery {...model} />
           <div className="min-w-0 lg:py-1">
-            {category && <p className="mb-3 text-[10px] tracking-[0.18em] text-lunara-rose-strong uppercase sm:text-xs">{category}</p>}
+            {category && <p className="mb-3 bg-lunara-campaign text-[10px] tracking-[0.18em] text-lunara-on-campaign uppercase sm:text-xs">{category}</p>}
             <h1 className="mb-4 font-display text-[clamp(2rem,3vw,2.6rem)] leading-[1.2] break-words text-lunara-ink">{name}</h1>
             <div aria-live="polite" aria-atomic="true" className="mb-3 flex flex-wrap items-baseline gap-3">
               <span data-detail-price className="font-display text-3xl text-lunara-ink">{model.variant ? formatVND(model.variant.price, language) : common.t('Unavailable')}</span>
@@ -66,7 +66,7 @@ export function ProductDetailView(model: ProductDetailModel) {
               </div>
             </div>
             <div data-detail-actions className="flex flex-wrap items-stretch gap-2 sm:gap-3">
-              <Button data-detail-add variant="outline" disabled={disabled} onClick={model.addToCart} className="min-h-11 min-w-0 flex-1 gap-2 rounded-[2px] border-lunara-rose-strong bg-lunara-card-surface px-3 py-3 text-[11px] text-lunara-rose-strong uppercase hover:bg-lunara-blush sm:text-xs"><ShoppingBag size={15} aria-hidden="true" />{t('Add to Cart')}</Button>
+              <Button data-detail-add variant="outline" disabled={disabled} onClick={model.addToCart} className="min-h-11 min-w-0 flex-1 gap-2 rounded-[2px] border-lunara-secondary-link bg-lunara-card-surface px-3 py-3 text-[11px] text-lunara-secondary-link uppercase hover:bg-lunara-blush sm:text-xs"><ShoppingBag size={15} aria-hidden="true" />{t('Add to Cart')}</Button>
               <Button data-order-now disabled={disabled} onClick={model.orderNow} className="min-h-11 min-w-0 flex-1 gap-2 rounded-[2px] bg-lunara-rose-strong px-3 py-3 text-[11px] text-white uppercase hover:bg-lunara-ink sm:text-xs">{t('Buy now')}<ArrowRight size={15} aria-hidden="true" /></Button>
               <button data-detail-favorite type="button" aria-pressed={model.favorite} aria-label={t(model.favorite ? 'Remove {{name}} from favorites' : 'Add {{name}} to favorites', { name })} onClick={model.toggleFavorite} className="hidden min-h-11 w-11 shrink-0 items-center justify-center rounded-[2px] border border-lunara-rose-strong bg-lunara-card-surface text-lunara-rose-strong md:inline-flex"><Heart size={20} fill={model.favorite ? 'currentColor' : 'none'} strokeWidth={1.5} aria-hidden="true" /></button>
             </div>
@@ -91,7 +91,7 @@ export function ProductDetailView(model: ProductDetailModel) {
           </aside>
         </section>
         <section data-related-products className="mt-12 border-t border-lunara-border pt-8 sm:mt-16 sm:pt-12">
-          <div className="mb-6 flex items-center justify-between gap-3 sm:mb-8"><h2 className="font-display text-xl text-lunara-ink sm:text-2xl">{t('You may also like')}</h2><Link data-related-view-all to="/shop" className="inline-flex min-h-11 shrink-0 items-center gap-1.5 text-xs text-lunara-rose-strong hover:underline">{t('View more')}<ArrowRight size={14} aria-hidden="true" /></Link></div>
+          <div className="mb-6 flex items-center justify-between gap-3 sm:mb-8"><h2 className="font-display text-xl text-lunara-ink sm:text-2xl">{t('You may also like')}</h2><Link data-related-view-all to="/shop" className="inline-flex min-h-11 shrink-0 items-center gap-1.5 text-xs text-lunara-secondary-link hover:underline">{t('View more')}<ArrowRight size={14} aria-hidden="true" /></Link></div>
           <ProductGrid appearance="recommendation" products={model.relatedProducts} selectedVariants={model.relatedVariants} added={model.addedRelated} onAdd={model.addRelated} />
         </section>
       </>}

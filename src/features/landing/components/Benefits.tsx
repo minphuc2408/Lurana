@@ -13,15 +13,15 @@ const journey = [
 ];
 export function Benefits({ variant = 'services' }: { variant?: 'services' | 'journey' }) {
   const { t } = useLocale("landing");
-  if (variant === 'journey') return <section data-home-journey aria-labelledby="journey-title" className="bg-lunara-section-secondary py-16 sm:py-20">
+  if (variant === 'journey') return <section data-home-journey aria-labelledby="journey-title" className="bg-lunara-journey py-16 sm:py-20">
     <div className="mx-auto max-w-[var(--lunara-content-max-width)] px-5 sm:px-8">
     <div className="mx-auto mb-12 max-w-xl text-center sm:mb-16">
-      <p className="mb-2 text-[11px] font-medium tracking-[0.16em] text-lunara-rose-strong uppercase">{t('The gifting journey')}</p>
+      <p className="mb-2 text-[11px] font-medium tracking-[0.16em] text-lunara-editorial-label uppercase">{t('The gifting journey')}</p>
       <h2 id="journey-title" className="font-display text-2xl leading-snug tracking-tight text-lunara-ink sm:text-3xl">{t('Just 3 steps to send a little love')}</h2>
     </div>
     <ol className="grid grid-cols-1 gap-8 text-center md:grid-cols-3 lg:gap-12">
       {journey.map(({ title, detail }, index) => <li key={title} className="flex min-w-0 flex-col items-center">
-        <div className="mb-4 flex size-12 items-center justify-center text-lunara-accent-secondary-strong">
+        <div className="mb-4 flex size-12 items-center justify-center bg-lunara-journey-icon text-lunara-on-journey-icon">
           <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             {index === 0 ? <><path d="M12 22v-9" /><path d="M12 13c-2.5 0-5-2-5-4.5a5 5 0 0 1 10 0c0 2.5-2.5 4.5-5 4.5z" /><path d="M12 8.5V4" /><path d="M9.5 5.5c1.5-1.5 3.5-1.5 5 0" /><path d="M12 17c-2 0-4-1-4-2" /><path d="M12 19c2 0 4-1 4-2" /></>
               : index === 1 ? <><rect x="3" y="5" width="18" height="14" rx="1" /><path d="m3 7 9 6 9-6" /><path d="M8 14h4" /><path d="M8 11h2" /></>
