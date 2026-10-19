@@ -138,7 +138,7 @@ html:has([data-home-layout]) :is(
   background-color: var(--lunara-card-surface);
 }
 
-/* Only the narrow utility strip uses the raw secondary accent; its text/focus are checked separately. */
+/* Utility text, dividers and focus follow the surface's semantic roles. */
 [data-header-utility] {
   --lunara-body: var(--lunara-utility-foreground);
   --lunara-ink: var(--lunara-utility-ink);
@@ -203,6 +203,39 @@ html[data-lunara-theme]:not([data-lunara-theme='original']) [role='option'][data
 [role='option'][data-highlighted]:has([data-theme-option]) {
   outline: 2px solid var(--lunara-focus-ring, var(--lunara-ink));
   outline-offset: -2px;
+}
+
+/* Scope the interaction refinement to the five creative palettes; legacy states stay intact.
+   Radix's highlighted state includes pointer focus, so it cannot identify keyboard use alone. */
+html[data-lunara-theme]:is(
+  [data-lunara-theme='wildflower-pop'], [data-lunara-theme='cobalt-citrus'],
+  [data-lunara-theme='orchid-picnic'], [data-lunara-theme='ocean-confetti'],
+  [data-lunara-theme='folk-bloom']
+) {
+  & :is([data-lunara-select-content] [role='option'], [data-storefront-submenu] [role='menuitem']) {
+    &[data-highlighted] {
+      background-color: var(--lunara-surface);
+      color: var(--lunara-ink);
+      outline: none;
+    }
+
+    &[data-state='checked'] {
+      background-color: transparent;
+      color: var(--lunara-rose-strong);
+    }
+
+    &[aria-current='page'] {
+      color: var(--lunara-rose-strong);
+    }
+  }
+
+  & :is(
+    [data-lunara-select-content][data-input-method='keyboard'] [role='option'][data-highlighted],
+    [data-storefront-submenu][data-input-method='keyboard'] [role='menuitem'][data-highlighted]
+  ) {
+    outline: 2px solid var(--lunara-focus-ring);
+    outline-offset: -2px;
+  }
 }
 
 @layer base {

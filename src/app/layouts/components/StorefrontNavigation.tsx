@@ -1,6 +1,7 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { ChevronDown } from 'lucide-react';
 import { Link } from 'react-router';
+import { useRef } from 'react';
 import { useLocale } from '@/shared/i18n';
 import { cn } from '@/shared/lib/utils';
 import type { MainLayoutModel } from '../hooks/useMainLayout';
@@ -9,16 +10,17 @@ const itemClass = 'flex min-h-11 w-full items-center rounded-lg px-4 py-2.5 text
 const occasions = ['Birthday', 'Anniversary', 'Wedding', 'Graduation', 'Sympathy'] as const;
 
 export function StorefrontNavigation({ model }: { model: MainLayoutModel }) {
+  const inputMethod = useRef('keyboard');
   const { t, language } = useLocale('common');
   const navClass = (active = false) => cn("relative flex min-h-14 w-full items-center justify-between gap-2 px-5 text-left text-base whitespace-nowrap transition-colors hover:text-lunara-rose-strong after:absolute after:inset-x-5 after:bottom-0 after:h-[2px] after:origin-left after:scale-x-0 after:rounded-full after:bg-lunara-rose-strong lg:w-auto lg:justify-center lg:px-1 lg:after:inset-x-0", active ? 'font-medium text-lunara-rose-strong after:scale-x-100 motion-safe:after:animate-[lunara-nav-underline_150ms_ease-out]' : 'text-lunara-ink');
   const menu = (kind: 'flowers' | 'occasions') => {
     const flowers = kind === 'flowers';
     return <DropdownMenu.Root modal={false}>
-      <DropdownMenu.Trigger data-header-submenu-trigger={kind} className={navClass(flowers && model.isActive('/shop') && model.activeCategory !== 'gift-sets')}>
+      <DropdownMenu.Trigger data-header-submenu-trigger={kind} onPointerDown={() => { inputMethod.current = 'pointer'; }} onKeyDown={() => { inputMethod.current = 'keyboard'; }} className={navClass(flowers && model.isActive('/shop') && model.activeCategory !== 'gift-sets')}>
         {t(flowers ? 'All flowers' : 'Shop by occasion')}<ChevronDown size={16} strokeWidth={1.5} aria-hidden="true" />
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content data-storefront-submenu={kind} align="start" sideOffset={4} collisionPadding={16} onCloseAutoFocus={event => { if (model.unavailableFeature) event.preventDefault(); }} className="z-[100] max-h-[min(24rem,var(--radix-dropdown-menu-content-available-height))] w-64 max-w-[calc(100vw-32px)] overflow-y-auto rounded-xl border border-lunara-border bg-lunara-cream p-2 font-body shadow-lg">
+        <DropdownMenu.Content data-storefront-submenu={kind} ref={node => { if (node) node.dataset.inputMethod = inputMethod.current; }} onPointerMove={event => { inputMethod.current = event.currentTarget.dataset.inputMethod = 'pointer'; }} onKeyDown={event => { inputMethod.current = event.currentTarget.dataset.inputMethod = 'keyboard'; }} align="start" sideOffset={4} collisionPadding={16} onCloseAutoFocus={event => { if (model.unavailableFeature) event.preventDefault(); }} className="z-[100] max-h-[min(24rem,var(--radix-dropdown-menu-content-available-height))] w-64 max-w-[calc(100vw-32px)] overflow-y-auto rounded-xl border border-lunara-border bg-lunara-cream p-2 font-body shadow-lg">
           {flowers ? <>
             <DropdownMenu.Item asChild><Link to="/shop" className={itemClass}>{t('All flowers')}</Link></DropdownMenu.Item>
             <DropdownMenu.Separator className="my-1 h-px bg-lunara-border" />

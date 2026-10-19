@@ -93,7 +93,7 @@ Mỗi màu phải có vai trò rõ ràng:
 
 Không chia đều diện tích cho tất cả màu.
 
-Ưu tiên khoảng 65–75% off-white, 15–20% surface trung tính/pastel và phần diện tích còn lại dành cho các accent có kiểm soát.
+Theo quyết định refactor19/10, ưu tiên khoảng90% cảm nhận là nền/giấy sáng và ảnh hoa; primary dẫn hướng tương tác, secondary/tertiary là chi tiết nhỏ. Đây là hướng dẫn thị giác, không áp tỷ lệ pixel cứng.
 
 Không dùng nhiều màu mạnh cạnh nhau trong những khu vực chứa nhiều thông tin.
 
@@ -167,25 +167,22 @@ Tôi muốn 5 theme mới mang bản sắc thương hiệu Lunara rõ ràng hơn
 
 Giữ nguyên toàn bộ thiết kế tôi đang hài lòng; chỉ mở rộng khả năng biểu đạt màu sắc của thương hiệu.
 
-## Hiện trạng triển khai — 18/10/2026
+## Hiện trạng triển khai — 19/10/2026
 
-- **Behavior:** Registry có21theme:16palette cũ +5creative ở trên. Menu hiện có giữ preview5màu cho palette cũ, hiển thị đủ6màu cho creative; preference vẫn `lunara.theme.v1`, áp dụng trước render và đi theo route/reload.
-- **Decision:** Primary giữ CTA/active/focus. Secondary gốc tô thanh tiện ích; bản strong dành cho link phụ/Footer/icon và quick-add, bản soft30% cho nền quick-add. Tertiary gốc tô nhãn Hero/category và ô icon/số Journey; strong dành cho chữ/line art, soft24% làm nền Journey. Nền trang/card/Story/Footer vẫn sáng; softSurface12% cũ trong registry và toàn bộ HEX gốc giữ nguyên.
-- **Compatibility:** Token mới có fallback về màu cũ; theme cũ không thêm override. Snapshot16palette/semantic colors trước mở rộng được khóa trong `tests/themes.test.mjs`; về Original xóa mọi override, kể cả accent mới.
-- **Source:** `themes.ts`/`brand.css`, `Hero`, `Benefits`, `FeaturedCollection`, `OurStory`, `ProductCard`, `ProductDetailView`, `StorefrontFooter`, `AdminLayout`. [Spec nền](LUNARA_MULTI_THEME_SPEC.md); kiểm chứng local và giới hạn tại [PROJECT_STATUS](../PROJECT_STATUS.md).
+- **Behavior:**21theme,16palette/semantic snapshot cũ và6HEX của mỗi creative giữ nguyên; `lunara.theme.v1`, bootstrap/persistence và6swatches không đổi. Surface sáng → primary cho tương tác → secondary/tertiary ở logo/nét minh họa nhỏ.
+- **Decision:** Mapping cũ tô secondary lên utility, tertiary lên nhãn Hero/icon và nền Journey; Radix highlight bao gồm pointer focus nên CSS outline theo `data-highlighted` tạo viền thừa. Mapping mới và trạng thái bên dưới thay audit18/10; không sửa layout/font/ảnh hay nghiệp vụ.
+- **Source:** `themeTokens()` trong `src/shared/theme/themes.ts`, `brand.css`; menu dùng `dropdown.tsx`/`StorefrontNavigation.tsx`. Menu ghi phương thức pointer/keyboard cục bộ; CSS chỉ override5creative, giữ nguyên trạng thái16theme cũ. Pointer dùng surface nhạt; checked dùng check + primary text; keyboard có outline primary2px; route active dùng primary.
 
-## Audit mức hiện diện màu — 18/10/2026
+## Phân bổ màu và kiểm chứng
 
-Trước audit, cả5theme dùng Primary cho Hero/CTA/Featured/Story/Footer. Secondary chỉ có ở logo, icon nhỏ và softSurface12% thường bị ảnh che; Tertiary chỉ có ở lá logo/số bước. Màu chữ Secondary còn bị pha về foreground nên khó nhận ra họ màu gốc.
+| Vùng | Trước refactor | Hiện tại |
+| --- | --- | --- |
+| Utility | Secondary gốc toàn dải | Secondary background sáng, ink/body, divider chuẩn |
+| Hero/category | Tertiary gốc phủ nhãn | Transparent, chữ primary |
+| Journey | Tertiary-soft +3ô tertiary | Secondary background sáng, icon transparent/nét secondary-strong |
+| Quick-add/link quan trọng | Secondary-soft/strong | Card trắng, primary; hover primary/on-primary |
+| Footer/Story/Featured | Heading/link secondary; divider secondary/tertiary | Heading ink, footer link body/hover primary, divider chuẩn |
+| Cá tính3accent | Mảng section khác màu | Primary CTA; secondary/tertiary gốc ở logo, secondary-strong ở icon nhỏ |
 
-| Theme | Primary giữ ở CTA | Secondary: từ logo/icon → tiện ích, link, quick-add | Tertiary: từ lá/số nhỏ → Hero, Journey |
-| --- | --- | --- | --- |
-| Wildflower Pop | Berry | Cyan | Vàng chanh |
-| Cobalt Citrus | Cobalt | Cam quýt | Xanh lá |
-| Orchid Picnic | Orchid | Cam san hô | Vàng olive |
-| Ocean Confetti | Teal | Hồng | Vàng nắng |
-| Folk Bloom | Đỏ gạch | Periwinkle | Olive |
-
-- **Contrast:** Gốc dùng trang trí; strong pha về đen, kiểm≥4.6:1 trên các surface thực sự dùng. Thanh tiện ích có text/ink/focus riêng; không tái dùng chữ trắng trên secondary sáng. Focus/control thiết yếu kiểm≥3:1; hover quick-add có chữ trắng/secondary-strong. Không gán màu theo index sản phẩm/bước.
-- **Admin audit:** Menu đang chọn còn khóa `#E8B0BC`/`#C17B8A` và header/user chip khóa border `#F0DDD5`; đã chuyển sang `admin-active-*`/`admin-header-border`, override chỉ5creative.16theme cũ giữ literal qua fallback. Sidebar tối, card trắng, success/warning/error và các fixture dashboard/settings/customer ẩn giữ nguyên; không redesign hay mở route deferred.
-- **Review:** `scripts/check-ui-creative-colors.mjs <loopback preview> before|after` tạo ảnh5theme ×desktop/mobile, từng vùng/toàn trang và báo cáo so sánh trong `.security-review/creative-theme-audit/index.html`. Cùng catalog/ảnh mẫu local/font cache; đo layout/type/content và computed styles16theme cũ trước/sau. Không dùng ảnh/font/provider remote để suy ra nghiệm thu cloud.
+- **Checks:** `scripts/check-ui-creative-colors.mjs <loopback preview> before|after` tạo baseline, computed states và ảnh5theme ×1440/390px ×7vùng, cộng10ảnh ghép trong `.security-review/creative-hierarchy-audit/`; `index.html` chọn theme/kích thước/vùng. So geometry/type/content và96ca computed styles legacy Home/Admin; kiểm text≥4.5:1, control/focus≥3:1 trên surface thực. [PROJECT_STATUS](../PROJECT_STATUS.md) ghi kết quả đã chạy và giới hạn.
+- **Review:** Dùng cùng catalog/admin tổng hợp, ảnh hoa mẫu local và font cache trước/sau; không ghi API hoặc suy ra nghiệm thu provider/cloud/thiết bị vật lý. [Spec16theme](LUNARA_MULTI_THEME_SPEC.md) giữ palette nền.

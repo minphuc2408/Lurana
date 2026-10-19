@@ -212,11 +212,11 @@ Hero và3ảnh Story dùng đúng ảnh Unsplash của ref, lưu local ở `src/
 | --- | --- | --- |
 | `--bg-primary` | `--lunara-cream` | Hero, Featured |
 | `--surface-card` | `--lunara-card-surface` | Navbar chính/search/menu, Story; nền trắng của21light themes theo ref |
-| `--section-secondary` | `--lunara-section-secondary` | Dải dịch vụ/Journey16theme cũ; Journey5creative dùng tertiary-soft qua journey-surface |
+| `--section-secondary` | `--lunara-section-secondary` | Dải dịch vụ/Journey dùng secondary background sáng;16theme cũ giữ nguyên |
 | `--surface-tertiary` | `--lunara-blush` | Khung ảnh |
-| Top bar (owner yêu cầu đồng bộ màu) | `--lunara-utility-background` |16theme cũ dùng soft surface;5creative dùng secondary gốc, text/focus có token riêng |
+| Top bar (owner yêu cầu đồng bộ màu) | `--lunara-utility-background` |16theme cũ dùng soft surface;5creative dùng secondary background sáng, ink/body và focus primary |
 
-Featured ProductCard dùng card-surface cho ô Xem chi tiết; nền nút giỏ16theme cũ giữ card-surface,5creative dùng secondary-soft/strong qua product-action tokens. CTA chính giữ primary; nhãn Hero/category dùng tertiary gốc riêng5creative. Góc/kích thước/bố cục giữ ref. Link phụ/nhóm link Footer dùng secondary-strong; chi tiết mapping/ảnh đối chiếu theo Extend Multi Theme.
+Featured ProductCard dùng card-surface cho ô Xem chi tiết/nút giỏ;5creative dùng icon/hover primary qua product-action tokens. Nhãn Hero/category transparent/chữ primary; Journey nền secondary background sáng, icon transparent. Footer5creative dùng heading ink/link body/hover primary. Secondary/tertiary giữ ở logo và nét icon nhỏ; divider dùng border chuẩn. Góc/kích thước/bố cục và16theme cũ giữ nguyên. Menu5creative phân biệt pointer highlight với keyboard outline2px; checked dùng check + primary text. Mapping/ảnh đối chiếu theo [Extend Multi Theme](docs/ui-ux/Extend_Lunara_Multi_Theme.md#phân-bổ-màu-và-kiểm-chứng).
 
 - Header3tầng max1440–1600px, lề20/32px, nav desktop từ1024px; shadow dưới thay border. Top bar36px gồm border1px, chữ10px dưới640px/12px từ640px, control32px; EN/VI storefront cao26px qua prop compact. Admin giữ cỡ cũ. Search cùng nền nav, không viền/outline cứng khi nhập, dùng shadow focus. Gạch active mở từ trái150ms, tắt với reduced-motion. Logo minh họa hoa từ ref, wordmark Lunarra; favicon giữ nguyên. Mobile đóng menu bằng Escape/click ngoài/đổi route.
 - `StorefrontNavigation.tsx` dùng Radix DropdownMenu; danh mục lấy CatalogProvider, Quà tặng tới `/shop?category=gift-sets` khi có category. Search luôn hiện, trim/encode tới `/shop?q=` và sync URL; tra đơn/giỏ dùng route hiện có, badge dùng shared itemCount. Story còn ở Home/footer/`/about`.

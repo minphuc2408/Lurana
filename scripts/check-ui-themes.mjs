@@ -81,12 +81,12 @@ async function checkHomePalette(theme) {
   if(!('secondaryAccent' in theme))assertNode.equal(colors.expected.journey,rgb(theme.secondary),'Legacy secondary-section role '+theme.id);
   assertNode.equal(colors.expected.story,rgb('#FFFFFF'),'Reference surface-card role '+theme.id);
   assertNode.deepEqual(colors.actual,colors.expected,'Home uses selected palette without local color overrides: '+theme.id);
-  assertNode.equal(colors.actual.utility,rgb('secondaryAccent' in theme?theme.secondaryAccent:theme.softSurface),'Utility stays within the active palette: '+theme.id);
+  assertNode.equal(colors.actual.utility,rgb('secondaryAccent' in theme?theme.secondary:theme.softSurface),'Utility stays within the active neutral palette: '+theme.id);
   assertNode.equal(colors.actual.footer,rgb(theme.secondary),'Footer stays within the active palette: '+theme.id);
   assertNode.ok(colors.logoColors.length>0&&colors.logoColors.every(color=>colors.allowedLogoColors.includes(color)),'Logo illustration follows the active palette: '+theme.id);
   if('secondaryAccent' in theme){
     assertNode.ok(colors.logoColors.includes(rgb(theme.secondaryAccent))&&colors.logoColors.includes(rgb(theme.tertiaryAccent)),'Logo renders both distinct accents: '+theme.id);
-    assertNode.equal(colors.actual.journeyMarkerSurface,rgb(theme.tertiaryAccent),'Campaign marker preserves the tertiary accent: '+theme.id);
+    assertNode.equal(colors.actual.journeyMarkerSurface,'rgba(0, 0, 0, 0)','Journey marker leaves paper visible: '+theme.id);
   }else{
     assertNode.equal(colors.actual.serviceIcon,colors.expected.accent,'Legacy service icon color: '+theme.id);
     assertNode.equal(colors.actual.journeyMarkerSurface,'rgba(0, 0, 0, 0)','Legacy marker remains transparent: '+theme.id);
