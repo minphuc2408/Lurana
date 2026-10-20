@@ -10,6 +10,7 @@ export function useProducts() {
   const search = params.get("q") || "";
   const [sortBy, setSortBy] = useState("featured");
   const [priceRange, setPriceRange] = useState("all");
+  const [filtersExpanded, setFiltersExpanded] = useState(false);
   const selectedVariants = useMemo(() => Object.fromEntries(catalog.products.flatMap(product => {
     const variant = smallestVariant(product.variants || []);
     return variant ? [[product.id, variant.id]] : [];
@@ -23,7 +24,7 @@ export function useProducts() {
   return {
     ...catalog, activeCategory, setActiveCategory: (value: string) => updateParam('category', value),
     search, setSearch: (value: string) => updateParam('q', value), sortBy, setSortBy, priceRange, setPriceRange,
-    sorted, selectedVariants,
+    sorted, selectedVariants, filtersExpanded, toggleFilters: () => setFiltersExpanded(value => !value),
   };
 }
 export type ProductsModel = ReturnType<typeof useProducts>;

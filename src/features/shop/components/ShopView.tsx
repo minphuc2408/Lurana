@@ -14,10 +14,9 @@ export function ShopView(model: ProductsModel & {
 }) {
   const { t } = useLocale("shop");
   return <main data-shop-layout className="min-h-screen bg-lunara-cream font-body">
-    <div className="mx-auto max-w-[1440px] px-5 pt-10 pb-10 sm:px-8 sm:pt-12">
-      <p className="mb-3 text-xs tracking-[0.16em] text-lunara-body uppercase sm:text-sm">{t('Fresh flower collection')}</p>
+    <div className="mx-auto max-w-[1440px] px-5 py-6 sm:px-8 sm:pt-12 sm:pb-10">
       <h1 className="font-display text-[clamp(2.2rem,5vw,3.2rem)] leading-tight tracking-tight text-lunara-ink">{t('Lunarra Flowers')}</h1>
-      <p className="mt-3 max-w-2xl text-base leading-7 text-lunara-body">{t("Discover handcrafted arrangements for every occasion")}</p>
+      <p className="mt-2 max-w-2xl text-base leading-6 text-lunara-body sm:mt-3 sm:leading-7">{t("Discover handcrafted arrangements for every occasion")}</p>
     </div>
     <div className="mx-auto max-w-[1440px] px-5 pb-10 sm:px-8">
       <FilterBar {...model} count={model.sorted.length} />
