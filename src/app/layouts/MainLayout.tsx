@@ -10,8 +10,9 @@ import { ZaloContact } from './components/ZaloContact';
 import { ThemeSwitcher } from './components/ThemeSwitcher';
 import { useWishlist, WishlistDrawer } from '@/features/shop';
 import { cn } from '@/shared/lib/utils';
+import { featureFlags } from '@/shared/config/features';
 
-const utilityClass = 'inline-flex min-h-8 min-w-8 items-center justify-center gap-1.5 rounded-sm text-[10px] text-lunara-body transition-colors hover:text-lunara-ink sm:text-xs';
+const utilityClass = 'inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-sm text-xs text-lunara-body transition-colors hover:text-lunara-ink';
 const actionClass = 'relative inline-flex min-h-11 min-w-11 flex-col items-center justify-center gap-1.5 rounded-sm text-lunara-body no-underline transition-colors hover:text-lunara-rose-strong lg:min-w-[84px]';
 
 export function MainLayout() {
@@ -21,11 +22,11 @@ export function MainLayout() {
   const description = t('Navigation feature coming soon', { feature: model.unavailableFeature ? t(model.unavailableFeature) : '' });
 
   return <div className="min-h-screen bg-lunara-cream font-body" data-d1-storefront>
-    <header data-storefront-header className="sticky top-0 z-50 bg-lunara-cream shadow-md shadow-lunara-ink/10">
+    <header ref={model.headerRef} data-storefront-header className="sticky top-0 z-50 bg-lunara-cream shadow-md shadow-lunara-ink/10">
       <div data-header-utility className="border-b border-lunara-border bg-lunara-utility">
-        <div className="mx-auto flex h-[35px] max-w-[var(--lunara-header-max-width)] items-center justify-between gap-2 px-5 sm:px-8">
+        <div className="mx-auto flex min-h-12 max-w-[var(--lunara-header-max-width)] items-center justify-between gap-2 px-5 sm:px-8">
           <p className="flex min-w-0 items-center gap-2 text-[10px] text-lunara-ink sm:text-xs"><Truck size={14} strokeWidth={1.5} aria-hidden="true" /><span className="hidden min-w-0 truncate sm:inline">{t('Flower delivery • Scheduled with care')}</span></p>
-          <div className="flex shrink-0 items-center gap-3 sm:gap-5">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-4">
             <button type="button" data-header-support aria-label={t('Customer support')} onClick={() => model.showUnavailable('Customer support')} className={utilityClass}><Headphones size={14} strokeWidth={1.5} aria-hidden="true" /><span className="hidden md:inline">{t('Customer support')}</span></button>
             <span aria-hidden="true" className="hidden h-4 w-px bg-lunara-border lg:block" />
             <button type="button" data-header-hotline aria-label={t('Hotline')} onClick={() => model.showUnavailable('Hotline')} className={utilityClass}><Phone size={14} strokeWidth={1.5} aria-hidden="true" /><span className="hidden lg:inline">{t('Hotline')}</span></button>
@@ -58,7 +59,7 @@ export function MainLayout() {
           <form id="header-search" role="search" action={import.meta.env.BASE_URL + 'shop'} method="get" onSubmit={model.submitSearch} className="flex min-h-[50px] min-w-0 flex-1 items-center gap-2 rounded-full border-0 bg-lunara-cream py-1 pr-1 pl-4 shadow-sm shadow-lunara-ink/15 transition-shadow focus-within:shadow-md focus-within:shadow-lunara-ink/15 sm:pl-5">
             <Search size={20} strokeWidth={1.5} aria-hidden="true" className="hidden shrink-0 text-lunara-body sm:block" />
             <input ref={model.searchInputRef} type="search" name="q" value={model.searchTerm} onChange={event => model.setSearchTerm(event.target.value)} aria-label={t('Search flowers')} placeholder={t('Find flowers, gifts...')} className="min-h-10 w-full min-w-0 border-0 bg-transparent px-1 text-base text-lunara-ink outline-none placeholder:text-lunara-body focus:outline-none focus-visible:outline-none focus-visible:ring-0 sm:px-2" />
-            <button type="submit" aria-label={t('Search')} className="inline-flex min-h-10 min-w-14 shrink-0 items-center justify-center rounded-full bg-lunara-rose-strong text-white transition-colors hover:bg-lunara-ink sm:min-w-[70px]"><Search size={21} strokeWidth={1.75} aria-hidden="true" /></button>
+            <button type="submit" aria-label={t('Search')} className="inline-flex min-h-11 min-w-14 shrink-0 items-center justify-center rounded-full bg-lunara-rose-strong text-white transition-colors hover:bg-lunara-ink sm:min-w-[70px]"><Search size={21} strokeWidth={1.75} aria-hidden="true" /></button>
           </form>
         </div>
 
@@ -74,7 +75,7 @@ export function MainLayout() {
       <StorefrontNavigation model={model} />
     </header>
 
-    <Outlet /><StorefrontFooter /><ZaloContact /><WishlistDrawer />
+    <Outlet /><StorefrontFooter />{featureFlags.zaloContact && <ZaloContact />}<WishlistDrawer />
     <Dialog open={model.unavailableFeature !== null} onOpenChange={open => { if (!open) model.closeUnavailable(); }}>
       <DialogContent className="rounded-2xl border-lunara-border bg-lunara-cream font-body" onCloseAutoFocus={event => { event.preventDefault(); model.restoreNoticeFocus(); }}>
         <DialogTitle className="sr-only">{model.unavailableFeature ? t(model.unavailableFeature) : ''}</DialogTitle>

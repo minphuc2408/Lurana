@@ -9,4 +9,6 @@ export const featureFlags = {
   adminCustomers: false,
   adminSettings: false,
   adminNotifications: false,
+  // Enable only after the shop supplies a working, verified contact destination.
+  zaloContact: false,
 };

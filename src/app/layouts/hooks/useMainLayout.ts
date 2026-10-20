@@ -17,8 +17,20 @@ export function useMainLayout() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const navigationRef = useRef<HTMLElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
   const noticeTriggerRef = useRef<HTMLElement | null>(null);
   const searchQuery = new URLSearchParams(location.search).get('q') || '';
+
+  useEffect(() => {
+    const header = headerRef.current;
+    const layout = header?.parentElement;
+    if (!header || !layout) return;
+    const updateHeight = () => layout.style.setProperty('--lunara-storefront-header-height', `${header.getBoundingClientRect().height}px`);
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(header);
+    return () => { observer.disconnect(); layout.style.removeProperty('--lunara-storefront-header-height'); };
+  }, []);
 
   useEffect(() => { setMenuOpen(false); setSearchTerm(searchQuery); }, [location.key, searchQuery]);
   useEffect(() => {
@@ -70,7 +82,7 @@ export function useMainLayout() {
   const activeCategory = new URLSearchParams(location.search).get('category');
   const isActive = (path: string) => path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
   return {
-    searchTerm, setSearchTerm, searchInputRef, submitSearch, itemCount,
+    searchTerm, setSearchTerm, searchInputRef, submitSearch, itemCount, headerRef,
     menuOpen, toggleMenu: () => setMenuOpen(previous => !previous), menuButtonRef, navigationRef,
     categories: catalog.categories, catalogLoading: catalog.loading, catalogError: catalog.error, reloadCatalog: catalog.reload,
     giftHref: giftCategory ? categoryHref(giftCategory.code) : undefined, categoryHref, activeCategory, isActive,

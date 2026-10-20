@@ -260,7 +260,7 @@ html[data-lunara-theme]:is(
   }
 
   :where(a, button, input, select, textarea):focus-visible {
-    outline: 2px solid var(--lunara-rose-light);
+    outline: 2px solid var(--lunara-focus-ring);
     outline-offset: 1px;
   }
 }
