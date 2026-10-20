@@ -49,13 +49,14 @@ Preview thường ở `http://127.0.0.1:4173`; nếu cổng bận, dùng đúng 
 | Binding/type changes | `npm run cf:typegen` tạo Worker declarations; không chạy chỉ vì sửa docs |
 | UI tổng quát | `npm run check:ui -- http://127.0.0.1:4173` |
 | Storefront responsive | `node scripts/check-ui-storefront.mjs http://127.0.0.1:4173 --responsive` |
-| Checkout/lookup/admin | `npm run check:ui:phase5`; harness cô lập/synthetic secrets, không nghiệm thu provider/cloud |
+| Checkout/lookup/admin | `npm run check:ui:phase5`; nếu build có site key, dùng build test key và `-- --turnstile-test` theo [BOT_PROTECTION](operations/BOT_PROTECTION.md#kiểm-tra-và-giới-hạn-bằng-chứng). Harness cô lập/synthetic secrets, không nghiệm thu provider/cloud |
 | Cart/checkout UI chọn lọc | `node scripts/check-ui-cart-checkout.mjs http://127.0.0.1:4173 --fonts`; loopback, callback/POST response tổng hợp, không ghi D1 |
 | Lookup UI chọn lọc | `node scripts/check-ui-order-lookup.mjs http://127.0.0.1:4173`; API/challenge giả lập, không tạo đơn |
+| Regression refinement | `node scripts/check-ui-refinements.mjs http://127.0.0.1:4173`; focus/menu admin, sticky, control/placeholder và filter mobile; public GET cache trong lượt chạy, admin giả lập, chặn mọi API ghi; tùy chọn `--font-cache=<file>` |
 | Theme | [Quy trình kiểm theme](#kiểm-theme-và-font) và scope trong design system |
 | Markdown-only | Kiểm nội dung, links/anchors, file inclusion và `git diff --check`; không chạy lại suite runtime để tạo log mới |
 
-Smoke local giữ `persist:false`, `remoteBindings:false`, env demo/synthetic và đối chiếu snapshot persisted. Không suy rộng việc cô lập secret này cho mọi script: schema verifier dùng getPlatformProxy có thể đọc env local. Browser mock/cache và tài nguyên remote bị chặn phải được ghi rõ phạm vi. Full UI suite còn vấn đề đã biết tại [PROJECT_STATUS](PROJECT_STATUS.md#code-và-kiểm-chứng-local); một targeted PASS không thay full-suite PASS.
+Smoke local giữ `persist:false`, `remoteBindings:false`, env demo/synthetic và đối chiếu snapshot persisted. Không suy rộng việc cô lập secret này cho mọi script: schema verifier dùng getPlatformProxy có thể đọc env local. Browser mock/cache và tài nguyên remote bị chặn phải được ghi rõ phạm vi. Full UI checker đã kiểm lại checkout tách route/ward tường minh ngày 20/10; phạm vi và giới hạn bằng chứng ở [hồ sơ nghiệm thu](archive/VERIFICATION_HISTORY.md#kiểm-chứng-local). Một targeted PASS không thay full-suite PASS.
 
 `npm run db:reset:local` xóa state D1 local rồi migrate/seed, chỉ dùng khi cần reset dữ liệu local có chủ đích. Không nằm trong vòng kiểm tài liệu/UI thường lệ. Remote smoke/deploy/migrate/restore thuộc [STAGING](operations/STAGING.md) và [OPERATIONS](operations/OPERATIONS.md), không lấy quyền từ hướng dẫn local này.
 

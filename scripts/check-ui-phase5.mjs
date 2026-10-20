@@ -330,29 +330,37 @@ async function locale(language) {
 }
 
 async function addPeony(size = 'M') {
-  await navigate('/shop');
-  await waitFor("document.querySelectorAll('[data-product-id]').length >= 8");
+  await navigate('/shop/blush-peony-bouquet');
+  await waitFor("Boolean(document.querySelector('[data-detail-sizes]'))");
   const variant = await evaluate(`fetch('/api/products', {cache:'no-store'}).then(r=>r.json()).then(b=>b.data.items.find(p=>p.slug==='blush-peony-bouquet').variants.find(v=>v.size_code===${JSON.stringify(size)}).id)`);
-  await input('[data-product-id="1"] [data-dropdown]', variant);
-  await click('[data-product-id="1"] [data-product-add]');
+  await click(`input[name=product-size][value="${variant}"]`);
+  await click('[data-detail-add]');
   await waitFor("JSON.parse(localStorage.getItem('lunara.cart.v1') || '{}').lines?.length > 0");
   await navigate('/cart');
-  await waitFor("Boolean(document.querySelector('[data-quote-amount=Total]'))");
+  await waitFor("Boolean(document.querySelector('[data-cart-total]'))");
   return variant;
 }
 
 async function fillCheckout(date) {
-  await input('input[name=province_name]', 'Thành phố Hà Nội');
-  await input('input[name=ward_name]', 'Phường Hoàn Kiếm');
-  if (!await evaluate(`Boolean(document.querySelector(${JSON.stringify(selectors.checkout)}))`)) await click('[data-checkout-start]');
+  if (!await evaluate(`Boolean(document.querySelector(${JSON.stringify(selectors.checkout)}))`)) await click('[data-proceed-checkout]');
   await waitFor(`Boolean(document.querySelector(${JSON.stringify(selectors.checkout)}))`);
-  for (const [name, value] of Object.entries({ senderName: 'Phase Five Sender', senderPhone: '0900000000', senderEmail: 'phase5@example.test', recipientName: 'Phase Five Recipient', recipientPhone: '0911111111', address: '12 Synthetic Flower Street', date, note: 'Only isolated acceptance data' })) await input(`[name="${name}"]`, value);
+  for (const [name, value] of Object.entries({ senderName: 'Phase Five Sender', senderPhone: '0900000000', recipientName: 'Phase Five Recipient', recipientPhone: '0911111111', address: '12 Synthetic Flower Street', date, note: 'SMOKE: Only isolated acceptance data' })) await input(`[name="${name}"]`, value);
   await input('[name="cardType"]', 'GREETING_CARD');
   await input('[name="cardMessage"]', 'Synthetic acceptance flowers');
   await input('[name="slot"]', '08:00-10:00');
-  await input('input[name=province_name]', 'Thành phố Hà Nội');
-  await input('input[name=ward_name]', 'Phường Hoàn Kiếm');
+  await chooseLocation('province_name', 'Thành phố Hà Nội');
+  await chooseLocation('ward_name', 'Hoàn Kiếm');
+  await checked('[name=termsAccepted]', true);
   await waitFor("!document.querySelector('[data-quote-loading]') && Boolean(document.querySelector('[data-quote-amount=Total]'))");
+}
+
+async function chooseLocation(name, value, scope = '') {
+  await click(`${scope} input[name=${name}]`);
+  await input(`${scope} input[name=${name}]`, value);
+  await waitFor("Boolean(document.querySelector('[role=listbox] [role=option]'))");
+  const chosen = await evaluate(`(() => {const option=[...document.querySelectorAll('[role=listbox] [role=option]')].find(element=>element.textContent.trim()===${JSON.stringify(value)});if(!option)return false;option.click();return true;})()`);
+  assert.equal(chosen, true, `Configured location option ${name}`);
+  await pause(70);
 }
 
 async function reviewCheckout() { await click(selectors.confirm); await waitFor(`Boolean(document.querySelector(${JSON.stringify(selectors.place)}))`); }
@@ -384,25 +392,30 @@ async function runAcceptance(db) {
   });
   await scenario(2, 'Variant M survives reload; corrupted versioned storage empties safely', async () => {
     variant = await addPeony();
-    await reload("Boolean(document.querySelector('[data-quote-amount=Total]'))");
+    await reload("Boolean(document.querySelector('[data-cart-total]'))");
     const saved = await evaluate("JSON.parse(localStorage.getItem('lunara.cart.v1'))");
     assert.deepEqual(saved, { version: 1, lines: [{ variantId: variant, quantity: 1 }] });
     await evaluate("localStorage.setItem('lunara.cart.v1', '{broken')"); await reload("Boolean(document.querySelector('[data-empty-cart]'))");
     variant = await addPeony();
     return { variantIdentity: true, reload: true, corruptStorage: true };
   });
-  await scenario(3, 'Delivery ward fee, province default and unsupported area handling', async () => {
-    await input('input[name=province_name]', 'Thành phố Hà Nội');
-    await input('input[name=ward_name]', 'Phường Hoàn Kiếm');
+  await scenario(3, 'Split checkout uses explicit active ward fees and rejects unconfigured coverage', async () => {
+    await expect("!document.querySelector('[data-cart-delivery-fee]') && !document.querySelector('[data-checkout-form]')", 'Cart must show provisional pricing without a delivery form');
+    await click('[data-proceed-checkout]');
+    await waitFor("Boolean(document.querySelector('[data-checkout-form]'))");
+    await expect("!document.querySelector('[data-checkout-delivery-fee]')", 'No fee before an explicit ward is selected');
+    await chooseLocation('province_name', 'Thành phố Hà Nội');
+    await chooseLocation('ward_name', 'Hoàn Kiếm');
     await waitFor("document.querySelector('[data-quote-amount=Total]')?.innerText.includes('670')");
-    await input('input[name=ward_name]', 'Phường chưa có phí riêng');
-    await waitFor("document.querySelector('[data-quote-amount=Total]')?.innerText.includes('685')");
+    const unsupported = await evaluate(`fetch('/api/checkout/quote',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({items:[{variant_id:${variant},quantity:1}],province_name:'Thành phố Hà Nội',ward_name:'Cửa Nam',delivery_method_code:'STANDARD'})}).then(async response=>({status:response.status,body:await response.json()}))`);
+    assert.equal(unsupported.status, 422); assert.equal(unsupported.body.error.code, 'NO_DELIVERY_ZONE');
     await input('input[name=province_name]', 'Tỉnh chưa được giao');
-    await waitFor("Boolean(document.querySelector('[role=alert]')) && document.querySelector('[data-checkout-start]').disabled");
-    await input('input[name=province_name]', 'Thành phố Hà Nội');
-    await input('input[name=ward_name]', 'Phường Hoàn Kiếm');
+    await waitFor("!document.querySelector('[role=listbox] [role=option]') && !document.querySelector('[data-checkout-delivery-fee]')");
+    await expect("document.querySelector('[data-checkout-review]').disabled", 'Unselected province blocks review');
+    await chooseLocation('province_name', 'Thành phố Hà Nội');
+    await chooseLocation('ward_name', 'Hoàn Kiếm');
     await waitFor("document.querySelector('[data-quote-amount=Total]')?.innerText.includes('670')");
-    return { wardFee: 20000, provinceDefaultFee: 35000, unsupportedProvinceBlocked: true };
+    return { wardFee: 20000, provinceDefaultFallback: false, unconfiguredWardRejected: true, unsupportedProvinceBlocked: true, splitCheckout: true };
   });
   await scenario(4, 'Rapid double submit creates exactly one order and deducts stock once', async () => {
     await fillCheckout(tomorrow); await reviewCheckout();
@@ -520,10 +533,8 @@ async function runAcceptance(db) {
     await click(`[data-testid="variant-save-${variant}"]`);
     await waitFor(`document.querySelector('[data-variant-id="${variant}"]')?.dataset.stock === '0'`);
     assert.equal(await stock(variant), 0);
-    await navigate('/shop'); await waitFor("document.querySelectorAll('[data-product-id]').length === 8");
-    await click('[data-product-id="1"] [data-dropdown]');
-    await expect(`document.querySelector('[role=option][data-value="${variant}"]').getAttribute('aria-disabled') === 'true'`, 'Out of stock variant must be unavailable');
-    await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape' });
+    await navigate('/shop/blush-peony-bouquet'); await waitFor("Boolean(document.querySelector('[data-detail-sizes]'))");
+    await expect(`document.querySelector('input[name=product-size][value="${variant}"]').disabled`, 'Out of stock variant must be unavailable');
     return { atomicDelta: -current, stock: 0, shopVariantDisabled: true };
   });
   await scenario(10, 'MVP source uses VND/Vietnam timezone and hidden legacy links stay absent', async () => {
@@ -559,6 +570,8 @@ async function verifyAdminCrud({ first, today }) {
   await evaluate("document.querySelector('[data-testid=product-form] details').open = true");
   assert.equal(await evaluate("Boolean(document.querySelector('[data-testid=product-form] [name=slug]'))"), false);
   for (const [name, value] of Object.entries({ name_en: 'Phase Five Test Bouquet', name_vi: 'Bó hoa kiểm Phase Five', image_url: 'https://res.cloudinary.com/demo/image/upload/phase5.jpg' })) await input(`[data-testid=product-form] [name="${name}"]`, value);
+  await click('[data-testid=product-form] [data-add-image-url]');
+  await waitFor("document.querySelectorAll('[data-product-images] [data-product-image-index]').length===1");
   await input('[data-testid=product-form] [name=category_id]', 1);
   for (const [index, size] of ['S', 'M', 'L'].entries()) {
     await input(`[data-testid=product-form] [name="sku-${size}"]`, `P5-TEST-${size}`);
@@ -599,10 +612,11 @@ async function verifyAdminCrud({ first, today }) {
   assert.equal((await first('SELECT stock_quantity FROM product_variants WHERE id = ?', [variant.id])).stock_quantity, 6);
   await navigate('/admin/delivery-zones'); await waitFor("Boolean(document.querySelector('[data-testid=admin-delivery-zones]'))");
   await click('[data-testid=zone-create]');
-  await input('[data-testid=zone-form] [name=province_name]', 'Tỉnh Phase Five'); await input('[data-testid=zone-form] [name=ward_name]', '');
+  await chooseLocation('province_name', 'Thành phố Hà Nội', '[data-testid=zone-form]');
+  await chooseLocation('ward_name', 'Ba Đình', '[data-testid=zone-form]');
   await input('[data-testid=zone-form] [name=fee]', 17000); await click('[data-testid=zone-form-save]');
-  await waitFor("document.body.innerText.includes('Tỉnh Phase Five')");
-  const zone = await first('SELECT id FROM delivery_zones WHERE province_name = ?', ['Tỉnh Phase Five']); assert.ok(zone);
+  await waitFor("!document.querySelector('[data-testid=zone-form]') && document.body.innerText.includes('Ba Đình')");
+  const zone = await first('SELECT id FROM delivery_zones WHERE province_name = ? AND ward_name = ?', ['Thành phố Hà Nội', 'Ba Đình']); assert.ok(zone);
   await click(`[data-testid="zone-edit-${zone.id}"]`); await input('[data-testid=zone-form] [name=fee]', 23000); await click('[data-testid=zone-form-save]');
   await waitFor(`document.querySelector('[data-zone-id="${zone.id}"]')?.innerText.includes('23')`);
   assert.equal((await first('SELECT fee FROM delivery_zones WHERE id = ?', [zone.id])).fee, 23000);

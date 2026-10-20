@@ -614,3 +614,6 @@
 !/src/features/shop/components/WishlistDrawer.tsx
 !/src/features/cart/hooks/useCheckoutFieldFocus.ts
 !/scripts/check-ui-product-detail.mjs
+
+# Reviewed local regression for keyboard, responsive checkout and readable forms.
+!/scripts/check-ui-refinements.mjs
