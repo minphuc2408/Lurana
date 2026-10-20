@@ -17,6 +17,8 @@ Cart có links ảnh/tên tới detail, số lượng theo giới hạn giỏ v�
 
 Checkout có năm khối: người đặt, địa chỉ người nhận, lịch giao, thiệp, thanh toán/ghi chú. Từ 1024 px có cột tóm tắt sticky; các field cặp từ 640 px. Tiêu đề Thông tin giao hoa & Thanh toán căn giữa; tóm tắt có ảnh/size/quantity, subtotal/phí/tổng, consent và CTA. Dưới CTA form/review giữ hai dòng copy owner duyệt: Chụp ảnh hoa thực tế gửi bạn trước khi giao; Giao hoa nhẹ nhàng, giữ dáng cánh hoa nguyên vẹn. Đây là copy trình bày đã duyệt, không thay lịch/phí/coverage API.
 
+Refinement 20/10: input/textarea/Combobox 16px, nhãn/helper quan trọng 14px; lỗi chỉ rõ tên, SĐT, địa chỉ hoặc lời nhắn cần nhập. Tên hoa summary xuống dòng; nút quantity 44px. Sticky lấy chiều cao Header đo thực tế cộng 16px, không dùng `top-28` cố định; không đổi form → review → API, consent hoặc UUID retry.
+
 Địa chỉ chỉ tỉnh/phường, không thêm quận/huyện hoặc cam kết từ mẫu. Methods/surcharge/slots/limits lấy API theo [Delivery](DELIVERY_ADDRESS.md). Gõ contact/địa chỉ/thiệp/ghi chú, đổi payment/consent hoặc chuyển Cart↔Checkout không tự tạo quote mới khi dữ liệu định giá không đổi.
 
 Ngoại lệ pointer focus chỉ áp input/textarea checkout theo quyết định 18/10; Tab vẫn có focus, validation/checkbox/radio/admin giữ nguyên. Chi tiết ở [design owner](../ui-ux/DESIGN_SYSTEM.md#interaction-và-accessibility); màu semantic áp toàn bộ 21 theme.

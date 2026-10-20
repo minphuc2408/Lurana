@@ -37,6 +37,8 @@ Font được link trong `index.html`, preconnect Google APIs/Gstatic và `displ
 
 Ngôn ngữ, tên sản phẩm song ngữ và dữ liệu khách có [vòng đời riêng](../reference/FRONTEND_ENTITIES.md#ownership-và-vòng-đời-dữ-liệu); đổi theme không đổi locale/font/currency/timezone hoặc nội dung khách nhập.
 
+Sau refinement 20/10, checkout/tra đơn dùng control 16px, label/helper/dữ liệu quan trọng 14px, heading khối 20px; tổng tiền vẫn display 24–30px. Placeholder dùng body token đủ tương phản, tên hoa trong summary được xuống dòng. Giữ typography Hero và bốn font theo locale; tăng chữ không thay validation hoặc dữ liệu khách.
+
 ## Bootstrap, persistence và compatibility
 
 Registry có một bộ ID và một Theme Switcher dùng lại Radix Dropdown: preview năm màu cho palette nền, sáu màu cho creative; có check, scroll và keyboard. `lunara.theme.v1` chỉ lưu ID. [theme-store.ts](../../src/shared/theme/theme-store.ts) áp dụng trước `createRoot`, duy trì qua route/reload và đồng bộ storage event; ID sai/storage lỗi fallback Original, vẫn đổi theme trong memory được.
@@ -49,6 +51,7 @@ Trước khi áp theme, store xóa toàn bộ inline override cũ. Original tr�
 - Sau refactor creative, menu ghi input method cục bộ: pointer dùng surface nhẹ không viền focus; checked dùng check + primary text; keyboard có outline primary 2px; route active dùng primary. CSS scope riêng năm creative, giữ trạng thái 16 theme cũ. Nguồn: `dropdown.tsx`, `StorefrontNavigation.tsx` và creative interaction rules trong `brand.css`.
 - WCAG AA: chữ thường ≥4.5:1, chữ lớn ≥3:1; control/focus thiết yếu ≥3:1 khi áp dụng. Kiểm foreground/background thật ở hover/checked/active/focus, đặc biệt CTA chữ trắng; không suy từ swatch hoặc bỏ keyboard outline toàn cục.
 - Có loading/error/empty/success, labels, alt, accessible name cho icon buttons, keyboard/Escape/focus restoration, reduced motion và layout không overflow. Dùng primitives sẵn trước khi tạo mới.
+- Focus chung, Dropdown trigger và nút đóng Dialog dùng `--lunara-focus-ring`; Original không còn dùng rose-light cho outline. Menu admin mobile dùng shared Dialog để chuyển/giữ/trả focus, Escape/backdrop đóng và resize lên desktop giải phóng modal. Tiêu đề trang admin vẫn hiện trên mobile; utility/EN-VI và các nút quantity/đóng có vùng bấm tối thiểu 44px.
 
 Checkout có ngoại lệ pointer-focus do owner yêu cầu: chỉ form checkout input/textarea dùng pointer mới bỏ outline/shadow và giữ viền mảnh; Tab vẫn có focus. Không áp sang validation/checkbox/radio hoặc admin. Flow/consent/payment thuộc [CHECKOUT_UI](../features/CHECKOUT_UI.md).
 
@@ -58,11 +61,13 @@ Home có Hero → dải dịch vụ → Featured → Journey → Story; behavior
 
 Khung Home co giãn 1240–1600px, Header 1440–1600px, gutter 20/32px. Hero dưới 1024px xếp ảnh dưới chữ; desktop chia 5/7; grid sản phẩm hai cột dưới 1024px/bốn cột từ 1024px. Hero và ba ảnh Story là JPEG local responsive từ reference, không gradient hoặc recolor; WebP Hero cũ chỉ còn asset giữ lại. [ATTRIBUTIONS](../../ATTRIBUTIONS.md) giữ provenance, không yêu cầu có thư mục reference riêng trên máy.
 
-Detail giữ gallery vuông/thumbnail phía dưới, size radio kèm giá và quantity. Bố cục ba phần nội dung cùng hai dòng dịch vụ là copy/layout owner đã duyệt; chúng không thay coverage/phí/lịch API. Trang About là article tĩnh không breadcrumb/CMS; bài, ảnh và giờ minh họa đã được duyệt về trình bày, thông tin kinh doanh vẫn cần xác minh trước mở bán.
+Detail giữ gallery vuông/thumbnail phía dưới, size radio kèm giá và quantity. Refinement 20/10 gom năm placeholder editorial lặp thành một notice dưới tiêu đề Chi tiết & Hướng dẫn chăm sóc; chưa tự thêm thành phần/kích thước/story. Hai dòng dịch vụ giữ nguyên, không thay coverage/phí/lịch API. Trang About là article tĩnh không breadcrumb/CMS; thông tin kinh doanh vẫn cần xác minh trước mở bán.
 
 Header có search luôn hiện, nav desktop từ 1024px; theme/EN-VI ở utility bar. Menu mobile absolute phải giữ containing block là sticky Header trực tiếp để `max-height:calc(100dvh - 100%)` trừ đúng chiều cao; kiểm landscape thấp và focus tới mục cuối. Search trim/encode URL, category từ catalog; thông tin chưa có destination dùng dialog hiện có, không chép dữ liệu mẫu vào vận hành.
 
-Footer sáng bốn cột desktop, mobile thương hiệu/địa chỉ toàn hàng và hai nhóm link cạnh nhau. Giữ thông tin/maps/copy hiện hữu cho tới khi owner xác minh; đích chưa có href mở FeatureUnavailable, Escape/X/Đóng trả focus. ID/thứ tự/href ở `src/shared/config/storefront-footer.ts`, copy/maps ở common.json EN/VI. Zalo là portal tránh CTA giỏ trên mobile, hiện chỉ notice vì chưa có tài khoản thật. Story/About và nội dung kinh doanh minh họa không tự trở thành cam kết pháp lý; việc còn thiếu thuộc [PROJECT_STATUS](../PROJECT_STATUS.md#việc-còn-cần-chủ-shop).
+`useMainLayout` đo Header bằng ResizeObserver và cung cấp `--lunara-storefront-header-height` trong layout; sticky summary checkout dùng chiều cao này cộng 16px thay offset cố định. Shop mobile bỏ nhãn dẫn trùng, thu khoảng dẫn và gộp giá/sort vào disclosure dưới 640px; state đóng/mở thuộc `useProducts`, không đổi filter/search/URL.
+
+Footer sáng bốn cột desktop, mobile thương hiệu/địa chỉ toàn hàng và hai nhóm link cạnh nhau. Giữ thông tin/maps/copy hiện hữu cho tới khi owner xác minh; đích chưa có href mở FeatureUnavailable, Escape/X/Đóng trả focus. ID/thứ tự/href ở `src/shared/config/storefront-footer.ts`, copy/maps ở common.json EN/VI. `featureFlags.zaloContact=false` ẩn widget nổi chưa có kênh thật để tránh che nội dung; chỉ bật cùng việc nối đích liên hệ đã xác minh. Source portal/notice được giữ lại. Nội dung kinh doanh minh họa và việc còn thiếu thuộc [PROJECT_STATUS](../PROJECT_STATUS.md#việc-còn-cần-chủ-shop).
 
 Primitives giữ tại `src/shared/ui/`: Button, Input, Dialog, Dropdown, Combobox. Dùng `cn`, ImageWithFallback, Lucide, formatter chung và feature ProductCard/ProductGrid/FilterBar. Không phục hồi toàn bộ wrapper đã bỏ hoặc tạo StatusBadge chung khi chưa có nhu cầu. `color-classes.ts` giữ class Tailwind literal cho màu fixture; không dựng `bg-[${color}]` lúc runtime.
 

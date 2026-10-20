@@ -36,7 +36,7 @@ flowchart LR
 ## Catalog và cuộn trang
 
 - CatalogProvider tải categories/products qua Shop service cùng origin, không fallback fixture. Featured lấy `is_featured` từ DB; Home hiển thị tối đa bốn sản phẩm. Thứ tự Home là Hero → dải dịch vụ COD → FeaturedCollection → Journey → OurStory. Dãy ảnh danh mục Home đã bỏ; navigation/Shop vẫn có danh mục.
-- Shop lọc/tìm/sort ở frontend trên catalog API có giới hạn MVP, không phải tìm kiếm toàn bộ database không giới hạn. Category và `q` ở URL; sort và khoảng giá là state local. Khoảng giá VND: [0,500k), [500k,1m), [1m,2m), [2m,+∞).
+- Shop lọc/tìm/sort ở frontend trên catalog API có giới hạn MVP, không phải tìm kiếm toàn bộ database không giới hạn. Category và `q` ở URL; sort, khoảng giá và disclosure giá/sort mobile là state local trong `useProducts`. Khoảng giá VND: [0,500k), [500k,1m), [1m,2m), [2m,+∞).
 - Shop dùng `smallestVariant` để hiển thị/lọc/sort/quick-add; size nhỏ nhất hết hàng thì khóa Add, không tự chuyển size lớn. Home không truyền lựa chọn size nên ProductCard chọn variant còn hàng đầu tiên; chọn size khác ở detail. Giá card có thể khác `Product.price` thấp nhất của adapter; không sửa DTO chỉ để ép hai giá giống nhau.
 - `useRouteScroll` đưa điều hướng/search từ Header và Back/Forward về đầu; hash giữ đích có trừ sticky header. Shop dùng URL REPLACE + `state.preserveScroll` để đổi bộ lọc tại chỗ; POP về URL đã lọc vẫn về đầu. Tắt native scroll restoration và chạy thêm một frame vì menu portal có thể trả focus sau commit. Đổi locale/theme hoặc mở dialog không tự reset route.
 
@@ -45,7 +45,7 @@ Nguồn: [useProducts](../src/features/shop/hooks/useProducts.ts), [shop.service
 ## Chi tiết sản phẩm và hoa yêu thích
 
 - Detail tải theo slug, có loading/retry/404, gallery/zoom, size hiện giá và quantity. Lượng thêm tối đa theo `max_quantity` trừ lượng variant đã trong giỏ. Thêm vào giỏ giữ trang; Mua ngay chỉ chuyển `/cart` sau khi thêm thành công, không gửi đơn.
-- Gợi ý tối đa bốn mẫu khác, ưu tiên cùng danh mục; giá/variant dùng quy tắc size nhỏ nhất, Xem thêm tới Shop. Mô tả vẫn từ DB. Các phần Câu chuyện/Ý nghĩa/Chi tiết & Chăm sóc đang hiển thị nội dung cập nhật sau theo owner; chưa có field/API/admin riêng để nhập chúng.
+- Gợi ý tối đa bốn mẫu khác, ưu tiên cùng danh mục; giá/variant dùng quy tắc size nhỏ nhất, Xem thêm tới Shop. Mô tả vẫn từ DB. Năm placeholder Câu chuyện/Ý nghĩa/Chi tiết & Chăm sóc được gom thành một notice cập nhật sau trong refinement 20/10; chưa có field/API/admin riêng để nhập nội dung hoặc thông số từng size.
 - WishlistProvider giữ Product snapshots trong memory qua route, dùng chung card/detail/header; không tài khoản/API/storage. Sidebar chỉ hiện từ 768 px; reload mất, resize xuống mobile đóng panel. Toggle trái tim không tự mở panel; Escape/đóng trả focus, không đổi route. Đây là wishlist storefront, khác source wishlist tài khoản còn ẩn.
 
 Nguồn: [useProductDetail](../src/features/shop/hooks/useProductDetail.ts), [WishlistProvider](../src/features/shop/WishlistProvider.tsx), [WishlistDrawer](../src/features/shop/components/WishlistDrawer.tsx). Layout/ảnh/interaction chung thuộc [design system](ui-ux/DESIGN_SYSTEM.md).
