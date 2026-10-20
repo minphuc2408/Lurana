@@ -1,5 +1,9 @@
 {
   "Check this field": "Check this field.",
+  "Enter the full name": "Enter the full name.",
+  "Enter a valid phone number": "Enter a valid phone number.",
+  "Enter a delivery address of at least 5 characters": "Enter a delivery address with at least 5 characters.",
+  "Enter a message for this card": "Enter a message for this card.",
   "Sender name": "Sender name",
   "Sender phone": "Sender phone",
   "Sender email optional": "Sender email (optional)",

@@ -1,5 +1,9 @@
 {
   "Check this field": "Vui lòng kiểm tra thông tin này.",
+  "Enter the full name": "Vui lòng nhập đầy đủ họ tên.",
+  "Enter a valid phone number": "Vui lòng nhập số điện thoại hợp lệ.",
+  "Enter a delivery address of at least 5 characters": "Vui lòng nhập địa chỉ giao hoa có ít nhất 5 ký tự.",
+  "Enter a message for this card": "Vui lòng nhập lời nhắn cho thiệp.",
   "Sender name": "Tên người gửi",
   "Sender phone": "Số điện thoại người gửi",
   "Sender email optional": "Email người gửi (không bắt buộc)",
