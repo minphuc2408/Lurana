@@ -1,4 +1,4 @@
-import type { Product, ProductDto, ProductApiDto, Category, ProductFilters, ProductVariant } from "./shop.types.ts";
+import type { Product, ProductDto, ProductApiDto, ProductPageDto, ProductPageQuery, Category, ProductFilters, ProductVariant } from "./shop.types.ts";
 import { apiRequest } from '../../shared/api/client.ts';
 import { getLocalizedName, normalizeSearch } from "../../shared/i18n/language.ts";
 let products: Product[] = [];
@@ -16,10 +16,24 @@ export function normalizeProduct(product: ProductDto | ProductApiDto, categoryLi
     variants: structuredClone(product.variants) };
 }
 export async function loadCatalog(signal?: AbortSignal) {
-  const [categoryList, response] = await Promise.all([apiRequest<Category[]>('/categories', { signal }), apiRequest<{ items: ProductApiDto[] }>('/products', { signal })]);
+  const [categoryList, response] = await Promise.all([apiRequest<Category[]>('/categories', { signal }), loadProductPage({ featured: true }, signal)]);
   const items = response.items.map(product => normalizeProduct(product, categoryList));
   products = items; categories = categoryList;
   return { products: structuredClone(items), categories: structuredClone(categoryList) };
+}
+export function loadProductPage(query: ProductPageQuery = {}, signal?: AbortSignal) {
+  const params = new URLSearchParams();
+  if (query.page && query.page !== 1) params.set('page', String(query.page));
+  if (query.category && query.category !== 'All') params.set('category', query.category);
+  if (query.q?.trim()) params.set('q', query.q.trim());
+  if (query.price && query.price !== 'all') params.set('price', query.price);
+  if (query.sort && query.sort !== 'featured') params.set('sort', query.sort);
+  if (query.featured) params.set('featured', '1');
+  return apiRequest<ProductPageDto>('/products' + (params.size ? '?' + params.toString() : ''), { signal });
+}
+export function loadProductsByVariants(variantIds: number[], signal?: AbortSignal) {
+  const params = new URLSearchParams({ variant_ids: [...new Set(variantIds)].join(',') });
+  return apiRequest<{ items: ProductApiDto[] }>('/products/by-variants?' + params.toString(), { signal });
 }
 export async function loadProductDetail(slug: string, signal?: AbortSignal) {
   return apiRequest<ProductApiDto>(`/products/${encodeURIComponent(slug)}`, { signal });

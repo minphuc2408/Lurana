@@ -2,17 +2,22 @@ import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import app from '../worker/index.ts';
 import { createTestDb } from './helpers/worker.mjs';
-import { getProduct, getProducts, loadCatalog, loadProductDetail, normalizeProduct, selectProducts, smallestVariant } from '../src/features/shop/shop.service.ts';
+import { getProduct, getProducts, loadCatalog, loadProductDetail, loadProductPage, normalizeProduct, selectProducts, smallestVariant } from '../src/features/shop/shop.service.ts';
 import { cartReducer, readCart, saveCart, CART_STORAGE_KEY } from '../src/features/cart/cart.service.ts';
 import { formatVND } from '../src/shared/lib/format.ts';
 import { apiRequest, ApiError } from '../src/shared/api/client.ts';
 import { requestQuote } from '../src/features/cart/quote.service.ts';
-let fixture;
-before(async () => { fixture = createTestDb(); const original = globalThis.fetch; globalThis.fetch = (url, options) => app.request(String(url), options, { DB: fixture.db }); try { await loadCatalog(); } finally { globalThis.fetch = original; } });
+let fixture, catalogPage;
+before(async () => {
+ fixture = createTestDb(); const original = globalThis.fetch;
+ globalThis.fetch = (url, options) => app.request(String(url), options, { DB: fixture.db });
+ try { await loadCatalog(); catalogPage = await loadProductPage(); } finally { globalThis.fetch = original; }
+});
 after(() => fixture.close());
 const item = (id, size = 'S', qty = 1) => { const p=getProduct(id),v=p.variants.find(v=>v.size_code===size);return {...p,id:'variant:'+v.id,productId:p.id,variantId:v.id,price:v.price,size,qty,maxQuantity:v.max_quantity}; };
-test('catalog is an API snapshot with variant prices, categories and no fabricated ratings', () => {
- const products=getProducts();assert.equal(products.length,8);assert.equal(products[0].price,450000);assert.equal(products[0].rating,undefined);
+test('catalog boots featured API products while the page API exposes the complete seed catalog', () => {
+ const products=getProducts();assert.deepEqual(products.map(product=>product.id),[1,2,5]);assert.ok(products.every(product=>product.is_featured));assert.equal(products[0].price,450000);assert.equal(products[0].rating,undefined);
+ assert.equal(catalogPage.items.length,8);assert.deepEqual([catalogPage.total,catalogPage.page,catalogPage.pageSize,catalogPage.totalPages],[8,1,40,1]);
  products[0].variants[0].price=1;assert.equal(getProduct(1).variants[0].price,450000);
  const product=getProduct(1);product.variants[0].price=1;assert.equal(getProduct(1).variants[0].price,450000);
  assert.equal(getProduct(999),undefined);
@@ -25,7 +30,7 @@ test('adapter selects primary image and lowest variant price; empty variants are
  assert.equal(normalizeProduct({...base,images:[],variants:[]}).image,'');
 });
 test('category code, accented search and price sorting compose over DB products', () => {
- const products=getProducts();assert.deepEqual(selectProducts(products,{category:'bouquets',search:'PASTEL',sort:'low'}).map(p=>p.id),[2]);
+ const products=catalogPage.items.map(product=>normalizeProduct(product));assert.deepEqual(selectProducts(products,{category:'bouquets',search:'PASTEL',sort:'low'}).map(p=>p.id),[2]);
  assert.deepEqual(selectProducts(products,{category:'All',search:'mau don',sort:'featured'}).map(p=>p.id),[1]);
  assert.deepEqual(selectProducts(products,{category:'All',search:'missing flower',sort:'featured'}),[]);
  assert.equal(products[0].id,1);

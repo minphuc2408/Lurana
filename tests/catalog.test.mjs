@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
-import { listCategories, listProducts, getProduct } from '../worker/services/catalog.ts';
+import { listCategories, listProducts, listProductPage, listProductsByVariants, getProduct } from '../worker/services/catalog.ts';
+import { productsQuerySchema, productsByVariantsQuerySchema } from '../shared/schemas.ts';
 import { createTestDb } from './helpers/worker.mjs';
 
 async function fixture(t) {
@@ -47,13 +48,13 @@ test('category and featured filters compose with bind parameters; empty catalog 
   queries.length = 0;
   const products = await listProducts(db, { category: 'bouquets', featured: true });
   assert.equal(queries.length, 3);
-  assert.deepEqual(queries[0].values, ['bouquets', 1]);
+  assert.deepEqual(queries[0].values, ['bouquets', 1, 40, 0]);
   assert.deepEqual(products.map(product => product.slug), ['blush-peony-bouquet', 'pastel-rose-bouquet']);
   assert.equal((await listProducts(db, { featured: false })).length, 5);
   queries.length = 0;
   assert.deepEqual(await listProducts(db, { category: "bouquets' OR 1=1 --" }), []);
   assert.equal(queries.length, 1);
-  assert.deepEqual(queries[0].values, ["bouquets' OR 1=1 --"]);
+  assert.deepEqual(queries[0].values, ["bouquets' OR 1=1 --", 40, 0]);
 });
 
 test('hidden and archived products disappear from lists and details', async t => {
@@ -99,25 +100,84 @@ test('details assemble all ordered images in three statements and missing slugs 
   assert.deepEqual(queries[0].values, ["missing' OR 1=1 --"]);
 });
 
-test('catalog caps products at 100 and child IN queries at 100 parameters without N+1 reads', async t => {
+test('catalog pages cap products and child binds at 40 with stable complete metadata', async t => {
   const { db, sqlite, queries } = await fixture(t);
   const insertProduct = sqlite.prepare('INSERT INTO products (category_id, slug, name_vi, name_en) VALUES (1, ?, ?, ?)');
   const insertVariant = sqlite.prepare("INSERT INTO product_variants (product_id, sku, size_code, price, stock_quantity) VALUES (?, ?, 'S', 1000, 1)");
   const insertImage = sqlite.prepare("INSERT INTO product_images (product_id, image_url, is_primary) VALUES (?, 'https://example.test/cap.png', 1)");
   for (let index = 0; index < 110; index++) {
-    const { lastInsertRowid } = insertProduct.run(`cap-${index}`, `Hoa ${index}`, `Flower ${index}`);
+    const { lastInsertRowid } = insertProduct.run(`cap-${index}`, `Hoa ${index}`, `Catalog Flower ${index}`);
     insertVariant.run(Number(lastInsertRowid), `CAP-${index}`);
     insertImage.run(Number(lastInsertRowid));
   }
   queries.length = 0;
-  const products = await listProducts(db);
-  assert.equal(products.length, 100);
-  assert.equal(new Set(products.map(product => product.id)).size, 100);
+  const first = await listProductPage(db);
+  assert.deepEqual([first.total, first.page, first.pageSize, first.totalPages, first.items.length], [118, 1, 40, 3, 40]);
+  assert.equal(queries.length, 4);
+  assert.equal(queries[2].values.length, 40);
+  assert.equal(queries[3].values.length, 40);
+  const second = await listProductPage(db, { page: 2 });
+  const last = await listProductPage(db, { page: 3 });
+  const all = [...first.items, ...second.items, ...last.items];
+  assert.equal(new Set(all.map(product => product.id)).size, 118, 'stable pages never skip or repeat products');
+  assert.deepEqual([second.items.length, last.items.length], [40, 38]);
+  assert.ok(all.every(product => product.variants.length > 0 && product.images.length === 1));
+  const outside = await listProductPage(db, { page: 4 });
+  assert.deepEqual(outside, { items: [], total: 118, page: 4, pageSize: 40, totalPages: 3 });
+  assert.deepEqual(await listProductPage(db, { q: 'no such flower' }), { items: [], total: 0, page: 1, pageSize: 40, totalPages: 0 });
+  const found = await listProductPage(db, { q: 'Flower 109', price: 'under-500', sort: 'low' });
+  assert.deepEqual(found.items.map(product => product.slug), ['cap-109'], 'filters search beyond the first page');
+  const searched = await Promise.all([1, 2, 3].map(page => listProductPage(db, { q: 'Catalog Flower', page, sort: 'low' })));
+  assert.deepEqual(searched.map(page => page.items.length), [40, 40, 30]);
+  assert.ok(searched.every(page => page.total === 110 && page.totalPages === 3));
+  assert.equal(new Set(searched.flatMap(page => page.items.map(product => product.id))).size, 110);
+});
+
+test('catalog search folds Vietnamese case/accents and treats GLOB and LIKE punctuation literally', async t => {
+  const { db, sqlite, queries } = await fixture(t);
+  sqlite.prepare('UPDATE products SET name_vi = ?, name_en = ? WHERE id = 1').run('BÓ HỒNG ĐỎ TÌNH YÊU', 'Literal [rose] * ? % _');
+  for (const q of ['bo hong do tinh yeu', 'Bó Hồng Đỏ', 'hồng đỏ', 'HỒNG ĐỎ', '[rose]', '[', ']', '*', '?', '%', '_']) {
+    const page = await listProductPage(db, { q });
+    assert.deepEqual(page.items.map(product => product.id), [1], q);
+    assert.equal(page.total, 1, q);
+  }
+  sqlite.prepare('UPDATE products SET name_vi = ? WHERE id = 1').run('BÓ HỒNG ĐỎ TÌNH YÊU'.normalize('NFD'));
+  assert.deepEqual((await listProductPage(db, { q: 'bó hồng đỏ'.normalize('NFD') })).items.map(product => product.id), [1]);
+  queries.length = 0;
+  assert.equal((await listProductPage(db, { q: "rose' OR 1=1 --" })).total, 0);
+  assert.ok(queries.every(query => !query.sql.includes("rose' OR 1=1 --")), 'search always uses binds');
+});
+
+test('price filtering/sorting uses the smallest active size even if a larger size is cheaper', async t => {
+  const { db, sqlite } = await fixture(t);
+  sqlite.exec("UPDATE product_variants SET compare_at_price = NULL; UPDATE product_variants SET price = 2000000 WHERE product_id = 1; UPDATE product_variants SET price = 1 WHERE product_id = 1 AND size_code = 'L'");
+  assert.ok(!(await listProductPage(db, { price: 'under-500' })).items.some(product => product.id === 1));
+  assert.ok((await listProductPage(db, { price: 'over-2000' })).items.some(product => product.id === 1));
+  assert.equal((await listProductPage(db, { sort: 'high' })).items[0].id, 1);
+  sqlite.exec("UPDATE product_variants SET is_active = 0 WHERE product_id = 1 AND size_code IN ('S', 'M')");
+  assert.equal((await listProductPage(db, { sort: 'low' })).items[0].id, 1);
+});
+
+test('cart variant restore is bounded, returns public active products and works independently of pages', async t => {
+  const { db, sqlite, queries } = await fixture(t);
+  queries.length = 0;
+  const restored = await listProductsByVariants(db, [1, 2, 4]);
+  assert.deepEqual(restored.map(product => product.id), [1, 2]);
   assert.equal(queries.length, 3);
-  assert.equal(queries[1].values.length, 100);
-  assert.equal(queries[2].values.length, 100);
-  assert.ok(products.every(product => product.variants.length > 0 && product.images.length === 1));
-  console.log('Catalog D1 evidence: stored_products=118, returned_products=100, child_bind_parameters=100, executed_statements=3.');
+  assert.doesNotMatch(JSON.stringify(restored), /stock_quantity|low_stock_threshold|cloudinary_public_id/);
+  sqlite.exec("UPDATE products SET status = 'HIDDEN' WHERE id = 1; UPDATE product_variants SET is_active = 0 WHERE id = 4");
+  assert.deepEqual(await listProductsByVariants(db, [1, 4, 999999]), []);
+  await assert.rejects(() => listProductsByVariants(db, Array.from({ length: 16 }, (_, index) => index + 1)), error => error.code === 'VALIDATION_ERROR');
+});
+
+test('catalog query schemas reject malformed pages and unbounded or ambiguous variant restore requests', () => {
+  assert.equal(productsQuerySchema.parse({}).page, 1);
+  for (const page of ['', '0', '-1', '1.2', '1e2', '9007199254740991']) assert.equal(productsQuerySchema.safeParse({ page }).success, false, page);
+  for (const input of [{ q: 'a\0b' }, { q: 'a'.repeat(101) }, { price: 'unknown' }, { sort: 'unknown' }]) assert.equal(productsQuerySchema.safeParse(input).success, false);
+  assert.deepEqual(productsByVariantsQuerySchema.parse({ variant_ids: '1,2' }), { variant_ids: [1, 2] });
+  for (const variant_ids of ['', '0', '-1', '1,1', '1.2', '1,', '9007199254740992', Array.from({ length: 16 }, (_, index) => index + 1).join(',')]) {
+    assert.equal(productsByVariantsQuerySchema.safeParse({ variant_ids }).success, false, variant_ids);
+  }
 });
 
 

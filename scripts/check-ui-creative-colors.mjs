@@ -83,11 +83,11 @@ async function actionAudit(theme,width){
   await evaluate('document.activeElement.blur();scrollTo(0,0)');
   if(width===390)await pointer('[data-header-menu-toggle]',true);
   const active=await styles('[data-main-navigation] a[aria-current=page]');assert.equal(active.color,rgb(primary),'Active route stays primary');
-  await pointer('[data-header-submenu-trigger=flowers]',true);await waitFor("document.querySelector('[data-storefront-submenu=flowers] [role=menuitem]')");
-  await pointer('[data-storefront-submenu=flowers] [role=menuitem]');const navHover=await styles('[data-storefront-submenu=flowers] [role=menuitem]');
-  assert.equal(navHover.background,rgb(theme.secondary),'Navigation hover neutral');assert.equal(navHover.outline,'none','Navigation pointer has no keyboard ring');
-  await key('ArrowDown');const navKeyboard=await styles('[data-storefront-submenu=flowers] [data-highlighted]');keyboardIndicator(navKeyboard,primary,'Navigation Arrow focus');
-  await key('Escape');assert.equal(await evaluate('document.activeElement.dataset.headerSubmenuTrigger'),'flowers','Navigation Escape restores focus');
+  await pointer('[data-main-navigation] a[href="/shop"]');const navHover=await styles('[data-main-navigation] a[href="/shop"]');
+  assert.equal(navHover.color,rgb(primary),'Navigation hover is primary');
+  await send('Input.dispatchMouseEvent',{type:'mouseMoved',x:0,y:0});await key('Tab');
+  await evaluate("document.querySelector('[data-main-navigation] a[href=\"/shop\"]').focus({preventScroll:true})");await frame();
+  const navKeyboard=await styles('[data-main-navigation] a[href="/shop"]');keyboardIndicator(navKeyboard,primary,'Navigation Tab focus');
   if(width===390)await key('Escape');
   interactions.push({theme:theme.id,width,hover,focus,active,navHover,navKeyboard});
 }
@@ -103,7 +103,7 @@ const measure=`(()=>{
  const elements=[...document.querySelectorAll('[data-d1-storefront] *, main *, header *, aside *')];
  return elements.map(e=>{const r=e.getBoundingClientRect(),s=getComputedStyle(e);return {tag:e.tagName,text:e.children.length?'':e.textContent,geometry:[r.x,r.y,r.width,r.height].map(round),style:properties.map(p=>s[p])}});
 })()`;
-const readUsage=`(()=>{const selectors={primary:'[data-home-hero] a',secondary:'[data-header-utility]',heroLabel:'[data-home-hero] > div > div > span',quickAdd:'[data-product-add]',journey:'[data-home-journey]',journeyIcon:'[data-home-journey] li > div',secondaryLink:'[data-story-link]',footer:'[data-storefront-footer]',footerHeading:'[data-storefront-footer] h4'};return Object.fromEntries(Object.entries(selectors).map(([key,selector])=>{const e=document.querySelector(selector),s=getComputedStyle(e),r=e.getBoundingClientRect();return [key,{color:s.color,background:s.backgroundColor,width:r.width,height:r.height}]}))})()`;
+const readUsage=`(()=>{const selectors={primary:'[data-home-hero] a',secondary:'[data-storefront-footer]',heroLabel:'[data-home-hero] > div > div > span',quickAdd:'[data-product-add]',journey:'[data-home-journey]',journeyIcon:'[data-home-journey] li > div',secondaryLink:'[data-story-link]',footer:'[data-storefront-footer]',footerHeading:'[data-storefront-footer] h4'};return Object.fromEntries(Object.entries(selectors).map(([key,selector])=>{const e=document.querySelector(selector),s=getComputedStyle(e),r=e.getBoundingClientRect();return [key,{color:s.color,background:s.backgroundColor,width:r.width,height:r.height}]}))})()`;
 const textContrast=`(()=>{
  const ctx=document.createElement('canvas').getContext('2d',{willReadFrequently:true});
  const rgba=color=>{ctx.clearRect(0,0,1,1);ctx.fillStyle=color;ctx.fillRect(0,0,1,1);return [...ctx.getImageData(0,0,1,1).data]};
@@ -163,7 +163,7 @@ try{
         const usage=await evaluate(readUsage);accentUsage.push({theme:theme.id,width,usage});
         if(baseline){
           const tokens=themeTokens(theme),primary=rgb(tokens['--lunara-rose-strong']);
-          assert.equal(usage.secondary.background,rgb(theme.secondary),'Neutral utility');
+          assert.equal(usage.secondary.background,rgb(theme.secondary),'Neutral footer');
           assert.equal(usage.heroLabel.background,'rgba(0, 0, 0, 0)','Transparent Hero label');assert.equal(usage.heroLabel.color,primary,'Hero label primary');
           assert.equal(usage.journey.background,rgb(theme.secondary),'Neutral Journey');assert.equal(usage.journeyIcon.background,'rgba(0, 0, 0, 0)','No repeated tertiary boxes');
           assert.equal(usage.quickAdd.background,rgb('#FFFFFF'),'Paper quick-add');assert.equal(usage.quickAdd.color,primary,'Primary quick-add icon');

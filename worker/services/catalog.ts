@@ -1,4 +1,4 @@
-import { MAX_QTY_PER_LINE } from '../../shared/constants.ts';
+import { CATALOG_PAGE_SIZE, MAX_CART_LINES, MAX_QTY_PER_LINE } from '../../shared/constants.ts';
 import { AppError } from '../lib/errors.ts';
 
 export interface CategoryDTO {
@@ -63,6 +63,18 @@ interface ImageRow {
 export interface ProductFilters {
   category?: string;
   featured?: boolean;
+  q?: string;
+  price?: 'all' | 'under-500' | '500-1000' | '1000-2000' | 'over-2000';
+  sort?: 'featured' | 'low' | 'high' | 'rating';
+  page?: number;
+}
+
+export interface ProductPageDTO {
+  items: ProductDTO[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
 }
 
 const PRODUCT_COLUMNS = `p.id, p.slug, c.code AS category_code,
@@ -75,9 +87,20 @@ export async function listCategories(db: D1Database): Promise<CategoryDTO[]> {
   return results;
 }
 
-// The product limit also bounds each child IN query to D1's 100-parameter limit.
-// Each nonempty catalog read executes exactly three statements, without per-product reads.
-async function loadProducts(db: D1Database, filters: ProductFilters, slug?: string): Promise<ProductDTO[]> {
+// Match the storefront's size choice, rather than the cheapest larger variant.
+const CARD_PRICE = `COALESCE((SELECT v.price FROM product_variants v
+  WHERE v.product_id = p.id AND v.is_active = 1
+  ORDER BY CASE v.size_code WHEN 'S' THEN 0 WHEN 'STANDARD' THEN 1
+    WHEN 'M' THEN 2 WHEN 'DELUXE' THEN 3 WHEN 'L' THEN 4 END, v.id LIMIT 1), 0)`;
+const PRICE_RANGES: Record<string, [number, number?]> = {
+  'under-500': [0, 500000], '500-1000': [500000, 1000000],
+  '1000-2000': [1000000, 2000000], 'over-2000': [2000000],
+};
+function normalizeSearch(search: string): string {
+  return search.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase().trim();
+}
+
+function productConditions(filters: ProductFilters) {
   const conditions = ["p.status = 'ACTIVE'", 'c.is_active = 1'];
   const values: (string | number)[] = [];
   if (filters.category !== undefined) {
@@ -88,14 +111,35 @@ async function loadProducts(db: D1Database, filters: ProductFilters, slug?: stri
     conditions.push('p.is_featured = ?');
     values.push(filters.featured ? 1 : 0);
   }
-  if (slug !== undefined) {
-    conditions.push('p.slug = ?');
-    values.push(slug);
+  const range = PRICE_RANGES[filters.price ?? 'all'];
+  if (range) {
+    conditions.push(`${CARD_PRICE} >= ?`);
+    values.push(range[0]);
+    if (range[1] !== undefined) {
+      conditions.push(`${CARD_PRICE} < ?`);
+      values.push(range[1]);
+    }
   }
-  const { results: products } = await db.prepare(`SELECT ${PRODUCT_COLUMNS}
+  return { where: conditions.join(' AND '), values };
+}
+
+function productOrder(filters: ProductFilters): string {
+  return filters.sort === 'low' ? `${CARD_PRICE} ASC, p.id ASC`
+    : filters.sort === 'high' ? `${CARD_PRICE} DESC, p.id ASC`
+    : 'p.is_featured DESC, p.id ASC';
+}
+
+function productListStatement(db: D1Database, filters: ProductFilters) {
+  const { where, values } = productConditions(filters);
+  return db.prepare(`SELECT ${PRODUCT_COLUMNS}
     FROM products p JOIN categories c ON c.id = p.category_id
-    WHERE ${conditions.join(' AND ')} ORDER BY p.id LIMIT ${slug === undefined ? 100 : 1}`)
-    .bind(...values).all<ProductRow>();
+    WHERE ${where} ORDER BY ${productOrder(filters)} LIMIT ? OFFSET ?`)
+    .bind(...values, CATALOG_PAGE_SIZE, ((filters.page ?? 1) - 1) * CATALOG_PAGE_SIZE);
+}
+
+// Page/detail/restore use two bulk child reads; no per-product queries. Page and
+// cart limits keep each child IN safely below D1's 100-parameter ceiling.
+async function assembleProducts(db: D1Database, products: ProductRow[], fullGallery = false): Promise<ProductDTO[]> {
   if (products.length === 0) return [];
 
   const ids = products.map(product => product.id);
@@ -107,7 +151,7 @@ async function loadProducts(db: D1Database, filters: ProductFilters, slug?: stri
       WHEN 'STANDARD' THEN 3 WHEN 'DELUXE' THEN 4 END, id`)
     .bind(...ids).all<VariantRow>();
   const { results: images } = await db.prepare(`SELECT product_id, image_url, alt_vi, alt_en, is_primary
-    FROM product_images WHERE product_id IN (${placeholders}) ${slug === undefined ? `AND id =
+    FROM product_images WHERE product_id IN (${placeholders}) ${!fullGallery ? `AND id =
       (SELECT cover.id FROM product_images cover WHERE cover.product_id = product_images.product_id
        ORDER BY cover.is_primary DESC, cover.sort_order, cover.id LIMIT 1)` : ''}
     ORDER BY product_id, sort_order, id`)
@@ -154,12 +198,66 @@ async function loadProducts(db: D1Database, filters: ProductFilters, slug?: stri
   }));
 }
 
-export function listProducts(db: D1Database, filters: ProductFilters = {}): Promise<ProductDTO[]> {
-  return loadProducts(db, filters);
+export async function listProducts(db: D1Database, filters: ProductFilters = {}): Promise<ProductDTO[]> {
+  if (filters.q?.trim()) return (await listProductPage(db, filters)).items;
+  const { results } = await productListStatement(db, filters).all<ProductRow>();
+  return assembleProducts(db, results);
+}
+
+export async function listProductPage(db: D1Database, filters: ProductFilters = {}): Promise<ProductPageDTO> {
+  const { where, values } = productConditions(filters);
+  if (filters.q?.trim()) {
+    // D1 rejects expanded Unicode GLOB patterns as too complex. Read only names
+    // and IDs, normalize in the Worker, and cap IDs before hydrating public DTOs.
+    const { results } = await db.prepare(`SELECT p.id, p.name_en, p.name_vi
+      FROM products p JOIN categories c ON c.id = p.category_id
+      WHERE ${where} ORDER BY ${productOrder(filters)}`).bind(...values)
+      .all<Pick<ProductRow, 'id' | 'name_en' | 'name_vi'>>();
+    const search = normalizeSearch(filters.q);
+    const matched = results.filter(product => normalizeSearch(product.name_en).includes(search) || normalizeSearch(product.name_vi).includes(search));
+    const page = filters.page ?? 1;
+    const ids = matched.slice((page - 1) * CATALOG_PAGE_SIZE, page * CATALOG_PAGE_SIZE).map(product => product.id);
+    let items: ProductDTO[] = [];
+    if (ids.length) {
+      const { results: products } = await db.prepare(`SELECT ${PRODUCT_COLUMNS}
+        FROM products p JOIN categories c ON c.id = p.category_id
+        WHERE p.status = 'ACTIVE' AND c.is_active = 1 AND p.id IN (${ids.map(() => '?').join(',')})`)
+        .bind(...ids).all<ProductRow>();
+      const productsById = new Map(products.map(product => [product.id, product]));
+      const ordered = ids.flatMap(id => { const product = productsById.get(id); return product ? [product] : []; });
+      items = await assembleProducts(db, ordered);
+    }
+    return { items, total: matched.length, page, pageSize: CATALOG_PAGE_SIZE, totalPages: Math.ceil(matched.length / CATALOG_PAGE_SIZE) };
+  }
+  const [count, products] = await db.batch([
+    db.prepare(`SELECT COUNT(*) AS total FROM products p JOIN categories c ON c.id = p.category_id
+      WHERE ${where}`).bind(...values),
+    productListStatement(db, filters),
+  ]);
+  const total = Number((count.results as unknown as { total: number }[])[0]?.total ?? 0);
+  return { items: await assembleProducts(db, products.results as unknown as ProductRow[]),
+    total, page: filters.page ?? 1, pageSize: CATALOG_PAGE_SIZE, totalPages: Math.ceil(total / CATALOG_PAGE_SIZE) };
+}
+
+export async function listProductsByVariants(db: D1Database, variantIds: number[]): Promise<ProductDTO[]> {
+  if (variantIds.length < 1 || variantIds.length > MAX_CART_LINES || new Set(variantIds).size !== variantIds.length
+    || variantIds.some(id => !Number.isSafeInteger(id) || id < 1)) {
+    throw new AppError('VALIDATION_ERROR', 400, 'Danh sách biến thể không hợp lệ.');
+  }
+  const placeholders = variantIds.map(() => '?').join(',');
+  const { results } = await db.prepare(`SELECT ${PRODUCT_COLUMNS}
+    FROM products p JOIN categories c ON c.id = p.category_id
+    WHERE p.status = 'ACTIVE' AND c.is_active = 1 AND EXISTS
+      (SELECT 1 FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1 AND v.id IN (${placeholders}))
+    ORDER BY p.id LIMIT ${MAX_CART_LINES}`).bind(...variantIds).all<ProductRow>();
+  return assembleProducts(db, results);
 }
 
 export async function getProduct(db: D1Database, slug: string): Promise<ProductDTO> {
-  const [product] = await loadProducts(db, {}, slug);
+  const { results } = await db.prepare(`SELECT ${PRODUCT_COLUMNS}
+    FROM products p JOIN categories c ON c.id = p.category_id
+    WHERE p.status = 'ACTIVE' AND c.is_active = 1 AND p.slug = ? LIMIT 1`).bind(slug).all<ProductRow>();
+  const [product] = await assembleProducts(db, results, true);
   if (!product) throw new AppError('NOT_FOUND', 404, 'Không tìm thấy sản phẩm.');
   return product;
 }

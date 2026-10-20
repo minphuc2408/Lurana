@@ -8,11 +8,9 @@ import type { CodCheckoutModel } from '../hooks/useCodCheckout';
 
 export function CartView(model: CodCheckoutModel) {
   const { t, language } = useLocale('cart');
-  const common = useLocale('common');
   const subtotal = model.items.reduce((sum, item) => sum + item.price * item.qty, 0);
   return <main data-cart-overview className="mx-auto max-w-[1240px] px-5 py-6 sm:px-8 sm:py-10">
-    <nav aria-label={t('Breadcrumb')} className="flex flex-wrap items-center gap-2 py-4 text-sm text-lunara-body"><Link to="/">{common.t('Home')}</Link><span aria-hidden="true">/</span><span aria-current="page">{common.t('Cart')}</span></nav>
-    <div className="mb-8 border-b border-lunara-border pb-6"><span className="mb-1 block text-sm font-medium tracking-[0.16em] text-lunara-rose-strong uppercase">{t('A message waiting to be sent')}</span><h1 className="font-display text-3xl tracking-tight text-lunara-ink sm:text-4xl">{t('Your flower cart')}</h1></div>
+    <div className="mb-8 border-b border-lunara-border pb-6 text-center"><span className="mb-1 block text-sm font-medium tracking-[0.16em] text-lunara-rose-strong uppercase">{t('A message waiting to be sent')}</span><h1 className="font-display text-3xl tracking-tight text-lunara-ink sm:text-4xl">{t('Your flower cart')}</h1></div>
     {model.catalogLoading ? <p role="status">{t('Loading catalog')}</p> : model.catalogError ? <div role="alert">{t(apiErrorKey(model.catalogError))}<button type="button" onClick={model.reloadCatalog} className="ml-4 min-h-11 text-lunara-rose-strong underline">{t('Retry')}</button></div> : !model.items.length ? <section data-empty-cart className="mx-auto max-w-md space-y-4 py-24 text-center">
       <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-lunara-blush text-lunara-body"><ShoppingBag size={24} strokeWidth={1.5} aria-hidden="true" /></div>
       <h2 className="font-display text-2xl text-lunara-ink">{t('Your flower cart is empty')}</h2><p className="text-sm leading-relaxed sm:text-sm">{t('Choose flowers for someone special')}</p>

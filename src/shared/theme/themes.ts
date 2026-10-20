@@ -1,6 +1,19 @@
-/** Base palettes stay separate from accessible semantic colors. Original mirrors brand.css. */
+/** White first, followed by the owner's exact Monochrome gray steps. */
+export const monochromeScale = {
+  0: '#FFFFFF',
+  50: '#F2F2F2', 100: '#DBDBDB', 200: '#C4C4C4', 300: '#ADADAD',
+  400: '#969696', 500: '#808080', 600: '#696969', 700: '#525252',
+  800: '#3B3B3B', 900: '#1B1B1B', 950: '#0D0D0D',
+} as const;
+
+/** Owner-approved local pink accents for the default Monochrome storefront. */
+export const monochromePinkScale = {
+  50: '#FBEAF0', 100: '#F4C3D5', 200: '#EC9CBA', 300: '#E5769F', 400: '#DE4F83',
+} as const;
+
+/** Stable IDs preserve saved choices; the Green Mist palette mirrors brand.css. */
 export const themes = [
-  { id: 'original', name: 'Original', background: '#F8FBFA', secondary: '#F1F7F5', softSurface: '#EDF4F6', accent: '#527E75', foreground: '#344B49' },
+  { id: 'original', name: 'Green Mist', background: '#F8FBFA', secondary: '#F1F7F5', softSurface: '#EDF4F6', accent: '#527E75', foreground: '#344B49' },
   { id: 'sage-green', name: 'Sage Green', background: '#FAFAF7', secondary: '#F2F5EF', softSurface: '#E5EBE0', accent: '#5B7164', foreground: '#37453D' },
   { id: 'champagne', name: 'Champagne', background: '#FAF9F6', secondary: '#F7F1E8', softSurface: '#EDE4D6', accent: '#786958', foreground: '#4F463E' },
   { id: 'powder-blue', name: 'Powder Blue', background: '#FAFBFC', secondary: '#F0F5F9', softSurface: '#E3ECF3', accent: '#5B7386', foreground: '#3B4E5C' },
@@ -21,10 +34,13 @@ export const themes = [
   { id: 'orchid-picnic', name: 'Orchid Picnic', background: '#FCFAF9', secondary: '#F2EBF8', softSurface: mix('#E47558', '#FCFAF9', 0.88), accent: '#954F9D', secondaryAccent: '#E47558', tertiaryAccent: '#D8DD8B', foreground: '#4A3A4F' },
   { id: 'ocean-confetti', name: 'Ocean Confetti', background: '#F8FBFA', secondary: '#E9F5F3', softSurface: mix('#F18EAD', '#F8FBFA', 0.88), accent: '#147A81', secondaryAccent: '#F18EAD', tertiaryAccent: '#F3CF70', foreground: '#27464B' },
   { id: 'folk-bloom', name: 'Folk Bloom', background: '#FBF9F3', secondary: '#F3E6D7', softSurface: mix('#8EA7D2', '#FBF9F3', 0.88), accent: '#A64740', secondaryAccent: '#8EA7D2', tertiaryAccent: '#96B06A', foreground: '#4B3736' },
+  { id: 'monochrome', name: 'Original', background: monochromeScale[50], secondary: monochromeScale[100], softSurface: monochromeScale[200], accent: monochromeScale[900], foreground: monochromeScale[900] },
 ] as const;
 export type ThemeId = typeof themes[number]['id'];
 export type Theme = typeof themes[number];
 export const themeStorageKey = 'lunara.theme.v1';
+export const defaultThemeId: ThemeId = 'monochrome';
+export const themeDefaultVersionKey = 'lunara.theme.default.v1';
 /** Legacy previews keep five swatches; creative palettes show all six approved colors. */
 export function themeSwatches(theme: Theme): string[] {
   return 'secondaryAccent' in theme
@@ -32,10 +48,10 @@ export function themeSwatches(theme: Theme): string[] {
     : [theme.background, theme.secondary, theme.softSurface, theme.accent, theme.foreground];
 }
 export function normalizeTheme(value: unknown): ThemeId {
-  return themes.find(theme => theme.id === value)?.id ?? 'original';
+  return themes.find(theme => theme.id === value)?.id ?? defaultThemeId;
 }
 export function readTheme(storage?: Pick<Storage, 'getItem'>): ThemeId {
-  try { return normalizeTheme(storage?.getItem(themeStorageKey)); } catch { return 'original'; }
+  try { return normalizeTheme(storage?.getItem(themeStorageKey)); } catch { return defaultThemeId; }
 }
 export function saveTheme(theme: ThemeId, storage?: Pick<Storage, 'setItem'>) {
   try { storage?.setItem(themeStorageKey, theme); } catch { /* Preference remains usable in memory. */ }
@@ -61,8 +77,87 @@ function accessibleColor(color: string, target: string, backgrounds: string[], r
   return target;
 }
 export function themeTokens(theme: Theme): Record<string, string> {
-  // Removing overrides restores every original token, including the legacy component palette.
+  // Green Mist retains the legacy "original" ID and its CSS fallback palette.
   if (theme.id === 'original') return {};
+  // Monochrome uses the owner's exact steps instead of interpolating new grays.
+  if (theme.id === 'monochrome') {
+    const gray = monochromeScale;
+    const pink = monochromePinkScale;
+    const white = gray[0];
+    // Only secondary backgrounds that shared the footer's gray 100 move to gray 50.
+    const secondarySurface = gray[50];
+    return {
+      ...Object.fromEntries(Object.entries(gray).map(([step, color]) => [`--color-${step}`, color])),
+      ...Object.fromEntries(Object.entries(pink).map(([step, color]) => [`--lunara-pink-${step}`, color])),
+      '--lunara-white': white,
+      '--lunara-shop-intro': gray[50],
+      '--lunara-floating-cart-background': pink[50], '--lunara-floating-cart-foreground': white,
+      '--lunara-header-count-background': pink[400], '--lunara-header-count-foreground': white,
+      '--lunara-preference-surface': white, '--lunara-preference-border': gray[100],
+      '--lunara-preference-active': pink[400], '--lunara-preference-active-foreground': white,
+      '--lunara-preference-hover': pink[50],
+      '--lunara-detail-surface': white,
+      '--lunara-detail-accent': pink[400], '--lunara-detail-selected-surface': pink[50],
+      '--lunara-detail-selected-border': pink[400], '--lunara-detail-thumbnail-hover': pink[100],
+      '--lunara-detail-thumbnail-hover-border': pink[200],
+      '--lunara-detail-buy': pink[400], '--lunara-detail-buy-hover': pink[300],
+      '--lunara-detail-buy-foreground': gray[900],
+      '--lunara-pagination-selected': pink[50], '--lunara-pagination-selected-border': pink[400],
+      '--lunara-pagination-hover': pink[50],
+      '--lunara-cream': gray[50], '--lunara-surface': secondarySurface, '--lunara-blush': gray[200],
+      '--lunara-card-surface': gray[50], '--lunara-section-secondary': secondarySurface,
+      '--lunara-rose': gray[900], '--lunara-rose-strong': gray[900], '--lunara-rose-light': gray[400],
+      '--lunara-ink': gray[900], '--lunara-body': gray[700], '--lunara-muted': gray[700],
+      '--lunara-border': gray[200], '--lunara-primary-hover': gray[950], '--lunara-focus-ring': gray[800],
+      '--lunara-control-border': gray[600], '--lunara-control-surface': gray[50],
+      '--lunara-accent-secondary': gray[400], '--lunara-accent-secondary-soft': secondarySurface,
+      '--lunara-accent-secondary-strong': gray[900],
+      '--lunara-accent-tertiary': gray[300], '--lunara-accent-tertiary-soft': secondarySurface,
+      '--lunara-accent-tertiary-strong': gray[900],
+      '--lunara-campaign-surface': 'transparent', '--lunara-campaign-foreground': gray[900],
+      '--lunara-secondary-link': gray[900], '--lunara-editorial-label': pink[400],
+      '--lunara-featured-rule': gray[200], '--lunara-story-rule': gray[200],
+      '--lunara-journey-surface': white, '--lunara-journey-icon-surface': pink[50],
+      '--lunara-journey-icon-foreground': pink[400], '--lunara-journey-step-foreground': pink[400],
+      '--lunara-product-favorite': pink[400], '--lunara-product-favorite-hover': pink[400],
+      '--lunara-product-favorite-active': pink[400],
+      '--lunara-product-action-icon': white,
+      '--lunara-product-action-surface': pink[400], '--lunara-product-action-foreground': gray[900],
+      '--lunara-product-action-border': pink[400], '--lunara-product-action-hover': pink[400],
+      '--lunara-product-action-hover-foreground': gray[900],
+      '--lunara-product-action-added': pink[400], '--lunara-product-action-added-foreground': gray[900],
+      '--lunara-product-action-added-border': pink[400], '--lunara-product-action-added-hover': pink[400],
+      '--lunara-utility-background': secondarySurface, '--lunara-utility-foreground': gray[700],
+      '--lunara-utility-ink': gray[900], '--lunara-utility-focus': gray[800], '--lunara-utility-border': gray[200],
+      '--lunara-editorial-ink': gray[900], '--lunara-editorial-body': gray[700],
+      '--lunara-editorial-border': gray[200], '--lunara-editorial-blush': gray[200], '--lunara-editorial-surface': secondarySurface,
+      '--lunara-footer-background': gray[100], '--lunara-footer-foreground': gray[900],
+      '--lunara-footer-muted': gray[700], '--lunara-footer-copyright': gray[700],
+      '--lunara-footer-link': gray[700], '--lunara-footer-heading': gray[900],
+      '--lunara-footer-border': gray[200], '--lunara-footer-hover': gray[950],
+      '--lunara-footer-focus': gray[800],
+      '--lunara-sidebar': gray[950], '--lunara-admin-background': gray[50],
+      '--lunara-admin-active-surface': gray[800], '--lunara-admin-active-foreground': gray[50],
+      '--lunara-admin-active-border': gray[500], '--lunara-admin-header-border': gray[200],
+      '--lunara-header-ink': gray[900], '--lunara-header-body': gray[900],
+      '--lunara-nav-ink': gray[900], '--lunara-nav-active': pink[400],
+      '--lunara-nav-hover': gray[950], '--lunara-text-hover': gray[950],
+      '--lunara-icon-foreground': gray[900], '--lunara-icon-hover': gray[950],
+      '--lunara-icon-button-background': gray[50], '--lunara-icon-button-hover': secondarySurface,
+      '--lunara-search-button-background': pink[400], '--lunara-search-button-foreground': gray[900],
+      '--lunara-search-button-hover': pink[400], '--lunara-search-icon-hover': gray[950],
+      '--lunara-services-background': white,
+      '--lunara-service-icon-background': pink[50], '--lunara-service-icon-hover': pink[100],
+      '--lunara-service-icon-foreground': pink[400], '--lunara-service-icon-foreground-hover': pink[400],
+      '--lunara-lookup-panel': white,
+      '--lunara-lookup-button': gray[200], '--lunara-lookup-button-hover': gray[300],
+      '--lunara-lookup-button-foreground': gray[900], '--lunara-lookup-button-foreground-hover': gray[950],
+      '--lunara-hero-backdrop': gray[950], '--lunara-hero-foreground': white,
+      '--lunara-hero-button-background': white, '--lunara-hero-button-foreground': gray[900],
+      '--lunara-hero-button-hover': gray[50],
+      '--lunara-hero-overlay': `color-mix(in srgb, ${gray[950]} 65%, transparent)`,
+    };
+  }
   const { background, secondary, softSurface, accent, foreground } = theme;
   const cardSurface = '#FFFFFF';
   const creative = 'secondaryAccent' in theme ? theme : null;

@@ -26,8 +26,8 @@ This skill covers **repository-specific feature work and pitfalls**. `AGENTS.md`
 
 ## 3. Theme and UI guardrails
 
-- The current registry has **21 light themes**: Original + 15 legacy palettes + 5 creative themes. Read `src/shared/theme/themes.ts`, `theme-store.ts` and `src/styles/brand.css` before visual changes.
-- The `rose`, `cream`, `blush` token names are **legacy aliases**; do not infer pink/cream values from their names. The Original palette currently uses green/white-mist. Use semantic tokens; palette HEX definitions belong in the registry/theming layer, not individual components.
+- The current registry has **22 light themes**. Original is the Monochrome/pink default (stable ID `monochrome`); the former Original palette is now Green Mist (stable ID `original`). Read `src/shared/theme/themes.ts`, `theme-store.ts` and `src/styles/brand.css` before visual changes.
+- The `rose`, `cream`, `blush` token names are **legacy aliases**, not literal colors. Use semantic tokens; palette HEX definitions belong in the registry/theming layer, not individual components. Display-name changes must not swap stored IDs or recolor another palette.
 - Keep theme IDs, `lunara.theme.v1`, boot/persistence, and the appearance of the 16 pre-creative themes unless a change is requested. Status colors preserve meaning; the admin has separate surfaces/sidebar plus some theme-aware active tokens.
 - Visual target for creative themes: neutral/off-white surfaces dominate; **primary** identifies CTA and key active actions; **secondary/tertiary** are localized, restrained brand accents. They should not automatically paint whole utility bars, Hero labels, Journey sections or all Footer headings.
 - **Important current-state distinction:** the repository's creative-theme mapping and `scripts/check-ui-creative-colors.mjs` may still enforce the older large-accent treatment. Inspect actual implementation. When *authorized* to refactor it, update the corresponding semantic mapping and visual assertions; do not claim the target is already implemented or delete regression tests merely to pass.
@@ -48,7 +48,7 @@ This skill covers **repository-specific feature work and pitfalls**. `AGENTS.md`
 ## 5. Verification and handoff
 
 - Run the required checks for the changed category as specified in `AGENTS.md`; do not equate `npm run build` with typecheck or API/cloud acceptance.
-- For UI changes verify affected routes and interactive states, EN/VI, responsive desktop/mobile and keyboard accessibility. For shared theme changes, run regression across **all 21 themes** and visually inspect **all five creative themes** at 390px and 1440px (with representative routes/states).
+- For UI changes verify affected routes and interactive states, EN/VI, responsive desktop/mobile and keyboard accessibility. For shared theme changes, run regression across **all 22 themes** and visually inspect **all five creative themes** at 390px and 1440px (with representative routes/states), unless the owner has explicitly paused those checks.
 - Use `scripts/check-ui-themes.mjs` and `scripts/check-ui-creative-colors.mjs` where supported. Replace **obsolete assertions** only when implementing a consciously revised visual contract; retain tests protecting the 16 earlier themes.
 - For Worker writes use isolated/local smoke and follow remote-operation guards in `docs/operations/OPERATIONS.md` and `docs/operations/STAGING.md`.
 - Follow the documentation ownership and Git allowlist policies in `AGENTS.md`. Report in Vietnamese: outcome, touched files, actual checks (PASS/FAIL/not run), relevant remaining limitations, and documentation updated/not needed.

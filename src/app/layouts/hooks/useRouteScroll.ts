@@ -16,6 +16,7 @@ export function useRouteScroll() {
       let target: HTMLElement | null = null;
       try { target = hash ? document.getElementById(decodeURIComponent(hash.slice(1))) : null; } catch { /* Invalid anchors fall back to the page top. */ }
       const headerHeight = document.querySelector('[data-storefront-header]')?.getBoundingClientRect().height || 0;
+      target?.focus({ preventScroll: true });
       window.scrollTo({ left: 0, top: target ? Math.max(0, window.scrollY + target.getBoundingClientRect().top - headerHeight - 24) : 0, behavior: 'instant' });
     };
     scroll();

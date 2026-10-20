@@ -48,7 +48,8 @@ const variantCreate = z.object({
 });
 export const adminProductCreateSchema = z.object({
   category_id: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
-  slug: z.string().trim().max(200).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Đường dẫn sản phẩm không hợp lệ.'),
+  slug: z.string().trim().max(200).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Đường dẫn sản phẩm không hợp lệ.')
+    .refine(value => value !== 'by-variants', 'Đường dẫn sản phẩm đã được dành riêng.'),
   name_vi: name,
   name_en: name,
   description_vi: description.optional(),

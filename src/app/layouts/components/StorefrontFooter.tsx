@@ -1,29 +1,27 @@
 import { useRef } from 'react';
 import { Link } from 'react-router';
+import { Facebook, Instagram, Linkedin, Phone, Twitter, Youtube, type LucideIcon } from 'lucide-react';
 import { useLocale } from '@/shared/i18n';
 import { customerCareLinks, socialLinks, storeLocations } from '@/shared/config/storefront-footer';
-import { FeatureUnavailable } from '@/shared/components/FeatureUnavailable';
-import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription, DialogClose } from '@/shared/ui/dialog';
+import { FeatureUnavailableDialog } from '@/shared/components/FeatureUnavailableDialog';
+import { cn } from '@/shared/lib/utils';
 
 const linkClass = 'inline-block text-sm leading-6 text-lunara-footer-link no-underline transition-colors hover:text-lunara-rose-strong hover:underline underline-offset-4 break-words';
 const headingClass = 'mb-5 text-sm font-medium tracking-[0.06em] uppercase text-lunara-footer-heading';
 const bottomLabels = ['Privacy Policy', 'Shipping Policy'];
 const shoppingLabels = ['Frequently Asked Questions', 'Payment Methods'];
+const socialIcons: Record<string, LucideIcon> = { Facebook, Twitter, Instagram, Linkedin, Youtube };
 
-function FooterDestination({ label, href }: { label: string; href?: string }) {
+function FooterDestination({ label, href, icon: Icon }: { label: string; href?: string; icon?: LucideIcon }) {
   const { t } = useLocale('common');
   const triggerRef = useRef<HTMLButtonElement>(null);
-  if (href) return <Link to={href} className={linkClass}>{t(label)}</Link>;
+  const className = cn(linkClass, Icon && 'inline-flex min-h-11 items-center gap-2');
+  const content = <>{Icon && <Icon size={16} strokeWidth={1.5} aria-hidden="true" />}{t(label)}</>;
+  if (href) return <Link to={href} className={className}>{content}</Link>;
   const description = t('Footer feature coming soon', { feature: t(label) });
-  return <Dialog>
-    <DialogTrigger asChild><button ref={triggerRef} type="button" data-footer-coming-soon className={'text-left ' + linkClass}>{t(label)}</button></DialogTrigger>
-    <DialogContent onCloseAutoFocus={event => { event.preventDefault(); triggerRef.current?.focus({ preventScroll: true }); }} className="rounded-2xl border-lunara-border bg-lunara-cream font-body">
-      <DialogTitle className="sr-only">{t(label)}</DialogTitle>
-      <DialogDescription className="sr-only">{description}</DialogDescription>
-      <FeatureUnavailable inline description={description} />
-      <DialogClose asChild><button type="button" className="rounded-full bg-lunara-rose-strong px-6 py-3 text-white">{t('Close')}</button></DialogClose>
-    </DialogContent>
-  </Dialog>;
+  return <FeatureUnavailableDialog description={description}
+    trigger={<button ref={triggerRef} type="button" data-footer-coming-soon className={cn('text-left', className)}>{content}</button>}
+    onCloseAutoFocus={event => { event.preventDefault(); triggerRef.current?.focus({ preventScroll: true }); }} />;
 }
 
 export function StorefrontFooter() {
@@ -38,7 +36,7 @@ export function StorefrontFooter() {
           <p className="max-w-sm text-sm leading-7">{t("Crafting nature's most beautiful moments into timeless floral arrangements. Bringing joy, one bloom at a time.")}</p>
           <nav aria-label={t('Follow Us')} className="mt-7">
             <h4 className={headingClass}>{t('Follow Us')}</h4>
-            <ul className="flex max-w-sm flex-wrap gap-x-5 gap-y-2">{socialLinks.map(link => <li key={link.label}><FooterDestination {...link} /></li>)}</ul>
+            <ul data-footer-socials className="flex max-w-sm flex-col items-start">{socialLinks.map(link => <li key={link.label}><FooterDestination {...link} icon={socialIcons[link.label]} /></li>)}</ul>
           </nav>
         </div>
         <nav aria-label={t('Shopping')} className="min-w-0">
@@ -54,8 +52,12 @@ export function StorefrontFooter() {
           <h4 className={headingClass}>{t('About Lunarra')}</h4>
           <ul className="flex flex-col gap-3">{aboutLinks.map(link => <li key={link.label}><FooterDestination {...link} /></li>)}</ul>
         </nav>
-        <div className="col-span-2 min-w-0 lg:col-span-1">
-          <h4 className={headingClass}>{t('Contact Us')}</h4>
+        <section id="contact" tabIndex={-1} aria-labelledby="footer-contact-heading" className="col-span-2 min-w-0 lg:col-span-1">
+          <h4 id="footer-contact-heading" className={headingClass}>{t('Contact Us')}</h4>
+          <div data-footer-hotline className="mb-5 flex items-center gap-2">
+            <Phone size={16} strokeWidth={1.5} aria-hidden="true" />
+            <FooterDestination label="Hotline" />
+          </div>
           <address className="grid gap-5 not-italic sm:grid-cols-3 lg:grid-cols-1">
             {storeLocations.map(store => <p key={store.id} className="text-sm leading-6">
               <strong className="block font-medium text-lunara-ink">{t(store.label)}:</strong>
@@ -66,7 +68,7 @@ export function StorefrontFooter() {
             <p className="font-medium text-lunara-ink">CÔNG TY TNHH LUNARA</p>
             <p>{t('Tax ID')}: 001</p>
           </div>
-        </div>
+        </section>
       </div>
       <div data-footer-bottom className="flex flex-col gap-5 border-t border-lunara-border pt-6 text-sm leading-6 lg:flex-row lg:items-center lg:justify-between lg:gap-8 lg:pt-8">
         <p>{t('© 2026 Lunara Flower Shop. All rights reserved. Made with love & flowers.')}</p>

@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react';
-import { normalizeTheme, readTheme, saveTheme, themes, themeStorageKey, themeTokens, type ThemeId } from './themes.ts';
+import { defaultThemeId, normalizeTheme, readTheme, saveTheme, themes, themeStorageKey, themeDefaultVersionKey, themeTokens, type ThemeId } from './themes.ts';
 
-let current: ThemeId = 'original';
+let current: ThemeId = defaultThemeId;
 let initialized = false;
 let appliedTokens: string[] = [];
 const listeners = new Set<() => void>();
@@ -22,7 +22,17 @@ function applyTheme(id: ThemeId) {
 export function initializeTheme() {
   if (initialized || typeof window === 'undefined') return;
   initialized = true;
-  applyTheme(readTheme(storage()));
+  const preferences = storage();
+  let initialTheme = readTheme(preferences);
+  try {
+    // Apply the owner's temporary default once, then preserve subsequent explicit choices.
+    if (preferences?.getItem(themeDefaultVersionKey) !== defaultThemeId) {
+      initialTheme = defaultThemeId;
+      saveTheme(initialTheme, preferences);
+      preferences?.setItem(themeDefaultVersionKey, defaultThemeId);
+    }
+  } catch { initialTheme = defaultThemeId; }
+  applyTheme(initialTheme);
   window.addEventListener('storage', event => {
     if ((event.key === themeStorageKey || event.key === null) && event.storageArea === storage()) applyTheme(normalizeTheme(event.newValue));
   });
@@ -37,6 +47,6 @@ function subscribe(listener: () => void) {
   return () => { listeners.delete(listener); };
 }
 export function useTheme() {
-  const theme = useSyncExternalStore(subscribe, () => current, () => 'original' as ThemeId);
+  const theme = useSyncExternalStore(subscribe, () => current, () => defaultThemeId);
   return { theme, setTheme };
 }

@@ -34,7 +34,7 @@ test('rate limits reject before validation, auth, Turnstile and D1; counters use
     assert.equal((await response.json()).error.code, 'RATE_LIMITED');
     assert.equal(calls.at(-1).key, `${route}:192.0.2.1`);
   }
-  for (const route of ['/api/categories', '/api/products', '/api/products/demo', '/api/delivery/options']) {
+  for (const route of ['/api/categories', '/api/products', '/api/products/by-variants?variant_ids=1', '/api/products/demo', '/api/delivery/options']) {
     assert.equal((await app.request(route, {}, env)).status, 429);
   }
   assert.equal((await app.request('https://shop.example/api/orders', post(body()), {})).status, 503);

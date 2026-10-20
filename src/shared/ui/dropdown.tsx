@@ -16,6 +16,7 @@ interface DropdownProps {
   className?: string;
   contentClassName?: string;
   triggerContent?: ReactNode;
+  showChevron?: boolean;
   placeholder?: string;
   'aria-label'?: string;
   'aria-invalid'?: boolean;
@@ -24,7 +25,7 @@ interface DropdownProps {
 const emptyValue = '__lunarra_empty_option__';
 
 /** Native option children keep labels/values close to the owning feature. */
-export function Dropdown({ value = '', onValueChange, children, name, id, form, required, disabled, className, contentClassName, triggerContent, placeholder, ...aria }: DropdownProps) {
+export function Dropdown({ value = '', onValueChange, children, name, id, form, required, disabled, className, contentClassName, triggerContent, showChevron = true, placeholder, ...aria }: DropdownProps) {
   // Radix programmatic focus can match :focus-visible even after a pointer opens Select.
   const inputMethod = useRef('keyboard');
   const options = Children.toArray(children).filter((child): child is ReactElement<OptionProps> => isValidElement(child) && child.type === 'option');
@@ -34,7 +35,7 @@ export function Dropdown({ value = '', onValueChange, children, name, id, form, 
   return <Select.Root value={selected} onValueChange={next => onValueChange(next === emptyValue ? '' : next)} name={name} form={form} required={required} disabled={disabled || !items.length}>
     <Select.Trigger {...aria} id={id} name={name} data-dropdown data-dropdown-name={name} onPointerDown={() => { inputMethod.current = 'pointer'; }} onKeyDown={() => { inputMethod.current = 'keyboard'; }} className={cn('flex min-h-11 w-full min-w-0 items-center justify-between gap-3 rounded-full border border-lunara-border bg-lunara-control-surface px-4 py-3 text-left font-body text-sm text-lunara-body shadow-none focus-visible:border-lunara-rose focus-visible:outline-2 focus-visible:outline-[var(--lunara-focus-ring)] disabled:opacity-50 [&>span:first-child]:truncate', className)}>
       <Select.Value placeholder={placeholder || empty?.props.label || empty?.props.children}>{triggerContent}</Select.Value>
-      <Select.Icon><ChevronDown size={15} aria-hidden="true" className="shrink-0" /></Select.Icon>
+      {showChevron && <Select.Icon><ChevronDown size={15} aria-hidden="true" className="shrink-0" /></Select.Icon>}
     </Select.Trigger>
     <Select.Portal>
       <Select.Content data-lunara-select-content ref={node => { if (node) node.dataset.inputMethod = inputMethod.current; }} onPointerMove={event => { inputMethod.current = event.currentTarget.dataset.inputMethod = 'pointer'; }} onKeyDown={event => { inputMethod.current = event.currentTarget.dataset.inputMethod = 'keyboard'; }} position="popper" sideOffset={8} collisionPadding={12} className={cn("z-[100] max-h-[min(20rem,var(--radix-select-content-available-height))] min-w-[var(--radix-select-trigger-width)] max-w-[calc(100vw-24px)] overflow-hidden rounded-2xl border border-lunara-border bg-lunara-cream p-1.5 font-body text-lunara-body shadow-lg", contentClassName)}>

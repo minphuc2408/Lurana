@@ -1,7 +1,6 @@
 import { useLocale } from '@/shared/i18n';
 import { ShieldCheck, Truck } from 'lucide-react';
-import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogClose } from '@/shared/ui/dialog';
-import { FeatureUnavailable } from '@/shared/components/FeatureUnavailable';
+import { FeatureUnavailableDialog } from '@/shared/components/FeatureUnavailableDialog';
 import type { CodCheckoutModel } from '../hooks/useCodCheckout';
 
 export function CheckoutPayment(model: CodCheckoutModel) {
@@ -31,11 +30,7 @@ export function CheckoutActions(model: CodCheckoutModel) {
       <p className="flex items-start gap-1.5"><ShieldCheck size={14} strokeWidth={1.5} aria-hidden="true" className="mt-0.5 shrink-0 text-lunara-rose-strong" /><span>{t('We send you a photo of your flowers before delivery.')}</span></p>
       <p className="flex items-start gap-1.5"><Truck size={14} strokeWidth={1.5} aria-hidden="true" className="mt-0.5 shrink-0 text-lunara-rose-strong" /><span>{t('Careful delivery keeps every petal in shape.')}</span></p>
     </div>
-    <Dialog open={model.paymentNoticeOpen} onOpenChange={model.setPaymentNoticeOpen}>
-      <DialogContent className="rounded-[2px] border-lunara-border bg-lunara-cream font-body"><DialogTitle className="sr-only">{t('Bank transfer Internet Banking ATM')}</DialogTitle><DialogDescription className="sr-only">{t('Bank transfer coming soon')}</DialogDescription><FeatureUnavailable inline description={t('Bank transfer coming soon')} /><DialogClose asChild><button type="button" className="rounded-[2px] bg-lunara-rose-strong px-6 py-3 text-white">{t('Close')}</button></DialogClose></DialogContent>
-    </Dialog>
-    <Dialog open={model.termsNoticeOpen} onOpenChange={model.setTermsNoticeOpen}>
-      <DialogContent className="rounded-[2px] border-lunara-border bg-lunara-cream font-body"><DialogTitle className="font-display text-2xl text-lunara-ink">{t('Terms and Conditions')}</DialogTitle><DialogDescription className="text-lunara-body">{t('Terms content coming later')}</DialogDescription><DialogClose asChild><button type="button" className="rounded-[2px] bg-lunara-rose-strong px-6 py-3 text-white">{t('Close')}</button></DialogClose></DialogContent>
-    </Dialog>
+    <FeatureUnavailableDialog open={model.paymentNoticeOpen} onOpenChange={model.setPaymentNoticeOpen} description={t('Bank transfer coming soon')} />
+    <FeatureUnavailableDialog open={model.termsNoticeOpen} onOpenChange={model.setTermsNoticeOpen} title={t('Terms and Conditions')} description={t('Terms content coming later')} />
   </div>;
 }

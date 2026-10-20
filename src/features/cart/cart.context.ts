@@ -6,6 +6,8 @@ export interface CartContextValue {
   addItem: (productId: number, size?: ProductSize | number, quantity?: number) => boolean;
   loading: boolean;
   error: string;
+  hydrationError: unknown;
+  retryHydration: () => void;
   updateQty: (id: string, delta: number) => void;
   removeItem: (id: string) => void;
   clearCart: () => void;

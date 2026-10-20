@@ -24,4 +24,6 @@ export interface ProductApiDto {
   images: { url: string; alt_vi: string|null; alt_en: string|null; is_primary: boolean }[]; variants: ProductVariant[];
 }
 export interface ProductFilters { category: string; search: string; sort: string; priceRange?: string; }
+export interface ProductPageDto { items: ProductApiDto[]; total: number; page: number; pageSize: number; totalPages: number; }
+export interface ProductPageQuery { page?: number; category?: string; q?: string; price?: string; sort?: string; featured?: boolean; }
 export type ProductDto = Omit<Product, "name"> & LocalizedNameFields;

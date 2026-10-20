@@ -8,7 +8,7 @@ import wrappingPhoto from '@/assets/home-reference/story-wrapping-600.jpg';
 
 export function OurStory() {
   const { t } = useLocale('landing');
-  return <section id="cau-chuyen-lunarra" data-home-story aria-labelledby="home-story-title" className="border-t border-lunara-story-rule bg-lunara-card-surface py-16 sm:py-24 [--story-photo-height:20rem] sm:[--story-photo-height:25rem] [--story-photo-gap:1rem] sm:[--story-photo-gap:1.25rem]">
+  return <section id="cau-chuyen-lunarra" data-home-story aria-labelledby="home-story-title" className="bg-lunara-card-surface py-16 sm:py-24 [--story-photo-height:20rem] sm:[--story-photo-height:25rem] [--story-photo-gap:1rem] sm:[--story-photo-gap:1.25rem]">
     <div className="mx-auto grid max-w-[var(--lunara-content-max-width)] grid-cols-1 items-center gap-12 px-5 sm:px-8 lg:grid-cols-12 lg:gap-16">
       <div className="min-w-0 lg:col-span-5">
         <span className="mb-4 block text-[11px] font-medium tracking-[0.18em] text-lunara-editorial-label uppercase">{t('The Lunarra story')}</span>

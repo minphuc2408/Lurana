@@ -1,6 +1,6 @@
 # API contract MVP
 
-Reference cho frontend/backend/QA; source đối chiếu **17/10/2026**, hợp nhất tài liệu **19/10/2026**. Base path `/api`, cùng origin với frontend; JSON UTF-8. File này giữ request/response, validation và hành vi API đã triển khai. Phiên bản remote và bằng chứng kiểm thử nằm ở [PROJECT_STATUS](../PROJECT_STATUS.md).
+Reference cho frontend/backend/QA; public catalog đối chiếu **20/10/2026**, các contract khác giữ mốc **17/10/2026**. Base path `/api`, cùng origin với frontend; JSON UTF-8. File này giữ request/response, validation và hành vi API đã triển khai. Phiên bản remote và bằng chứng kiểm thử nằm ở [PROJECT_STATUS](../PROJECT_STATUS.md).
 
 Route API lạ trả `NOT_FOUND` JSON 404, message `Không tìm thấy API.`; boundary admin kiểm cookie trước khi trả 404. Chưa có endpoint hủy đơn dành cho khách.
 
@@ -47,8 +47,12 @@ Rate-limit bindings chạy trước validation/D1/Siteverify: POST orders/login 
 ### `GET /api/categories`
 `data: [{ id, code, slug, name_vi, name_en, image_url: string | null }]` — chỉ `is_active = 1`, sắp theo `sort_order`, ID. `image_url=null` khi chưa gán ảnh; URL ảnh được trả trong JSON, không trả bytes/base 64. Không có endpoint ghi danh mục. Nguồn assets/migration: [CATEGORY_IMAGES](../features/CATEGORY_IMAGES.md).
 
-### `GET /api/products?category=<code>&featured=1`
-`data: { items: Product[] }` — tối đa 100 sản phẩm `ACTIVE` (frontend giữ logic lọc/tìm hiện có). Không phân trang ở MVP.
+### `GET /api/products?page=1&q=&category=<code>&price=all&sort=featured&featured=1`
+`data: { items: Product[]; total: number; page: number; pageSize: 40; totalPages: number }`. Phân trang cố định **40 sản phẩm/trang**, không nhận page size từ client. `total` tính sau lọc và trước phân trang; `totalPages = ceil(total / 40)`, bằng 0 khi rỗng. `page` mặc định 1, chỉ nhận số nguyên dương ở dạng thập phân không số 0 đầu, tối đa `floor(Number.MAX_SAFE_INTEGER / 40)`; trang vượt cuối trả `items: []` và giữ page đã yêu cầu để frontend điều hướng.
+
+- `q` tùy chọn, trim, tối đa 100 ký tự, không NUL; tìm trên cả `name_en`/`name_vi`. Worker chuẩn hóa NFD/bỏ dấu tổ hợp/đ → d/chữ thường, rồi so khớp chuỗi con literal; NFC/NFD, hoa/thường và dấu Việt cho cùng kết quả. `*`, `?`, `[`, `]`, `%`, `_` đều là ký tự thường; không ghép từ khóa vào SQL.
+- `category` lọc code active, trim 1–100 ký tự; `featured` chỉ nhận `1` khi có mặt. `price`: `all` (mặc định), `under-500` [0,500000), `500-1000` [500000,1000000), `1000-2000` [1000000,2000000), `over-2000` [2000000,+∞), đơn vị VND.
+- `sort`: `featured` (mặc định) = featured DESC/ID ASC; `low`/`high` = giá ASC/DESC rồi ID ASC. Giá lọc/sắp là giá variant active có cỡ nhỏ nhất: S → STANDARD → M → DELUXE → L; sản phẩm không có variant active dùng 0 như card hiện hành. `rating` được nhận để tương thích nhưng dùng featured/ID vì chưa có dữ liệu rating. Lọc/tìm/sắp áp dụng trên toàn catalog trước phân trang.
 
 ```ts
 type Product = {
@@ -63,7 +67,12 @@ type Product = {
 ```
 Chỉ trả variant `is_active = 1`. Không lộ `stock_quantity` chính xác.
 
-Chỉ sản phẩm thuộc category đang active. `in_stock = stock > 0`; `low_stock = 0 < stock ≤ low_stock_threshold`. Danh sách sắp theo ID; variants theo S/M/L/STANDARD/DELUXE, ảnh theo `sort_order`, ID. `category` lọc theo code; `featured` chỉ nhận `1` khi có mặt. Danh sách chỉ trả cover (ưu tiên primary, sau đó sort_order/ID); chi tiết trả toàn bộ ảnh, không có public ID. Danh sách/chi tiết có dữ liệu dùng đúng 3 statement D1 (products → variants → images); danh sách rỗng/slug không tồn tại chỉ cần 1. Mỗi truy vấn con có tối đa 100 tham số bind.
+Chỉ sản phẩm thuộc category đang active. `in_stock = stock > 0`; `low_stock = 0 < stock ≤ low_stock_threshold`. Variants theo S/M/L/STANDARD/DELUXE, ảnh theo `sort_order`, ID. Danh sách chỉ trả cover (ưu tiên primary, sau đó sort_order/ID); chi tiết trả toàn bộ ảnh, không có public ID. Không `q`: trang có dữ liệu dùng 4 statement D1 (count + products cùng batch, rồi bulk variants + images), rỗng dùng 2. Có `q`: SQL lọc/sắp candidate, chỉ đọc ID/tên EN/VI về Worker; Worker normalize/tìm trên toàn candidate, đếm rồi cắt tối đa 40 ID trước đọc DTO + variants + images, tổng 4 statement; rỗng/trang vượt cuối dùng 1. Hai child IN tối đa 40 bind, không N+1. Detail có dữ liệu dùng 3 statement; slug không tồn tại chỉ cần 1.
+
+**Quyết định search:** Unicode GLOB mở rộng trả `SQLITE_ERROR`/`pattern_too_complex` trên workerd D1 dù Node SQLite chạy được. Nhánh lightweight giữ tìm tiếng Việt đúng toàn catalog và response 40, không đổi schema; đổi lại CPU/bộ nhớ Worker tăng theo số candidate. Targeted probe 118 sản phẩm đã chạy workerd cô lập; chưa đo giới hạn cloud cho catalog lớn.
+
+### `GET /api/products/by-variants?variant_ids=1,2`
+`data: { items: Product[] }` cho khôi phục giỏ đã lưu mà không tải mọi trang catalog. Bắt buộc **1–15 variant ID** nguyên dương/safe integer, không trùng, phân cách bằng dấu phẩy; không khoảng trắng hoặc số 0 đầu. Trả mỗi product một lần, ID ASC, cover và các variant active theo DTO public ở trên. ID không tồn tại/inactive hoặc product/category không active bị bỏ qua; tất cả không còn bán trả `items: []`. Không trả tồn kho nội bộ, không ghi hoặc giữ tồn. Có dữ liệu dùng 3 statement, rỗng dùng 1; rate-limit/cache giống các GET catalog khác. `by-variants` là slug dành riêng, admin create từ chối giá trị này.
 
 ### `GET /api/products/:slug`
 `data: Product`; 404 nếu không `ACTIVE`.

@@ -16,12 +16,16 @@ test('Phase 2 API acceptance on isolated workerd D1; no remote or persisted seed
     let queries = 0;
     // Each all()/first()/run() invocation counts a statement executed by the real D1 binding.
     const countedStatement = statement => ({
+      raw: statement,
       bind(...values) { return countedStatement(statement.bind(...values)); },
       async all() { queries++; return statement.all(); },
       async first(column) { queries++; return statement.first(column); },
       async run() { queries++; return statement.run(); },
     });
-    const env = { DB: { prepare(sql) { return countedStatement(db.prepare(sql)); } } };
+    const env = { DB: {
+      prepare(sql) { return countedStatement(db.prepare(sql)); },
+      async batch(statements) { queries += statements.length; return db.batch(statements.map(statement => statement.raw)); },
+    } };
     const read = async path => {
       const response = await app.request(path, {}, env);
       assert.equal(response.status, 200, path);
@@ -29,13 +33,34 @@ test('Phase 2 API acceptance on isolated workerd D1; no remote or persisted seed
     };
     const categories = await read('/api/categories'); assert.equal(categories.length, 4);
     queries = 0;
-    const products = (await read('/api/products')).items;
-    assert.equal(products.length, 8); assert.equal(queries, 3);
+    const page = await read('/api/products'); const products = page.items;
+    assert.deepEqual([page.total, page.page, page.pageSize, page.totalPages], [8, 1, 40, 1]);
+    assert.equal(products.length, 8); assert.equal(queries, 4);
     for (const product of products) {
       assert.deepEqual(product.variants.map(v => v.size_code), ['S', 'M', 'L']);
       assert.equal(product.images.filter(i => i.is_primary).length, 1);
     }
-    console.log('D1 LOCAL API evidence: categories=4 products=8 variants=24 primary_images=8 GET /api/products statements=3.');
+    console.log('D1 LOCAL API evidence: categories=4 products=8 variants=24 primary_images=8 GET /api/products statements=4 pageSize=40.');
+    // Actual D1 rejects expanded Unicode GLOB patterns that Node SQLite accepts.
+    // Keep this case on workerd so Vietnamese search cannot regress unnoticed.
+    const original = await db.prepare('SELECT name_vi,name_en FROM products WHERE id=1').first();
+    try {
+      await db.prepare('UPDATE products SET name_vi=?,name_en=? WHERE id=1').bind('BÓ HỒNG ĐỎ TÌNH YÊU', 'Literal [rose] * ? % _').run();
+      for (const q of ['bo hong do', 'Bó Hồng Đỏ', '[rose]', '[', ']', '*', '?', '%', '_']) {
+        queries = 0;
+        const searched = await read('/api/products?q=' + encodeURIComponent(q));
+        assert.equal(searched.total, 1);
+        assert.deepEqual(searched.items.map(product => product.id), [1]);
+        assert.equal(queries, 4);
+      }
+      await db.prepare('UPDATE products SET name_vi=? WHERE id=1').bind('BÓ HỒNG ĐỎ TÌNH YÊU'.normalize('NFD')).run();
+      assert.equal((await read('/api/products?q=' + encodeURIComponent('HỒNG ĐỎ'.normalize('NFD')))).total, 1);
+      queries = 0;
+      assert.equal((await read('/api/products?q=' + encodeURIComponent("rose' OR 1=1 --"))).total, 0);
+      assert.equal(queries, 1);
+    } finally {
+      await db.prepare('UPDATE products SET name_vi=?,name_en=? WHERE id=1').bind(original.name_vi, original.name_en).run();
+    }
     const options = await read('/api/delivery/options');
     assert.equal(options.provinces.length, 1); assert.equal(options.provinces.flatMap(p => p.wards).length, 1);
 

@@ -4,11 +4,19 @@ import fs from 'node:fs';
 import i18next from 'i18next';
 import ts from 'typescript';
 import { getLocalizedName, normalizeLanguage, normalizeSearch, readLanguage, saveLanguage } from '../src/shared/i18n/language.ts';
-import { getProducts, loadCatalog, normalizeProduct, selectProducts } from '../src/features/shop/shop.service.ts';
+import { getProducts, loadCatalog, loadProductPage, normalizeProduct, selectProducts } from '../src/features/shop/shop.service.ts';
 import app from '../worker/index.ts';
 import { createTestDb } from './helpers/worker.mjs';
-let fixture;
-before(async () => { fixture = createTestDb(); const original = globalThis.fetch; globalThis.fetch = (url, options) => app.request(String(url), options, { DB: fixture.db }); try { await loadCatalog(); } finally { globalThis.fetch = original; } });
+let fixture, catalogProducts;
+before(async () => {
+  fixture = createTestDb(); const original = globalThis.fetch;
+  globalThis.fetch = (url, options) => app.request(String(url), options, { DB: fixture.db });
+  try {
+    const catalog = await loadCatalog();
+    const page = await loadProductPage();
+    catalogProducts = page.items.map(product => normalizeProduct(product, catalog.categories));
+  } finally { globalThis.fetch = original; }
+});
 after(() => fixture.close());
 
 const root = new URL('../src/shared/i18n/locales/', import.meta.url);
@@ -76,13 +84,15 @@ test('product names honor Vietnamese fields, legacy aliases and English fallback
 });
 
 test('catalog search accepts accented, unaccented and English names without mutating products', () => {
-  const products = getProducts();
+  const products = catalogProducts;
+  const snapshot = structuredClone(products);
   const filter = search => selectProducts(products, { category: 'All', sort: 'featured', search }).map(product => product.id);
   assert.deepEqual(filter('mẫu đơn'), [1]);
   assert.deepEqual(filter('mau don'), [1]);
   assert.deepEqual(filter('peony'), [1]);
   assert.deepEqual(filter('OẢI HƯƠNG'), [7]);
   assert.equal(products[0].name, 'Blush Peony Bouquet');
+  assert.deepEqual(products, snapshot);
   assert.equal(normalizeSearch('Đồng HOA'), 'dong hoa');
 });
 

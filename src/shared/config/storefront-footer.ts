@@ -1,9 +1,10 @@
 type FooterLink = { label: string; href?: string };
+export const storefrontContactPath = '/#contact';
 
 // Only published destinations have a URL; the rest open a coming-soon notice.
 export const customerCareLinks: FooterLink[] = [
   { label: 'About Us', href: '/about' },
-  { label: 'Contact Us' },
+  { label: 'Contact Us', href: storefrontContactPath },
   { label: 'Shipping Policy' },
   { label: 'Frequently Asked Questions' },
   { label: 'Payment Methods' },

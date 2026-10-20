@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { DELIVERY_METHOD_CODES, MAX_CART_LINES, MAX_QTY_PER_LINE } from './constants.ts';
+import { CATALOG_PAGE_SIZE, DELIVERY_METHOD_CODES, MAX_CART_LINES, MAX_QTY_PER_LINE } from './constants.ts';
 
 export const methodCodeSchema = z.enum(DELIVERY_METHOD_CODES, { error: 'Phương thức giao hàng không hợp lệ.' });
 const areaName = z.string({ error: 'Vui lòng nhập khu vực giao hàng.' }).trim()
@@ -22,6 +22,18 @@ export const quoteBodySchema = quoteSchema;
 export const productsQuerySchema = z.object({
   category: z.string({ error: 'Danh mục không hợp lệ.' }).trim().min(1, 'Danh mục không hợp lệ.').max(100, 'Danh mục không hợp lệ.').optional(),
   featured: z.literal('1', { error: 'Bộ lọc featured phải bằng 1.' }).optional().transform(value => value === '1' ? true : undefined),
+  q: z.string({ error: 'Từ khóa không hợp lệ.' }).trim().max(100, 'Từ khóa tối đa 100 ký tự.')
+    .refine(value => !value.includes('\0'), 'Từ khóa không hợp lệ.').optional(),
+  price: z.enum(['all', 'under-500', '500-1000', '1000-2000', 'over-2000'], { error: 'Khoảng giá không hợp lệ.' }).optional(),
+  sort: z.enum(['featured', 'low', 'high', 'rating'], { error: 'Thứ tự sản phẩm không hợp lệ.' }).optional(),
+  page: z.string({ error: 'Trang không hợp lệ.' }).regex(/^[1-9]\d*$/, 'Trang phải là số nguyên dương.')
+    .transform(Number).pipe(z.number().int().max(Math.floor(Number.MAX_SAFE_INTEGER / CATALOG_PAGE_SIZE), 'Trang không hợp lệ.')).optional().default(1),
+});
+export const productsByVariantsQuerySchema = z.object({
+  variant_ids: z.string({ error: 'Danh sách biến thể không hợp lệ.' }).max(MAX_CART_LINES * 17, 'Giỏ hàng tối đa 15 dòng.')
+    .regex(/^[1-9]\d*(,[1-9]\d*)*$/, 'Danh sách biến thể không hợp lệ.').transform(value => value.split(',').map(Number))
+    .pipe(z.array(z.number().int().positive().max(Number.MAX_SAFE_INTEGER)).min(1).max(MAX_CART_LINES))
+    .refine(ids => new Set(ids).size === ids.length, 'Danh sách biến thể không được trùng lặp.'),
 });
 export const productSlugSchema = z.object({ slug: z.string().min(1, 'Đường dẫn sản phẩm không hợp lệ.').max(200, 'Đường dẫn sản phẩm không hợp lệ.') });
 

@@ -46,6 +46,8 @@
 !/worker/lib/rate-limit.ts
 !/worker/services/pending-orders.ts
 !/src/shared/lib/turnstile.ts
+!/src/shared/lib/motion.ts
+!/src/features/landing/hooks/useHeroMotion.ts
 !/src/shared/hooks/useTurnstile.ts
 !/src/shared/components/TurnstileChallenge.tsx
 !/tests/bot-protection.test.mjs
@@ -207,6 +209,9 @@
 !/src/shared/api/
 !/src/shared/api/client.ts
 !/src/shared/components/FeatureUnavailable.tsx
+!/src/shared/components/FeatureUnavailableDialog.tsx
+!/src/shared/components/LunarraMark.tsx
+!/src/shared/components/BreadcrumbTrail.tsx
 !/src/pages/UnavailablePage.tsx
 !/src/features/shop/catalog.context.ts
 !/src/features/shop/CatalogProvider.tsx
@@ -602,6 +607,8 @@
 
 # Reviewed storefront navigation using shared catalog and existing Radix menus.
 !/src/app/layouts/components/StorefrontNavigation.tsx
+!/src/app/layouts/components/StorefrontBreadcrumb.tsx
+!/src/shared/hooks/useFieldFocus.ts
 
 # Reviewed route scroll behavior for storefront/admin navigation.
 !/src/app/layouts/hooks/useRouteScroll.ts
@@ -614,6 +621,8 @@
 !/src/features/shop/components/WishlistDrawer.tsx
 !/src/features/cart/hooks/useCheckoutFieldFocus.ts
 !/scripts/check-ui-product-detail.mjs
+!/src/features/shop/components/ProductPagination.tsx
+!/src/features/shop/hooks/useThumbnailRail.ts
 
 # Reviewed local regression for keyboard, responsive checkout and readable forms.
 !/scripts/check-ui-refinements.mjs

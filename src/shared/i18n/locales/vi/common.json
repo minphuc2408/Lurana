@@ -1,4 +1,8 @@
 {
+  "Breadcrumb": "Đường dẫn trang",
+  "Checkout": "Thanh toán",
+  "Product details": "Chi tiết sản phẩm",
+  "Page unavailable": "Trang chưa khả dụng",
   "Theme": "Giao diện",
   "Theme, current: {{name}}": "Giao diện, đang chọn: {{name}}",
   "API timeout": "Yêu cầu quá thời gian chờ. Thông tin vẫn được giữ; hãy thử lại.",
@@ -276,6 +280,8 @@
   "Search": "Tìm kiếm",
   "Close search": "Đóng tìm kiếm",
   "Main navigation": "Điều hướng chính",
+  "Explore": "Khám phá",
+  "Customer account": "Tài khoản",
   "Story": "Câu chuyện",
   "Flower delivery • Scheduled with care": "Giao hoa tận nơi • Theo lịch hẹn",
   "Customer support": "Hỗ trợ khách hàng",

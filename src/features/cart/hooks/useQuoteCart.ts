@@ -38,7 +38,8 @@ export function useQuoteCart() {
   });
   const changeProvince = (value: string) => { if (value !== province) { setProvince(value); setWard(''); } };
   return { ...cart, items: displayItems, quote, quoteError, options, optionsError, province, setProvince: changeProvince, ward, setWard, method, setMethod,
-    catalogLoading: catalog.loading || (!catalog.error && cart.loading), catalogError: catalog.error, reloadCatalog: catalog.reload,
+    catalogLoading: catalog.loading || (!catalog.error && !cart.hydrationError && cart.loading), catalogError: catalog.error || cart.hydrationError,
+    reloadCatalog: () => { catalog.reload(); cart.retryHydration(); },
     quoteLoading: Boolean(cart.items.length && addressSelected && options && !quote && !quoteError),
     retry: () => setVersion(previous => previous + 1) };
 }

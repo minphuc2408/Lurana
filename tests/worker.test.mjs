@@ -9,7 +9,7 @@ const quote = { items: [{ variant_id: 1, quantity: 1 }], province_name: 'Thành 
 test('Hono GET routes compose DTOs, cache policy and security headers', async t => {
   const fixture = createTestDb(); t.after(() => fixture.close());
   const env = { DB: fixture.db };
-  for (const path of ['/api/categories', '/api/products', '/api/products/blush-peony-bouquet', '/api/delivery/options']) {
+  for (const path of ['/api/categories', '/api/products', '/api/products/by-variants?variant_ids=1,4', '/api/products/blush-peony-bouquet', '/api/delivery/options']) {
     fixture.resetQueryCount();
     const response = await app.request(path, {}, env);
     assert.equal(response.status, 200);
@@ -19,7 +19,7 @@ test('Hono GET routes compose DTOs, cache policy and security headers', async t 
     assert.equal(response.headers.get('X-Frame-Options'), 'SAMEORIGIN');
     assert.match(response.headers.get('X-Request-Id'), /^[\w-]+$/);
     assert.ok((await response.json()).data);
-    if (path.startsWith('/api/products')) assert.equal(fixture.queryCount, 3);
+    if (path.startsWith('/api/products')) assert.equal(fixture.queryCount, path === '/api/products' ? 4 : 3);
   }
   const health = await app.request('/api/health', {}, {});
   assert.equal(health.status, 200); assert.equal((await health.json()).data.ok, true);
@@ -65,6 +65,10 @@ test('Hono validation/404 errors share JSON envelope and never expose stack trac
     ['/api/checkout/quote', { method: 'POST', body: JSON.stringify(quote) }, 400, 'VALIDATION_ERROR'],
     ['/api/products?featured=no', {}, 400, 'VALIDATION_ERROR'],
     ['/api/products?category=a&category=b', {}, 400, 'VALIDATION_ERROR'],
+    ['/api/products?page=0', {}, 400, 'VALIDATION_ERROR'],
+    ['/api/products?price=unknown', {}, 400, 'VALIDATION_ERROR'],
+    ['/api/products/by-variants?variant_ids=1,1', {}, 400, 'VALIDATION_ERROR'],
+    ['/api/products/by-variants?variant_ids=1&variant_ids=2', {}, 400, 'VALIDATION_ERROR'],
     ['/api/unknown', {}, 404, 'NOT_FOUND'],
     ['/api/orders', post(quote), 400, 'VALIDATION_ERROR'],
     ['/api/admin/me', {}, 401, 'UNAUTHORIZED'],

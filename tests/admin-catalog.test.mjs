@@ -95,6 +95,7 @@ test('duplicate slug/SKU returns CONFLICT and failed child insert rolls the enti
 test('product create validation rejects bad image URLs, duplicate sizes, compare price and missing category without partial records', async t => {
   const { db, sqlite, queries } = fixture(t);
   for (const bad of [
+    product({ slug: 'by-variants' }),
     product({ image: { url: 'malformed-url' } }),
     product({ image: { url: 'javascript:alert(1)' } }),
     product({ image: { url: 'https://user:password@example.test/image.png' } }),

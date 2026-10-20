@@ -7,7 +7,7 @@ import { CheckoutPayment } from './CheckoutPayment';
 import type { CodCheckoutModel, CodForm } from '../hooks/useCodCheckout';
 import { useCheckoutFieldFocus } from '../hooks/useCheckoutFieldFocus';
 
-const inputClass = 'mt-1 min-h-11 w-full min-w-0 rounded-[2px] border border-lunara-border bg-lunara-cream p-2.5 text-base leading-6 font-normal text-lunara-ink placeholder:text-lunara-body placeholder:opacity-100';
+const inputClass = 'mt-1 min-h-11 w-full min-w-0 rounded-[2px] border-0 bg-lunara-cream p-2.5 text-base leading-6 font-normal text-lunara-ink placeholder:text-lunara-body placeholder:opacity-100';
 const sectionClass = 'min-w-0 space-y-4 rounded-[2px] border border-lunara-border bg-lunara-surface p-5 sm:p-6';
 const headingClass = 'border-b border-lunara-border pb-2 font-display text-xl leading-7 text-lunara-ink';
 export function CodCheckoutForm(model: CodCheckoutModel) {

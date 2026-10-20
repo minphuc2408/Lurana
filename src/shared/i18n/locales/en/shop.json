@@ -1,4 +1,5 @@
 {
+  "Clear filters": "Clear filters",
   "View details": "View details",
   "Search flowers": "Search flowers",
   "Search flowers...": "Search flowers...",
@@ -86,5 +87,15 @@
   "Favorite flowers ({{count}})": "Favorite flowers ({{count}})",
   "Flowers you like during this visit": "Flowers you like during this visit",
   "No favorite flowers yet": "You have not chosen any favorite flowers yet.",
-  "Continue exploring flowers": "Continue exploring flowers"
+  "Continue exploring flowers": "Continue exploring flowers",
+  "More photos": "More photos",
+  "Back to first photos": "Back to first photos",
+  "Product pages": "Product pages",
+  "First page": "First page",
+  "Previous page": "Previous page",
+  "Next page": "Next page",
+  "Last page": "Last page",
+  "More pages": "More pages",
+  "Go to page {{page}}": "Go to page {{page}}",
+  "Page {{page}} of {{total}}": "Page {{page}} of {{total}}"
 }

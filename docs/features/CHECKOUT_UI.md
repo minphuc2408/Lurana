@@ -21,7 +21,9 @@ Refinement 20/10: input/textarea/Combobox 16px, nhãn/helper quan trọng 14px; 
 
 Địa chỉ chỉ tỉnh/phường, không thêm quận/huyện hoặc cam kết từ mẫu. Methods/surcharge/slots/limits lấy API theo [Delivery](DELIVERY_ADDRESS.md). Gõ contact/địa chỉ/thiệp/ghi chú, đổi payment/consent hoặc chuyển Cart↔Checkout không tự tạo quote mới khi dữ liệu định giá không đổi.
 
-Ngoại lệ pointer focus chỉ áp input/textarea checkout theo quyết định 18/10; Tab vẫn có focus, validation/checkbox/radio/admin giữ nguyên. Chi tiết ở [design owner](../ui-ux/DESIGN_SYSTEM.md#interaction-và-accessibility); màu semantic áp toàn bộ 21 theme.
+Ngày 20/10 owner bỏ viền field checkout ở cả trạng thái nghỉ và focus, gồm input/textarea/Combobox/Dropdown; pointer không outline/shadow, Tab vẫn có focus 2px qua shared `useFieldFocus`. Labels/lỗi/validation/checkbox/radio/admin giữ nguyên. Breadcrumb chung đặt trước nội dung, checkout có link về Giỏ hàng. Chi tiết trình bày thuộc [design owner](../ui-ux/DESIGN_SYSTEM.md#interaction-và-accessibility); giữ các palette hiện có.
+
+Thông báo chuyển khoản và điều khoản dùng `FeatureUnavailableDialog` chung với footer/header, có icon hoa bốn cánh từ favicon và copy EN/VI theo ngữ cảnh; [mẫu thông báo](../ui-ux/DESIGN_SYSTEM.md#thông-báo-tính-năng-chung) thuộc design system. Giữ callback đóng chuyển khoản về COD, không thay consent hoặc bước review.
 
 ## Gửi, retry và xác nhận
 

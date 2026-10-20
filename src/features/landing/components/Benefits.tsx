@@ -1,5 +1,16 @@
 import { useLocale } from "@/shared/i18n";
-import { Truck, Flower2, Banknote, Heart } from "lucide-react";
+import { Truck, Flower2, Banknote, Heart, HandHeart, createLucideIcon } from "lucide-react";
+
+// Adapt the existing Lucide notepad and pen geometry to the owner's top-bound card reference.
+const CardNotePen = createLucideIcon('CardNotePen', [
+  ['path', { d: 'M8 2v4', key: 'ring-left' }],
+  ['path', { d: 'M12 2v4', key: 'ring-middle' }],
+  ['path', { d: 'M16 2v4', key: 'ring-right' }],
+  ['path', { d: 'M20 10V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3', key: 'page' }],
+  ['path', { d: 'M8 10h6M8 14h3', key: 'message' }],
+  ['path', { d: 'M21.378 12.626a1 1 0 0 0-3.004-3.004l-4.01 4.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z', key: 'pen' }],
+]);
+
 const benefits = [
   { icon: Truck, title: "Delivery Options", detail: "Choose your area and time at checkout" },
   { icon: Flower2, title: "Thoughtfully Arranged", detail: "Handcrafted with love and care" },
@@ -7,39 +18,38 @@ const benefits = [
   { icon: Heart, title: "Thoughtful Gifts", detail: "A personal touch for every moment" },
 ];
 const journey = [
-  { title: 'Choose your flowers', detail: 'Find flowers and gifts for every moment.' },
-  { title: 'Write a card', detail: 'Share a heartfelt message with a little card.' },
-  { title: 'Delivered with care', detail: 'Lunarra prepares and delivers your gift to someone you love.' },
+  { icon: Flower2, title: 'Choose your flowers', detail: 'Find flowers and gifts for every moment.' },
+  { icon: CardNotePen, title: 'Write a card', detail: 'Share a heartfelt message with a little card.' },
+  { icon: HandHeart, title: 'Delivered with care', detail: 'Lunarra prepares and delivers your gift to someone you love.' },
 ];
 export function Benefits({ variant = 'services' }: { variant?: 'services' | 'journey' }) {
   const { t } = useLocale("landing");
   if (variant === 'journey') return <section data-home-journey aria-labelledby="journey-title" className="bg-lunara-journey py-16 sm:py-20">
     <div className="mx-auto max-w-[var(--lunara-content-max-width)] px-5 sm:px-8">
-    <div className="mx-auto mb-12 max-w-xl text-center sm:mb-16">
+    <div className="mx-auto mb-10 max-w-xl text-center sm:mb-12">
       <p className="mb-2 text-[11px] font-medium tracking-[0.16em] text-lunara-editorial-label uppercase">{t('The gifting journey')}</p>
       <h2 id="journey-title" className="font-display text-2xl leading-snug tracking-tight text-lunara-ink sm:text-3xl">{t('Just 3 steps to send a little love')}</h2>
     </div>
     <ol className="grid grid-cols-1 gap-8 text-center md:grid-cols-3 lg:gap-12">
-      {journey.map(({ title, detail }, index) => <li key={title} className="flex min-w-0 flex-col items-center">
-        <div className="mb-4 flex size-12 items-center justify-center bg-lunara-journey-icon text-lunara-on-journey-icon">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            {index === 0 ? <><path d="M12 22v-9" /><path d="M12 13c-2.5 0-5-2-5-4.5a5 5 0 0 1 10 0c0 2.5-2.5 4.5-5 4.5z" /><path d="M12 8.5V4" /><path d="M9.5 5.5c1.5-1.5 3.5-1.5 5 0" /><path d="M12 17c-2 0-4-1-4-2" /><path d="M12 19c2 0 4-1 4-2" /></>
-              : index === 1 ? <><rect x="3" y="5" width="18" height="14" rx="1" /><path d="m3 7 9 6 9-6" /><path d="M8 14h4" /><path d="M8 11h2" /></>
-                : <><path d="M12 2v20" /><path d="M20 12a8 8 0 0 0-16 0" /><path d="M4 12v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6" /><path d="M12 6a2.5 2.5 0 0 0-2.5-2.5c-1.5 0-2.5 1-2.5 2.5 0 2 5 3 5 3s5-1 5-3c0-1.5-1-2.5-2.5-2.5A2.5 2.5 0 0 0 12 6z" /></>}
-          </svg>
+      {journey.map(({ icon: Icon, title, detail }, index) => <li key={title} className="flex min-w-0 flex-col items-center">
+        <div data-journey-icon-circle className="mb-4 flex size-20 shrink-0 items-center justify-center rounded-full bg-lunara-journey-icon sm:size-[90px]">
+          <Icon data-journey-icon size={32} strokeWidth={1.8} aria-hidden="true" className="text-lunara-on-journey-icon" />
         </div>
-        <span aria-hidden="true" className="mb-1 bg-lunara-campaign font-display text-xs font-semibold tracking-widest text-lunara-on-campaign">{String(index + 1).padStart(2, '0')}</span>
+        <span data-journey-step aria-hidden="true" className="mb-2 font-display text-xs text-lunara-journey-step">{String(index + 1).padStart(2, '0')}</span>
         <h3 className="mb-2 font-display text-lg text-lunara-ink">{t(title)}</h3>
         <p className="max-w-xs text-xs leading-relaxed text-lunara-body sm:text-sm">{t(detail)}</p>
       </li>)}
     </ol>
     </div>
   </section>;
-  return <section data-home-services aria-label={t('The Lunara Experience')} className="rounded-[2px] border border-lunara-border bg-lunara-section-secondary px-5 py-6 sm:px-6">
-    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
-      {benefits.map(({ icon: Icon, title, detail }) => <div key={title} className="flex min-w-0 items-center gap-3 lg:border-l lg:border-lunara-border lg:pl-5 lg:first:border-0 lg:first:pl-0">
-        <Icon size={23} strokeWidth={1.5} aria-hidden="true" className="shrink-0 text-lunara-accent-secondary-strong" />
-        <div><h3 className="text-xs leading-5 font-semibold text-lunara-ink">{t(title)}</h3><p className="mt-0.5 text-[0.7rem] leading-5 text-lunara-body">{t(detail)}</p></div>
+  return <section data-home-services aria-label={t('The Lunara Experience')} className="bg-lunara-services">
+    <div className="mx-auto grid max-w-[var(--lunara-content-max-width)] grid-cols-2 gap-x-6 gap-y-10 px-5 py-12 sm:gap-x-8 sm:px-8 sm:py-16 lg:grid-cols-4 lg:gap-x-12">
+      {benefits.map(({ icon: Icon, title, detail }) => <div key={title} data-service-item className="group flex min-w-0 flex-col items-center text-center">
+        <div data-service-icon className="mb-5 flex size-16 shrink-0 items-center justify-center rounded-full bg-lunara-service-icon transition-colors group-hover:bg-lunara-service-icon-hover">
+          <Icon data-theme-icon size={25} strokeWidth={1.5} aria-hidden="true" className="text-lunara-service-icon-foreground transition-colors group-hover:text-lunara-service-icon-foreground-hover" />
+        </div>
+        <h3 className="text-sm leading-6 font-medium text-lunara-ink transition-colors group-hover:text-lunara-text-hover sm:text-base">{t(title)}</h3>
+        <p className="mt-2 max-w-56 text-sm leading-6 text-lunara-body">{t(detail)}</p>
       </div>)}
     </div>
   </section>;

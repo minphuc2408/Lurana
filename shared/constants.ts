@@ -4,5 +4,6 @@ export const DELIVERY_METHOD_CODES = ['STANDARD', 'EXPRESS', 'SAME_DAY'] as cons
 export const SIZE_CODES = ['S', 'M', 'L', 'STANDARD', 'DELUXE'] as const;
 export const ORDER_STATUSES = ['PENDING', 'CONFIRMED', 'PREPARING', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED'] as const;
 export const MAX_CART_LINES = 15;
+export const CATALOG_PAGE_SIZE = 40;
 export const MAX_QTY_PER_LINE = 20;
 export const MAX_ADVANCE_DAYS = 30;

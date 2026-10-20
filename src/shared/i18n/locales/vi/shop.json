@@ -1,4 +1,5 @@
 {
+  "Clear filters": "Xóa bộ lọc",
   "View details": "Xem chi tiết",
   "Search flowers": "Tìm hoa",
   "Search flowers...": "Tìm hoa...",
@@ -86,5 +87,15 @@
   "Favorite flowers ({{count}})": "Hoa yêu thích ({{count}})",
   "Flowers you like during this visit": "Các mẫu hoa bạn yêu thích trong lần xem này",
   "No favorite flowers yet": "Bạn chưa chọn mẫu hoa yêu thích nào.",
-  "Continue exploring flowers": "Tiếp tục xem hoa"
+  "Continue exploring flowers": "Tiếp tục xem hoa",
+  "More photos": "Xem thêm ảnh",
+  "Back to first photos": "Về ảnh đầu tiên",
+  "Product pages": "Phân trang sản phẩm",
+  "First page": "Trang đầu",
+  "Previous page": "Trang trước",
+  "Next page": "Trang sau",
+  "Last page": "Trang cuối",
+  "More pages": "Các trang khác",
+  "Go to page {{page}}": "Đến trang {{page}}",
+  "Page {{page}} of {{total}}": "Trang {{page}} / {{total}}"
 }

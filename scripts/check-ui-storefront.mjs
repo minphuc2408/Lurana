@@ -58,10 +58,12 @@ async function navigate(route){
 }
 async function key(key,code=key){await send('Input.dispatchKeyEvent',{type:'keyDown',key,code});await send('Input.dispatchKeyEvent',{type:'keyUp',key,code});await frame();}
 async function choose(id){
-  await evaluate("document.querySelector('#header-theme').click()");
+  const previousScroll=await evaluate('scrollY');
+  await evaluate("document.querySelector('#header-theme').scrollIntoView({block:'center'});document.querySelector('#header-theme').click()");
   await waitFor("document.querySelectorAll('[role=option] [data-theme-option]').length==="+themes.length);
   await evaluate("document.querySelector('[role=option][data-value=\""+id+"\"]').click()");
   await waitFor("document.documentElement.dataset.lunaraTheme==='"+id+"' && !document.querySelector('[role=listbox]')");
+  await evaluate('scrollTo(0,'+previousScroll+')');await frame();
 }
 async function screenshot(name){const {data}=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});writeFileSync(path.join(root,'.security-review','themes-'+name+'.png'),Buffer.from(data,'base64'));}
 function rgb(hex){return 'rgb('+hex.slice(1).match(/../g).map(x=>parseInt(x,16)).join(', ')+')';}
@@ -98,7 +100,10 @@ try {
   const getSnapshot=async route=>{if(!apiCache[route]){const response=await fetch(baseUrl+route);if(!response.ok)throw new Error('Public snapshot '+route+' HTTP '+response.status);apiCache[route]=await response.json();}return apiCache[route];};
 
   await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'no-preference'}]});
-  const click=async selector=>{await evaluate("document.querySelector("+JSON.stringify(selector)+").click()");await frame();};
+  const click=async selector=>{
+    if(selector==='[data-header-tracking]'&&await evaluate('innerWidth<1024&&!document.querySelector("[data-header-menu-toggle]").matches("[aria-expanded=true]")'))await click('[data-header-menu-toggle]');
+    await evaluate("document.querySelector("+JSON.stringify(selector)+").click()");await frame();
+  };
   const chooseControl=async(id,value)=>{if(await evaluate("innerWidth<640&&!document.querySelector('#"+id+"').getClientRects().length")){await click('[data-shop-filter-toggle]');await waitFor("document.querySelector('#"+id+"').getClientRects().length>0");}await click('#'+id);await waitFor("document.querySelector('[role=option][data-value="+JSON.stringify(value)+"]')");await click('[role=option][data-value="'+value+'"]');await waitFor("!document.querySelector('[role=listbox]')");};
   const localeJson={en:JSON.parse(readFileSync('src/shared/i18n/locales/en/common.json','utf8')),vi:JSON.parse(readFileSync('src/shared/i18n/locales/vi/common.json','utf8'))};
   const preservedVietnameseCopy=['✦ Studio hoa cao cấp','Nơi những đóa hoa','Kể câu chuyện của bạn','Được tạo nên bằng tình yêu và sự chăm chút, mỗi mẫu hoa Lunarra là một tác phẩm sống, thay bạn gửi những điều khó nói.','Tùy chọn giao hàng','Chọn khu vực và thời gian khi đặt hàng','Chăm chút từng đóa hoa','Được kết bằng tình yêu và sự tận tâm','Thanh toán khi nhận hàng','Nhận hoa rồi thanh toán','Món quà đầy tâm ý','Gửi trao cảm xúc trong từng khoảnh khắc'];
@@ -123,7 +128,7 @@ try {
         await evaluate("document.querySelector('#header-search input').focus({preventScroll:true})");await frame();
         await assert("(()=>{const form=document.querySelector('#header-search'),input=form.querySelector('input'),header=document.querySelector('[data-storefront-header]'),f=getComputedStyle(form),i=getComputedStyle(input);return f.borderTopWidth==='0px'&&i.borderTopWidth==='0px'&&i.outlineStyle==='none'&&f.backgroundColor===getComputedStyle(header).backgroundColor&&f.boxShadow!=='none'})()",'Search uses navigation color/shadow without focused border');
         await assert("(()=>{const e=document.querySelector('[data-language-switcher]');return getComputedStyle(e).fontSize==='12px'&&[...e.querySelectorAll('button')].every(b=>{const r=b.getBoundingClientRect();return r.width>=44&&r.height>=44})})()",'EN VI readable labels and touch targets');
-        await assert("document.querySelector('[data-header-utility]').getBoundingClientRect().height>=48",'Utility bar fits 44px controls');
+        await assert("!document.querySelector('[data-header-utility]')&&document.querySelector('[data-footer-preferences] #header-theme')&&document.querySelector('[data-footer-preferences] [data-language-switcher]')",'Utility bar removed; preferences available in footer');
         await assert("(()=>{const s=getComputedStyle(document.querySelector('[data-home-story]')).backgroundColor;return s===getComputedStyle(document.querySelector('[data-header-main]')).backgroundColor&&s!==getComputedStyle(document.querySelector('[data-home-journey]')).backgroundColor})()",'Story shares navbar body surface and differs from Journey');
         await assert("(()=>{const a=document.querySelector('#featured'),b=document.querySelector('[data-home-journey]'),s=getComputedStyle(b);return s.borderTopWidth==='0px'&&s.backgroundColor!==getComputedStyle(a).backgroundColor&&Math.abs(a.getBoundingClientRect().bottom-b.getBoundingClientRect().top)<1&&b.getBoundingClientRect().width===document.documentElement.clientWidth})()",'Featured and Journey meet without separator on distinct full-width surfaces');
         await assert("document.querySelectorAll('[data-storefront-footer] [data-footer-coming-soon]').length===14",'All deferred footer destinations preserved');
@@ -136,8 +141,8 @@ try {
           await assert("(()=>{const hero=document.querySelector('[data-home-hero]'),copy=hero.firstElementChild.firstElementChild.getBoundingClientRect(),image=document.querySelector('[data-hero-visual]').getBoundingClientRect();return innerWidth>=1024?copy.right<=image.left&&copy.top<image.bottom&&image.top<copy.bottom:image.top>=copy.bottom})()",'Hero composition follows reference breakpoint '+width);
           await assert("(()=>{const grid=document.querySelector('[data-home-story]').firstElementChild.children[1].firstElementChild,a=grid.children[0].getBoundingClientRect(),b=grid.children[1].getBoundingClientRect();return Math.abs(a.top-b.top)<1&&Math.abs(a.bottom-b.bottom)<1})()",'Story photo columns align '+width);
           await assert("[...document.querySelectorAll('[data-product-price], [data-home-layout] h1, [data-home-layout] h2')].every(e=>e.scrollWidth<=e.clientWidth+1)",'Essential text stays within its bounds '+width);
-          await click('#header-theme');await waitFor("Boolean(document.querySelector('[role=listbox]'))");
-          await assert("(()=>{const r=document.querySelector('[role=listbox]').getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+1&&r.top>=0&&r.bottom<=innerHeight+1})()",'Theme menu fits viewport '+width+'/'+height);await key('Escape');
+          await evaluate("document.querySelector('#header-theme').scrollIntoView({block:'center'})");await click('#header-theme');await waitFor("Boolean(document.querySelector('[role=listbox]'))");
+          await assert("(()=>{const r=document.querySelector('[role=listbox]').getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+1&&r.top>=0&&r.bottom<=innerHeight+1})()",'Theme menu fits viewport '+width+'/'+height);await key('Escape');await evaluate('scrollTo(0,0)');await frame();
           if(width<1024){
             await click('[data-header-menu-toggle]');
             await assert("(()=>{const nav=document.querySelector('[data-main-navigation]'),r=nav.getBoundingClientRect(),header=document.querySelector('[data-storefront-header]').getBoundingClientRect();return r.height>0&&r.top>=header.bottom-1&&r.bottom<=innerHeight+1})()",'Mobile navigation fits available height '+width+'/'+height);

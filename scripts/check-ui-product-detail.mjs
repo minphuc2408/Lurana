@@ -3,6 +3,10 @@ import { spawn } from 'node:child_process';
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { themes } from '../src/shared/theme/themes.ts';
+import { normalizeSearch } from '../src/shared/i18n/language.ts';
+import { smallestVariant } from '../src/features/shop/shop.service.ts';
+import { CATALOG_PAGE_SIZE } from '../shared/constants.ts';
+import { productsQuerySchema, productsByVariantsQuerySchema } from '../shared/schemas.ts';
 
 const origin=process.argv[2]||'http://127.0.0.1:4173';
 if(new URL(origin).hostname!=='127.0.0.1')throw new Error('Loopback preview only');
@@ -11,6 +15,17 @@ const fonts=fontFile?JSON.parse(readFileSync(fontFile,'utf8')):{};
 const profile=path.resolve('.security-review/product-detail-edge-'+Date.now());mkdirSync(profile,{recursive:true});
 const photo='/assets/'+readdirSync('dist/client/assets').find(f=>f.startsWith('hero-1400')&&f.endsWith('.jpg'));
 const products=Array.from({length:5},(_,i)=>({id:50001+i,slug:'ui-flowers-'+(i+1),category_code:'bouquets',name_en:'Synthetic bouquet '+(i+1),name_vi:'Bó hoa kiểm thử '+(i+1),description_en:'Synthetic product description for browser acceptance.',description_vi:'Mô tả sản phẩm tổng hợp để kiểm tra giao diện.',badge_code:null,is_featured:true,images:[0,1,2].map((n)=>({url:origin+photo+'?photo='+n,alt_en:'Synthetic bouquet photo',alt_vi:'Ảnh hoa kiểm thử',is_primary:n===0})),variants:['S','M','L'].map((size,n)=>({id:(50001+i)*10+n+1,sku:'UI-'+i+'-'+size,size_code:size,price:[450000,650000,850000][n],compare_at_price:null,in_stock:n<2,low_stock:n===1,max_quantity:[5,3,0][n]}))}));
+const coverProduct=product=>({...product,images:product.images.length?[product.images.find(image=>image.is_primary)||product.images[0]]:[]});
+const queryInput=url=>Object.fromEntries([...new Set(url.searchParams.keys())].map(key=>{const values=url.searchParams.getAll(key);return[key,values.length===1?values[0]:values];}));
+function catalogPage(query){
+ const search=normalizeSearch(query.q||'');
+ const ranges={'under-500':[0,500000],'500-1000':[500000,1000000],'1000-2000':[1000000,2000000],'over-2000':[2000000,Infinity]};
+ const [minimum,maximum]=ranges[query.price]||[0,Infinity];
+ const price=product=>smallestVariant(product.variants)?.price||0;
+ const items=products.filter(product=>(!query.category||product.category_code===query.category)&&(!query.featured||product.is_featured)&&price(product)>=minimum&&price(product)<maximum&&[product.name_en,product.name_vi].some(name=>normalizeSearch(name).includes(search)))
+  .sort((a,b)=>(query.sort==='low'?price(a)-price(b):query.sort==='high'?price(b)-price(a):Number(b.is_featured)-Number(a.is_featured))||a.id-b.id);
+ return{items:items.slice((query.page-1)*CATALOG_PAGE_SIZE,query.page*CATALOG_PAGE_SIZE).map(coverProduct),total:items.length,page:query.page,pageSize:CATALOG_PAGE_SIZE,totalPages:Math.ceil(items.length/CATALOG_PAGE_SIZE)};
+}
 const options={provinces:[{province_name:'Thành phố Hà Nội',default_fee:null,free_from_amount:null,wards:[{ward_name:'Hoàn Kiếm',fee:30000}]}],methods:[{code:'STANDARD',surcharge:0}],time_slots:['14:00-16:00'],limits:{max_cart_lines:15,max_quantity_per_line:20,max_advance_days:30}};
 const browser=spawn('C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',['--headless','--disable-gpu','--disable-sync','--no-first-run','--disable-background-networking','--remote-debugging-port=0','--user-data-dir='+profile,'about:blank'],{windowsHide:true,stdio:'ignore'});
 const pause=ms=>new Promise(r=>setTimeout(r,ms));let ws,id=0,scenario='normal',orderWrites=0;const pending=new Map(),exceptions=[],checks=[],layouts=[];
@@ -30,7 +45,17 @@ async function intercept({requestId,request}){
   if(request.method!=='GET'){if(url.pathname!=='/api/checkout/quote')orderWrites++;return send('Fetch.failRequest',{requestId,errorReason:'BlockedByClient'});}
   if(url.pathname==='/api/admin/me')return respond(401,{error:{code:'UNAUTHORIZED'}});
   if(url.pathname==='/api/categories')return respond(200,{data:[{id:900,code:'bouquets',slug:'bouquets',name_en:'Bouquets',name_vi:'Bó hoa',image_url:null}]});
-  if(url.pathname==='/api/products')return respond(200,{data:{items:products}});
+  if(url.pathname==='/api/products'){
+   const query=productsQuerySchema.safeParse(queryInput(url));
+   if(!query.success)return respond(400,{error:{code:'VALIDATION_ERROR',message:'Bộ lọc sản phẩm không hợp lệ.'}});
+   return respond(200,{data:catalogPage(query.data)});
+  }
+  if(url.pathname==='/api/products/by-variants'){
+   const query=productsByVariantsQuerySchema.safeParse(queryInput(url));
+   if(!query.success)return respond(400,{error:{code:'VALIDATION_ERROR',message:'Danh sách biến thể không hợp lệ.'}});
+   const ids=new Set(query.data.variant_ids);
+   return respond(200,{data:{items:products.filter(product=>product.variants.some(variant=>ids.has(variant.id))).sort((a,b)=>a.id-b.id).map(coverProduct)}});
+  }
   if(url.pathname==='/api/delivery/options')return respond(200,{data:options});
   const product=products.find(p=>url.pathname==='/api/products/'+p.slug);
   if(product){if(scenario==='missing')return respond(404,{error:{code:'NOT_FOUND'}});if(scenario==='error')return respond(503,{error:{code:'INTERNAL'}});return respond(200,{data:{...product,images:scenario==='no-photo'?[]:product.images,variants:scenario==='sold-out'?product.variants.map(v=>({...v,in_stock:false,max_quantity:0})):product.variants}});}

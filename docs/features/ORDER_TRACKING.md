@@ -16,6 +16,6 @@ Nút liên hệ hiện chứa số cố định `0987656789` trong component, **
 
 ## Thiết kế và kiểm chứng
 
-Form/lỗi/kết quả cùng chiều rộng, tiêu đề căn giữa/divider nhẹ như checkout, không có dải blush toàn viewport; dùng [design system](../ui-ux/DESIGN_SYSTEM.md), EN/VI và responsive.
+Ngày 20/10 owner thay tiêu đề/divider bằng breadcrumb chung ở đầu trang; giữ h1 ẩn cho accessibility. Panel nhập không border, nền tràn toàn viewport; form bên trong và kết quả vẫn căn theo content container. Monochrome panel dùng trắng bước 0 (`#FFFFFF`), nút 200→300 khi hover, chữ/icon 900→950 để không chìm vào nền. Input không viền khi nghỉ/focus, pointer bỏ outline còn Tab giữ focus; [design system](../ui-ux/DESIGN_SYSTEM.md#interaction-và-accessibility) sở hữu tokens và input rules. Không đổi payload, Turnstile, lỗi hay dữ liệu kết quả.
 
 [Runner lookup](../../scripts/check-ui-order-lookup.mjs) kiểm trạng thái/timeline, EN/VI, 320–1440 px, response trễ/lỗi/privacy bằng API/challenge giả lập, không tạo đơn. Nghiệm thu challenge thật/đơn cloud là phạm vi riêng; [cách chạy](../LOCAL_DEVELOPMENT.md#build-preview-và-kiểm-tra).

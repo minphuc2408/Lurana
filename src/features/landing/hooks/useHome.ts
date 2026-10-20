@@ -7,6 +7,9 @@ export function useHome() {
   const [selectedVariants, setSelectedVariants] = useState<Record<number, number>>({});
   return {
     ...catalog,
+    loading: catalog.loading || (!catalog.error && !cart.hydrationError && cart.loading),
+    error: catalog.error || cart.hydrationError,
+    reload: () => { catalog.reload(); cart.retryHydration(); },
     testimonials: [] as { name: string; review: string; review_vi: string; stars: number }[],
     featuredProducts: catalog.products.filter(product => product.is_featured),
     selectedVariants,

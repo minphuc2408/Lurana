@@ -69,6 +69,10 @@ node scripts/check-ui.mjs http://127.0.0.1:4173 --i18n-only --fonts
 
 Runner theme mặc định chặn font remote; `--font-cache=<file>` và `--api-cache=<file>` là tùy chọn, không phải file bắt buộc trên clone mới. Chế độ `--fonts` của runner i18n cho tải Google Fonts để kiểm bốn font và glyph tiếng Việt. Scope thiết kế/contrast ở [DESIGN_SYSTEM](ui-ux/DESIGN_SYSTEM.md#kiểm-chứng-thiết-kế).
 
+Sau đổi catalog phân trang ngày 20/10, trước khi bật lại các runner theme/storefront/refinements/creative đang tạm dừng, cập nhật bộ giả lập/cache API theo [contract](reference/API_CONTRACT.md#get-apiproductspage1qcategorycodepriceallsortfeaturedfeatured1): khóa cache phải giữ query, response có metadata 40/trang và hỗ trợ `featured` cùng `products/by-variants` để restore giỏ. Cache cũ chỉ khóa pathname không đủ. Fixture Commerce/i18n/Product Detail đã thích ứng và qua kiểm cú pháp; chưa chạy lại suite. Bằng chứng targeted của pagination không thay bằng chứng toàn theme.
+
+Trước khi nối lại kiểm theme, sửa assumptions cũ về21theme, `themes[0]` là mặc định và tên Original gắn với ID `original`: [hợp đồng tên/ID hiện tại](ui-ux/DESIGN_SYSTEM.md#bootstrap-persistence-và-compatibility) giữ ID nhưng đổi nhãn Original/Green Mist. Snapshot16 palette phải tiếp tục bảo vệ giá trị màu/token, chỉ cập nhật tên đã được duyệt. EN/VI storefront nay có màu ở `[data-language-pill]`, nút ngoài giữ vùng bấm44px; không đo background của nút để suy màu active. Các suite này vẫn chưa chạy theo owner.
+
 Runner creative có prerequisite riêng đã xác minh: [check-ui-creative-colors.mjs](../scripts/check-ui-creative-colors.mjs) đọc bắt buộc `.security-review/themes-font-cache.json`, `themes-api-cache.json` và ảnh Hero trong build trước khi chạy `before|after`. Đây là cache local ignored; repository chưa có quy trình chia sẻ đầy đủ để tái tạo chúng cho clone mới. Nếu thiếu, ghi runner chưa chạy thay vì tuyên bố PASS; không đưa snapshot admin/PII vào Git để chữa lỗi. Chuẩn bị cache an toàn hoặc sửa runner là tác vụ source riêng.
 
 ## Bẫy local thường gặp

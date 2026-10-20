@@ -1,4 +1,8 @@
 {
+  "Breadcrumb": "Breadcrumb",
+  "Checkout": "Checkout",
+  "Product details": "Product details",
+  "Page unavailable": "Page unavailable",
   "Theme": "Theme",
   "Theme, current: {{name}}": "Theme, current: {{name}}",
   "API timeout": "The request timed out. Your details are preserved; try again.",
@@ -276,6 +280,8 @@
   "Search": "Search",
   "Close search": "Close search",
   "Main navigation": "Main navigation",
+  "Explore": "Explore",
+  "Customer account": "Customer account",
   "Story": "Our story",
   "Flower delivery • Scheduled with care": "Flower delivery • On your schedule",
   "Customer support": "Customer support",

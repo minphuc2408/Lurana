@@ -2,6 +2,7 @@
 :root {
   --lunara-font-display: 'Fraunces', serif;
   --lunara-font-body: 'Inter', sans-serif;
+  --lunara-breadcrumb-font-weight: 550;
   --lunara-content-max-width: clamp(1240px, 80vw, 1600px);
   --lunara-header-max-width: clamp(1440px, 80vw, 1600px);
   --lunara-rose: #527E75;
@@ -22,6 +23,7 @@
   --lunara-journey-surface: var(--lunara-section-secondary);
   --lunara-journey-icon-surface: transparent;
   --lunara-journey-icon-foreground: var(--lunara-accent-secondary-strong);
+  --lunara-journey-step-foreground: var(--lunara-campaign-foreground);
   --lunara-product-action-surface: var(--lunara-card-surface);
   --lunara-product-action-foreground: var(--lunara-body);
   --lunara-product-action-border: var(--lunara-border);
@@ -40,6 +42,28 @@
   --lunara-surface: #F1F7F5;
   --lunara-blush: #EDF4F6;
   --lunara-card-surface: #FFFFFF;
+  --lunara-shop-intro: var(--lunara-cream);
+  --lunara-floating-cart-background: var(--lunara-ink);
+  --lunara-floating-cart-foreground: #FFFFFF;
+  --lunara-header-count-background: var(--lunara-rose-strong);
+  --lunara-header-count-foreground: #FFFFFF;
+  --lunara-preference-surface: var(--lunara-cream);
+  --lunara-preference-border: var(--lunara-border);
+  --lunara-preference-active: var(--lunara-rose-strong);
+  --lunara-preference-active-foreground: #FFFFFF;
+  --lunara-preference-hover: var(--lunara-blush);
+  --lunara-detail-surface: var(--lunara-cream);
+  --lunara-detail-accent: var(--lunara-rose-strong);
+  --lunara-detail-selected-surface: var(--lunara-blush);
+  --lunara-detail-selected-border: var(--lunara-rose-strong);
+  --lunara-detail-thumbnail-hover: var(--lunara-surface);
+  --lunara-detail-thumbnail-hover-border: var(--lunara-rose-strong);
+  --lunara-detail-buy: var(--lunara-rose-strong);
+  --lunara-detail-buy-hover: var(--lunara-primary-hover);
+  --lunara-detail-buy-foreground: #FFFFFF;
+  --lunara-pagination-selected: var(--lunara-surface);
+  --lunara-pagination-selected-border: var(--lunara-rose-strong);
+  --lunara-pagination-hover: var(--lunara-surface);
   --lunara-section-secondary: var(--lunara-surface);
   --lunara-utility-background: var(--lunara-blush);
   --lunara-border: #E4EBE8;
@@ -67,6 +91,44 @@
   --lunara-footer-copyright: var(--lunara-body);
   --lunara-footer-border: var(--lunara-border);
   --lunara-footer-hover: var(--lunara-rose-strong);
+  --lunara-header-ink: var(--lunara-ink);
+  --lunara-header-body: var(--lunara-body);
+  --lunara-nav-ink: var(--lunara-ink);
+  --lunara-nav-active: var(--lunara-rose-strong);
+  --lunara-nav-hover: var(--lunara-rose-strong);
+  --lunara-text-hover: var(--lunara-ink);
+  --lunara-icon-foreground: var(--lunara-accent-secondary-strong);
+  --lunara-icon-hover: var(--lunara-rose-strong);
+  --lunara-services-background: var(--lunara-card-surface);
+  --lunara-service-icon-background: var(--lunara-section-secondary);
+  --lunara-service-icon-hover: var(--lunara-blush);
+  --lunara-search-button-background: var(--lunara-rose-strong);
+  --lunara-search-button-foreground: #FFFFFF;
+  --lunara-search-button-hover: var(--lunara-ink);
+  --lunara-search-icon-hover: #FFFFFF;
+  --lunara-product-action-hover-foreground: #FFFFFF;
+  --lunara-product-action-icon: currentColor;
+  --lunara-product-favorite: var(--lunara-rose-strong);
+  --lunara-product-favorite-hover: var(--lunara-primary-hover);
+  --lunara-product-favorite-active: var(--lunara-rose-strong);
+  --lunara-product-action-added: var(--lunara-product-action-surface);
+  --lunara-product-action-added-foreground: var(--lunara-rose-strong);
+  --lunara-product-action-added-border: var(--lunara-rose-strong);
+  --lunara-product-action-added-hover: var(--lunara-product-action-hover);
+  --lunara-service-icon-foreground: var(--lunara-icon-foreground);
+  --lunara-service-icon-foreground-hover: var(--lunara-icon-hover);
+  --lunara-footer-focus: var(--lunara-focus-ring);
+  --lunara-lookup-panel: var(--lunara-editorial-surface);
+  --lunara-lookup-button: var(--lunara-rose-strong);
+  --lunara-lookup-button-hover: var(--lunara-primary-hover);
+  --lunara-lookup-button-foreground: #FFFFFF;
+  --lunara-lookup-button-foreground-hover: #FFFFFF;
+  --lunara-hero-backdrop: var(--lunara-ink);
+  --lunara-hero-foreground: #FFFFFF;
+  --lunara-hero-button-background: var(--lunara-rose-strong);
+  --lunara-hero-button-foreground: #FFFFFF;
+  --lunara-hero-button-hover: var(--lunara-primary-hover);
+  --lunara-hero-overlay: color-mix(in srgb, var(--lunara-ink) 65%, transparent);
   --lunara-image-placeholder: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 88 88'%3E%3Cg fill='none' stroke='white' stroke-width='3'%3E%3Crect x='16' y='16' width='56' height='56' rx='6'/%3E%3Cpath d='m16 58 16-18 32 32'/%3E%3Ccircle cx='53' cy='35' r='7'/%3E%3C/g%3E%3C/svg%3E");
 }
 
@@ -94,6 +156,7 @@ html[lang='vi'] {
   --color-lunara-journey: var(--lunara-journey-surface);
   --color-lunara-journey-icon: var(--lunara-journey-icon-surface);
   --color-lunara-on-journey-icon: var(--lunara-journey-icon-foreground);
+  --color-lunara-journey-step: var(--lunara-journey-step-foreground);
   --color-lunara-product-action: var(--lunara-product-action-surface);
   --color-lunara-on-product-action: var(--lunara-product-action-foreground);
   --color-lunara-product-action-border: var(--lunara-product-action-border);
@@ -107,6 +170,28 @@ html[lang='vi'] {
   --color-lunara-cream: var(--lunara-cream);
   --color-lunara-surface: var(--lunara-surface);
   --color-lunara-card-surface: var(--lunara-card-surface);
+  --color-lunara-shop-intro: var(--lunara-shop-intro);
+  --color-lunara-floating-cart: var(--lunara-floating-cart-background);
+  --color-lunara-on-floating-cart: var(--lunara-floating-cart-foreground);
+  --color-lunara-header-count: var(--lunara-header-count-background);
+  --color-lunara-on-header-count: var(--lunara-header-count-foreground);
+  --color-lunara-preference-surface: var(--lunara-preference-surface);
+  --color-lunara-preference-border: var(--lunara-preference-border);
+  --color-lunara-preference-active: var(--lunara-preference-active);
+  --color-lunara-on-preference-active: var(--lunara-preference-active-foreground);
+  --color-lunara-preference-hover: var(--lunara-preference-hover);
+  --color-lunara-detail-surface: var(--lunara-detail-surface);
+  --color-lunara-detail-accent: var(--lunara-detail-accent);
+  --color-lunara-detail-selected: var(--lunara-detail-selected-surface);
+  --color-lunara-detail-selected-border: var(--lunara-detail-selected-border);
+  --color-lunara-detail-thumbnail-hover: var(--lunara-detail-thumbnail-hover);
+  --color-lunara-detail-thumbnail-hover-border: var(--lunara-detail-thumbnail-hover-border);
+  --color-lunara-detail-buy: var(--lunara-detail-buy);
+  --color-lunara-detail-buy-hover: var(--lunara-detail-buy-hover);
+  --color-lunara-detail-buy-foreground: var(--lunara-detail-buy-foreground);
+  --color-lunara-pagination-selected: var(--lunara-pagination-selected);
+  --color-lunara-pagination-selected-border: var(--lunara-pagination-selected-border);
+  --color-lunara-pagination-hover: var(--lunara-pagination-hover);
   --color-lunara-section-secondary: var(--lunara-section-secondary);
   --color-lunara-utility: var(--lunara-utility-background);
   --color-lunara-blush: var(--lunara-blush);
@@ -128,6 +213,77 @@ html[lang='vi'] {
   --color-lunara-footer-copyright: var(--lunara-footer-copyright);
   --color-lunara-footer-border: var(--lunara-footer-border);
   --color-lunara-footer-hover: var(--lunara-footer-hover);
+  --color-lunara-header-ink: var(--lunara-header-ink);
+  --color-lunara-header-body: var(--lunara-header-body);
+  --color-lunara-nav-ink: var(--lunara-nav-ink);
+  --color-lunara-nav-active: var(--lunara-nav-active);
+  --color-lunara-nav-hover: var(--lunara-nav-hover);
+  --color-lunara-text-hover: var(--lunara-text-hover);
+  --color-lunara-icon: var(--lunara-icon-foreground);
+  --color-lunara-icon-hover: var(--lunara-icon-hover);
+  --color-lunara-services: var(--lunara-services-background);
+  --color-lunara-service-icon: var(--lunara-service-icon-background);
+  --color-lunara-service-icon-hover: var(--lunara-service-icon-hover);
+  --color-lunara-search-button: var(--lunara-search-button-background);
+  --color-lunara-search-button-foreground: var(--lunara-search-button-foreground);
+  --color-lunara-search-button-hover: var(--lunara-search-button-hover);
+  --color-lunara-search-icon-hover: var(--lunara-search-icon-hover);
+  --color-lunara-product-action-hover-foreground: var(--lunara-product-action-hover-foreground);
+  --color-lunara-product-action-icon: var(--lunara-product-action-icon);
+  --color-lunara-product-favorite: var(--lunara-product-favorite);
+  --color-lunara-product-favorite-hover: var(--lunara-product-favorite-hover);
+  --color-lunara-product-favorite-active: var(--lunara-product-favorite-active);
+  --color-lunara-product-action-added: var(--lunara-product-action-added);
+  --color-lunara-product-action-added-foreground: var(--lunara-product-action-added-foreground);
+  --color-lunara-product-action-added-border: var(--lunara-product-action-added-border);
+  --color-lunara-product-action-added-hover: var(--lunara-product-action-added-hover);
+  --color-lunara-service-icon-foreground: var(--lunara-service-icon-foreground);
+  --color-lunara-service-icon-foreground-hover: var(--lunara-service-icon-foreground-hover);
+  --color-lunara-lookup-panel: var(--lunara-lookup-panel);
+  --color-lunara-lookup-button: var(--lunara-lookup-button);
+  --color-lunara-lookup-button-hover: var(--lunara-lookup-button-hover);
+  --color-lunara-lookup-button-foreground: var(--lunara-lookup-button-foreground);
+  --color-lunara-lookup-button-foreground-hover: var(--lunara-lookup-button-foreground-hover);
+  --color-lunara-hero-backdrop: var(--lunara-hero-backdrop);
+  --color-lunara-hero-foreground: var(--lunara-hero-foreground);
+  --color-lunara-hero-button: var(--lunara-hero-button-background);
+  --color-lunara-hero-button-foreground: var(--lunara-hero-button-foreground);
+  --color-lunara-hero-button-hover: var(--lunara-hero-button-hover);
+  --color-lunara-hero-overlay: var(--lunara-hero-overlay);
+}
+
+[data-storefront-breadcrumb] {
+  font-weight: var(--lunara-breadcrumb-font-weight);
+}
+
+[data-product-thumbnails] {
+  scrollbar-width: thin;
+  scrollbar-color: var(--lunara-detail-thumbnail-hover-border) transparent;
+}
+
+/* Header preferences share the header text role; the selected locale keeps its on-primary label. */
+[data-header-preferences] [data-language-switcher] button[aria-pressed='false'] {
+  color: var(--lunara-header-body);
+}
+
+/* Icons with a dedicated theme role opt out of the neutral storefront icon default. */
+html[data-lunara-theme='monochrome'] [data-d1-storefront] {
+  & svg.lucide:not([data-journey-icon]):not([data-theme-icon]) {
+    color: var(--lunara-icon-foreground);
+    transition: color 160ms ease-out;
+  }
+  & :is(a, button):hover svg.lucide:not([data-journey-icon]):not([data-theme-icon]),
+  & [data-service-item]:hover svg.lucide:not([data-journey-icon]):not([data-theme-icon]) {
+    color: var(--lunara-icon-hover);
+  }
+  & :is(a, button):is(.bg-lunara-rose-strong, .bg-lunara-ink, .bg-primary):has(svg.lucide) {
+    background-color: var(--lunara-icon-button-background);
+    color: var(--lunara-icon-foreground);
+    &:hover {
+      background-color: var(--lunara-icon-button-hover);
+      color: var(--lunara-icon-hover);
+    }
+  }
 }
 
 /* Reference surface-card role; page and secondary-section colors stay independent. */
@@ -153,9 +309,12 @@ html:has([data-home-layout]) :is(
   --lunara-body: var(--lunara-footer-muted);
   --lunara-border: var(--lunara-footer-border);
   --lunara-rose-strong: var(--lunara-footer-hover);
+  --lunara-icon-foreground: var(--lunara-footer-foreground);
+  --lunara-icon-hover: var(--lunara-footer-hover);
+  --lunara-focus-ring: var(--lunara-footer-focus);
 }
 
-/* The original generic/shadcn palette remains intact until a new light theme is selected. */
+/* Green Mist keeps the legacy "original" ID and its generic/shadcn palette. */
 html[data-lunara-theme]:not([data-lunara-theme='original']) {
   color-scheme: light;
   --background: var(--lunara-cream);
@@ -186,10 +345,14 @@ html[data-lunara-theme]:not([data-lunara-theme='original']) {
 html[data-lunara-theme]:not([data-lunara-theme='original']) :is(input:not([type='checkbox']):not([type='radio']), textarea, [data-dropdown]) {
   border-color: var(--lunara-control-border);
 }
-[data-checkout-form][data-focus-method='pointer'] :is(input:not([type='checkbox']):not([type='radio']), textarea):focus {
+/* Borderless fields are a storefront form decision; keyboard outlines remain visible. */
+html :is([data-checkout-form], [data-order-lookup]) :is(input:not([type='checkbox']):not([type='radio']), textarea, [data-dropdown]) {
+  border-width: 0;
+  box-shadow: none;
+}
+:is([data-checkout-form], [data-order-lookup])[data-focus-method='pointer'] :is(input:not([type='checkbox']):not([type='radio']), textarea, [data-dropdown]):focus {
   outline: none;
   box-shadow: none;
-  border-color: var(--lunara-border);
 }
 
 html[data-lunara-theme]:not([data-lunara-theme='original']) :focus-visible {
@@ -275,9 +438,4 @@ html[lang='vi'] .font-display {
 html[lang='en'] .font-display {
   font-weight: 500;
   font-optical-sizing: auto;
-}
-
-@keyframes lunara-nav-underline {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
 }
