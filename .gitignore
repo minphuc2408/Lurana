@@ -49,7 +49,7 @@
 !/src/shared/hooks/useTurnstile.ts
 !/src/shared/components/TurnstileChallenge.tsx
 !/tests/bot-protection.test.mjs
-!/docs/BOT_PROTECTION.md
+!/docs/operations/BOT_PROTECTION.md
 !/worker/lib/auth.ts
 !/worker/routes/
 !/worker/routes/public.ts
@@ -74,7 +74,7 @@
 !/worker/services/cloudinary.ts
 !/src/features/admin/product-image.service.ts
 !/tests/cloudinary.test.mjs
-!/docs/CLOUDINARY.md
+!/docs/operations/CLOUDINARY.md
 
 # Reviewed verification tools and tests.
 !/tests/
@@ -114,13 +114,22 @@
 
 # Reviewed backend design documents.
 !/docs/
+!/docs/reference/
+!/docs/features/
+!/docs/operations/
+!/docs/DOCUMENTATION_REFACTOR_PLAN.md
+!/docs/archive/
+!/docs/archive/VERIFICATION_HISTORY.md
+!/docs/ARCHITECTURE.md
+!/docs/LOCAL_DEVELOPMENT.md
+!/docs/ui-ux/DESIGN_SYSTEM.md
 !/docs/TECH_STACK.md
-!/docs/OPERATIONS.md
-!/docs/STAGING.md
+!/docs/operations/OPERATIONS.md
+!/docs/operations/STAGING.md
 !/docs/PROJECT_STATUS.md
 !/docs/DOCUMENTATION_AUDIT.md
-!/docs/FRONTEND_ENTITIES.md
-!/docs/DATABASE_DESIGN.md
+!/docs/reference/FRONTEND_ENTITIES.md
+!/docs/reference/DATABASE_DESIGN.md
 !/docs/sql/
 !/docs/sql/MVP_SCHEMA.sql
 !/docs/sql/MVP_SEED_DEV.sql
@@ -128,7 +137,7 @@
 !/docs/sql/deferred/0002_custom_requests.sql
 !/docs/pipeline/
 !/docs/pipeline/README.md
-!/docs/pipeline/API_CONTRACT.md
+!/docs/reference/API_CONTRACT.md
 !/docs/pipeline/BACKLOG.md
 !/docs/pipeline/MVP_SCHEMA.sql
 !/docs/pipeline/PHASE_0_PREPARE.md
@@ -471,7 +480,7 @@
 !/src/app/layouts/MetadataLayout.tsx
 !/src/app/layouts/hooks/useRouteMetadata.ts
 !/tests/hardening.test.mjs
-!/docs/HARDENING.md
+!/docs/operations/HARDENING.md
 /.security-review/
 /.codegraph/
 /SECURITY_REVIEW.md
@@ -514,7 +523,7 @@
 !/public/images/categories/dried-flowers-v1.webp
 !/public/images/categories/gift-sets-v1.webp
 
-!/docs/CATEGORY_IMAGES.md
+!/docs/features/CATEGORY_IMAGES.md
 
 # Reviewed shared accessible dropdown, using the existing Radix dependency.
 !/src/shared/ui/dropdown.tsx
@@ -533,7 +542,7 @@
 !/src/features/cart/delivery-address.ts
 !/src/shared/ui/combobox.tsx
 !/tests/delivery-address.test.mjs
-!/docs/DELIVERY_ADDRESS.md
+!/docs/features/DELIVERY_ADDRESS.md
 !/scripts/check-ui-delivery.mjs
 
 # Reviewed checkout blocks, payment availability and consent validation.
@@ -542,7 +551,7 @@
 !/tests/checkout-form.test.mjs
 !/scripts/check-ui-checkout-layout.mjs
 
-!/docs/CHECKOUT_UI.md
+!/docs/features/CHECKOUT_UI.md
 
 # Reviewed Hanoi-only administrative catalog and delivery coverage.
 !/migrations/0003_hanoi_administrative_areas.sql
@@ -577,7 +586,7 @@
 !/scripts/check-ui-order-lookup.mjs
 
 # Reviewed concise order tracking feature handover and endpoints.
-!/docs/ORDER_TRACKING.md
+!/docs/features/ORDER_TRACKING.md
 
 # Reviewed light-theme registry, header control and regression checks.
 !/src/shared/theme/

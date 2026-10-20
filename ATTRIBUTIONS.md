@@ -8,6 +8,8 @@ This Figma Make file includes photos from [Unsplash](https://unsplash.com) used 
 
 The owner requested the imagery from the read-only design reference `D:/Download/lunara`. Home now imports local JPEG copies of those Unsplash photos; product images remain catalog-owned. Requests preserve the reference's `auto=format&fit=crop&q=85`, with width variants for the Hero. No generated replacement or color treatment is applied.
 
+The local reference path records provenance only. The committed assets and source URLs below are sufficient for maintenance; the reference directory is not required on another machine.
+
 | Local asset in `src/assets/home-reference/` | Reference source | Dimensions |
 | --- | --- | --- |
 | `hero-640.jpg`, `hero-960.jpg`, `hero-1400.jpg` | [Bouquet held in two hands](https://images.unsplash.com/photo-1526047932273-341f2a7631f9) | 640² / 960² / 1400² |
@@ -42,4 +44,8 @@ Four owner-requested category illustrations created with the built-in imagegen t
 
 ## Administrative data
 
-Administrative names/codes derive from **Open Admin Data**, [Vietnam Administrative Divisions](https://github.com/open-admin-data/vietnam-administrative-divisions), under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The project extracts the supported area and normalizes the province display name; the source snapshot and transformations are recorded in [DELIVERY_ADDRESS.md](docs/DELIVERY_ADDRESS.md#nguồn-và-giấy-phép).
+Administrative names/codes derive from **Open Admin Data**, [Vietnam Administrative Divisions](https://github.com/open-admin-data/vietnam-administrative-divisions), under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The project extracts the supported area and normalizes the province display name; the source snapshot and transformations are recorded in [DELIVERY_ADDRESS.md](docs/features/DELIVERY_ADDRESS.md#nguồn-và-giấy-phép).
+
+## Fonts
+
+The Vietnamese typefaces are [Lora](https://github.com/google/fonts/tree/main/ofl/lora) and [Be Vietnam Pro](https://github.com/google/fonts/tree/main/ofl/bevietnampro), recorded in the project guide under the SIL Open Font License. These source/license references move here with the documentation refactor; runtime selection and weights belong to [DESIGN_SYSTEM.md](docs/ui-ux/DESIGN_SYSTEM.md#typography-theo-locale). Fonts are loaded through the Google Fonts stylesheet in `index.html`.

@@ -1,98 +1,48 @@
 # Lunarra — trạng thái hiện tại
 
-Cập nhật tài liệu **19/10/2026**, giờ Việt Nam. Đây là nơi tổng hợp nghiệm thu và các mốc triển khai đã ghi nhận. Các kết quả giữ đúng ngày và phạm vi của từng lượt kiểm; chỉ mục staging bên dưới xác nhận bản đã triển khai.
+Cập nhật cấu trúc và liên kết tài liệu **20/10/2026, giờ Việt Nam**. Các mốc dưới là lần xác minh gần nhất **đã ghi nhận**, không phải lần kiểm cloud/tests mới của lượt tổ chức tài liệu. Chi tiết nghiệm thu cũ ở [hồ sơ lịch sử](archive/VERIFICATION_HISTORY.md).
+
+**Phase 0–5 đã nghiệm thu local; Phase 6 chưa đóng**, mốc [5/7 tiêu chí ngày 15/10](pipeline/PHASE_6_DEPLOY.md#tiêu-chí-nghiệm-thu--mốc-production-15102026) còn thiếu dữ liệu mở bán thật và xác nhận bàn giao quota. Provider/Cron và giới hạn cloud vẫn cần nghiệm thu riêng.
 
 ## Code và kiểm chứng local
 
-**Phase 0–5 DONE local; Phase 6 IN PROGRESS, 5/7 tiêu chí.** Hai việc còn thiếu là dữ liệu mở bán thật và xác nhận bàn giao cách theo dõi quota. Source có storefront/catalog, giỏ hàng → checkout COD, tra đơn và quản trị API; các feature khách hàng ngoài MVP vẫn deferred. Chi tiết hành vi xem [sổ tay](../PROJECT_GUIDE.md), [Checkout UI](CHECKOUT_UI.md), [Tra đơn](ORDER_TRACKING.md) và [hợp đồng API](pipeline/API_CONTRACT.md).
+- Source có storefront/catalog, giỏ → checkout COD, tra đơn và admin API; customer auth/profile/custom request cùng các màn admin ngoài MVP vẫn deferred. Hành vi và ownership ở [ARCHITECTURE](ARCHITECTURE.md), [Checkout UI](features/CHECKOUT_UI.md), [Tra đơn](features/ORDER_TRACKING.md).
+- Mốc local 19/10 ghi nhận typecheck/architecture/tests/build và các runner theme/detail có phạm vi kiểm chọn lọc PASS. Detail/yêu thích và 5 creative themes có thay đổi local chưa ghi nhận deploy; xem [phạm vi và giới hạn](archive/VERIFICATION_HISTORY.md#kiểm-chứng-local).
+- Lần full UI checker ghi nhận 17–18/10 dừng ở assertion `total670` trong `check-ui-live-catalog.mjs`, còn giả định quote-before-zone/checkout gộp. **Chưa có nghiệm thu lại full suite**; targeted PASS không thay full-suite PASS.
 
-| Mốc kiểm local đã ghi nhận | Kết quả và giới hạn |
-| --- | --- |
-| 5creative — refactor hierarchy,19/10 — **local, chưa deploy** |6HEX/ID/key và snapshot16theme cũ giữ nguyên. Neutral surfaces → primary interactions → logo/icon accents; menu phân biệt pointer/keyboard qua re-render, outline bàn phím2px. [Mapping/nguyên nhân](ui-ux/Extend_Lunara_Multi_Theme.md#phân-bổ-màu-và-kiểm-chứng). Typecheck/architecture **242source**, **200/200tests**, build PASS; regression mới FAIL trước sửa. Browser **126ca** layout/type/content, **96ca** legacy computed styles PASS; **70cặp** ảnh5theme ×1440/390px ×7vùng +**10PNGghép**, đã xem10ảnh ghép và vùng Journey/card/footer/menu. Text AA/control-focus≥3 PASS. Runner21theme: **400màu/336Header/147route/21Original/10navigation/20admin**, detail **294ca** PASS; keyboard/portal/boot/storage/form/4font PASS,0exceptions/0API ghi. API/catalog/admin tổng hợp, ảnh mẫu và font cache local; chưa kiểm provider/thiết bị vật lý. Evidence ignored `.security-review/creative-hierarchy-*.log`, `creative-hierarchy-audit/{before,after}.json`, `index.html`, PNG. CodeGraph/diff check PASS. |
-| Chi tiết/yêu thích/focus,18/10 — **local, chưa deploy** | Detail theo ảnh owner: size/giá hiện trực tiếp, quantity theo tồn và lượng đã trong giỏ; Add giữ trang/Mua ngay tới Cart; gallery/2dòng dịch vụ/gợi ý4mẫu và Xem thêm. Yêu thích memory-only qua route, sidebar phải từ768px, reload mất; mobile ẩn. Nội dung câu chuyện/ý nghĩa/chăm sóc để “đang cập nhật” chờ owner, chưa có API/field mới. Typecheck/architecture **242source**, **197tests**, build PASS. Browser **224ca** detail(16theme ×EN/VI ×7widths320–3840), sidebar desktop/iPad/resize/Tab/Escape/storage/size/quantity/empty/error PASS; lookup **72ca**, checkout **18nhóm**, navigation **10ca** PASS;0exceptions/0API ghi. API/challenge tổng hợp, fonts cache local; không nghiệm thu provider/thiết bị vật lý. [Hành vi](../PROJECT_GUIDE.md#chi-tiết-sản-phẩm-và-hoa-yêu-thích). Evidence ignored `.security-review/product-detail-results.json`, `product-update-{tests,lookup,checkout,navigation}.log`; source chưa commit/push/deploy trong lượt này. |
-| Home/Original đồng bộ xanh,18/10 — **đã lên staging21:42** | Sửa xanh trộn hồng: bỏ top bar hồng của ref/footer rose bị khóa; logo và icon ảnh lỗi dùng token theme. Giữ layout/copy/ảnh/API/DB/16ID/15palette khác/preference. Regression mới tái hiện lỗi trước sửa. Typecheck, architecture **239source**, **197tests**, build, CodeGraph/diff check PASS. Edge16theme: **305ca màu** gồm footer/logo/fallback/alt/kích thước, **256Header/112route/10navigation**, **16lượt về Original/reload**, portal/persistence/4font PASS; **224ca** giữ layout/font/copy/link footer và kiểm màu theo theme; **28layout/4interaction** PASS;0exceptions/0order writes.1504responsive thuộc lượt refactor trước sửa màu. Catalog GET bị intercept/font cache; chưa kiểm Safari/thiết bị vật lý/provider. [Thiết kế](../PROJECT_GUIDE.md#bộ-nhận-diện-và-token-thiết-kế), [runner](../scripts/check-ui-themes.mjs). Evidence ignored `.security-review/themes-results.json`, `storefront-results.json`, `home-reference-results.json`, `original-mixed-palette-reproduction.log`, `themes-original-clean-footer-1440.png`, `themes-original-clean-fallback-1440.png`. Kiểm lại build staging và xác minh live tại mục bên dưới. |
-| Home — gỡ dãy danh mục,18/10 — **đã lên staging** | Gỡ5thẻ danh mục/All Flowers dưới Hero; giữ dải dịch vụ giao hoa, Featured, Journey, Story và danh mục navigation/Shop. Không đổi DB/API/asset. Typecheck, architecture239source, **196/196 tests**, build, CodeGraph sync PASS. Edge **160ca**(16theme ×EN/VI ×5widths320–1920) xác nhận khối đã gỡ, services trực tiếp sau Hero, phần còn lại giữ và không overflow;0exceptions/0order writes. Catalog GET snapshot bị intercept. Probe/evidence ignored `.security-review/remove-home-categories.mjs`/`remove-home-categories-results.json`. |
-| Storefront/footer/Shop,18/10 — **đã lên staging** | Footer sáng4cột giữ thông tin cũ; search/nav shadow, EN/VI26px và underline150ms; divider thật1px; Shop dùng card Featured/size nhỏ nhất và2lọc giá/sort. Typecheck, architecture **239 source files**, **196/196 tests**, build và CodeGraph sync PASS. Runner16theme: **256** Header/**112** route/**10** nhóm navigation; runner storefront build cuối: **28** layout EN/VI320–1920px và **4** nhóm interaction EN/VI390/1440 PASS, gồm route/Back về Shop đã lọc, filter giữ vị trí, focus/notice, giá/sort/quick-add và reduced-motion;0exceptions/0order writes. Catalog/delivery bị intercept bằng public snapshot, font từ cache local; không nghiệm thu provider/admin thật. [Runner](../scripts/check-ui-storefront.mjs), evidence ignored `.security-review/storefront-results.json`/`themes-*-ref-*.png`; [hành vi](../PROJECT_GUIDE.md#catalog-và-cuộn-trang). |
-| GitHub Pages workflow,18/10 — **kiểm local, chưa deploy** | [Workflow](../.github/workflows/deploy-pages.yml) build `dist/client` với base `/Lurana/`, thêm `404.html`; đặt `VITE_SITE_INDEXABLE=false`. Typecheck, architecture **237 source files**, **194/194 tests**, build mặc định và build Pages PASS; CodeGraph sync. Edge trên server tĩnh loopback: **6 routes** render + client navigation PASS,0exceptions/0writes; kiểm asset base/noindex/robots/sitemap/fallback PASS. Deep links cart/checkout/tra đơn render với HTTP404. API không có trên Pages; canonical/OG giữ production. Probe ignored `.security-review/pages-check.mjs`. Workflow còn untracked; chưa commit/push, chưa xác minh Settings/Actions hay deploy GitHub. [Thiết lập và giới hạn](STAGING.md#github-pages--static-ui-preview). |
-| 16 light themes,17/10 — **kiểm local; lên staging18/10** | Typecheck, architecture **237 source files**, **194/194 tests**, build PASS; CodeGraph sync. Edge trên build: **256** Header cases(16themes ×EN/VI ×8widths320–1440), **112** route cases(16×Home/Shop/detail/Cart/Checkout/Tra đơn/Story), đối chiếu màu Original với computed styles đã có trong baseline7routes PASS.4font thật từ cache local; kiểm keyboard/focus/check/cuộn/Escape/click ngoài, popup/modal, search mở, boot trước render, persistence/fallback/storage bị chặn và giữ form PASS;0JS exceptions/0order writes. Catalog/delivery public GET snapshot bị intercept, không nghiệm thu provider/admin thật. [Runner](../scripts/check-ui-themes.mjs), [unit tests](../tests/themes.test.mjs); evidence ignored `.security-review/themes-results.json`/`themes-*.png`. [Spec](ui-ux/LUNARA_MULTI_THEME_SPEC.md) giữ quyết định màu và giới hạn Original. |
-| Home theo ref,17/10 — **kiểm local; lên staging18/10** | Thay khối Featured cũ bằng Tuyển chọn hôm nay/Sản phẩm nổi bật và Hành trình trao gửi. Typecheck, architecture **234 source files**, **191/191 tests**, build PASS; CodeGraph đã sync. Preview EN/VI ×7 widths320–1440: **14 ca** layout, quick-add variant còn hàng đầu tiên, keyboard/detail/Shop, hết hàng/loading/rỗng/lỗi/retry PASS;0exceptions/0API writes. Catalog synthetic bị intercept; snapshot GET staging **1sản phẩm**, ảnh Cloudinary tải đúng trong preview, không phải deploy mới. Evidence ignored `.security-review/home-selection-results.json` và ảnh `home-selection-*`; probe tạm không đưa vào Git. |
-| 17/10, Tra đơn/footer | Typecheck, architecture **234 source files**, **191 tests**, production build và staging build/dry-run PASS. Không phải lượt chạy mới của audit tài liệu |
-| Tra đơn | **72 ca** =6 trạng thái ×2 locale ×6 widths320–1440px; căn giữa/cùng chiều rộng/không overflow, lỗi và phản hồi trễ, required mã+SĐT, memory-only PII PASS. API/challenge bị intercept;0exceptions/0order writes. Runner [check-ui-order-lookup](../scripts/check-ui-order-lookup.mjs), evidence ignored `.security-review/lookup-ref-results.json` |
-| Footer | **84 lượt** =14 mục ×2 locale ×3 widths320/768/1440px; notice đúng tên, Escape/X/Đóng, focus restoration và không điều hướng PASS;0exceptions. Probe tạm ignored, không có runner footer riêng trong Git |
-| Cart/checkout hai trang,17/10 | **18 nhóm**: EN/VI/responsive/cart controls/consent/bank rollback/review/memory draft/retry UUID PASS;2 order responses bị intercept(503→201),0order API writes/0exceptions. [Runner](../scripts/check-ui-cart-checkout.mjs), evidence `.security-review/`/ảnh probe local; không nghiệm thu provider thật |
-| Story,17/10 | **28 ca** =2 routes ×2 locale ×7 widths;7 vị trí ảnh đã tải, noindex/navigation/địa chỉ chung footer PASS,0exceptions/0order writes. Đã chạy lại sau khi chèn Hành trình trao gửi, assertion thứ tự Home được cập nhật. [Runner](../scripts/check-ui-story.mjs), `.security-review/story-ui-results.json` |
-| Header/layout/typeface,17/10 | Header/search/cart **24 ca**, EN/VI/6 widths/cart0 và12; query tiếng Việt, Escape/focus, container/grid PASS. Probe typography tải4font/glyph VI, body/form/portal PASS. Local evidence, không phải full UI suite |
-| Delivery/catalog,16/10 | **190 tests/225 source files**, typecheck/build, schema **13/13 nhóm(46 assertions)** và smoke **40/40** PASS; browser admin7 +address8 +checkout12nhóm PASS trên dữ liệu cô lập;0exceptions. [Delivery](DELIVERY_ADDRESS.md) |
-| Gallery/detail,16/10 | Gallery5nhóm và product detail6nhóm browser PASS; signed-upload/challenge giả lập, Worker/D1 cô lập; snapshot persisted không đổi. Lần lượt179/174tests tại đúng mốc, không phải counts hiện tại |
-| Category images,16/10 |172tests, schema13/13, smoke40/40; browser ảnh EN/VI10ca PASS;4WebP khớp SHA256. [Nguồn/rollback](CATEGORY_IMAGES.md) |
-| Hardening/fail-closed,16/10 | Native verifier3cấu hình và22phản hồi header live đã kiểm; bằng chứng tại mốc đó, không chứng minh secret/challenge hiện tại hoặc CPU cloud |
-| Phase5,15/10 |136tests/207source/smoke40, UI17routes/0exceptions;10/10MVP +2/2mở rộng trên local. [Nghiệm thu Phase5](pipeline/PHASE_5_FRONTEND.md) |
+## Môi trường được ghi nhận
 
-Full UI checker đã chạy lại17/10 và18/10, vẫn dừng ở assertion total670 trong `check-ui-live-catalog.mjs`: checker cũ còn giả định quote-before-zone/luồng checkout gộp. Chưa điều chỉnh và nghiệm thu lại toàn bộ; các targeted PASS ở trên không thay kết quả full suite. Ảnh/provider bị chặn hoặc mock trong một số probe; không suy ra upload thật, Turnstile thật hoặc quota/CPU cloud.
+| Môi trường | Mốc ghi nhận | Phạm vi đã biết và giới hạn |
+| --- | --- | --- |
+| Local | 19/10 | Kiểm source và nghiệm thu local nêu trên; API/challenge tổng hợp hoặc font cache trong một số runner, không thay kiểm provider thật. |
+| [Staging](https://lunara-staging.minphuc2408.workers.dev) | 18/10, 21:42 giờ Việt Nam | Home/Original và 16 theme tại bản đó; migrations 0001–0003. Public routes/assets/headers, read-only smoke và browser PASS; chưa nghiệm thu checkout/admin/provider thật. Chưa có bằng chứng deploy các thay đổi local mới hơn. |
+| [Production](https://lunara.minphuc2408.workers.dev) | Preflight chỉ đọc 18/10; deploy ghi nhận 17/10 | Owner hoãn production. D1 chỉ có 0001; chưa có 0002/0003, TURNSTILE_SECRET và hai Cloudinary API secrets trong metadata tại mốc kiểm. Chưa nghiệm thu lại theo source hiện tại. |
+| GitHub Pages | Build local 18/10; Git audit 19/10 | Workflow đã tracked; chưa xác minh Settings/Actions hoặc URL deployment. Chỉ preview frontend tĩnh, không có Worker/D1/API. [Giới hạn](operations/STAGING.md#github-pages--static-ui-preview). |
 
-## Staging ghi nhận gần nhất — 18/10/2026
-
-- [Staging](https://lunara-staging.minphuc2408.workers.dev), Worker `lunara-staging`: deploy **21:42:04 giờ Việt Nam**,100%traffic. Version **`21f0e1be-22a6-44f3-b2fa-48d19630beda`**, deployment`fdc73814-3677-43a6-ba9c-cc94b68f4986`. Home theo ref và Original đã sửa màu; bản trước`f77449f2-ddd4-4ee2-89e9-898dfb998930`(16:05).
-- Live JS/CSS và **6 JPG** khớp SHA256 build; JS`index-Cm58vrRs.js`, SHA256`045f2ab586954739ac11dfbfa38fa22a7e4849d1ebf48470f0676c7918a017bf`. **7routes** reload200, CSP/noindex/nosniff và read-only smoke **3/3 PASS**.
-- Preflight mới: typecheck/architecture239/**197tests**/build/build staging/dry-run PASS; runner16theme **305màu/256Header/112route/10navigation/16Original round-trips**, storefront **28layout/4interaction** PASS. Catalog/font cache local; bằng chứng chi tiết ở mục kiểm local.
-- Edge live **224ca**(16theme ×EN/VI ×7widths320–3840) và **4nhóm** interaction390/1440 PASS: nền navbar/Story/Journey/top/footer đúng palette,4ảnh ref hiển thị, filter/sort/quick-add/Cart/Checkout/route/Back/focus. Catalog thật32active;0exceptions/0API errors/0API ghi, font cache local. Chưa nghiệm thu challenge/upload/admin/order thật hoặc thiết bị vật lý.
-- DB sau deploy vẫn khớp đủ12counts của bộ mẫu bên dưới,40products/120variants/images0/FK0/migrations0001–0003; không migrate/seed/đổi secret/ghi production. Evidence ignored `.security-review/deploy-20261018-final-{verification,browser-results,db-counts}.json`, `.security-review/deploy-20261018-final-smoke.log`; không thay nghiệm thu Cron/CPU/quota cloud.
+Version/deployment IDs và bằng chứng đối chiếu nằm trong [hồ sơ staging](archive/VERIFICATION_HISTORY.md#staging-ngày-18102026) và [production](archive/VERIFICATION_HISTORY.md#production--preflight-ngày-18102026). Không suy trạng thái cloud từ config local hoặc tên secret.
 
 ### Dữ liệu staging thay mới theo owner — 18/10/2026
 
-- **Đã áp remote lúc21:27 giờ Việt Nam**, chỉ `lunara-staging-db`/`ed391b18-0bcf-41b3-8315-389807ace7f2`; không deploy code, migrate, đổi secret hoặc ghi production. Thay dữ liệu 12 bảng nghiệp vụ, giữ schema/0001–0003/sequence và coverage Hà Nội/Hoàn Kiếm hiện có. Quyết định dữ liệu: [DATABASE_DESIGN](DATABASE_DESIGN.md#bộ-dữ-liệu-staging-theo-quyết-định-owner).
-- **Backup trước reset đã mở thử offline**: `.security-review/backups/lunara-staging-final-before-reset-20261018-212651.sql`; SHA256 `d62ec21fc09960c320f0c639ee8ada6b6a4c34566a21ebdaaab535757f57e302`. Integrity OK/FK0; hash trùng backup21:11, không có drift trước ghi. SQL/SQLite/log chứa dữ liệu, chỉ giữ local ignored.
-- Counts đã đối chiếu toàn bộ row remote với dataset: **products40/variants120/categories4/images0; users10/addresses9; orders18/items36/history54; provinces1/wards126/zones1**. Products ACTIVE32/HIDDEN4/ARCHIVED4, featured8; mỗi badge BEST_SELLER/HOT/NEW có10,10 không badge. Mỗi trạng thái đơn có3. Ảnh trống là ngoại lệ owner đã chốt; CSV40 sản phẩm `.security-review/staging-products-40.csv`.
-- Checks: SQL23 statements nạp D1 workerd cô lập, catalog/filters/detail/quote/admin catalog/18order details/summary/zones PASS; `db:verify`13/13 nhóm,46assertions PASS sau ghi. Remote FK0/migration history không đổi, public API categories4/active32/featured8 và32detail không ảnh PASS. Evidence ignored `staging-dataset-{isolated-check,remote-verification}.json` trong `.security-review/`. Đây là dữ liệu kiểm thử, chưa phải dữ liệu mở bán hay nghiệm thu provider/admin cloud.
-- `/cart` local: owner xác nhận Ctrl+Shift+R đã hết lỗi, không sửa code. Browser local/staging: **24 ca** Home/Shop/detail ×320/768/1440/2560px, **6 ca** giỏ rỗng/có variant/mã cũ PASS,0overflow/0JS exceptions/0API ghi; local vẫn dùng seed riêng. Evidence ignored `.security-review/cart-{local,staging}-verified.json`;401`/admin/me` chưa login là dự kiến. D1 tạm trả500 trong cửa sổ import; kiểm sau đó không còn lỗi.
-
-### Production tạm hoãn theo owner — 18/10/2026
-
-- Owner chốt **chỉ deploy staging, không deploy production**. Lượt này không deploy/migrate/seed/đổi secrets hoặc ghi dữ liệu production.
-- Preflight chỉ đọc: version production `e671445a-d2ff-4211-9312-57c46bf1b508`, deploy17/10 lúc21:08 giờ Việt Nam; D1 chỉ có0001, còn thiếu0002/0003. Metadata chỉ có ADMIN_PASSWORD/JWT_SECRET, chưa có TURNSTILE_SECRET và hai Cloudinary API secrets. Đây là kiểm metadata/schema, không phải nghiệm thu UI/provider production.
-- Nếu tiếp tục production cần owner cho phép lại đúng phạm vi, xử lý migrations/config/secrets và đối chiếu rollback theo [STAGING](STAGING.md); không chạy seed để bù schema. Trạng thái này thay snapshot production16/10 bên dưới.
-
-### Bằng chứng staging lịch sử — 17/10/2026
-
-- Version`ef985262-c3fe-4b70-b75f-636c87cfadda` lúc17:14: Tra đơn/footer **12/12ca EN/VI PASS**, token lookup tổng hợp sai trả403; chưa chứng minh challenge thật. Evidence ignored `.security-review/lookup-live-results.json`/`lookup-staging-verification.json`. Preflight18/10 thấy version mới hơn`666e53f5-10fd-4000-9434-02d55c0b4285` từ17/10 lúc20:47; bản18/10 hiện thay các mốc này.
-- Bản16:42`c29141be-740e-4908-b369-179d7631356e` và hai PR đã merge: main khi kiểm`77bdfdc`; @minphuc8042 thực hiện README`4821a53`/tiến trình đơn`7dac1bb`; @minphuc2408 merge [PR1](https://github.com/minphuc2408/Lurana/pull/1)/[PR2](https://github.com/minphuc2408/Lurana/pull/2). Public audit4categories/1product/1phường, CSP/noindex/bundle hash PASS tại mốc đó; không suy ra tổng stock/orders. Evidence ignored `.security-review/staging-doc-audit-2026-10-17.json`.
-
-## Snapshot remote chỉ đọc — 16/10/2026
-
-Đây là **lịch sử**. Metadata/schema production đã được rà lại18/10 và staging đã deploy mới; xem các mục trên. Số liệu catalog/provider16/10 không mô tả hiện tại.
-
-| Hạng mục | Production tại16/10 | Staging tại16/10,13:31 |
-| --- | --- | --- |
-| URL | [Production](https://lunara.minphuc2408.workers.dev) | [Staging](https://lunara-staging.minphuc2408.workers.dev) |
-| Worker / D1 | lunara /lunara-db | lunara-staging /lunara-staging-db |
-| Version |26d0811c-f2f0-4f7f-a0fa-7cb175035d06,deploy15/10 19:52 |e984d962-076f-492c-b2e3-c5cac5f52ec3 |
-| Public catalog/coverage |4categories/8active products/2provinces |4categories/1active product/0provinces |
-| Secrets/config đã thấy |Admin secret names; thiếu Cloudinary vars/secrets và TURNSTILE_SECRET tại snapshot |Admin/Cloudinary names; chưa có TURNSTILE_SECRET tại snapshot |
-| Static headers /bot config |Chưa có CSP/RateLimit/TTL mới; robots trả SPA |Có CSP/noindex/key staging/RateLimit/TTL24/scheduled handler |
-
-Source Wrangler hiện khai báo Cloudinary public vars, RateLimit và Cron cho cả hai target; điều đó không chứng minh production đã nhận cấu hình mới. Secret staging đã xuất hiện trong metadata17/10, nên kết luận thiếu secret16/10 không còn mô tả staging ghi nhận gần nhất.
-
-| Mốc migration/deploy lịch sử | Bằng chứng cần giữ |
-| --- | --- |
-|15/10,production Phase6 |0001/seed remote, backup export mở offline integrity/FK/counts PASS; API live7/7 và public browser PASS.3đơnSMOKE đã cleanup, tồn24variant về baseline/FK sạch tại thời điểm đó. [Phase6](pipeline/PHASE_6_DEPLOY.md) giữ checklist và kết quả này |
-|16/10,category images |0002 +4URL áp local/staging; version75fcbb54-5528-4cc1-b101-22fdc7a91a40. API4URL/ảnh4khớpSHA256/browser10ca; login/lookup503khi thiếu secret tại đúng mốc |
-|16/10,19:21,administrative catalog |0003 áp local/staging,12bảng/1tỉnh126phường Hà Nội/HCM0/FK sạch; version27c3d24e-f3df-42e1-8d18-8b8299427062. Aggregate sau migration:zones0/products1/variants3/stock30/orders0/items0/history0; publicoptions trống đúng mốc. Không full seed hoặc tạo phí. Full remote backup không xuất do automatic approval review từ chối khả năng sao chép dữ liệu khách; chỉ đối chiếu aggregate/FK |
-
-Counts nghiệp vụ lịch sử không phải dữ liệu hiện tại. Không suy từ coverage1phường sang tổng zone, orders hay stock. Không chạy lại seed hoặc backup chỉ để cập nhật tài liệu.
+Staging dùng bộ mẫu riêng 40 sản phẩm/120 variants, ảnh sản phẩm trống theo owner; coverage ghi nhận Hà Nội/Hoàn Kiếm. Đây chưa phải dữ liệu mở bán. [Quyết định dữ liệu](reference/DATABASE_DESIGN.md#bộ-dữ-liệu-staging-theo-quyết-định-owner) và [backup/counts/checks tại mốc thay dữ liệu](archive/VERIFICATION_HISTORY.md#bộ-dữ-liệu-staging-và-backup) được giữ riêng; không dùng seed dev để phục hồi hoặc coi counts lịch sử là số hiện tại.
 
 ## Việc còn cần chủ shop
 
-| Việc | Điều kiện hoàn tất |
+| Việc | Điều kiện còn thiếu / bước xử lý |
 | --- | --- |
-| Dữ liệu mở bán thật |Catalog/ảnh/giá/SKU/tồn và zone/phí/khung giờ thật được owner duyệt; tắt dữ liệu mẫu và kiểm quote |
-| Bàn giao quota |Owner xác nhận xem được Workers Requests/Errors/CPU và D1 rows/storage; [OPERATIONS](OPERATIONS.md#8-kiểm-hạn-mức-hằng-ngày-và-sự-cố) |
-| Turnstile/provider |Kiểm challenge thật/action/hostname của checkout,lookup,login trên từng môi trường; metadata secret name/token-sai403 không thay success flow |
-| Cloudinary/Cron/cloud limits |Nghiệm thu upload thật/preset, Cron tick/expiry và CPU/quota trong đúng cửa sổ được phép; source/scheduled binding không chứng minh thực thi |
-| Production mới |Owner hoãn18/10; còn migration0002/0003 và secrets provider. Chỉ tiếp tục khi có yêu cầu mới; đối chiếu config/rollback theo STAGING |
-| Nội dung shop |Xác minh địa chỉ/maps,pháp nhân/MST,hotline,story/giờ mở cửa,policy và Zalo; nội dung minh họa trong source không phải xác nhận pháp lý |
-| Staging checkout |Public17/10 đã có1phường; vẫn chưa nghiệm thu end-to-end checkout/admin với dữ liệu/challenge thật |
-| Domain/WAF |Tùy chọn, quyết định riêng về hạ tầng và chi phí |
+| Dữ liệu mở bán | Duyệt catalog/ảnh/giá/SKU/tồn, zone/phí/ngưỡng/cutoff/slots thật; ẩn hoặc tắt mẫu và kiểm quote theo [OPERATIONS](operations/OPERATIONS.md#2-migration-deploy-và-dữ-liệu-mở-bán). |
+| Bàn giao quota | Owner xác nhận xem được Workers Requests/Errors/CPU và D1 rows/storage theo [runbook](operations/OPERATIONS.md#8-kiểm-hạn-mức-hằng-ngày-và-sự-cố). |
+| Turnstile | Challenge thành công đúng action/hostname cho checkout, lookup và login trên từng môi trường; metadata hoặc token sai trả 403 không đủ. [BOT_PROTECTION](operations/BOT_PROTECTION.md). |
+| Cloudinary/Cron/cloud limits | Nghiệm thu preset/upload thật, Cron tick/expiry và CPU/quota đúng môi trường trong cửa sổ được phép. [Cloudinary](operations/CLOUDINARY.md), [Hardening](operations/HARDENING.md). |
+| Checkout/admin staging | Chưa nghiệm thu end-to-end với dữ liệu và challenge thật; public read/browser cũ không thay kiểm ghi. [Smoke và đối soát](operations/OPERATIONS.md#3-smoke-trên-deployment-và-cleanup). |
+| Production mới | Cần yêu cầu đúng phạm vi để tiếp tục; xử lý migrations/config/secrets và rollback theo [STAGING](operations/STAGING.md). Không seed để bù schema. |
+| Nội dung shop | Xác minh địa chỉ/maps, pháp nhân/MST, hotline, story/giờ mở cửa, policy và Zalo; copy minh họa chưa phải xác nhận pháp lý. |
+| Domain/WAF | Tùy chọn; quyết định hạ tầng/chi phí riêng, không tự coi là blocker deploy cơ bản. |
+
+## Việc tiếp theo
+
+- Chốt dữ liệu/chính sách và người theo dõi quota; khi được phép, lập cửa sổ nghiệm thu checkout/admin/provider theo [OPERATIONS](operations/OPERATIONS.md). Production tiếp tục giữ quyết định hoãn.
+- Xử lý giả định checkout cũ của full UI checker và chạy lại trong một tác vụ source được phép; chưa đánh dấu full suite PASS hoặc Phase 6 DONE bằng kết quả kiểm chọn lọc.
 
 ## Tài liệu chuẩn
 
-[Kiến trúc](../PROJECT_GUIDE.md) · [Stack](TECH_STACK.md) · [API](pipeline/API_CONTRACT.md) · [Database](DATABASE_DESIGN.md) · [Entity](FRONTEND_ENTITIES.md) · [Staging](STAGING.md) · [Operations](OPERATIONS.md) · [Audit tài liệu](DOCUMENTATION_AUDIT.md).
+[Chỉ mục](../PROJECT_GUIDE.md) · [Kiến trúc](ARCHITECTURE.md) · [Phát triển local](LOCAL_DEVELOPMENT.md) · [Stack](TECH_STACK.md) · [API](reference/API_CONTRACT.md) · [Database](reference/DATABASE_DESIGN.md) · [Entity](reference/FRONTEND_ENTITIES.md) · [Staging](operations/STAGING.md) · [Operations](operations/OPERATIONS.md) · [Lịch sử kiểm chứng và audit](archive/VERIFICATION_HISTORY.md).

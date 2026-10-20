@@ -1,6 +1,6 @@
 # Cloudinary cho Lunarra
 
-Cloud name owner cung cấp: `yrnqg7ay`, chế độ **Dynamic folders**. Form tạo/sửa sản phẩm hỗ trợ signed direct upload và gallery nhiều ảnh. Tài liệu này hướng dẫn cấu hình, tải ảnh và quản lý liên kết asset; triển khai/secrets theo môi trường và nghiệm thu provider xem [PROJECT_STATUS](PROJECT_STATUS.md).
+How-to cho chủ shop/developer về cấu hình provider và lifecycle gallery, hợp nhất 19/10/2026. Cloud name owner cung cấp: `yrnqg7ay`, chế độ **Dynamic folders**. Form tạo/sửa sản phẩm hỗ trợ signed direct upload và gallery nhiều ảnh. Tài liệu này hướng dẫn cấu hình, tải ảnh và quản lý liên kết asset; triển khai/secrets theo môi trường và nghiệm thu provider xem [PROJECT_STATUS](../PROJECT_STATUS.md).
 
 ## 1. Có thể dùng thủ công ngay
 
@@ -60,9 +60,9 @@ Khởi động lại dev/preview sau đổi biến. Phải đặt scope=local đ
 
 ## 5. Deploy và nghiệm thu
 
-Khi owner cho phép deploy: `npm run deploy:staging`; kiểm thật rồi mới `npm run deploy` production. Không dùng chung dist cho hai lệnh chạy đồng thời.
+Chọn build/deploy đúng target theo [STAGING](STAGING.md#build-và-deploy); nghiệm thu staging trước production trong phạm vi đã được owner cho phép.
 
-1. Đăng nhập admin, mở một sản phẩm thử → chọn ảnh JPEG/PNG/WebP ≤5 MB.
+1. Đăng nhập admin, mở một sản phẩm thử → chọn ảnh JPEG/PNG/WebP ≤5 MiB.
 2. Chờ thông báo tải ảnh thành công, URL HTTPS điền tự động và preview hiện.
 3. Bấm **Save product**; reload admin và storefront để kiểm ảnh. CatalogProvider giữ snapshot đến reload/retry; HTTP catalog có cache 30 giây.
 4. Kiểm asset trong đúng folder Cloudinary và product_images.url trong đúng D1 môi trường. Upload xong chưa bấm Save thì chưa đổi sản phẩm.
@@ -70,9 +70,9 @@ Khi owner cho phép deploy: `npm run deploy:staging`; kiểm thật rồi mới 
 
 ## Hợp đồng và giới hạn
 
-`POST /api/admin/uploads/sign` yêu cầu cookie admin, same-origin Origin và JSON; payload/response đầy đủ ở [API_CONTRACT](pipeline/API_CONTRACT.md#post-apiadminuploadssign). Server chỉ kiểm MIME/size khai báo và ký tham số do server sở hữu, không nhận public_id/preset tùy ý. SHA-256 ký ở Worker bằng Web Crypto, không dùng Node SDK. Theo [Cloudinary signatures](https://cloudinary.com/documentation/authentication_signatures), chữ ký có hiệu lực **một giờ** từ timestamp; không gọi đây là URL một lần hay ticket 60 giây. overwrite=false + UUID tránh ghi đè.
+`POST /api/admin/uploads/sign` yêu cầu cookie admin, same-origin Origin và JSON; payload/response đầy đủ ở [API_CONTRACT](../reference/API_CONTRACT.md#post-apiadminuploadssign). Server chỉ kiểm MIME/size khai báo và ký tham số do server sở hữu, không nhận public_id/preset tùy ý. SHA-256 ký ở Worker bằng Web Crypto, không dùng Node SDK. Theo [Cloudinary signatures](https://cloudinary.com/documentation/authentication_signatures), chữ ký có hiệu lực **một giờ** từ timestamp; không gọi đây là URL một lần hay ticket 60 giây. overwrite=false + UUID tránh ghi đè.
 
-Ảnh đi trực tiếp browser → Cloudinary, không đi qua Worker. **Giới hạn 5 MB là kiểm ở client và metadata khai báo**, không phải giới hạn byte do Worker cưỡng chế; Cloudinary áp allowed_formats và giới hạn provider/preset thực tế. Không tuyên bố có server-side magic-byte scanning hoặc hard quota 5 MB. Chỉ admin được cấp chữ ký; chưa có rate limit/quota upload bổ sung.
+Ảnh đi trực tiếp browser → Cloudinary, không đi qua Worker. **Giới hạn 5 MiB là kiểm ở client và metadata khai báo**, không phải giới hạn byte do Worker cưỡng chế; Cloudinary áp allowed_formats và giới hạn provider/preset thực tế. Không tuyên bố có server-side magic-byte scanning hoặc hard quota 5 MiB. Chỉ admin được cấp chữ ký; chưa có rate limit/quota upload bổ sung.
 
 D1 lưu URL và `cloudinary_public_id` vào bảng/cột đã có trong 0001; không cần migration riêng cho upload/gallery. Chưa tự xóa asset cũ, dọn ảnh mồ côi hoặc xóa Cloudinary khi xóa sản phẩm. Đổi ảnh/hủy form có thể để lại asset chưa dùng: owner kiểm và dọn thủ công sau khi chắc ảnh không còn tham chiếu. Không xóa ảnh cũ tự động vì đơn hàng có thể dùng snapshot URL.
 
@@ -85,10 +85,10 @@ Form tạo/sửa có tối đa 8 ảnh, chọn nhiều file hoặc thêm URL tro
 
 Chọn cover bằng nút sao, đổi thứ tự bằng lên/xuống và gỡ ảnh bằng thùng rác; nếu gỡ cover thì ảnh còn lại đầu tiên làm cover. Chỉ bấm Lưu sản phẩm mới ghi gallery vào D1. Cancel/gỡ không xóa file provider; owner dọn file chưa liên kết thủ công sau khi kiểm tham chiếu.
 
-Lưu gallery qua API sản phẩm hiện có; [API_CONTRACT](pipeline/API_CONTRACT.md) là nơi định nghĩa payload và ràng buộc `image`/`images`. Mảng quyết định thứ tự, phải có đúng một cover và không trùng URL/public ID; khi có public ID phải khớp URL Cloudinary. Patch thay toàn bộ liên kết trong một batch atomic; lỗi insert rollback cả gallery và text. ID row ảnh được cấp lại khi replace. API admin có ID/thứ tự/public ID; public chỉ có URL/alt/is_primary, không lộ cấu hình ký.
+Save gửi gallery qua API sản phẩm; [API_CONTRACT](../reference/API_CONTRACT.md#dto-và-validation-admin) sở hữu image/images, thứ tự/cover/URL/public ID và validation. Replace gallery/text atomic, lỗi rollback; ID ảnh có thể đổi khi thay liên kết. Không có concurrency version/ETag; không coi draft hoặc upload thành công là đã lưu D1.
 
-GET `/api/products` trả một cover, fallback theo sort_order/id khi legacy không có primary. GET `/api/products/:slug` trả toàn bộ ảnh; `/shop/:slug` hiển thị cover + thumbnails, chuyển/phóng ảnh. Không cần chuyển URL cũ. [Upload response chính thức](https://cloudinary.com/documentation/image_upload_api_reference#upload_response).
+Storefront list dùng cover, detail có thumbnails/zoom theo [API](../reference/API_CONTRACT.md#get-apiproductsslug). Không cần chuyển URL cũ. [Upload response chính thức](https://cloudinary.com/documentation/image_upload_api_reference#upload_response).
 
 ## Kiểm chứng
 
-Kiểm thử dùng provider/API giả lập và D1 cô lập để kiểm file sai, thiếu cấu hình, upload/preview, gallery, lỗi giữa chừng và lưu sản phẩm. Không dùng kết quả mock để kết luận preset/keys hoặc upload thật hoạt động; nghiệm thu theo bước 5 và ghi kết quả tại [PROJECT_STATUS](PROJECT_STATUS.md). Giới hạn URL ảnh và CSP xem [HARDENING](HARDENING.md).
+Kiểm thử dùng provider/API giả lập và D1 cô lập để kiểm file sai, thiếu cấu hình, upload/preview, gallery, lỗi giữa chừng và lưu sản phẩm. Không dùng kết quả mock để kết luận preset/keys hoặc upload thật hoạt động; nghiệm thu theo bước 5 và ghi kết quả tại [PROJECT_STATUS](../PROJECT_STATUS.md). Giới hạn URL ảnh và CSP xem [HARDENING](HARDENING.md).

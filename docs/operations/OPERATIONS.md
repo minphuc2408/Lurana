@@ -1,41 +1,22 @@
-# Vận hành Lunara trên Cloudflare
+# Vận hành Lunarra trên Cloudflare
 
-Đối chiếu source **18/10/2026**. Runbook production `lunara`/`lunara-db`; staging riêng `lunara-staging`/`lunara-staging-db` theo [STAGING](STAGING.md); trạng thái nghiệm thu và bằng chứng thực thi nằm tại [Phase 6](pipeline/PHASE_6_DEPLOY.md). Có runbook hoặc chạy tốt local không đồng nghĩa deployment đã nghiệm thu. Chỉ mở bán sau khi đủ toàn bộ tiêu chí Phase 6, gồm dữ liệu thật và kiểm thử trên URL đã deploy.
+How-to cho operator/chủ shop, hợp nhất **19/10/2026**. Target/build/deploy thuộc [STAGING](STAGING.md), trạng thái/mức nghiệm thu thuộc [PROJECT_STATUS](../PROJECT_STATUS.md), bằng chứng phase ở [Phase 6](../pipeline/PHASE_6_DEPLOY.md). Các thông số provider/quota giữ mốc đối chiếu tài liệu **16/10/2026**, chưa tái thẩm định cloud trong lượt refactor.
 
 ## 1. Đúng môi trường và quyền thao tác
 
-Chạy từ root repository với Node/npm và Wrangler đã pin trong `package-lock.json`. Không đăng ký tài khoản, login hoặc tạo lại D1 đã có. Đối chiếu account trong dashboard trước mỗi đợt ghi; cấu hình hiện tại ở [wrangler.jsonc](../wrangler.jsonc): Worker `lunara`, binding `DB`, database `lunara-db`, ID `1796e7bf-d230-4bc1-a80a-f4be4d1eccc7`. ID database không phải secret. Không đổi ID để bỏ qua lỗi quyền hoặc lỗi migrate.
+Chạy từ root với Node/npm/Wrangler đã pin. Đối chiếu account/Worker/DB/UUID theo [bảng target](STAGING.md#target-cloudflare) trước thao tác; các lệnh --remote bên dưới là production, staging phải dùng target riêng. Không login/create lại tài nguyên đã có hoặc đổi ID để né lỗi quyền/migration.
 
-Các lệnh `--remote` trong runbook này nhắm database production; staging dùng target riêng theo [STAGING](STAGING.md). Lệnh ghi remote, deploy, thay secrets, rollback và restore chỉ thực hiện khi chủ dự án đã cho phép đúng thao tác/target. Hướng dẫn dưới đây không tạo authorization mới. Trong Phase 6, SQL ghi trực tiếp chỉ gồm migration canonical, seed mẫu ở bước 6.5 và cleanup `SMOKE` ở bước 6.9 theo [danh sách đã duyệt](pipeline/PHASE_6_DEPLOY.md). Quy trình thường lệ không reset D1 remote, truncate, xóa bảng hay cập nhật tồn hàng loạt.
+Ghi remote/deploy/rotate/rollback/restore cần authorization đúng thao tác và môi trường. Runbook không cấp quyền mới, không cho reset/truncate/xóa bảng/cập nhật tồn hàng loạt. Đợt thay dữ liệu staging 18/10 là lịch sử tại [archive](../archive/VERIFICATION_HISTORY.md#bộ-dữ-liệu-staging-và-backup), không phải thủ tục reset thường lệ.
 
-Ngoại lệ owner yêu cầu ngày18/10: backup rồi thay dữ liệu nghiệp vụ **chỉ staging** bằng [bộ mẫu 40 sản phẩm](DATABASE_DESIGN.md#bộ-dữ-liệu-staging-theo-quyết-định-owner). Trước ghi phải xuất SQL/mở thử offline, kiểm integrity/FK và đúng target, thử dataset trên D1 cô lập; sau ghi đối chiếu đủ bảng, migration và coverage. Giữ schema/bảng hệ thống/sequence/secrets; không mang quyền một lần này sang production hoặc lần reset tiếp theo. Trạng thái thực thi ở [PROJECT_STATUS](PROJECT_STATUS.md#dữ-liệu-staging-thay-mới-theo-owner--18102026).
-
-Giữ dev/preview trên `127.0.0.1`, `remoteBindings: false`; `npm run db:reset:local` chỉ dùng local. `/api/health` kiểm tra Worker còn chạy; catalog/quote và truy vấn bảng mới kiểm chứng D1 sẵn sàng.
+Dev/preview giữ 127.0.0.1/remoteBindings:false; reset chỉ local theo [LOCAL_DEVELOPMENT](../LOCAL_DEVELOPMENT.md). Health chỉ kiểm Worker liveness; catalog/quote/truy vấn bảng mới kiểm D1 readiness.
 
 ## 2. Migration, deploy và dữ liệu mở bán
 
-Kiểm migration/deployment được ghi nhận tại [PROJECT_STATUS](PROJECT_STATUS.md) trước thao tác. Không chạy lại full seed hoặc sửa migration đã áp để đồng bộ môi trường. Các lệnh sau là ví dụ cho target production, chỉ chạy đúng bước còn thiếu và đã được owner cho phép.
+Đối chiếu [Status](../PROJECT_STATUS.md), backup/bookmark rồi dùng đúng [lệnh target/migration](STAGING.md#database-và-dữ-liệu-thử). Không sửa migration đã áp, không full seed để lấp dữ liệu thiếu. Danh sách migration chờ trống phải đi cùng migration history và đủ schema theo [Database](../reference/DATABASE_DESIGN.md), không suy remote từ source.
 
-Đầu tiên đối chiếu account/database, quota và quyền áp dụng migration. Các lệnh sau là kế hoạch có điều kiện; kiểm tra từng kết quả trước bước kế tiếp:
+Sau deploy kiểm HTTPS/reload Shop/Tra đơn, catalog/quote/cookie/Origin và [10 kịch bản MVP](../pipeline/README.md#8-định-nghĩa-mvp-xong). Secret values không vào source/VITE_*/Git/chat/screenshots; owner nhập qua prompt ẩn.
 
-```powershell
-npx wrangler d1 migrations list lunara-db --remote
-npx wrangler d1 migrations apply lunara-db --remote
-npx wrangler d1 execute lunara-db --remote --command "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
-npx wrangler d1 execute lunara-db --remote --command "SELECT name, applied_at FROM d1_migrations ORDER BY id"
-```
-
-`migrations list` liệt kê migration **chưa áp dụng**. Danh sách trống cần đi cùng dòng `0001_mvp.sql` trong `d1_migrations` và đủ bảng theo migrations đã áp. Base0001 có10bảng: `users`, `user_addresses`, `categories`, `products`, `product_variants`, `product_images`, `delivery_zones`, `orders`, `order_items`, `order_status_history`; 0002 thêm cột ảnh danh mục,0003 thêm administrative_provinces/administrative_wards thành12bảng; không đếm bảng nội bộ Cloudflare/SQLite. Không suy từ source migrations sang trạng thái remote đã áp. [Cloudflare D1 migrations](https://developers.cloudflare.com/d1/reference/migrations/).
-
-Seed mẫu chỉ chạy một lần để nghiệm thu trước mở bán, sau khi xác nhận database chưa có dữ liệu thật; không chạy lại seed để sửa dữ liệu production:
-
-```powershell
-npx wrangler d1 execute lunara-db --remote --file=./docs/sql/MVP_SEED_DEV.sql
-```
-
-Dùng lệnh target theo [STAGING](STAGING.md#build-và-deploy); xác nhận origin chính xác trước nghiệm thu. Không deploy lại chỉ để cập nhật tài liệu. Không đưa secrets vào `wrangler.jsonc`, `VITE_*`, source, Git, nội dung chat hay ảnh chụp. Đặt hai secrets riêng biệt qua prompt của Wrangler theo mục 6. Sau deploy kiểm tra HTTPS, refresh trực tiếp `/shop` và `/orders/track`, catalog/quote, cookie/Origin và [10 kịch bản MVP](pipeline/README.md#8-định-nghĩa-mvp-xong).
-
-Trước mở bán, chủ shop cung cấp/nhập sản phẩm, giá VND, tồn từng variant, ảnh có quyền sử dụng, khu vực/phí/ngưỡng miễn phí và chính sách giao. Ẩn (`HIDDEN`) sản phẩm mẫu; tắt khu vực mẫu thay vì xóa dữ liệu có tham chiếu. Các giá trị hiện tại trong [worker/config.ts](../worker/config.ts) là giả định: phụ phí Standard/Express/Same-day `0/30.000/50.000`, cutoff `16:00`, thời gian chuẩn bị `120` phút; khung giờ được re-export từ [shared/constants.ts](../shared/constants.ts). Chốt và kiểm thử local trước khi deploy cấu hình đã sửa.
+Trước mở bán owner chốt catalog/ảnh có quyền dùng/giá VND/tồn từng variant, zone/phí/ngưỡng và chính sách. Ẩn HIDDEN sản phẩm mẫu, tắt zone mẫu, không xóa dữ liệu có tham chiếu. Phụ phí 0/30000/50000, cutoff 16:00, chuẩn bị 120 phút và slots trong [API contract](../reference/API_CONTRACT.md#quy-tắc-kiểm-tra-dữ-liệu-đặt-hàng) còn là giả định; sửa source khi được yêu cầu, kiểm local rồi deploy.
 
 ## 3. Smoke trên deployment và cleanup
 
@@ -45,7 +26,7 @@ Chỉ định đầy đủ HTTPS origin thuộc dự án, không có path/query/
 node scripts/smoke.mjs --base-url https://TEN.SUBDOMAIN.workers.dev
 ```
 
-Kiểm reload SPA cho phép tối đa một redirect301/302/307/308 từ route sang đúng route thêm `/` trên cùng HTTPS origin (Cloudflare Assets phục vụ thư mục prerender). Redirect sang origin/path khác, có query/fragment hoặc lặp tiếp đều bị từ chối; API vẫn không theo redirect.
+Kiểm reload SPA cho phép tối đa một redirect 301/302/307/308 từ route sang đúng route thêm `/` trên cùng HTTPS origin (Cloudflare Assets phục vụ thư mục prerender). Redirect sang origin/path khác, có query/fragment hoặc lặp tiếp đều bị từ chối; API vẫn không theo redirect.
 
 Nghiệm thu ghi cần chủ dự án cung cấp URL, variant được phép thử và khoảng thời gian chỉ dùng để kiểm thử; không có đơn khách đồng thời. Chế độ ghi yêu cầu xác nhận origin và variant ID rõ ràng; nhập mật khẩu admin qua stdin/prompt ẩn, không truyền vào command line hoặc biến `VITE_*`:
 
@@ -53,7 +34,9 @@ Nghiệm thu ghi cần chủ dự án cung cấp URL, variant được phép th�
 node scripts/smoke.mjs --base-url https://TEN.SUBDOMAIN.workers.dev --allow-remote-writes --confirm-origin https://TEN.SUBDOMAIN.workers.dev --variant-id ID_DA_DUYET --exclusive-test-window
 ```
 
-Khi Turnstile đã cấu hình, runner cần token mới đúng action/hostname cho từng login/create/replay/lookup; nó không tạo challenge. Prompt TTY chỉ hỏi mật khẩu; token được cấp qua stdin JSON `{admin_password,turnstile_tokens}` (tối đa16token). Không lưu JSON/token vào file, args, log hay chat. Thứ tự và thời hạn token theo [BOT_PROTECTION](BOT_PROTECTION.md); không tắt bảo vệ remote để chạy suite.
+Khi Turnstile đã cấu hình, runner cần token mới đúng action/hostname cho từng login/create/replay/lookup; runner không tạo challenge. Prompt TTY chỉ hỏi password; tokens qua hidden stdin JSON `{admin_password,turnstile_tokens}`, tối đa 16 token. Full suite dùng 11 token theo thứ tự `admin_login, checkout, checkout, lookup, lookup, lookup, lookup, checkout, lookup, checkout, checkout`; hai token cuối có thể gửi đồng thời. Token hết hạn sau 5 phút; không lưu JSON/token trong file/args/log/chat.
+
+Nếu không cấp được token đúng luồng/thời hạn, giữ API smoke read-only và nghiệm thu ghi qua browser trong cửa sổ được duyệt; không tắt bảo vệ production. Cơ chế challenge thuộc [BOT_PROTECTION](BOT_PROTECTION.md).
 
 Write smoke tạo ba đơn `SMOKE`: COD giao xong/PAID, đơn kiểm giá đã sửa trên request rồi hủy, đơn thắng cuộc đua món cuối rồi hủy. Script chỉ chỉnh variant được chỉ định, tạm đưa tồn về 1 để kiểm race và phục hồi qua admin delta khi GET xác nhận đúng tồn dự kiến. Khi write mơ hồ, script dừng việc tự phục hồi và yêu cầu đối chiếu; không coi script fail là database chưa thay đổi. Sau run phải kiểm tồn và báo cáo riêng trước cleanup, tránh hoàn thêm lần nữa.
 
@@ -61,7 +44,7 @@ Mọi đơn thử phải có `customer_note` bắt đầu bằng `SMOKE`; dùng 
 
 Sau smoke, đối chiếu ledger riêng của run: đơn nào đã hủy/hoàn tồn, đơn nào đã giao hoặc còn giữ tồn, variant nào đã chỉnh và số lượng cuối mong muốn. Xóa đơn bằng SQL không gọi `transitionOrder`, **không tự hoàn tồn**. Không cộng tồn lần nữa cho đơn đã hủy. Nếu cần chỉnh, dùng admin → Kho, chỉ exact variant ID được chủ shop duyệt và `stock_delta = tồn_mục_tiêu - tồn_GET_hiện_tại`; kiểm lại GET sau ghi. Không phục hồi snapshot tồn cũ nếu đã có đơn khách hoặc không còn cửa sổ kiểm thử độc quyền.
 
-Đếm trước khi xóa để chắc rằng tất cả dòng bắt đầu `SMOKE` đều là dữ liệu thử được phép dọn; nếu có dòng không xác định, dừng cleanup để chủ shop xác nhận. Chỉ dùng lệnh xóa đã có trong Phase 6; không mở rộng `WHERE`:
+Đếm trước khi xóa để chắc rằng tất cả dòng bắt đầu `SMOKE` đều là dữ liệu thử được phép dọn; nếu có dòng không xác định, dừng cleanup để chủ shop xác nhận. Chỉ chạy DELETE khi việc cleanup đã được duyệt và mọi dòng khớp đều thuộc run được phép; không mở rộng `WHERE`:
 
 ```powershell
 npx wrangler d1 execute lunara-db --remote --command "SELECT COUNT(*) AS smoke_orders FROM orders WHERE customer_note LIKE 'SMOKE%'"
@@ -74,7 +57,7 @@ FK canonical xóa dây chuyền `order_items`/`order_status_history`. Sau cleanu
 
 ## 4. Sao lưu riêng tư và mở thử offline
 
-D1 Time Travel luôn bật trên database production; retention hiện hành: Free **7 ngày**, Paid **30 ngày**. Lấy bookmark trước migration, smoke ghi hoặc thay dữ liệu lớn và ghi thời điểm kèm timezone vào nhật ký riêng. Không suy ra có backup dùng được chỉ từ việc lấy bookmark. [Cloudflare Time Travel](https://developers.cloudflare.com/d1/reference/time-travel/), [D1 limits](https://developers.cloudflare.com/d1/platform/limits/).
+D1 Time Travel luôn bật trên database production; retention tham chiếu tại mốc 16/10/2026: Free **7 ngày**, Paid **30 ngày**. Lấy bookmark trước migration, smoke ghi hoặc thay dữ liệu lớn và ghi thời điểm kèm timezone vào nhật ký riêng. Không suy ra có backup dùng được chỉ từ việc lấy bookmark. [Cloudflare Time Travel](https://developers.cloudflare.com/d1/reference/time-travel/), [D1 limits](https://developers.cloudflare.com/d1/platform/limits/).
 
 ```powershell
 npx wrangler d1 time-travel info lunara-db
@@ -179,13 +162,13 @@ npx wrangler secret put JWT_SECRET
 npx wrangler secret list
 ```
 
-`secret list` chỉ kiểm tên/metadata, không xác minh giá trị hay độ dài; phải kiểm đăng nhập thực tế. Thiếu/trống/ngắn secrets hoặc hai giá trị giống nhau: code hiện tại từ chối login/admin, không cấp cookie. Kiểm fail-closed bằng test/harness local; không xóa secret production chỉ để nghiệm thu. Cookie `lunara_admin` là HttpOnly/SameSite=Strict/Path=/, Secure trên HTTPS, hết hạn 12 giờ. Ghi admin yêu cầu đúng Origin và JSON; không lưu password/JWT/session vào localStorage/sessionStorage.
+`secret list` chỉ kiểm tên/metadata, không xác minh giá trị/độ dài hoặc login/provider thành công. Kiểm cấu hình sai bằng harness local, không xóa secret production để test. Contract cookie 12 h/HttpOnly/Strict/Secure, fail-closed và Origin/JSON ở [API](../reference/API_CONTRACT.md#admin-cookie-lunara_admin-httponly); session/credentials không vào browser storage.
 
 Đổi riêng `ADMIN_PASSWORD` chỉ thay mật khẩu cho **lần login tiếp theo**; các JWT còn hạn vẫn hợp lệ nếu `JWT_SECRET` giữ nguyên. Muốn thu hồi **mọi phiên**, chủ dự án rotate `JWT_SECRET`; sau đó phiên cũ phải nhận 401, UI về login, đăng nhập mới thành công. Khi nghi ngờ lộ mật khẩu, đổi cả hai, không chỉ logout trên một trình duyệt. Không ghi credential/JWT/cookie hoặc payload chứa PII vào log; lỗi ứng dụng INTERNAL chỉ giữ `request_id`/`error_name`.
 
 ## 7. Khu vực giao và tồn kho
 
-Admin → **Phí giao** (`/admin/delivery-zones`) → chọn tỉnh/phường từ danh mục D1, nhập phí VND/ngưỡng miễn phí/ETA/active. Chỉ zone active hợp danh mục được công bố; không có zone phù hợp thì quote/order trả `NO_DELIVERY_ZONE`, không fallback tỉnh. Dòng legacy mặc định tỉnh hoặc ngoài danh mục được giữ để tắt, không dùng mở coverage. Kiểm quote cho phường active, phường đã tắt và ngoài vùng; không tự thêm phí/SQL ngoài phạm vi được duyệt. [Quy tắc địa chỉ](DELIVERY_ADDRESS.md).
+Admin → **Phí giao** (`/admin/delivery-zones`) → chọn tỉnh/phường từ danh mục D1, nhập phí VND/ngưỡng miễn phí/ETA/active. Chỉ zone active hợp danh mục được công bố; không có zone phù hợp thì quote/order trả `NO_DELIVERY_ZONE`, không fallback tỉnh. Dòng legacy mặc định tỉnh hoặc ngoài danh mục được giữ để tắt, không dùng mở coverage. Kiểm quote cho phường active, phường đã tắt và ngoài vùng; không tự thêm phí/SQL ngoài phạm vi được duyệt. [Quy tắc địa chỉ](../features/DELIVERY_ADDRESS.md).
 
 Admin → **Kho** (`/admin/stock`): GET tồn hiện tại, đối chiếu tồn thực tế, nhập **delta**, không nhập nhầm số tồn đích vào delta. Khi ghi lỗi `NETWORK`, `TIMEOUT`, `BAD_RESPONSE` hoặc `INTERNAL`, request có thể đã áp dụng: UI xóa delta vừa nhập, khóa hàng; bấm tải lại/kiểm lại để GET thành công, đối chiếu rồi mới nhập delta mới. Không lặp tự động delta cũ. Nếu GET vẫn lỗi, giữ hàng bị khóa và xử lý kết nối trước. Hủy ở trạng thái sớm mặc định hoàn tồn một lần; IN_TRANSIT hủy cần lý do, restock mặc định false và chỉ hoàn khi owner chọn true vì hoa còn bán được. CANCELLED luôn terminal. Không hoàn tay thêm sau khi service đã hoàn.
 
@@ -196,7 +179,7 @@ Chủ shop mở Cloudflare dashboard mỗi ngày và kiểm các mục sau:
 1. **Workers & Pages → `lunara` → Metrics**: xem Requests, Errors và CPU Time; chọn khoảng thời gian cần kiểm tra, đối chiếu số request với quota ngày trong bảng dưới. [Cloudflare Workers metrics](https://developers.cloudflare.com/workers/observability/metrics-and-analytics/).
 2. **D1 → `lunara-db` → Metrics → Row Metrics**: xem Rows read/Rows written; kiểm thêm Storage/dung lượng database và đối chiếu quota ngày/dung lượng. [Cloudflare D1 metrics](https://developers.cloudflare.com/d1/observability/metrics-analytics/), [D1 pricing](https://developers.cloudflare.com/d1/platform/pricing/).
 
-Ghi tổng hợp không chứa PII; kiểm quota **toàn account**, không chỉ Worker/DB này. Chọn ngưỡng cảnh báo nội bộ theo traffic thực tế; việc tạo nhắc lịch do chủ dự án quyết định, runbook này không tạo lịch tự động. Hướng dẫn ngắn đã được cung cấp ngày 15/10/2026; **chưa có xác nhận chủ dự án đã biết cách theo dõi**, nên phần bàn giao này vẫn chờ xác nhận.
+Ghi tổng hợp không chứa PII; kiểm quota **toàn account**, không chỉ Worker/DB này. Chọn ngưỡng cảnh báo nội bộ theo traffic thực tế; việc tạo nhắc lịch do chủ dự án quyết định, runbook này không tạo lịch tự động. Trạng thái owner xác nhận bàn giao quota ở [PROJECT_STATUS](../PROJECT_STATUS.md).
 
 Thông số đối chiếu lại tài liệu Cloudflare ngày **16/10/2026**; trước vận hành phải xác nhận gói/giá thực tế trong account:
 
@@ -216,18 +199,12 @@ Khi lỗi tăng: xác nhận URL/deployment và request_id, xem metrics/log đã
 
 ## 9. Turnstile và domain
 
-Cấu hình widget/secret và cơ chế Turnstile/rate-limit/TTL tại [BOT_PROTECTION](BOT_PROTECTION.md). Phối hợp deploy UI/Site key và secret đúng cặp cho từng hostname; secret đã tồn tại không cần nhập lại sau mỗi deploy. Không gửi secret/token qua chat/log và không bật local bypass trên remote. Giá trị đã khai báo trong source không chứng minh deployment đã nhận hoặc provider/Cron đã chạy; xem [PROJECT_STATUS](PROJECT_STATUS.md) cho mốc kiểm thực tế.
+Setup/challenge/rate-limit/TTL theo [BOT_PROTECTION](BOT_PROTECTION.md), upload/gallery theo [CLOUDINARY](CLOUDINARY.md). Ghép đúng UI/site key/secret/hostname từng môi trường, không bật local bypass trên remote. Kiểm header static và API độc lập theo [HARDENING](HARDENING.md).
 
-Kiểm header HTML/static và API độc lập: `_headers` chỉ áp assets, API dùng middleware. Dùng request_id để đối chiếu lỗi, xem cấu hình và giới hạn tại [HARDENING](HARDENING.md). Shop xác nhận đơn qua liên hệ đã được owner duyệt; quyết định hủy/restock theo tình trạng hoa, không suy ra restock mặc định từ trạng thái terminal.
+Domain riêng là tùy chọn cần owner đồng ý hạ tầng/chi phí. Sau gắn Custom Domain kiểm HTTPS/refresh SPA/assets/API cùng origin, login/logout/cookie Secure/write Origin và widget hostname. Cookie workers.dev không chuyển sang domain mới: đăng nhập lại, dùng origin mới cho smoke. [Cloudflare Custom Domains](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/).
 
-Domain riêng là tùy chọn. Chủ dự án cung cấp domain và đồng ý chi phí/authorization; sau gắn Custom Domain kiểm HTTPS, refresh SPA, asset/API cùng origin, login/logout/cookie Secure và write Origin trên domain mới. Cookie cũ của `workers.dev` không chuyển sang domain mới; đăng nhập lại. Dùng HTTPS origin mới khi chạy smoke và cấu hình hostname Turnstile nếu đã bật. [Cloudflare Custom Domains](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/).
+## 10. Ghi nhận nghiệm thu và bàn giao
 
-## 10. Nhật ký nghiệm thu và bàn giao
+Ghi ngày/target/phạm vi/kết quả/giới hạn vào owner: [PROJECT_STATUS](../PROJECT_STATUS.md) chỉ latest verified/blocker/Next, [Phase 6](../pipeline/PHASE_6_DEPLOY.md) giữ mốc phase, [archive](../archive/VERIFICATION_HISTORY.md) giữ lịch sử ngoài phase. Không nhân bản test/deployment snapshots hoặc tick đầu vào còn thiếu.
 
-Trạng thái current và counts public mới nhất ở [PROJECT_STATUS](PROJECT_STATUS.md). Các mốc15/10 dưới đây là lịch sử; không kết luận staging chưa deploy/thiếu secrets từ một mốc local cũ.
-
-Giữ trong [Phase 6](pipeline/PHASE_6_DEPLOY.md) các bằng chứng **đã thực thi**: ngày giờ, target, migration applied, số smoke pass, 10 ca MVP trên deployment, cleanup/tồn, backup remote mở offline, dữ liệu thật và owner xác nhận cách xem quota mỗi ngày. Không ghi URL giả hoặc tick mục đang chờ owner.
-
-Đầu vào cần owner cung cấp/xác nhận trước bước phụ thuộc: đúng account/database và quyền ghi; quyền deploy đầu tiên/URL; secrets thật do owner nhập; variant/cửa sổ thử độc quyền; sản phẩm/tồn/khu vực/phí/chính sách thật; lựa chọn Turnstile/domain; người kiểm hạn mức hằng ngày. Các mục tùy chọn không tự chặn deploy cơ bản, nhưng lựa chọn bật chúng cần tích hợp/kiểm thử tương ứng.
-
-Upload/gallery theo [CLOUDINARY](CLOUDINARY.md); chẩn đoán log/query/SEO theo HARDENING. Hướng dẫn vận hành không ghi kết quả test/deploy mới; bằng chứng thực thi phải có ngày, target và phạm vi ở PROJECT_STATUS/Phase6.
+Trước bước phụ thuộc cần đúng account/DB/quyền ghi, secrets do owner nhập, variant/cửa sổ thử độc quyền, catalog/tồn/zone/chính sách đã duyệt và người theo dõi quota. Có runbook hoặc local PASS chưa chứng minh deployment/provider/cloud đã nghiệm thu.

@@ -1,13 +1,15 @@
-# Lunara Shop — staging và production
+# Lunarra — staging và production
 
-Cấu hình target, build và triển khai cho hai môi trường. Version đang được ghi nhận, migrations đã áp và kết quả kiểm cloud xem [PROJECT_STATUS](PROJECT_STATUS.md); tài liệu này không phải deployment log.
+How-to cho người triển khai: target, build và migrations; hợp nhất tài liệu 19/10/2026. Version đang được ghi nhận, migrations đã áp và kết quả kiểm cloud xem [PROJECT_STATUS](../PROJECT_STATUS.md); tài liệu này không phải deployment log.
 
 ## GitHub Pages — static UI preview
 
-- **Cấu hình:** [workflow](../.github/workflows/deploy-pages.yml) dùng Node22, `npm ci`, build `dist/client` với base `/Lurana/`, rồi thêm `404.html`; chạy khi push `main` hoặc manual dispatch. Router dùng Vite `BASE_URL`; bản Worker vẫn dùng `/`. Base này dành cho project Pages tên repo `Lurana`, cần đổi nếu đổi tên repo hoặc dùng custom domain.
-- **Thiết lập GitHub:** chọn **Settings → Pages → Build and deployment → Source: GitHub Actions**, cho phép Actions và environment `github-pages` deploy từ nhánh mong muốn. Repo private cần gói GitHub hỗ trợ Pages. Workflow hiện là file untracked local tại lượt kiểm18/10; phải được commit/push mới có thể chạy. [Hướng dẫn GitHub](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
-- **Giới hạn:** chỉ phục vụ frontend tĩnh, không có Worker/D1/API; catalog, quote, checkout, tra đơn và admin không hoạt động. Dùng các target Cloudflare bên dưới cho luồng có API. `404.html` cho app render khi mở trực tiếp route chưa có file; HTTP vẫn404, không phải rewrite200. `/shop/` và `/about/` có HTML do SEO plugin sinh.
+- **Cấu hình:** [workflow](../../.github/workflows/deploy-pages.yml) dùng Node 22, `npm ci`, build `dist/client` với base `/Lurana/`, rồi thêm `404.html`; chạy khi push `main` hoặc manual dispatch. Router dùng Vite `BASE_URL`; bản Worker vẫn dùng `/`. Base này dành cho project Pages tên repo `Lurana`, cần đổi nếu đổi tên repo hoặc dùng custom domain.
+- **Thiết lập GitHub:** chọn **Settings → Pages → Build and deployment → Source: GitHub Actions**, cho phép Actions và environment `github-pages` deploy từ nhánh mong muốn. Repo private cần gói GitHub hỗ trợ Pages. Workflow đã được Git theo dõi khi kiểm local19/10; chưa xác minh Settings/Actions hoặc deployment Pages. Tracked không chứng minh workflow đã chạy. [Hướng dẫn GitHub](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
+- **Giới hạn:** chỉ phục vụ frontend tĩnh, không có Worker/D1/API; catalog, quote, checkout, tra đơn và admin không hoạt động. Dùng các target Cloudflare bên dưới cho luồng có API. `404.html` cho app render khi mở trực tiếp route chưa có file; HTTP vẫn 404, không phải rewrite 200. `/shop/` và `/about/` có HTML do SEO plugin sinh.
 - **SEO/headers:** workflow đặt `VITE_SITE_INDEXABLE=false` cho preview, sinh meta noindex, robots disallow và sitemap rỗng. Canonical/OG vẫn trỏ production theo `.env.production`; đây không phải cấu hình SEO cho domain Pages riêng. Pages không áp dụng file Cloudflare `_headers`, nên không suy CSP/security headers từ artifact. Build local hoặc thêm workflow không chứng minh deploy thành công; xem bằng chứng tại PROJECT_STATUS.
+
+## Target Cloudflare
 
 | Môi trường | Worker | D1 / UUID | Public frontend config |
 | --- | --- | --- | --- |
@@ -41,22 +43,13 @@ Remove-Item Env:VITE_TURNSTILE_SITE_KEY -ErrorAction SilentlyContinue
 
 Deploy dùng toàn bộ source local hiện tại, kể cả thay đổi chưa commit. Deploy không migrate/seed hoặc copy secrets/dữ liệu giữa hai môi trường. UI chưa có banner staging, kiểm hostname trước thao tác.
 
-Sau build đổi tên bundle, khởi động lại Vite preview đang chạy để nhận manifest asset mới. Đã tái hiện index HTML mới nhưng request JS mới trả `text/html` từ fallback khi preview giữ manifest cũ; restart cùng cổng loopback rồi kiểm lại MIME/bundle trước chạy browser tests. Không sửa code hoặc đổi asset URL để chữa trạng thái preview này.
+Bẫy preview giữ manifest cũ sau build và cách kiểm MIME/bundle được quản lý trong [hướng dẫn local](../LOCAL_DEVELOPMENT.md#bẫy-local-thường-gặp).
 
 ## Secrets — nhập một lần riêng cho từng Worker
 
-Cấu hình và kiểm provider theo [BOT_PROTECTION](BOT_PROTECTION.md). Thiếu secret thì API được bảo vệ fail-closed; không bật bypass trên remote để chạy thử. Secret tồn tại không phải nhập lại sau mỗi deploy.
+Owner nhập secrets riêng từng Worker qua prompt ẩn khi thiếu hoặc rotate; không đọc/reuse password local, không cần nhập lại sau mỗi deploy. Auth/rotate/revoke phiên theo [OPERATIONS](OPERATIONS.md#6-secrets-mật-khẩu-và-phiên-admin), widget/site-secret/hostname theo [BOT_PROTECTION](BOT_PROTECTION.md#việc-chủ-shop-cần-cấu-hình-trên-cloudflare), upload keys theo [CLOUDINARY](CLOUDINARY.md#3-owner-nhập-keys-vào-cloudflare).
 
-ADMIN_PASSWORD ≥24 ký tự ngẫu nhiên, JWT_SECRET ≥32 ký tự ngẫu nhiên và khác nhau; không đọc/reuse password local để cấu hình cloud. Secrets đã tồn tại không cần nhập lại mỗi deploy.
-
-Khi môi trường còn thiếu secret hoặc cần rotate, owner nhập Secret key đúng widget tại prompt ẩn; không đọc hoặc tái sử dụng password local:
-
-```powershell
-npx wrangler secret put TURNSTILE_SECRET --env staging --config wrangler.jsonc
-npx wrangler secret put TURNSTILE_SECRET --config wrangler.jsonc
-```
-
-Staging widget cho phép `lunara-staging.minphuc2408.workers.dev`; production widget cho phép `lunara.minphuc2408.workers.dev`, không thêm scheme/path. Site key công khai nằm trong file env tương ứng; Secret key chỉ ở Worker. Kiểm checkout/lookup/admin login với challenge thật sau cấu hình. [Turnstile](BOT_PROTECTION.md) · [Cloudinary](CLOUDINARY.md).
+Site key/origin công khai ở file env đúng mode; Secret key chỉ ở Worker. Kiểm challenge thật ở checkout/lookup/admin login sau cấu hình. Thiếu secret fail-closed; metadata secret names không chứng minh success, không bật bypass trên remote.
 
 ## Database và dữ liệu thử
 
@@ -72,9 +65,22 @@ npm run db:migrate:staging
 
 `npm run db:seed:staging` nạp toàn bộ seed mẫu, không phải reset và không khôi phục tồn đã sửa. **Không chạy lại cho trạng thái staging hiện có** khi chỉ cần categories hoặc delivery zones. Canonical base là `migrations/0001_mvp.sql`, thêm `0002_category_images.sql` cho ảnh category và `0003_hanoi_administrative_areas.sql` cho danh mục Hà Nội; không áp deferred/0002, không sửa migration đã áp remote.
 
-Owner đã yêu cầu một lần thay dữ liệu staging ngày18/10 sau backup, bằng [bộ mẫu 40 sản phẩm](DATABASE_DESIGN.md#bộ-dữ-liệu-staging-theo-quyết-định-owner), không dùng lại seed dev. Ngoại lệ và điều kiện backup/kiểm chứng tại [OPERATIONS](OPERATIONS.md#1-đúng-môi-trường-và-quyền-thao-tác); kết quả thực tế tại [PROJECT_STATUS](PROJECT_STATUS.md#dữ-liệu-staging-thay-mới-theo-owner--18102026). Lệnh seed cũ không phải công cụ phục hồi bộ dữ liệu này.
+Staging có [bộ mẫu riêng theo owner](../reference/DATABASE_DESIGN.md#bộ-dữ-liệu-staging-theo-quyết-định-owner); seed dev không phục hồi bộ này. Bằng chứng lần thay18/10 và backup ở [archive](../archive/VERIFICATION_HISTORY.md#bộ-dữ-liệu-staging-và-backup); phạm vi cũ không cấp quyền reset tiếp.
 
 Smoke remote mặc định chỉ đọc; ghi cần origin/variant/exclusive window và credential/token qua hidden stdin. Không tự retry write có kết quả chưa rõ. [OPERATIONS](OPERATIONS.md).
+
+### Kiểm và áp migration production
+
+Đối chiếu đúng target, authorization và backup theo [OPERATIONS](OPERATIONS.md#4-sao-lưu-riêng-tư-và-mở-thử-offline); kiểm từng kết quả trước bước tiếp:
+
+```powershell
+npx wrangler d1 migrations list lunara-db --remote
+npx wrangler d1 migrations apply lunara-db --remote
+npx wrangler d1 execute lunara-db --remote --command "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
+npx wrangler d1 execute lunara-db --remote --command "SELECT name, applied_at FROM d1_migrations ORDER BY id"
+```
+
+migrations list chỉ liệt kê phần chưa áp; danh sách trống cần đi cùng history và đủ bảng theo [Database](../reference/DATABASE_DESIGN.md), không đếm bảng nội bộ. Seed chỉ dành database mới, chưa có dữ liệu thật và đã được phép: `npx wrangler d1 execute lunara-db --remote --file=./docs/sql/MVP_SEED_DEV.sql`. Không chạy lại để sửa môi trường hiện có.
 
 ## Giới hạn nghiệm thu
 
@@ -82,9 +88,9 @@ Deploy/build/dry-run không tự migrate D1, seed dữ liệu hoặc xác minh s
 
 ## Wrangler Dashboard diff
 
-Nguồn cũ có observability.head_sampling_rate=0.1 nhưng thiếu logs.head_sampling_rate và traces.head_sampling_rate. Hàm normalizeObservability trong Wrangler4.150.0 điền mặc định1 cho các mục con thiếu khi so sánh remote; đã tái hiện bằng chính hàm từ dependency local. Điều này giải thích diff10%→100% trong prompt; không kết luận chỉ từ diff rằng cloud đã đổi sampling hoặc đã deploy.
+Nguồn cũ có observability.head_sampling_rate=0.1 nhưng thiếu logs.head_sampling_rate và traces.head_sampling_rate. Hàm normalizeObservability trong Wrangler 4.150.0 điền mặc định 1 cho các mục con thiếu khi so sánh remote; đã tái hiện bằng chính hàm từ dependency local. Điều này giải thích diff10%→100% trong prompt; không kết luận chỉ từ diff rằng cloud đã đổi sampling hoặc đã deploy.
 
-`wrangler.jsonc` khai báo rõ0.1 ở cấp chung/logs/traces cho cả production và staging; invocation_logs=false giữ nguyên, không bật traces. Guard scripts/staging.mjs kiểm các giá trị này trong cả source và config generated trước deploy, vẫn kiểm đúng tên Worker/DB/UUID.
+`wrangler.jsonc` khai báo rõ 0.1 ở cấp chung/logs/traces cho cả production và staging; invocation_logs=false giữ nguyên, không bật traces. Guard scripts/staging.mjs kiểm các giá trị này trong cả source và config generated trước deploy, vẫn kiểm đúng tên Worker/DB/UUID.
 
 Nếu đang ở prompt cũ: chọn n để hủy upload, và n nếu được hỏi cập nhật local config từ remote; sau đó dùng lại npm run deploy:staging khi muốn deploy. Không tiếp tục prompt đã nạp config cũ. Không sửa tay dist/lunara/wrangler.json; build lại từ nguồn. D1 database_name/migrations_dir và assets có thể còn xuất hiện do metadata/đường dẫn build khác remote; kiểm từng diff, không tắt cảnh báo hoặc auto-yes. Dry-run bỏ qua remote pre-upload check, không chứng minh prompt cloud đã biến mất.
 

@@ -1,12 +1,12 @@
 # Database MVP — Cloudflare D1
 
-Đối chiếu source ngày **18/10/2026**. Tài liệu giữ quyết định schema, ràng buộc và bất biến dữ liệu. [API contract](pipeline/API_CONTRACT.md) mô tả giao tiếp; lịch sử migration/deploy và counts theo môi trường nằm ở [PROJECT_STATUS.md](PROJECT_STATUS.md).
+Reference cho backend/maintainer: schema, constraints và decision dữ liệu; source đối chiếu 18/10, hợp nhất tài liệu 19/10/2026. [API contract](API_CONTRACT.md) mô tả giao tiếp; lịch sử migration/deploy và counts theo môi trường nằm ở [PROJECT_STATUS.md](../PROJECT_STATUS.md).
 
 ## Một nguồn schema chuẩn
 
-[`migrations/0001_mvp.sql`](../migrations/0001_mvp.sql) là **base DDL bất biến**; schema trong source là base cộng [`0002_category_images.sql`](../migrations/0002_category_images.sql) và [`0003_hanoi_administrative_areas.sql`](../migrations/0003_hanoi_administrative_areas.sql). Migration 0003 theo yêu cầu owner nhập danh mục Hà Nội vào 2 bảng riêng, không thêm phí giao. [`sql/MVP_SCHEMA.sql`](sql/MVP_SCHEMA.sql) và [`pipeline/MVP_SCHEMA.sql`](pipeline/MVP_SCHEMA.sql) chỉ chứa chú thích dẫn về migration, không giữ bản DDL sao chép. Khi cần xem hoặc kiểm chứng schema, đọc chuỗi migration này.
+[`migrations/0001_mvp.sql`](../../migrations/0001_mvp.sql) là **base DDL bất biến**; schema trong source là base cộng [`0002_category_images.sql`](../../migrations/0002_category_images.sql) và [`0003_hanoi_administrative_areas.sql`](../../migrations/0003_hanoi_administrative_areas.sql). Migration 0003 theo yêu cầu owner nhập danh mục Hà Nội vào 2 bảng riêng, không thêm phí giao. [`sql/MVP_SCHEMA.sql`](../sql/MVP_SCHEMA.sql) và [`pipeline/MVP_SCHEMA.sql`](../pipeline/MVP_SCHEMA.sql) chỉ chứa chú thích dẫn về migration, không giữ bản DDL sao chép. Khi cần xem hoặc kiểm chứng schema, đọc chuỗi migration này.
 
-Canonical Phase 1 chọn DDL v2 cho 10 bảng và [seed dev](sql/MVP_SEED_DEV.sql). Các mở rộng được yêu cầu sau đó dùng migration mới: 0002 thêm `categories.image_url` nullable; 0003 tạo `administrative_provinces`/`administrative_wards` và nhập Hà Nội (mã 01, 126 phường/xã). Không sửa migration đã áp hoặc áp [custom_requests deferred](sql/deferred/0002_custom_requests.sql) vào chuỗi MVP.
+Canonical Phase 1 chọn DDL v2 cho 10 bảng và [seed dev](../sql/MVP_SEED_DEV.sql). Các mở rộng được yêu cầu sau đó dùng migration mới: 0002 thêm `categories.image_url` nullable; 0003 tạo `administrative_provinces`/`administrative_wards` và nhập Hà Nội (mã 01, 126 phường/xã). Không sửa migration đã áp hoặc áp [custom_requests deferred](../sql/deferred/0002_custom_requests.sql) vào chuỗi MVP.
 
 File seed gồm **4 categories, 8 products, 24 variants, 8 images, 4 delivery zones**. Các câu `INSERT OR IGNORE` kết hợp khóa unique giúp chạy lại không nhân đôi. Ảnh placeholder, giá/tồn và khu vực giao là dữ liệu mẫu. Dòng tỉnh mặc định/ngoài danh mục vẫn có thể tồn tại trong DB nhưng không mở coverage ở service hiện tại.
 
@@ -15,13 +15,13 @@ File seed gồm **4 categories, 8 products, 24 variants, 8 images, 4 delivery zo
 - Owner yêu cầu thay toàn bộ dữ liệu nghiệp vụ staging sau backup; đây là bộ mẫu riêng, không đổi seed dev/schema. Có 40 thiết kế EN/VI, mã `LNR-STG-001`–`040`, 4 danh mục và 120 biến thể S/M/L; bao phủ ACTIVE/HIDDEN/ARCHIVED, featured, BEST_SELLER/HOT/NEW, tồn thường/thấp/hết và variant tắt.
 - `product_images` được owner cho phép trống; không chèn URL rỗng/ảnh giả. Ảnh danh mục và snapshot ảnh đơn cũng NULL. Quy tắc gallery khi lưu qua API vẫn giữ nguyên.
 - Khách/địa chỉ/đơn/timeline là dữ liệu tổng hợp có nhãn STAGING, email `example.test`, không kích hoạt customer auth. Mỗi trạng thái đơn có 3 mẫu; COD giao thành công là PAID, hủy đã hoàn tồn; tồn ban đầu trừ đúng lượng của các đơn chưa hủy. Pending vẫn chịu TTL/Cron hiện hành.
-- Giữ nguyên danh mục hành chính, coverage/phí hiện có, migration history và schema. ID số mới lớn hơn ID/sequence cũ; không reset `sqlite_sequence`, tránh giỏ đã lưu variant ID cũ nhận nhầm sản phẩm mới. Artifact SQL/CSV và backup chỉ nằm trong `.security-review/` ignored; bằng chứng/đường dẫn ở [PROJECT_STATUS](PROJECT_STATUS.md#dữ-liệu-staging-thay-mới-theo-owner--18102026).
+- Giữ nguyên danh mục hành chính, coverage/phí hiện có, migration history và schema. ID số mới lớn hơn ID/sequence cũ; không reset `sqlite_sequence`, tránh giỏ đã lưu variant ID cũ nhận nhầm sản phẩm mới. Artifact SQL/CSV và backup chỉ nằm trong `.security-review/` ignored; bằng chứng/đường dẫn ở [PROJECT_STATUS](../PROJECT_STATUS.md#dữ-liệu-staging-thay-mới-theo-owner--18102026).
 
 ## Quyết định base schema (v1 → v2 tại Phase 1)
 
 | Mục | V1 | Canonical Phase 1 (DDL v2) | Lý do |
 | --- | --- | --- | --- |
-| Phạm vi 10 bảng | Có `custom_requests`, thiếu `delivery_zones` | Thay bằng `delivery_zones`; request ở [deferred/0002](sql/deferred/0002_custom_requests.sql), **không áp dụng** | MVP cần phí giao theo khu vực; wizard ngoài MVP |
+| Phạm vi 10 bảng | Có `custom_requests`, thiếu `delivery_zones` | Thay bằng `delivery_zones`; request ở [deferred/0002](../sql/deferred/0002_custom_requests.sql), **không áp dụng** | MVP cần phí giao theo khu vực; wizard ngoài MVP |
 | Email user | `UNIQUE`, không kiểm lowercase | `CHECK (email = lower(email))` + unique index `uq_users_email` | Từ chối email viết hoa ASCII và email trùng theo quy ước lưu chữ thường |
 | Auth user | `password_hash NOT NULL`; locale cho phép NULL | Hash nullable; `preferred_locale NOT NULL`, mặc định `vi`, chỉ `vi/en` | Dựng sẵn cho auth khách tương lai; admin MVP dùng secret, không phụ thuộc user password |
 | Địa chỉ mặc định | Chỉ cờ 0/1 | Unique index một phần theo user khi `is_default = 1` | Mỗi user tối đa một địa chỉ mặc định; vẫn có nhiều địa chỉ thường |
@@ -50,8 +50,8 @@ Không có cột JSON trong 12 bảng hiện tại: các trường JSON nằm tr
 | `products` | Category FK restrict, slug unique, tên/mô tả EN/VI, badge/featured, ACTIVE/HIDDEN/ARCHIVED |
 | `product_variants` | SKU unique, unique product+size; giá/tồn không âm và ngưỡng cảnh báo theo variant |
 | `product_images` | Product FK cascade; URL, Cloudinary public ID nullable, alt EN/VI, sort_order; unique partial index giới hạn tối đa một primary/product |
-| `administrative_provinces` | Mã TEXT 2 ký tự PK, tên unique; 0003 nhập Hà Nội 01 |
-| `administrative_wards` | Mã TEXT 5 ký tự PK, FK tỉnh RESTRICT, unique tên trong tỉnh; 0003 nhập 126 phường/xã Hà Nội |
+| `administrative_provinces` | Mã TEXT 2 ký tự PK, tên không rỗng/unique; 0003 nhập Hà Nội 01 |
+| `administrative_wards` | Mã TEXT 5 ký tự PK, FK tỉnh RESTRICT, tên không rỗng/unique trong tỉnh; 0003 nhập 126 phường/xã Hà Nội |
 | `delivery_zones` | Tỉnh/phường unique, phí/ngưỡng/ETA/active; service kiểm danh mục, legacy không bị xóa; không phải FK snapshot đơn |
 | `orders` | COD guest, snapshot người gửi/nhận/giao hàng/thiệp; total, idempotency và mốc/cờ hỗ trợ xử lý |
 | `order_items` | Snapshot SKU/tên EN/VI/size/ảnh/giá; xóa catalog đặt FK product/variant về NULL, giữ snapshot |
@@ -67,21 +67,18 @@ Auth khách/profile chưa có API dù users/user_addresses đã nằm trong base
 - Tên dùng `name_en/name_vi`, snapshot song ngữ trong order items. `name_vn` chỉ là alias FE; nội dung khách nhập giữ nguyên.
 - Variant chấp nhận S/M/L/STANDARD/DELUXE; seed có S/M/L. Map Small/Medium/Large → S/M/L. PETITE/CLASSIC/GRANDE/LUXE thuộc wizard deferred.
 - `lower()` SQLite mặc định chủ yếu xử lý ASCII; email cần normalize/validate ở API. CHECK email không thay thế kiểm tra cấu trúc địa chỉ email.
-- `stock_released` chỉ là cờ 0/1; DDL tự nó không bảo đảm hoàn tồn một lần hay transition. transitionOrder dùng conditional release + CAS trạng thái trong một batch, kiểm meta.changes và chống history trùng; route admin dùng actor_label ADMIN/actor_id NULL. CANCELLED vẫn terminal khi stock_released=0 (hủy không hoàn tồn). Batch expiry lọc PENDING quá hạn/stock_released=0, ghi SYSTEM history, hoàn tồn rồi CANCELLED trong cùng giao dịch; [quy tắc expiry](BOT_PROTECTION.md).
-- Unique idempotency ngăn key trùng; API Phase 3 kiểm UUID v4, canonical lowercase, replay một read và xử lý UNIQUE race rollback. Key xác định đơn đã tạo; body hợp lệ gửi lại khác nội dung vẫn replay đơn cũ, không có kiểm hash payload. Frontend quản lý key theo payload trong memory; [vòng đời ý định](FRONTEND_ENTITIES.md#ownership-và-vòng-đời-dữ-liệu).
+- stock_released chỉ là cờ 0/1; DDL không tự bảo đảm transition hoặc hoàn tồn một lần. Rationale giao dịch/CAS tại [Architecture](../ARCHITECTURE.md#worker-và-dữ-liệu-bền-vững), contract trạng thái tại [API](API_CONTRACT.md#máy-trạng-thái-đơn), expiry tại [Bot](../operations/BOT_PROTECTION.md).
+- Unique idempotency ngăn trùng key; schema vẫn cho NULL. UUID v4/replay/race do [API](API_CONTRACT.md#post-apiorders) bảo vệ, vòng đời key/payload FE ở [Entities](FRONTEND_ENTITIES.md#ownership-và-vòng-đời-dữ-liệu).
 
-## Bất biến do service bảo vệ
+## Ranh giới DDL và service
 
-1. Zod validate contact, ngày giao thực, mã lựa chọn, money và số lượng. Server tính giá/phí/tổng; không tin total/role/stock từ client.
-2. Order/items/history và trừ tồn nằm trong một batch. Trừ tồn không điều kiện để `CHECK (stock_quantity >= 0)` ném lỗi và rollback; `UPDATE` 0 dòng tự nó không gây rollback. Cap tối đa 3 PENDING theo sender_phone chuẩn hóa nằm trong INSERT, dùng NOT NULL guard sẵn có khi vượt cap; không thêm bảng đếm. [Nghiệm thu backend](pipeline/PHASE_3_CHECKOUT_ORDERS.md).
-3. Ưu tiên archive sản phẩm đã bán; hiển thị đơn theo snapshot. Hủy chỉ hoàn tồn một lần theo transition hợp lệ.
-4. D1 thực thi FK mặc định; không đưa `PRAGMA foreign_keys` vào migration. Kiểm `PRAGMA foreign_key_check` trên D1 local. [D1 foreign keys](https://developers.cloudflare.com/d1/sql-api/foreign-keys/).
-5. Admin secret/cookie không đọc users. API kiểm quyền, Origin và JSON; role client chỉ điều khiển UI. RateLimit dùng Worker bindings, không có bảng D1 counter.
-6. Admin tạo product/variants/gallery và thay gallery bằng D1 batch. API gallery yêu cầu 1–8 ảnh, đúng một primary và không trùng URL/public ID; DB chỉ bảo vệ tối đa một primary. Public ID được lưu khi có, unlink không xóa asset provider. ARCHIVED ghi archived_at; ưu tiên archive sản phẩm đã bán. [Giới hạn gallery](CLOUDINARY.md).
-7. Variant stock_delta dùng `stock_quantity = stock_quantity + ?`; CHECK chặn tồn âm. Delta không có idempotency như tạo đơn nên phản hồi không rõ cần đọc lại trước khi ghi tiếp. Delivery zone không có FK tới danh mục; service JOIN chỉ zone active đúng tỉnh/phường, chấp nhận alias tiền tố cũ nhưng không fallback tỉnh. Snapshot địa chỉ đơn không phụ thuộc các thay đổi coverage sau đó.
+- DDL bảo vệ totals/CHECK tồn/FK/unique; validate contact/ngày lịch/money, pricing và transaction order thuộc [API](API_CONTRACT.md)/[Architecture](../ARCHITECTURE.md). Archive sản phẩm đã bán để giữ catalog, order vẫn hiển thị snapshot.
+- DB chỉ giới hạn tối đa một primary/product; API yêu cầu gallery 1–8 ảnh và đúng một primary, URL/public ID hợp lệ. Product/gallery replace atomic; gỡ liên kết không xóa provider asset theo [Cloudinary](../operations/CLOUDINARY.md).
+- Delivery zone không có FK tới danh mục; service kiểm coverage. Snapshot địa chỉ đơn không đổi khi coverage đổi, theo [Delivery](../features/DELIVERY_ADDRESS.md). Admin secret auth không dùng bảng users; rate-limit không thêm D1 counter.
+- SQL dùng bind, tối đa 100 tham số/statement. Mỗi statement trong batch tính vào sizing 50 queries/request; cổng tạo đơn chặt hơn≤40, không coi batch/retry là một query. Quota có ngày và điều kiện xác minh tại [Operations](../operations/OPERATIONS.md#8-kiểm-hạn-mức-hằng-ngày-và-sự-cố). D1 bật FK sẵn, không đặt PRAGMA foreign_keys trong migration. [D1 foreign keys](https://developers.cloudflare.com/d1/sql-api/foreign-keys/).
 
 ## Kiểm chứng và dữ liệu mẫu
 
-`npm run db:verify` kiểm schema/migration/FK trên D1 local; các phép thử constraints, rollback, snapshot khi xóa và migration/seed lặp chạy trên D1 tạm cô lập. Dữ liệu persisted chỉ được đọc để kiểm tra. Quy trình và output nghiệm thu giữ tại [Phase 1](pipeline/PHASE_1_DATABASE.md); kết quả hiện hành ở [PROJECT_STATUS.md](PROJECT_STATUS.md).
+`npm run db:verify` kiểm schema/migration/FK trên D1 local; các phép thử constraints, rollback, snapshot khi xóa và migration/seed lặp chạy trên D1 tạm cô lập. Dữ liệu persisted chỉ được đọc để kiểm tra. Quy trình và output nghiệm thu giữ tại [Phase 1](../pipeline/PHASE_1_DATABASE.md); kết quả hiện hành ở [PROJECT_STATUS.md](../PROJECT_STATUS.md).
 
-Seed là dữ liệu phát triển; migration danh mục hành chính không tự tạo coverage hoặc phí giao. Không dùng counts seed để suy ra dữ liệu hiện tại trên local/staging/production. Dữ liệu mở bán và policy giao cần chủ shop chốt; [runbook staging](STAGING.md), [ảnh category](CATEGORY_IMAGES.md), [địa chỉ giao](DELIVERY_ADDRESS.md) và [vận hành](OPERATIONS.md) hướng dẫn thao tác theo môi trường.
+Seed là dữ liệu phát triển; migration danh mục hành chính không tự tạo coverage hoặc phí giao. Không dùng counts seed để suy ra dữ liệu hiện tại trên local/staging/production. Dữ liệu mở bán và policy giao cần chủ shop chốt; [runbook staging](../operations/STAGING.md), [ảnh category](../features/CATEGORY_IMAGES.md), [địa chỉ giao](../features/DELIVERY_ADDRESS.md) và [vận hành](../operations/OPERATIONS.md) hướng dẫn thao tác theo môi trường.
