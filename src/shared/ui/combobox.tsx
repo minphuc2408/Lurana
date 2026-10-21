@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
+import { cn } from '@/shared/lib/utils';
 
 interface ComboboxProps {
   name: string;
@@ -11,10 +12,11 @@ interface ComboboxProps {
   onValueChange: (value: string) => void;
   normalize: (value: string) => string;
   disabled?: boolean;
+  inputClassName?: string;
 }
 
 /** Search text is local; only selecting an option commits its value. */
-export function Combobox({ name, label, placeholder, emptyText, value, options, onValueChange, normalize, disabled }: ComboboxProps) {
+export function Combobox({ name, label, placeholder, emptyText, value, options, onValueChange, normalize, disabled, inputClassName }: ComboboxProps) {
   const id = useId();
   const [query, setQuery] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
@@ -42,7 +44,7 @@ export function Combobox({ name, label, placeholder, emptyText, value, options, 
             event.preventDefault(); if (visible[active]) choose(visible[active].value);
           } else if (event.key === 'Escape') { event.preventDefault(); setOpen(false); setQuery(null); }
         }}
-        className="min-h-11 w-full rounded-xl border border-lunara-border bg-lunara-surface py-3 pr-10 pl-4 text-sm text-lunara-ink disabled:opacity-50" />
+        className={cn('min-h-11 w-full rounded-xl border border-lunara-border bg-lunara-surface py-3 pr-10 pl-4 text-sm text-lunara-ink disabled:opacity-50', inputClassName, 'pr-10')} />
       <ChevronDown size={16} aria-hidden="true" className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-lunara-body" />
     </div>
     {open && !disabled && <div className="absolute z-30 mt-2 w-full overflow-hidden rounded-xl border border-lunara-border bg-lunara-cream shadow-lg">

@@ -38,6 +38,19 @@
   --lunara-admin-active-foreground: #E8B0BC;
   --lunara-admin-active-border: #C17B8A;
   --lunara-admin-header-border: #F0DDD5;
+  --lunara-admin-panel: #FFFFFF;
+  --lunara-admin-radius-panel: 12px;
+  --lunara-admin-radius-field: 6px;
+  --lunara-admin-soft-surface: var(--lunara-blush);
+  --lunara-admin-border: var(--lunara-border);
+  --lunara-admin-primary: var(--lunara-rose-strong);
+  --lunara-admin-primary-hover: var(--lunara-primary-hover);
+  --lunara-admin-primary-foreground: #FFFFFF;
+  --lunara-admin-sidebar-foreground: var(--lunara-rose-light);
+  --lunara-admin-sidebar-muted: var(--lunara-rose-light);
+  --lunara-admin-sidebar-logo: #FFFFFF;
+  --lunara-admin-sidebar-border: rgba(255, 255, 255, 0.08);
+  --lunara-admin-sidebar-hover: rgba(255, 255, 255, 0.06);
   --lunara-cream: #F8FBFA;
   --lunara-surface: #F1F7F5;
   --lunara-blush: #EDF4F6;
@@ -139,6 +152,8 @@ html[lang='vi'] {
 }
 
 @theme inline {
+  --radius-lunara-admin-panel: var(--lunara-admin-radius-panel);
+  --radius-lunara-admin-field: var(--lunara-admin-radius-field);
   --font-display: var(--lunara-font-display);
   --font-body: var(--lunara-font-body);
   --font-serif: var(--lunara-font-display);
@@ -167,6 +182,16 @@ html[lang='vi'] {
   --color-lunara-on-admin-active: var(--lunara-admin-active-foreground);
   --color-lunara-admin-active-border: var(--lunara-admin-active-border);
   --color-lunara-admin-header-border: var(--lunara-admin-header-border);
+  --color-lunara-admin-panel: var(--lunara-admin-panel);
+  --color-lunara-admin-soft: var(--lunara-admin-soft-surface);
+  --color-lunara-admin-primary: var(--lunara-admin-primary);
+  --color-lunara-admin-primary-hover: var(--lunara-admin-primary-hover);
+  --color-lunara-on-admin-primary: var(--lunara-admin-primary-foreground);
+  --color-lunara-admin-sidebar-foreground: var(--lunara-admin-sidebar-foreground);
+  --color-lunara-admin-sidebar-muted: var(--lunara-admin-sidebar-muted);
+  --color-lunara-admin-sidebar-logo: var(--lunara-admin-sidebar-logo);
+  --color-lunara-admin-sidebar-border: var(--lunara-admin-sidebar-border);
+  --color-lunara-admin-sidebar-hover: var(--lunara-admin-sidebar-hover);
   --color-lunara-cream: var(--lunara-cream);
   --color-lunara-surface: var(--lunara-surface);
   --color-lunara-card-surface: var(--lunara-card-surface);
@@ -286,12 +311,58 @@ html[data-lunara-theme='monochrome'] [data-d1-storefront] {
   }
 }
 
+/* A dedicated theme override keeps both header rows independent of content cards. */
+[data-storefront-header], [data-header-main], [data-main-navigation] {
+  background-color: var(--lunara-header-background, var(--lunara-cream));
+}
+html:has([data-home-layout]) :is([data-storefront-header], [data-header-main], [data-main-navigation]) {
+  background-color: var(--lunara-header-background, var(--lunara-card-surface));
+}
+
 /* Reference surface-card role; page and secondary-section colors stay independent. */
 html:has([data-home-layout]) :is(
-  [data-storefront-header], [data-header-main], [data-main-navigation], #header-search,
+  #header-search,
   [data-storefront-submenu], [role='listbox']:has([data-theme-option])
 ) {
   background-color: var(--lunara-card-surface);
+}
+
+/* Monochrome shares one white surface between navigation, search and these route bodies. */
+html[data-lunara-theme='monochrome'] #header-search {
+  background-color: var(--lunara-header-background);
+}
+html[data-lunara-theme='monochrome'] [data-d1-storefront]:has(
+  [data-story-page], [data-shop-layout], [data-order-lookup-page]
+) {
+  background-color: var(--lunara-page-background);
+  --lunara-card-surface: var(--lunara-page-background);
+  --lunara-shop-intro: var(--lunara-page-background);
+  --lunara-editorial-surface: var(--lunara-page-background);
+  --lunara-lookup-panel: var(--lunara-page-background);
+}
+
+html[data-lunara-theme='monochrome'] [data-shop-layout] {
+  background-color: var(--lunara-page-background);
+}
+
+/* Native radio semantics, a visible empty ring and a pink selected dot on white. */
+html[data-lunara-theme='monochrome'] [data-shop-filters] input[type='radio'] {
+  appearance: none;
+  border: 1.5px solid var(--lunara-control-border);
+  border-radius: 50%;
+  background-color: var(--lunara-page-background);
+  &:checked {
+    border-color: var(--lunara-filter-selected);
+    background-color: var(--lunara-filter-selected);
+    box-shadow: inset 0 0 0 3px var(--lunara-page-background);
+  }
+  &:hover:not(:checked) {
+    border-color: var(--lunara-ink);
+  }
+  @media (forced-colors: active) {
+    appearance: auto;
+    box-shadow: none;
+  }
 }
 
 /* Utility text, dividers and focus follow the surface's semantic roles. */
@@ -345,6 +416,21 @@ html[data-lunara-theme]:not([data-lunara-theme='original']) {
 html[data-lunara-theme]:not([data-lunara-theme='original']) :is(input:not([type='checkbox']):not([type='radio']), textarea, [data-dropdown]) {
   border-color: var(--lunara-control-border);
 }
+/* Admin surfaces also cover portalled dialogs without changing storefront roles. */
+html[data-lunara-theme='monochrome'] :is([data-admin-layout], [data-admin-login]),
+html[data-lunara-theme='monochrome']:has([data-admin-layout]) :is([data-slot='dialog-content'], [data-lunara-select-content], [role='listbox']) {
+  --lunara-blush: var(--lunara-admin-soft-surface);
+  --lunara-surface: var(--lunara-admin-panel);
+  --lunara-border: var(--lunara-admin-border);
+}
+
+[data-admin-content] table {
+  font-variant-numeric: tabular-nums;
+}
+[data-admin-content] tbody tr:hover {
+  background-color: var(--lunara-admin-soft-surface);
+}
+
 /* Borderless fields are a storefront form decision; keyboard outlines remain visible. */
 html :is([data-checkout-form], [data-order-lookup]) :is(input:not([type='checkbox']):not([type='radio']), textarea, [data-dropdown]) {
   border-width: 0;

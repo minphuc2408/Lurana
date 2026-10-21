@@ -18,7 +18,7 @@ const destinations = [
 
 export function StorefrontNavigation({ model }: { model: MainLayoutModel }) {
   const { t } = useLocale('common');
-  const navClass = (active = false) => cn("group/navigation relative flex min-h-14 w-full items-center justify-between gap-2 px-5 text-left text-base whitespace-nowrap no-underline transition-colors lg:w-auto lg:justify-center lg:px-1", active ? 'font-medium text-lunara-nav-active hover:text-lunara-nav-active' : 'text-lunara-nav-ink hover:text-lunara-nav-hover');
+  const navClass = (active = false) => cn("group/navigation relative flex min-h-14 w-full items-center justify-between gap-2 px-5 text-left text-base whitespace-nowrap no-underline transition-colors lg:w-auto lg:justify-center lg:px-1", active ? 'font-medium text-lunara-nav-active hover:text-lunara-nav-active' : 'text-lunara-nav-ink hover:text-lunara-nav-hover focus-visible:text-lunara-nav-hover');
 
   return <LayoutGroup id="storefront-navigation"><m.nav ref={model.navigationRef} id="storefront-navigation" initial={false} animate={model.menuOpen ? { opacity: [0.85, 1], y: [-6, 0] } : { opacity: 1, y: 0 }} aria-label={t('Main navigation')} data-main-navigation className={cn('absolute inset-x-0 top-full max-h-[calc(100dvh-100%)] overflow-y-auto bg-lunara-cream py-2 shadow-sm lg:static lg:max-h-none lg:overflow-visible lg:py-0 lg:shadow-none', model.menuOpen ? 'block' : 'hidden lg:block')}>
     <div className="mx-auto flex max-w-[1240px] flex-col px-2 lg:flex-row lg:items-center lg:justify-center lg:gap-12 lg:px-8 xl:gap-16">

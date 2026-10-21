@@ -59,9 +59,9 @@ export function StorefrontFooter() {
             <FooterDestination label="Hotline" />
           </div>
           <address className="grid gap-5 not-italic sm:grid-cols-3 lg:grid-cols-1">
-            {storeLocations.map(store => <p key={store.id} className="text-sm leading-6">
+            {storeLocations.filter(store => store.address.trim()).map(store => <p key={store.id} className="text-sm leading-6">
               <strong className="block font-medium text-lunara-ink">{t(store.label)}:</strong>
-              <a href={t(store.mapUrlKey)} target="_blank" rel="noopener noreferrer" className={linkClass}>{t(store.addressKey)}</a>
+              {store.mapUrl.trim() ? <a href={store.mapUrl} target="_blank" rel="noopener noreferrer" className={linkClass}>{store.address}</a> : <span>{store.address}</span>}
             </p>)}
           </address>
           <div className="mt-6 text-xs leading-6">

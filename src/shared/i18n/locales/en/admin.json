@@ -1,4 +1,6 @@
 {
+  "Shop overview": "Shop overview",
+  "Orders and inventory at a glance": "Orders and inventory at a glance",
   "Failed delivery keeps stock consumed unless you choose to restock.": "This closes the failed delivery without returning stock. Only restock flowers that can still be sold. This action cannot be undone.",
   "Failed delivery reason required": "Reason for failed delivery (required)",
   "Return reusable flowers to stock": "Return reusable flowers to stock",

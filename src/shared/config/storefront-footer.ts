@@ -23,9 +23,9 @@ export const socialLinks: FooterLink[] = [
   { label: 'Youtube' },
 ];
 
-export const storeLocations = [
-  // Editable labels, addresses and map URLs live in EN/VI common.json.
-  { id: 'main', label: 'Main Store', addressKey: 'Main Store address', mapUrlKey: 'Main Store map URL' },
-  { id: 'hcmc', label: 'HCMC Store', addressKey: 'HCMC Store address', mapUrlKey: 'HCMC Store map URL' },
-  { id: 'hanoi', label: 'Hanoi Branch', addressKey: 'Hanoi Branch address', mapUrlKey: 'Hanoi Branch map URL' },
+export const storeLocations: { id: string; label: string; address: string; mapUrl: string }[] = [
+  // Owner fills verified addresses here; blank entries stay hidden in Footer and About.
+  { id: 'main', label: 'Main Store', address: '', mapUrl: '' },
+  { id: 'hcmc', label: 'HCMC Store', address: '', mapUrl: '' },
+  { id: 'hanoi', label: 'Hanoi Branch', address: '', mapUrl: '' },
 ];

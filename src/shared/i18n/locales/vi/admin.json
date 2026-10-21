@@ -1,4 +1,6 @@
 {
+  "Shop overview": "Tổng quan cửa hàng",
+  "Orders and inventory at a glance": "Theo dõi nhanh đơn hàng và tồn kho",
   "Failed delivery keeps stock consumed unless you choose to restock.": "Đóng đơn giao thất bại và giữ nguyên tồn đã trừ. Chỉ hoàn tồn hoa còn có thể bán lại. Không thể hoàn tác thao tác này.",
   "Failed delivery reason required": "Lý do giao thất bại (bắt buộc)",
   "Return reusable flowers to stock": "Hoàn tồn hoa còn có thể bán lại",

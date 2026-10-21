@@ -1,6 +1,6 @@
 # Design system Lunarra
 
-Reference dành cho người làm UI và QA, sở hữu hierarchy, semantic roles, typography, compatibility và accessibility hiện hành. Cập nhật quyết định/source **20/10/2026**; phạm vi kiểm chứng từng lượt ở [hồ sơ lịch sử](../archive/VERIFICATION_HISTORY.md#kiểm-chứng-local). Palette đã duyệt ở [spec 16 theme](LUNARA_MULTI_THEME_SPEC.md) và [5 creative palettes](Extend_Lunara_Multi_Theme.md); registry/styles là nguồn giá trị triển khai.
+Reference dành cho người làm UI và QA, sở hữu hierarchy, semantic roles, typography, compatibility và accessibility hiện hành. Cập nhật quyết định/source **21/10/2026**; phạm vi kiểm chứng từng lượt ở [hồ sơ lịch sử](../archive/VERIFICATION_HISTORY.md#kiểm-chứng-local). Palette đã duyệt ở [spec 16 theme](LUNARA_MULTI_THEME_SPEC.md) và [5 creative palettes](Extend_Lunara_Multi_Theme.md); registry/styles là nguồn giá trị triển khai.
 
 ## Nhận diện và phân cấp thị giác
 
@@ -14,17 +14,19 @@ Reference dành cho người làm UI và QA, sở hữu hierarchy, semantic role
 | Vùng / vai trò | Token và cách dùng |
 | --- | --- |
 | Nền Featured | `--lunara-cream`; không suy màu từ tên alias |
-| Đầu trang Shop | `--lunara-shop-intro`; Monochrome xám 50 như danh sách sản phẩm/header; separator chỉ rộng theo khung nội dung bên dưới |
+| Đầu trang Shop | `--lunara-shop-intro`; Monochrome trắng0 như danh sách sản phẩm; separator chỉ rộng theo khung nội dung bên dưới |
 | Hero toàn viewport | `--lunara-hero-backdrop`, `--lunara-hero-overlay`, `--lunara-hero-foreground`; ảnh JPEG full bleed, lớp phủ giữ chữ rõ |
 | Hero CTA | `--lunara-hero-button-background`, `--lunara-hero-button-foreground`, `--lunara-hero-button-hover` |
-| Navbar chính/search/menu, Story, card | `--lunara-card-surface`; Monochrome xám 50 |
-| Chữ header/navbar | `--lunara-header-ink/body`, `--lunara-nav-ink/active`; Monochrome thường xám900, tab active và underline hồng400, kể cả đang hover |
+| Search navbar | Cùng `--lunara-header-background` trắng0 với cả hai hàng nav trong Monochrome |
+| Story Home/menu con, card | `--lunara-card-surface`; Monochrome Home xám50, card tại Shop trắng0 |
+| Nền header/navbar trên và dưới | `--lunara-header-background`; Monochrome trắng bậc0 (`monochromeScale[0]` = `#FFFFFF`), gồm menu mobile; theme khác giữ fallback cream/Home card-surface |
+| Chữ header/navbar | `--lunara-header-ink/body`, `--lunara-nav-ink/active`; Monochrome thường xám900, tab active và chữ hover/focus-visible cùng underline hồng400 |
 | Icon/search storefront | `--lunara-icon-foreground/hover`: nét xám900→950; ô search giữ một kính lúp bên trái ở mọi viewport, không có nút submit bên phải; Enter vẫn tìm |
-| Badge header / giỏ nổi Shop | `--lunara-header-count-background/foreground`: hồng400/trắng0; `--lunara-floating-cart-background/foreground`: hồng50/trắng0 theo màu owner chốt |
-| Preferences storefront | `--lunara-preference-surface/border`: trắng0/xám100; `--lunara-preference-active/active-foreground`: hồng400/trắng0, hover hồng50. Dùng cho EN/VI pill và theme trigger đang mở |
+| Badge header / giỏ nổi Shop | `--lunara-header-count-background/foreground`: hồng400/trắng0; `--lunara-floating-cart-background/foreground`: hồng50/xám900 (`monochromeScale[900]` = `#1B1B1B`), chữ và icon dùng chung biến foreground theo owner 21/10/2026 |
+| Preferences dùng chung | `--lunara-preference-surface/border`: trắng0/xám100; `--lunara-preference-active/active-foreground`: hồng400/trắng0, hover hồng50. Dùng cho EN/VI pill và theme trigger đang mở tại storefront, admin và login |
 | Dải dịch vụ Home/About values | `--lunara-services-background`, `--lunara-service-icon-background/hover`, `--lunara-service-icon-foreground/hover`; Monochrome nền trắng, vòng tròn hồng 50→100, nét hồng 400 |
 | Tim và thêm sản phẩm | `--lunara-product-favorite/hover/active`, nhóm `--lunara-product-action-*`; tách màu thường, hover và đã thêm |
-| Tra đơn | `--lunara-lookup-panel`, `--lunara-lookup-button/hover`, `--lunara-lookup-button-foreground/hover`; Monochrome panel trắng 0, nút 200→300, nét/chữ 900→950 |
+| Tra đơn | `--lunara-lookup-panel`, `--lunara-lookup-button/hover`, `--lunara-lookup-button-foreground/hover`; Monochrome panel và nền đến Footer trắng0, nút 200→300, nét/chữ 900→950 |
 | Section phụ | `--lunara-section-secondary`; creative utility/Journey dùng secondary background sáng |
 | Nền ảnh | `--lunara-blush`; ảnh chụp không đổi màu theo theme |
 | CTA/chữ nhấn/focus | `--lunara-rose-strong`, `--lunara-primary-hover`, `--lunara-focus-ring`; on-primary phải đủ tương phản |
@@ -41,12 +43,13 @@ Monochrome có trắng **0 (`#FFFFFF`) ở đầu `monochromeScale`**, sau đó 
 ### Quy tắc màu Monochrome
 
 - Owner làm rõ: hoàn tác việc giảm toàn bộ màu ngoài Footer. Chữ chính/nét icon về **900 (`#1B1B1B`)**, hover **950 (`#0D0D0D`)**, chữ phụ **700 (`#525252`)**; viền/placeholder 200, control border 600, focus 800. Accent hồng về 400, các ngoại lệ cụ thể ở dưới.
-- **Chỉ nền Footer giữ xám 100 (`#DBDBDB`)**. Những nền phụ từng dùng cùng màu chuyển một bậc sáng hơn về50 qua `secondarySurface`. Owner đã hoàn tác nền trắng riêng của intro Shop: breadcrumb/heading/mô tả về50, đồng màu Header và danh sách; đường ngăn dưới intro nằm trong gutter20/32px của khung catalog, không tràn viewport. Panel tra đơn vẫn trắng0; Header/Featured/Story/nền chung50, dịch vụ/Journey trắng. Search có ngoại lệ hồng theo bảng role.
-- Footer giữ heading/icon 900, chữ phụ/link 700, viền 200, hover 950, focus 800. Hero giữ chữ/nền CTA trắng, chữ CTA 900, overlay 950 ở 65%; sidebar/background chuyên biệt admin giữ nguyên. Màu nằm trong theme layer.
+- **Footer giữ xám100 (`#DBDBDB`)**; Featured/Story Home/nền chung vẫn50, dịch vụ/Journey trắng0. Theo owner21/10, search dùng trực tiếp `--lunara-header-background`; `--lunara-page-background` alias cùng biến này cho About, Shop và tra đơn. CSS scope theo route đồng bộ wrapper/breadcrumb, intro Shop, card và khung giờ About; không kéo màu trắng sang Home/checkout/admin. Tra đơn liền nền từ panel tới Footer, ô nhập vẫn xám50 để dễ nhận biết. Separator Shop giữ trong gutter20/32px.
+- Footer giữ heading/icon 900, chữ phụ/link 700, viền 200, hover 950, focus 800. Hero giữ chữ/nền CTA trắng, chữ CTA 900, overlay 950 ở 65%. Admin dùng mapping sáng riêng theo [quyết định Mono](#áp-dụng-mono-cho-admin); màu nằm trong theme layer.
 
 | Vùng Home — Monochrome | Background / token |
 | --- | --- |
-| Header, navbar, ô tìm kiếm | `#F2F2F2` — cream/card-surface |
+| Header/navbar trên và dưới | `#FFFFFF` — header-background, bậc0 |
+| Ô tìm kiếm | `#FFFFFF` — header-background, cùng biến navbar |
 | Hero | Ảnh full bleed + `#0D0D0D` 65% — hero-overlay |
 | Dải bốn dịch vụ | `#FFFFFF` — services-background |
 | Vòng tròn icon dịch vụ | `#FBEAF0` → hover `#F4C3D5` — service-icon-background/hover |
@@ -56,13 +59,15 @@ Monochrome có trắng **0 (`#FFFFFF`) ở đầu `monochromeScale`**, sau đó 
 | Footer | `#DBDBDB` — footer-background |
 | Nền chung | `#F2F2F2` — cream |
 
+Radio bộ lọc Mono giữ native input/keyboard: vòng viền control-border600 trên trắng0, selected viền/chấm `--lunara-filter-selected` hồng400 và khoảng trắng inset3px; hover viền ink900, Tab giữ focus800, forced-colors trả native appearance. Không dùng trắng làm dấu chọn.
+
 Mapping nằm trong nhánh Monochrome của `themeTokens()`; đổi Journey không đổi section-secondary hoặc palette các theme khác.
 
 ### Điểm nhấn hồng Home
 
 - `monochromePinkScale` trong `themes.ts`: 50/100/200/300/400 = **`#FBEAF0` / `#F4C3D5` / `#EC9CBA` / `#E5769F` / `#DE4F83`**, xuất CSS `--lunara-pink-*`. Giữ nguyên dải xám.
 - `--lunara-editorial-label` dùng hồng **400**: ba nhãn Home và About us/The Lunarra space/Visit the shop. Journey icon/số bước cũng 400; vòng tròn đúng **50** theo owner. Dịch vụ Home và ba About values dùng service roles: nét 400, vòng tròn 50; hover dịch vụ nền 100.
-- Số màu owner gọi **1/2/3/4/5** tương ứng bước50/100/200/300/400. Header badge giỏ/yêu thích, tab active/underline, EN/VI active và theme trigger đang mở dùng **5** theo quyết định mới; đã bỏ nút search trùng kính lúp. Giỏ nổi vẫn nền1/chữ trắng0, không coi các cặp màu owner chốt là bằng chứng contrast AA. MapPin ba địa chỉ About dùng editorial-label400, miễn quy tắc icon trung tính qua `data-theme-icon`.
+- Số màu owner gọi **1/2/3/4/5** tương ứng bước50/100/200/300/400. Header badge giỏ/yêu thích, tab active/underline, EN/VI active và theme trigger đang mở dùng **5** theo quyết định mới; đã bỏ nút search trùng kính lúp. Giỏ nổi nền1/chữ và icon900; không coi các cặp màu owner chốt là bằng chứng contrast AA. MapPin địa chỉ About khi có dữ liệu dùng editorial-label400, miễn quy tắc icon trung tính qua `data-theme-icon`.
 - Journey theo ảnh: Flower2, CardNotePen (notepad/pen Lucide), HandHeart; icon 32px, vòng tròn 90px desktop/80px mobile. Giữ heading/copy EN/VI; Journey/Story không border/divider, nền từng vùng theo bảng trên.
 - `data-journey-icon` và `data-theme-icon` miễn quy tắc nét trung tính chung để giữ accent/state. Màu thuộc theme layer; 21 palette trước giữ mapping cũ. Các HEX owner chốt không phải nghiệm thu contrast/WCAG toàn theme.
 
@@ -110,7 +115,7 @@ Detail theo ảnh owner, có size radio kèm giá và quantity; xem mục [bố 
 - `ProductPagination` dưới lưới có đầu/trước, số trang/ellipsis, sau/cuối (`<< < 1 2 3 … n > >>`), aria-current/nhãn EN–VI và disabled ở biên. Dùng metadata API 40/trang; một trang vẫn hiện pager, rỗng ẩn pager. Mobile rút các số giữa khi nhiều trang, giữ đầu/hiện tại/cuối và bốn nút; Link giữ query, Back/Forward/reload. Role pagination chọn nền hồng50/viền400 trong Monochrome, hover hồng50; không nhúng màu tại JSX.
 
 - Header gồm hàng logo/search/actions và navbar bên dưới; utility bar đã bỏ. Theo owner ngày 20/10/2026, actions có thứ tự Theme → EN/VI → icon tài khoản → yêu thích → giỏ hàng; controls không còn ở footer. Dưới 640px, actions thành hàng riêng và search xuống hàng tiếp theo để giữ vùng bấm; wishlist vẫn chỉ hiện từ 768px. Giữ badge/accessible name; tài khoản mở FeatureUnavailable, chưa bật đăng nhập khách hàng.
-- Theme trigger chỉ Palette20px/vùng bấm44px, không chữ/chấm/mũi tên; `Dropdown showChevron=false` riêng trigger này. Giữ aria-label,22 lựa chọn/swatches và keyboard/Escape/trả focus. EN/VI `appearance=storefront` đã thu gọn: cả nhóm **102×44px desktop,94×44px dưới640px**; mỗi nút bấm48×44/44×44px. Pill màu ở span con cao36px, rộng44/40px, font14/12px; active hồng400/chữ trắng, nền nhóm trắng viền mảnh. Không thu vùng bấm cùng phần màu; Admin/Auth giữ appearance mặc định.
+- Theme trigger chỉ Palette20px/vùng bấm44px, không chữ/chấm/mũi tên; `Dropdown showChevron=false` riêng trigger này. Giữ aria-label,22 lựa chọn/swatches và keyboard/Escape/trả focus. EN/VI `appearance=storefront` đã thu gọn: cả nhóm **102×44px desktop,94×44px dưới640px**; mỗi nút bấm48×44/44×44px. Pill màu ở span con cao36px, rộng44/40px, font14/12px; active hồng400/chữ trắng, nền nhóm trắng viền mảnh. Không thu vùng bấm cùng phần màu; Admin/Auth tái sử dụng cùng controls và preference theme/locale.
 - Logo cạnh Lunarra trong hàng search dùng đúng `public/favicon.svg` bằng `<img>` (32px mobile/40px desktop), ghép `import.meta.env.BASE_URL` để hoạt động trên basename. Không dùng SVG nhành hoa LunarraMark tại Header; asset favicon giữ nguyên.
 - Navbar theo thứ tự Trang chủ (`/`), Khám phá (`/shop`), Giới thiệu (`/about`), Tra cứu đơn (`/orders/track`), Liên hệ (**`/#contact` của Home**). Navbar/footer dùng chung `storefrontContactPath` trong `storefront-footer.ts`: về Home rồi cuộn/focus cột Liên hệ và đóng menu mobile. Chỉ Home có hash contact mới active Liên hệ (`aria-current=location`), không active đồng thời Trang chủ; không tạo `/contact`.
 - Navbar không có border phân cách; giữ shadow header và chiều cao link 56px. Nhãn căn giữa hàng, active indicator bám ngay dưới `data-navigation-label` (cách chữ 4px, còn 10px tới đáy navbar desktop), không bám đáy cả hàng. Active Motion span và hover span có key/type riêng: trước đây React tái sử dụng span khiến opacity/scale active còn trên tab cũ. Hover dùng CSS hover/focus-visible, active vẫn chuyển vị trí bằng Motion; pointer focus không giữ nét trên tab đã rời.
@@ -118,7 +123,7 @@ Detail theo ảnh owner, có size radio kèm giá và quantity; xem mục [bố 
 
 `useMainLayout` đo Header trước paint bằng useLayoutEffect, sau đó cập nhật bằng ResizeObserver; `--lunara-storefront-header-height` dùng cho Hero và sticky summary checkout (cộng 16px). Query/pagination Shop thuộc `useProducts`; contract server ở [API](../reference/API_CONTRACT.md#get-apiproductspage1qcategorycodepriceallsortfeaturedfeatured1).
 
-Footer sáng bốn cột desktop, mobile thương hiệu/địa chỉ toàn hàng và hai nhóm link cạnh nhau. **Theo dõi xếp dọc**, mỗi social có Lucide logo16px bên trái, kế thừa màu icon/footer như Hotline, không màu thương hiệu riêng. Hotline ở Liên hệ; Theme/EN-VI ở header. Đích chưa có href dùng FeatureUnavailableDialog, giữ Escape/X/Đóng trả focus. ID/thứ tự/href ở `storefront-footer.ts`, copy/maps common.json EN/VI; không tự đặt URL/số thật. `featureFlags.zaloContact=false`; nội dung cần duyệt ở [PROJECT_STATUS](../PROJECT_STATUS.md#việc-còn-cần-chủ-shop).
+Footer sáng bốn cột desktop, mobile thương hiệu/liên hệ toàn hàng và hai nhóm link cạnh nhau. **Theo dõi xếp dọc**, mỗi social có Lucide logo16px bên trái, kế thừa màu icon/footer như Hotline, không màu thương hiệu riêng. Hotline ở Liên hệ; Theme/EN-VI ở header. Đích chưa có href dùng FeatureUnavailableDialog, giữ Escape/X/Đóng trả focus. ID/thứ tự/href và dữ liệu địa chỉ/maps ở `storefront-footer.ts`; nhãn/copy ở common.json EN/VI. [Địa chỉ chưa công bố](#địa-chỉ-shop-chưa-công-bố) đang ẩn; không tự đặt URL/số thật. `featureFlags.zaloContact=false`; nội dung cần duyệt ở [PROJECT_STATUS](../PROJECT_STATUS.md#việc-còn-cần-chủ-shop).
 
 Primitives giữ tại `src/shared/ui/`: Button, Input, Dialog, Dropdown, Combobox. Dùng `cn`, ImageWithFallback, Lucide, formatter chung và feature ProductCard/ProductGrid/FilterBar. Không phục hồi toàn bộ wrapper đã bỏ hoặc tạo StatusBadge chung khi chưa có nhu cầu. `color-classes.ts` giữ class Tailwind literal cho màu fixture; không dựng `bg-[${color}]` lúc runtime.
 
@@ -142,6 +147,18 @@ Primitives giữ tại `src/shared/ui/`: Button, Input, Dialog, Dropdown, Combob
 - `FeatureUnavailable` giữ nội dung dùng lại cho dialog hoặc trang chờ chức năng, dùng `LunarraMark.tsx` rộng 48px từ lựa chọn trước. Yêu cầu mới thay favicon chỉ áp dụng logo Header; notice giữ SVG/theme tokens hiện có. Heading mặc định “Sắp ra mắt / Coming soon”; DialogTitle/Description hiện trực tiếp, không lặp bản ẩn.
 - Dùng Radix Dialog cho focus trap, Escape/backdrop/X/nút Đóng; caller giữ trigger/focus restoration và state nghiệp vụ. Đóng thông báo chuyển khoản vẫn trả COD qua model checkout, không tự bật bank transfer. Không dựng dialog riêng cho thông báo cùng loại.
 
+## Áp dụng Mono cho admin
+
+- **Hướng owner chọn21/10:** sidebar sáng; giữ bốn menu Tổng quan/Đơn hàng/Sản phẩm/Phí giao hàng cùng login. Logo favicon/Lunarra; heading `font-display` theo [locale](#typography-theo-locale), label/form/số liệu `font-body`, số tabular. Admin/Auth dùng chung theme picker và EN/VI với storefront.
+- **Bậc màu:** sidebar/header/card trắng0, nội dung/đầu bảng50, viền panel100; chữ900/phụ700. Active nav hồng50/chữ900/icon400; nút chính400→hover300/chữ900 (tương phản4,55:1/6,09:1), nút phụ trắng/viền control600. Status giữ token nghiệp vụ. Chỉ Mono có mapping sáng; giữ ID/storage và palette khác.
+- **Khối:** sidebar256px/thu76px, header tối thiểu80px; nội dung tối đa1600px, gutter16/24px. Card/dialog12px, input6px, CTA pill/vùng bấm≥44px. Dashboard: toolbar/làm mới → hai KPI → trạng thái → đơn mới; các trang khác giữ bộ lọc/action → bảng/form. Bảng rộng cuộn trong khối; mobile dùng drawer288px có Escape/focus trap.
+- **Control:** `--lunara-admin-radius-field/panel` trong `brand.css` chốt6/12px; không suy từ shadcn `rounded-md/xl` hiện resolve8/14px. `adminInputClass` dùng radius biến để `cn`/Tailwind merge thay default của Combobox; `inputClassName` tùy chọn giữ caller storefront. Placeholder admin dùng body700/opacity1; Province trên trắng đạt7,81:1, native/Combobox6px và dialog12px đã đo lại.
+- **Source:** `AdminLayout`, `AuthLayout`, các view API admin và `AdminLoginView`; `AdminApiState` sở hữu input/CTA/error chung. `themes.ts` sở hữu `--lunara-admin-*`, `brand.css` giữ fallback palette cũ và scope alias surface vào admin/portal: selector stylesheet trên html không ghi đè biến inline. Giữ auth/DB/API, delta/recheck tồn kho và Cloudinary.
+
+## Địa chỉ shop chưa công bố
+
+Owner21/10 yêu cầu để trống ba địa chỉ minh họa. `storeLocations` tại `src/shared/config/storefront-footer.ts` giữ `id`/`label`, là nơi owner nhập một lần `address`/`mapUrl` đã duyệt; hiện cả ba rỗng. `StorefrontFooter` và `StoryView` lọc địa chỉ trống; có địa chỉ chưa có Maps thì render text. Địa chỉ giữ nguyên nội dung, chỉ nhãn chi nhánh dịch theo locale. Đã bỏ địa chỉ/Maps mẫu khỏi common.json EN/VI; hotline/pháp nhân/giờ mở cửa vẫn chờ xác minh riêng.
+
 ## Motion storefront
 
 - Dùng `motion@12.23.24`, `LazyMotion/domMax`, `MotionConfig reducedMotion=user`. Nhịp ở `src/shared/lib/motion.ts`: ease `[0.16,1,0.3,1]`, feedback 160ms, navigation/layout 280ms, ảnh Hero 950ms.
@@ -151,6 +168,6 @@ Primitives giữ tại `src/shared/ui/`: Button, Input, Dialog, Dropdown, Combob
 
 ## Kiểm chứng thiết kế
 
-- Owner tạm dừng chạy test toàn bộ theme và yêu cầu không chạy test trong các lượt Monochrome/header/dịch vụ; giữ nguyên các palette/suite cũ để dùng lại khi cần. Chỉ typecheck/architecture/build, rà tĩnh và xem preview chọn lọc. Khi nối lại kiểm thử, cập nhật assertions default/count/controls, DOM indicator thay pseudo-element và responsive theo contract hiện hành. Kết quả 21 theme trước đó không nghiệm thu các thay đổi mới.
+- Suite đầy đủ/smoke/toàn theme vẫn tạm dừng theo owner. Lượt Mono admin21/10:14 test hiện có thuộc admin-frontend/i18n, typecheck/architecture/build và recapture đủ font từ cache local chạy lại sau batch cuối PASS. Reviewer `ship` cho finding P2 đã resolve; phạm vi và giới hạn ở [Status](../PROJECT_STATUS.md#code-và-kiểm-chứng-local). Khi nối lại kiểm toàn theme, cập nhật assertions default/count/controls, DOM indicator và responsive theo contract hiện hành. Kết quả21theme cũ không nghiệm thu thay đổi mới.
 - So target/current/result với cùng ảnh/copy/content, kiểm computed styles ở trạng thái tương tác. Kết quả mock/local không chứng minh provider hoặc thiết bị thật; record ngày/scope ở [PROJECT_STATUS](../PROJECT_STATUS.md), evidence cũ ở [archive](../archive/VERIFICATION_HISTORY.md).
 - Lệnh runner/prerequisite và giới hạn cache local thuộc [LOCAL_DEVELOPMENT](../LOCAL_DEVELOPMENT.md#kiểm-theme-và-font), không copy lại log hoặc danh sách theme tại đây.
