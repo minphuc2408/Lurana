@@ -8,6 +8,7 @@ import { adminProductCreateSchema, adminProductPatchSchema, adminVariantPatchSch
 import type { ApiOrderStatus } from '@/features/orders';
 import type { AdminOrderDetail, AdminOrdersResult, AdminProductsResult, AdminZonesResult, AdminSummary, AdminVariant, DeliveryZone } from './admin-api.types';
 import { adminProductsQuerySchema, adminZonesQuerySchema } from '../../../shared/admin-list-schemas';
+import type { ZoneImportResult } from '../../../shared/zone-import';
 import { adminImageUploadRequestSchema, adminImageUploadTicketSchema } from '../../../shared/admin-upload-schemas';
 
 function validated<T>(schema: z.ZodType<T>, value: unknown): T {
@@ -50,6 +51,8 @@ export const getAdminVariant = (id: number) => adminRequest<AdminVariant>(`/vari
 export const deleteAdminVariant = (id: number) => adminRequest<{ id: number }>(`/variants/${id}`, { method: 'DELETE', body: '{}' });
 export const deleteAdminZone = (id: number) => adminRequest<{ id: number }>(`/delivery-zones/${id}`, { method: 'DELETE', body: '{}' });
 export const getProductImportTemplate = () => adminRequest<ProductImportFile>('/products/import-template');
+export const getZoneImportTemplate = () => adminRequest<ProductImportFile>('/delivery-zones/import-template');
+export const importZoneFile = (file: ProductImportFile, validateOnly: boolean) => adminRequest<ZoneImportResult>('/delivery-zones/import', { method: 'POST', body: JSON.stringify({ ...file, validate_only: validateOnly }) });
 export const importProductFile = (file: ProductImportFile, validateOnly: boolean) => adminRequest<ProductImportResult>('/products/import', {
   method: 'POST', body: JSON.stringify({ ...file, validate_only: validateOnly }),
 });

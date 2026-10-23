@@ -6,6 +6,7 @@ import { importProducts } from '../services/product-import.ts';
 import { AppError } from '../lib/errors.ts';
 import { listAdminProductPage, listAdminZonePage } from '../services/admin-catalog-pages.ts';
 import { getAdminVariant, deleteAdminVariant, deleteAdminZone } from '../services/admin-catalog-actions.ts';
+import { createZoneWorkbook, importZones } from '../services/zone-import.ts';
 import type { WorkerEnv } from '../env.ts';
 import { adminCatalogIdSchema, adminProductCreateSchema, adminProductPatchSchema,
   adminVariantPatchSchema, adminDeliveryZoneSchema } from '../../shared/admin-catalog-schemas.ts';
@@ -15,6 +16,11 @@ import { listAdminProducts, createAdminProduct, patchAdminProduct, patchAdminVar
   listAdminDeliveryZones, createAdminDeliveryZone, putAdminDeliveryZone } from '../services/admin-catalog.ts';
 
 export const adminCatalogRoutes = new Hono<WorkerEnv>();
+adminCatalogRoutes.get('/delivery-zones/import-template', async c => c.json({ data: { file_name: 'lunarra-delivery-zones-template.xlsx', content_base64: encodeWorkbook(await createZoneWorkbook(c.env.DB)) } }));
+adminCatalogRoutes.post('/delivery-zones/import', bodyLimit({ maxSize: 1_400_000, onError: () => { throw new AppError('VALIDATION_ERROR', 400, 'File Excel quá lớn.', [{ path: 'file', message: 'Tối đa 1 MB.' }]); } }), validate('json', productImportRequestSchema), async c => {
+  const input = c.req.valid('json');
+  return c.json({ data: await importZones(c.env.DB, input.content_base64, input.validate_only) }, input.validate_only ? 200 : 201);
+});
 adminCatalogRoutes.get('/variants/:id', validate('param', adminCatalogIdSchema), async c => c.json({ data: await getAdminVariant(c.env.DB, c.req.valid('param').id) }));
 adminCatalogRoutes.delete('/variants/:id', validate('param', adminCatalogIdSchema), async c => c.json({ data: await deleteAdminVariant(c.env.DB, c.req.valid('param').id) }));
 adminCatalogRoutes.delete('/delivery-zones/:id', validate('param', adminCatalogIdSchema), async c => c.json({ data: await deleteAdminZone(c.env.DB, c.req.valid('param').id) }));

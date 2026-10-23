@@ -85,13 +85,15 @@ function boundedWorkbook(base64: string): ArrayBuffer {
   return zipSync(entries, { level: 0 }).buffer as ArrayBuffer;
 }
 
-export async function parseProductWorkbook(base64: string): Promise<ImportedProduct[]> {
-  let rows;
-  try { rows = await readSheet(boundedWorkbook(base64), 'Products', { trim: false }); }
+export async function readAdminWorkbook(base64: string, sheet: string) {
+  try { return await readSheet(boundedWorkbook(base64), sheet, { trim: false }); }
   catch (error) {
     if (error instanceof AppError) throw error;
-    workbookError('Không đọc được file .xlsx. Hãy dùng template và giữ sheet Products.');
+    workbookError(`Không đọc được file .xlsx. Hãy dùng template và giữ sheet ${sheet}.`);
   }
+}
+export async function parseProductWorkbook(base64: string): Promise<ImportedProduct[]> {
+  const rows = await readAdminWorkbook(base64, 'Products');
   const columns = rows[0]?.map(value => typeof value === 'string' ? value.trim() : value) ?? [];
   if (columns.length !== PRODUCT_IMPORT_COLUMNS.length || PRODUCT_IMPORT_COLUMNS.some(column => columns.filter(value => value === column).length !== 1)) {
     workbookError('Các cột không khớp template. Vui lòng tải template mới và giữ đầy đủ tiêu đề.');

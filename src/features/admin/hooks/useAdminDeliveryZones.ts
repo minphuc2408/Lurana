@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { inputInteger } from '../admin-api.adapters';
-import { getDeliveryZones, saveDeliveryZone, deleteAdminZone } from '../admin-api.service';
+import { getDeliveryZones, saveDeliveryZone, deleteAdminZone, getZoneImportTemplate, importZoneFile } from '../admin-api.service';
 import { useAdminListQuery } from './useAdminListQuery';
+import { useAdminExcelImport } from './useAdminExcelImport';
 import type { DeliveryZone, ZoneForm } from '../admin-api.types';
 import { canonicalWardName, type AdministrativeProvince } from '../../../../shared/delivery-areas';
 import { ApiError } from '@/shared/api/client';
@@ -71,9 +72,11 @@ export function useAdminDeliveryZones() {
     finally { inFlight.current = false; setDeletePending(false); }
   };
   const wards = provinces.find(province => province.province_name === form.province_name)?.wards || [];
+  const zoneImport = useAdminExcelImport(async () => { await load(); }, { template: getZoneImportTemplate, request: importZoneFile });
   const validAddress = wards.some(ward => ward.ward_name === form.ward_name);
   return { zones, total, counts, list, provinces, wards, validAddress, loading, error, reload: () => void load(), dialogOpen, setDialogOpen, editingId, form, setForm, formError, pending, toggleId, openCreate, openEdit, save, toggle,
     deletingZone, deleteError, deletePending, confirmDeleteZone, requestDeleteZone: (zone: DeliveryZone | null) => { if (!deletePending) { setDeleteError(null); setDeletingZone(zone); } },
+    zoneImport,
     selectProvince: (value: string) => setForm(previous => ({ ...previous, province_name: value, ward_name: '' })),
     selectWard: (value: string) => setForm(previous => ({ ...previous, ward_name: value })),
   };

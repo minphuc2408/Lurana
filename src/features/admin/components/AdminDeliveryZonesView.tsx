@@ -1,6 +1,7 @@
 import { AdminPagination } from './AdminPagination';
-import { MapPin, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { Download, FileUp, MapPin, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import { AdminDeleteDialog } from './AdminDeleteDialog';
+import { AdminZoneImport } from './AdminZoneImport';
 import { useLocale } from '@/shared/i18n';
 import { formatVND } from '@/shared/lib/format';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/shared/ui/dialog';
@@ -19,7 +20,8 @@ export function AdminDeliveryZonesView(model: AdminDeliveryZonesModel) {
     <section className="admin-panel admin-collection">
       <div className="admin-zone-toolbar flex shrink-0 flex-wrap items-center justify-between gap-3 p-4">
         <div className="admin-inline-tabs" aria-label={t('Status')}>{[{ id: 'all', label: 'All zones', count: model.counts.all }, { id: 'active', label: 'Active', count: activeCount }, { id: 'inactive', label: 'Inactive', count: model.counts.all - activeCount }].map(item => <button key={item.id} type="button" aria-pressed={filter === item.id} onClick={() => setFilter(item.id)} className="admin-filter-tab">{t(item.label)}<span className="text-xs text-lunara-body">{item.count}</span></button>)}</div>
-        <div className="flex min-w-0 flex-1 items-center justify-end gap-3"><label className="relative block min-w-0 flex-1 sm:max-w-64"><span className="sr-only">{t('Search delivery zones')}</span><Search size={16} className="pointer-events-none absolute left-3 top-3.5 text-lunara-body" aria-hidden="true" /><input value={search} onChange={event => setSearch(event.target.value)} placeholder={t('Search city or ward')} className={`${adminInputClass} !pl-10`} /></label><button aria-label={t('Add delivery zone')} data-testid="zone-create" onClick={model.openCreate} className={adminButtonClass}><Plus size={17} aria-hidden="true" /><span className="hidden sm:inline">{t('Add delivery zone')}</span></button></div>
+        <div className="flex w-full min-w-0 flex-wrap items-center justify-end gap-3"><label className="relative block min-w-40 flex-1 sm:max-w-64"><span className="sr-only">{t('Search delivery zones')}</span><Search size={16} className="pointer-events-none absolute left-3 top-3.5 text-lunara-body" aria-hidden="true" /><input name="zone_search" value={search} maxLength={100} onChange={event => setSearch(event.target.value)} placeholder={t('Search city or ward')} className={`${adminInputClass} !pl-10`} /></label><div className="flex flex-wrap items-center gap-2"><button type="button" data-testid="zone-template-download" disabled={model.zoneImport.downloading} onClick={() => void model.zoneImport.download()} className={adminSecondaryClass}><Download size={16} aria-hidden="true" />{t(model.zoneImport.downloading ? 'Downloading…' : 'Download template')}</button><button type="button" data-testid="zone-import-open" disabled={model.loading || model.toggleId != null} onClick={model.zoneImport.show} className={adminSecondaryClass}><FileUp size={16} aria-hidden="true" />{t('Upload delivery zone file')}</button><button aria-label={t('Add delivery zone')} data-testid="zone-create" onClick={model.openCreate} className={adminButtonClass}><Plus size={17} aria-hidden="true" /><span className="hidden sm:inline">{t('Add delivery zone')}</span></button></div></div>
+        <AdminApiState error={model.zoneImport.downloadError} />
       </div>
       <div data-admin-records className="admin-records"><AdminApiState loading={model.loading} error={model.error} onRetry={model.reload} empty={pagination.total === 0} />
       {!model.loading && model.error == null && zones.length > 0 && <div className="overflow-x-auto"><table role="table" className="admin-table admin-zones-table min-w-[850px]"><thead><tr>{['Status', 'Delivery area', 'Delivery fee VND', 'Free delivery from VND', 'ETA minutes', 'Active'].map(key => <th key={key} scope="col">{t(key)}</th>)}</tr></thead><tbody>{zones.map((zone, index) => <tr key={zone.id} data-zone-id={zone.id} data-active={String(zone.is_active)}>
@@ -39,5 +41,6 @@ export function AdminDeliveryZonesView(model: AdminDeliveryZonesModel) {
       </fieldset><AdminApiState error={model.formError} /><div className="admin-dialog-footer !justify-end"><button type="button" disabled={model.pending} onClick={() => model.setDialogOpen(false)} className={adminSecondaryClass}>{t('Cancel')}</button><button data-testid="zone-form-save" disabled={model.pending || !model.validAddress} className={adminButtonClass}>{t(model.pending ? 'Saving…' : 'Save delivery zone')}</button></div></form>
     </DialogContent></Dialog>
     <AdminDeleteDialog open={Boolean(model.deletingZone)} kind="zone" name={model.deletingZone ? `${model.deletingZone.ward_name}, ${model.deletingZone.province_name}` : ''} pending={model.deletePending} error={model.deleteError} onClose={() => model.requestDeleteZone(null)} onConfirm={() => void model.confirmDeleteZone()} />
+    <AdminZoneImport {...model.zoneImport} />
   </div>;
 }
