@@ -898,8 +898,13 @@ async function orderSmoke() {
 
     await check('Phase 4 10/12 product batch create/conflict, public ACTIVE, hidden/archive remain admin', async () => {
       const catalog = await admin('/products');
-      assert.ok(catalog.queryCount <= 3, 'Admin product list must use at most 3 queries');
-      assert.equal(catalog.payload.data.items.length, 8);
+      assert.ok(catalog.queryCount <= 5, 'Admin page uses two ID/count statements plus three bounded DTO reads');
+      assert.equal(catalog.payload.data.items.length, 5);
+      assert.equal(catalog.payload.data.total, 8);
+      assert.equal(catalog.payload.data.limit, 5);
+      const secondPage = (await admin('/products?limit=5&offset=5')).payload.data;
+      assert.equal(secondPage.items.length, 3);
+      assert.ok(secondPage.items.every(item => !catalog.payload.data.items.some(firstItem => firstItem.id === item.id)));
       assert.equal(catalog.payload.data.items.flatMap(product => product.variants).every(variant => Number.isInteger(variant.stock_quantity)), true);
       const input = {
         category_id: categories[0].id, slug: 'isolated-admin-smoke-product',
@@ -924,14 +929,14 @@ async function orderSmoke() {
         const publicItems = (await localJson('/api/products', undefined, 200)).payload.data.items;
         assert.equal(publicItems.some(product => product.id === id), false);
         await localError(`/api/products/${input.slug}`, {}, 404, 'NOT_FOUND');
-        const record = (await admin('/products')).payload.data.items.find(product => product.id === id);
+        const record = (await admin(`/products?q=${encodeURIComponent(input.slug)}`)).payload.data.items.find(product => product.id === id);
         assert.equal(record.status, status);
         assert.equal(record.name_en, 'Patched isolated product');
         assert.equal(record.images.filter(image => image.is_primary).length, 1);
         assert.equal(record.images.find(image => image.is_primary).url, 'https://res.cloudinary.com/demo/image/upload/patched.jpg');
         if (status === 'ARCHIVED') assert.match((await first('SELECT archived_at FROM products WHERE id = ?', [id])).archived_at, /Z$/);
       }
-      console.log('D1 Phase 4 products: list_statements<=3; create_batch=3; slug/SKU=CONFLICT/rollback; ACTIVE visible; HIDDEN/ARCHIVED public absent/admin retained.');
+      console.log('D1 Phase 4 products: page_statements<=5; pages=5+3/total8; create_batch=3; slug/SKU=CONFLICT/rollback; ACTIVE visible; HIDDEN/ARCHIVED public absent/admin retained.');
     });
 
     await check('Phase 4 11/12 zone create/fee edit changes quote immediately; soft delete removes delivery', async () => {

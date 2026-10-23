@@ -261,7 +261,10 @@ test('admin catalog routes expose expected envelopes and validate route IDs/stri
     method, headers: { 'content-type': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}),
   }, { DB: db });
   let response = await request('/products');
-  assert.equal((await response.json()).data.items.length, 8);
+  const firstPage = (await response.json()).data;
+  assert.equal(firstPage.items.length, 5);
+  assert.equal(firstPage.total, 8);
+  assert.equal(firstPage.limit, 5);
   response = await request('/products', 'POST', product());
   assert.equal(response.status, 201);
   assert.ok((await response.json()).data.id > 8);

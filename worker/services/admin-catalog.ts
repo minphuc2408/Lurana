@@ -61,16 +61,20 @@ function mapWriteError(error: unknown): never {
 }
 
 // Three bulk queries return every status and inactive variant; no per-product reads or IN bind limit.
-export async function listAdminProducts(db: D1Database): Promise<AdminProduct[]> {
+export async function listAdminProducts(db: D1Database, ids?: number[]): Promise<AdminProduct[]> {
+  if (ids?.length === 0) return [];
+  const placeholders = ids?.map(() => '?').join(',');
+  const scope = placeholders ? ` WHERE p.id IN (${placeholders})` : '';
+  const childScope = placeholders ? ` WHERE product_id IN (${placeholders})` : '';
   const { results: products } = await db.prepare(`SELECT p.id, p.category_id, c.code AS category_code,
     p.slug, p.name_vi, p.name_en, p.description_vi, p.description_en, p.badge_code,
     p.is_featured, p.status, p.archived_at FROM products p JOIN categories c ON c.id = p.category_id
-    ORDER BY p.id`).all<ProductRow>();
+    ${scope} ORDER BY p.id`).bind(...(ids ?? [])).all<ProductRow>();
   const { results: variants } = await db.prepare(`SELECT ${VARIANT_COLUMNS} FROM product_variants
-    ORDER BY product_id, CASE size_code WHEN 'S' THEN 0 WHEN 'M' THEN 1 WHEN 'L' THEN 2
-      WHEN 'STANDARD' THEN 3 WHEN 'DELUXE' THEN 4 END, id`).all<VariantRow>();
+    ${childScope} ORDER BY product_id, CASE size_code WHEN 'S' THEN 0 WHEN 'M' THEN 1 WHEN 'L' THEN 2
+      WHEN 'STANDARD' THEN 3 WHEN 'DELUXE' THEN 4 END, id`).bind(...(ids ?? [])).all<VariantRow>();
   const { results: images } = await db.prepare(`SELECT id, product_id, image_url, cloudinary_public_id, sort_order, alt_vi, alt_en, is_primary
-    FROM product_images ORDER BY product_id, sort_order, id`).all<ImageRow>();
+    FROM product_images${childScope} ORDER BY product_id, sort_order, id`).bind(...(ids ?? [])).all<ImageRow>();
   const variantsByProduct = new Map<number, AdminVariant[]>();
   for (const row of variants) {
     const rows = variantsByProduct.get(row.product_id) ?? [];

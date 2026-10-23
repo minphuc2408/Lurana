@@ -646,3 +646,15 @@
 !/src/features/admin/components/AdminProductImport.tsx
 !/tests/product-import.test.mjs
 !/scripts/check-ui-product-import.mjs
+!/shared/admin-list-schemas.ts
+!/shared/zone-import.ts
+!/worker/services/admin-catalog-pages.ts
+!/worker/services/admin-catalog-actions.ts
+!/worker/services/zone-import.ts
+!/src/features/admin/hooks/useAdminListQuery.ts
+!/src/features/admin/hooks/useAdminExcelImport.ts
+!/src/features/admin/components/AdminDeleteDialog.tsx
+!/src/features/admin/components/AdminZoneImport.tsx
+!/tests/admin-pagination-actions.test.mjs
+!/tests/zone-import.test.mjs
+!/scripts/check-ui-admin-tables.mjs
