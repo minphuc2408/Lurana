@@ -48,6 +48,7 @@ Preview thường ở `http://127.0.0.1:4173`; nếu cổng bận, dùng đúng 
 | Database changes | `npm run db:verify`; ca destructive dùng D1 cô lập, persisted seed chỉ đọc; verifier không phải công cụ migrate |
 | Binding/type changes | `npm run cf:typegen` tạo Worker declarations; không chạy chỉ vì sửa docs |
 | UI tổng quát | `npm run check:ui -- http://127.0.0.1:4173` |
+| Bảng admin/phí/Excel/popup | `node scripts/check-ui-admin-tables.mjs http://127.0.0.1:4173`; Edge EN/VI1440/390/320 với API source/SQLite memory, kiểm server query/đổi size/trang/draft/save/delete, Excel phí và popup80vw/85dvh; không ghi local D1/remote |
 | Nhập Excel/nút ảnh kho | `node scripts/check-ui-product-import.mjs http://127.0.0.1:4173`; Edge EN/VI1440/390/320, API source + SQLite memory/synthetic admin, không ghi D1 local/remote; chặn provider/nguồn ngoài |
 | Storefront responsive | `node scripts/check-ui-storefront.mjs http://127.0.0.1:4173 --responsive` |
 | Checkout/lookup/admin | `npm run check:ui:phase5`; nếu build có site key, dùng build test key và `-- --turnstile-test` theo [BOT_PROTECTION](operations/BOT_PROTECTION.md#kiểm-tra-và-giới-hạn-bằng-chứng). Harness cô lập/synthetic secrets, không nghiệm thu provider/cloud |

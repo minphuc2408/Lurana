@@ -19,7 +19,9 @@ Tên phường chuẩn không có tiền tố. Server chấp nhận alias `Phư�
 
 ## Admin và checkout
 
-Admin `/admin/delivery-zones` dùng shared Combobox: mở để chọn hoặc tìm không dấu (gồm đ/d); chọn thành phố xong chọn phường, nhập phí và lưu. Đổi thành phố xóa phường. Không lưu được lựa chọn chưa thuộc danh mục. GET admin trả cả zones hiện hữu và danh mục Hà Nội 126; cookie auth và same-origin JSON write giữ nguyên.
+Admin `/admin/delivery-zones` dùng shared Combobox: mở để chọn hoặc tìm không dấu (gồm đ/d); chọn thành phố xong chọn phường, nhập phí và lưu. Đổi thành phố xóa phường. Không lưu được lựa chọn chưa thuộc danh mục. GET admin trả một trang zones + tổng/counts theo bộ lọc, cùng danh mục Hà Nội126; cookie auth và same-origin JSON write giữ nguyên.
+
+Kho phí có Tải template/Upload file Excel: điền DeliveryZones từ danh mục Areas, kiểm trước rồi xác nhận tạo khu vực mới; không ghi đè phí đã có hoặc tự seed coverage. Công tắc tắt/bật giữ dòng; icon xóa có xác nhận và xóa cấu hình zone, đơn cũ giữ snapshot. Payload/giới hạn và rollback thuộc [API Excel phí](../reference/API_CONTRACT.md#nhập-phí-giao-hàng-excel).
 
 Public `GET /api/delivery/options` chỉ JOIN các zone **đang active và khớp danh mục**, trả tên phường chuẩn. Checkout lấy toàn bộ lựa chọn từ response này:
 
