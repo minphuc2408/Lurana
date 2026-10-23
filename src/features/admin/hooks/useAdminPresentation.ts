@@ -1,6 +1,4 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { normalizeAddressSearch } from '../../../../shared/delivery-areas';
-import type { AdminProduct, DeliveryZone } from '../admin-api.types';
 
 export function useAdminPagination<T>(source: T[], initialSize = 5, resetKey = '') {
   const [position, setPosition] = useState({ key: resetKey, page: 0, size: initialSize });
@@ -18,21 +16,6 @@ export function useAdminToggle() {
 export function useInventoryPanel(initiallyOpen: boolean) {
   const [open, setOpen] = useState(initiallyOpen);
   return { open, toggle: () => setOpen(value => !value) };
-}
-export function useInventoryFilters(source: AdminProduct[], search = '') {
-  const [filter, setFilter] = useState('all');
-  const lowStock = (product: AdminProduct) => product.status === 'ACTIVE' && product.variants.some(variant => variant.is_active && variant.stock_quantity <= variant.low_stock_threshold);
-  const filtered = source.filter(product => filter === 'low' ? lowStock(product) : filter === 'hidden' ? product.status !== 'ACTIVE' : true);
-  const pagination = useAdminPagination(filtered, 5, `${filter}:${search}`);
-  return { filter, setFilter, products: pagination.items, pagination,
-    lowStockCount: source.filter(lowStock).length, hiddenCount: source.filter(product => product.status !== 'ACTIVE').length };
-}
-export function useZoneFilters(source: DeliveryZone[]) {
-  const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState('all');
-  const filtered = source.filter(zone => (filter === 'all' || (filter === 'active' ? zone.is_active : !zone.is_active)) && normalizeAddressSearch(`${zone.province_name} ${zone.ward_name}`).includes(normalizeAddressSearch(search)));
-  const pagination = useAdminPagination(filtered, 10, `${filter}:${search}`);
-  return { search, setSearch, filter, setFilter, zones: pagination.items, pagination, activeCount: source.filter(zone => zone.is_active).length };
 }
 export type OrderSection = 'overview' | 'products' | 'notes' | 'history' | 'actions';
 export function useAdminOrderWorkspace(orderNumber: string) {

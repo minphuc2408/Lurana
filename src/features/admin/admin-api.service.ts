@@ -6,7 +6,8 @@ import { ApiError, apiRequest } from '@/shared/api/client';
 import { adminOrdersQuerySchema, adminOrderStatusSchema, adminOrderNoteSchema } from '../../../shared/admin-order-schemas';
 import { adminProductCreateSchema, adminProductPatchSchema, adminVariantPatchSchema, adminDeliveryZoneSchema } from '../../../shared/admin-catalog-schemas';
 import type { ApiOrderStatus } from '@/features/orders';
-import type { AdminOrderDetail, AdminOrdersResult, AdminProduct, AdminSummary, AdminVariant, DeliveryZone } from './admin-api.types';
+import type { AdminOrderDetail, AdminOrdersResult, AdminProductsResult, AdminZonesResult, AdminSummary, AdminVariant, DeliveryZone } from './admin-api.types';
+import { adminProductsQuerySchema, adminZonesQuerySchema } from '../../../shared/admin-list-schemas';
 import { adminImageUploadRequestSchema, adminImageUploadTicketSchema } from '../../../shared/admin-upload-schemas';
 
 function validated<T>(schema: z.ZodType<T>, value: unknown): T {
@@ -41,7 +42,13 @@ export async function requestImageUploadTicket(file: { type: string; size: numbe
   if (!result.success) throw new ApiError('BAD_RESPONSE', 'Invalid upload configuration.');
   return result.data;
 }
-export const getAdminProducts = (signal?: AbortSignal) => adminRequest<{ items: AdminProduct[] }>('/products', { signal });
+export const getAdminProducts = (query: Record<string, string> = {}, signal?: AbortSignal) => {
+  const input = validated(adminProductsQuerySchema, query);
+  return adminRequest<AdminProductsResult>(`/products?${new URLSearchParams(Object.entries(input).map(([key, value]) => [key, String(value)]))}`, { signal });
+};
+export const getAdminVariant = (id: number) => adminRequest<AdminVariant>(`/variants/${id}`);
+export const deleteAdminVariant = (id: number) => adminRequest<{ id: number }>(`/variants/${id}`, { method: 'DELETE', body: '{}' });
+export const deleteAdminZone = (id: number) => adminRequest<{ id: number }>(`/delivery-zones/${id}`, { method: 'DELETE', body: '{}' });
 export const getProductImportTemplate = () => adminRequest<ProductImportFile>('/products/import-template');
 export const importProductFile = (file: ProductImportFile, validateOnly: boolean) => adminRequest<ProductImportResult>('/products/import', {
   method: 'POST', body: JSON.stringify({ ...file, validate_only: validateOnly }),
@@ -65,5 +72,8 @@ export function downloadProductTemplate(file: ProductImportFile) {
 export const createAdminProduct = (body: unknown) => adminRequest<{ id: number }>('/products', { method: 'POST', body: JSON.stringify(validated(adminProductCreateSchema, body)) });
 export const patchAdminProduct = (id: number, body: unknown) => adminRequest<{ id: number }>(`/products/${id}`, { method: 'PATCH', body: JSON.stringify(validated(adminProductPatchSchema, body)) });
 export const patchAdminVariant = (id: number, body: unknown) => adminRequest<AdminVariant>(`/variants/${id}`, { method: 'PATCH', body: JSON.stringify(validated(adminVariantPatchSchema, body)) });
-export const getDeliveryZones = (signal?: AbortSignal) => adminRequest<{ items: DeliveryZone[]; provinces: AdministrativeProvince[] }>('/delivery-zones', { signal });
+export const getDeliveryZones = (query: Record<string, string> = {}, signal?: AbortSignal) => {
+  const input = validated(adminZonesQuerySchema, query);
+  return adminRequest<AdminZonesResult>(`/delivery-zones?${new URLSearchParams(Object.entries(input).map(([key, value]) => [key, String(value)]))}`, { signal });
+};
 export const saveDeliveryZone = (id: number | null, body: unknown) => adminRequest<DeliveryZone>(`/delivery-zones${id == null ? '' : `/${id}`}`, { method: id == null ? 'POST' : 'PUT', body: JSON.stringify(validated(adminDeliveryZoneSchema, body)) });

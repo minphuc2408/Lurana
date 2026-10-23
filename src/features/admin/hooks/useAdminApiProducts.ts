@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { MAX_PRODUCT_IMAGES, adminProductImageSchema } from '../../../../shared/admin-catalog-schemas';
 import { useCatalog } from '@/features/shop';
-import { normalizeSearch } from '@/shared/i18n';
 import { ApiError } from '@/shared/api/client';
 import { buildProductSlug, buildVariantPatch, inputInteger, rebaseVariantDraft, variantDraft } from '../admin-api.adapters';
-import { createAdminProduct, getAdminProducts, patchAdminProduct, patchAdminVariant, requestImageUploadTicket } from '../admin-api.service';
+import { createAdminProduct, getAdminProducts, getAdminVariant, deleteAdminVariant, patchAdminProduct, patchAdminVariant, requestImageUploadTicket } from '../admin-api.service';
 import { uploadProductImage, validateProductImage } from '../product-image.service';
 import type { AdminProduct, AdminVariant, ProductForm, VariantDraft } from '../admin-api.types';
 import { useAdminProductImport } from './useAdminProductImport';
+import { useAdminListQuery } from './useAdminListQuery';
 
 const emptyProduct = (categoryId = ''): ProductForm => ({ name_en: '', name_vi: '', category_id: categoryId, image_url: '', images: [], status: 'ACTIVE', is_featured: false,
   variants: (['S', 'M', 'L'] as const).map(size_code => ({ size_code, sku: '', price: '', stock_quantity: '0', low_stock_threshold: '5' })) });
@@ -18,7 +18,14 @@ export function useAdminApiProducts() {
   const [drafts, setDrafts] = useState<Record<number, VariantDraft>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
-  const [search, setSearch] = useState('');
+  const list = useAdminListQuery(5);
+  const [total, setTotal] = useState(0);
+  const [counts, setCounts] = useState({ all: 0, low: 0, hidden: 0 });
+  const snapshots = useRef(new Map<number, AdminVariant>());
+  const [editingVariantId, setEditingVariantId] = useState<number | null>(null);
+  const [deletingVariant, setDeletingVariant] = useState<AdminVariant | null>(null);
+  const [deleteError, setDeleteError] = useState<unknown>(null);
+  const [deletePending, setDeletePending] = useState(false);
   const [savingIds, setSavingIds] = useState<number[]>([]);
   const [variantErrors, setVariantErrors] = useState<Record<number, unknown>>({});
   const [savedIds, setSavedIds] = useState<number[]>([]);
@@ -80,27 +87,31 @@ export function useAdminApiProducts() {
   const generation = useRef(0);
   const productsRef = useRef(products);
   productsRef.current = products;
-  const load = useCallback(async (signal?: AbortSignal, preserveDrafts = false) => {
+  const load = useCallback(async (signal?: AbortSignal, preserveDrafts = true) => {
     const revision = ++generation.current;
     setLoading(true); setError(null);
     try {
-      const result = await getAdminProducts(signal);
+      const result = await getAdminProducts(list.queryRef.current, signal);
       if (!signal?.aborted && revision === generation.current) {
-        const previous = new Map(productsRef.current.flatMap(product => product.variants.map(variant => [variant.id, variant] as const)));
+        if (!result.counts || !Number.isSafeInteger(result.total)) throw new ApiError('BAD_RESPONSE', 'Missing product pagination metadata.');
+        if (list.clamp(result.total)) return;
+        const previous = new Map(snapshots.current);
+        result.items.forEach(product => product.variants.forEach(variant => snapshots.current.set(variant.id, variant)));
         setProducts(result.items);
-        setDrafts(current => Object.fromEntries(result.items.flatMap(product => product.variants.map(variant => [variant.id,
-          preserveDrafts && previous.has(variant.id) && current[variant.id] ? rebaseVariantDraft(previous.get(variant.id)!, current[variant.id], variant) : variantDraft(variant)]))));
-        setUncertainIds([]); setVariantErrors({});
+        setTotal(result.total); setCounts(result.counts);
+        setDrafts(current => ({ ...current, ...Object.fromEntries(result.items.flatMap(product => product.variants.map(variant => [variant.id,
+          preserveDrafts && previous.has(variant.id) && current[variant.id] ? rebaseVariantDraft(previous.get(variant.id)!, current[variant.id], variant) : variantDraft(variant)]))) }));
+        const readIds = result.items.flatMap(product => product.variants.map(variant => variant.id));
+        setUncertainIds(current => current.filter(id => !readIds.includes(id)));
       }
     } catch (cause) { if (!signal?.aborted && revision === generation.current) setError(cause); }
     finally { if (!signal?.aborted && revision === generation.current) setLoading(false); }
-  }, []);
+  }, [list.query]);
   useEffect(() => { const controller = new AbortController(); void load(controller.signal); return () => { controller.abort(); generation.current++; }; }, [load]);
   const updateDraft = (id: number, change: Partial<VariantDraft>) => { setDrafts(current => ({ ...current, [id]: { ...current[id], ...change } })); setSavedIds(current => current.filter(value => value !== id)); setReconciledIds(current => current.filter(value => value !== id)); };
   const reconcileVariant = async (variant: AdminVariant, draft: VariantDraft, unlock = true) => {
-    const result = await getAdminProducts();
-    const fresh = result.items.flatMap(product => product.variants).find(item => item.id === variant.id);
-    if (!fresh) throw new ApiError('NOT_FOUND', 'Variant unavailable.');
+    const fresh = await getAdminVariant(variant.id);
+    snapshots.current.set(fresh.id, fresh);
     setProducts(current => current.map(product => ({ ...product, variants: product.variants.map(item => item.id === fresh.id ? fresh : item) })));
     setDrafts(current => ({ ...current, [fresh.id]: rebaseVariantDraft(variant, draft, fresh, true) }));
     if (unlock) {
@@ -123,12 +134,14 @@ export function useAdminApiProducts() {
     let submitted = false;
     try {
       const patch = buildVariantPatch(variant, submittedDraft);
-      if (Object.keys(patch).length === 0) return;
+      if (Object.keys(patch).length === 0) { setEditingVariantId(null); return; }
       submitted = true;
       const saved = await patchAdminVariant(variant.id, patch);
+      snapshots.current.set(saved.id, saved);
       setProducts(current => current.map(product => ({ ...product, variants: product.variants.map(item => item.id === saved.id ? saved : item) })));
       setDrafts(current => ({ ...current, [saved.id]: variantDraft(saved) }));
-      setSavedIds(current => [...current, saved.id]); catalog.reload();
+      setSavedIds(current => [...current, saved.id]); setEditingVariantId(null); catalog.reload();
+      await load(undefined, true);
     } catch (cause) {
       setVariantErrors(current => ({ ...current, [variant.id]: cause }));
       if (submitted && cause instanceof ApiError && ['NETWORK', 'TIMEOUT', 'BAD_RESPONSE', 'INTERNAL'].includes(cause.code)) {
@@ -140,6 +153,13 @@ export function useAdminApiProducts() {
     finally { saving.current.delete(variant.id); setSavingIds(current => current.filter(id => id !== variant.id)); }
   };
   const productImport = useAdminProductImport(async () => { await load(undefined, true); catalog.reload(); });
+  const confirmDeleteVariant = async () => {
+    if (!deletingVariant || saving.current.size > 0 || formInFlight.current) return;
+    formInFlight.current = true; setDeletePending(true); setDeleteError(null);
+    try { await deleteAdminVariant(deletingVariant.id); snapshots.current.delete(deletingVariant.id); setDeletingVariant(null); setEditingVariantId(null); await load(undefined, true); catalog.reload(); }
+    catch (cause) { setDeleteError(cause); }
+    finally { formInFlight.current = false; setDeletePending(false); }
+  };
   const openCreate = () => { if (saving.current.size > 0 || imageController.current) return; setInitialSection('general'); productSlug.current = null; setImageError(null); setImageUploaded(false); setEditing(null); setForm(emptyProduct(String(catalog.categories[0]?.id ?? ''))); setFormError(null); setDialogOpen(true); };
   const openEdit = (product: AdminProduct, section = 'general') => {
     if (saving.current.size > 0 || imageController.current) return;
@@ -170,8 +190,9 @@ export function useAdminApiProducts() {
     } catch (cause) { setFormError(cause); }
     finally { formInFlight.current = false; setFormPending(false); }
   };
-  const filtered = products.filter(product => [product.name_en, product.name_vi, product.slug, ...product.variants.map(variant => variant.sku)].some(value => normalizeSearch(value).includes(normalizeSearch(search))));
-  return { products: filtered, loading, error, reload: () => void load(), search, setSearch, drafts, updateDraft, saveVariant,
+  return { products, total, counts, list, loading, error, reload: () => void load(), search: list.search, setSearch: list.setSearch, drafts, updateDraft, saveVariant,
+    editingVariantId, setEditingVariantId, deletingVariant, deleteError, deletePending, confirmDeleteVariant,
+    requestDeleteVariant: (variant: AdminVariant | null) => { if (!deletePending) { setDeleteError(null); setDeletingVariant(variant); } },
     savingIds, variantErrors, savedIds, uncertainIds, reconciledIds, recheckVariant, dialogOpen, setDialogOpen, editing, form, setForm, formError, formPending, openCreate, openEdit, saveProduct,
     imagePending, imageError, imageUploaded, selectImages, addImageUrl, primaryImage, removeImage, moveImage,
     initialSection, productImport, categories: catalog.categories, categoriesLoading: catalog.loading, categoriesError: catalog.error, retryCategories: catalog.reload };

@@ -299,5 +299,22 @@
   "Imported {{products}} products and {{variants}} SKUs.": "Đã nhập {{products}} sản phẩm và {{variants}} SKU.",
   "Ready to import {{products}} products and {{variants}} SKUs.": "Sẵn sàng nhập {{products}} sản phẩm và {{variants}} SKU.",
   "Existing slugs and SKUs are rejected. Any error cancels the entire import. No images are imported.": "Slug/SKU đã tồn tại sẽ bị từ chối. Nếu có lỗi, toàn bộ file sẽ không được nhập. File không bao gồm ảnh.",
-  "Import products": "Nhập sản phẩm"
+  "Import products": "Nhập sản phẩm",
+  "Sequence number": "STT",
+  "Delete SKU": "Xóa SKU",
+  "Delete delivery zone": "Xóa phí giao hàng",
+  "Deleting…": "Đang xóa…",
+  "Delete this SKU permanently? Saved order details will be kept. The final size and SKUs in open orders cannot be deleted.": "Xóa vĩnh viễn SKU này? Thông tin đã lưu trong đơn hàng được giữ lại. Không thể xóa kích cỡ cuối cùng hoặc SKU còn trong đơn đang xử lý.",
+  "Delete this delivery zone permanently? It will no longer be available at checkout. Existing orders keep their delivery details.": "Xóa vĩnh viễn khu vực giao hàng này? Khu vực sẽ không còn ở bước đặt hàng. Các đơn đã tạo vẫn giữ thông tin giao hàng.",
+  "The final size or a SKU used by an open order cannot be deleted. Disable it instead.": "Không thể xóa kích cỡ cuối cùng hoặc SKU còn trong đơn đang xử lý. Bạn có thể tắt trạng thái để ngừng bán.",
+  "Upload delivery zone file": "Upload file phí giao hàng",
+  "Import new delivery zones from Excel. Existing areas are not overwritten.": "Nhập khu vực giao hàng mới từ Excel. Các khu vực đã có sẽ không bị ghi đè.",
+  "Fill DeliveryZones using names from Areas. One zone per row, up to 50 rows and 1 MB. Fees are integer VND.": "Điền sheet DeliveryZones bằng tên từ Areas. Mỗi dòng một khu vực, tối đa 50 dòng và 1 MB. Phí là số nguyên VND.",
+  "Importing delivery zones…": "Đang nhập phí giao hàng…",
+  "Import result uncertain. Close this dialog and refresh delivery zones before trying again.": "Chưa xác định được kết quả nhập. Hãy đóng hộp thoại và tải lại phí giao hàng để kiểm tra trước khi thử lại.",
+  "Imported {{count}} delivery zones.": "Đã nhập {{count}} khu vực giao hàng.",
+  "Ready to import {{count}} delivery zones.": "Sẵn sàng nhập {{count}} khu vực giao hàng.",
+  "Existing or repeated areas are rejected. Any error cancels the entire import.": "Khu vực đã có hoặc bị lặp sẽ bị từ chối. Nếu có lỗi, toàn bộ file sẽ không được nhập.",
+  "Import delivery zones": "Nhập phí giao hàng",
+  "Unsaved changes": "Chưa lưu thay đổi"
 }

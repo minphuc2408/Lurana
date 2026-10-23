@@ -120,7 +120,7 @@ try {
     await check('document.documentElement.scrollWidth <= window.innerWidth', tag + ' stock fits viewport');
     await check(`document.querySelector('[data-testid=product-template-download]').textContent.includes(${JSON.stringify(language === 'vi' ? 'Tải template' : 'Download template')})`, tag + ' toolbar translation');
     if (width === 1440 && language === 'en') { await click('[data-testid=product-template-download]'); await waitFor('!document.querySelector("[data-testid=product-template-download]").disabled'); }
-    if (width === 1440 && language === 'en') await input('[data-variant-id="1"] [name=price]', '123456');
+    if (width === 1440 && language === 'en') { await click('[data-testid=variant-edit-1]'); await input('[data-variant-id="1"] [name=price]', '123456'); }
     await screenshot(tag + '-stock');
     await click('[data-testid=product-import-open]');
     const row = { category_id: 1, slug: 'ui-' + tag, name_vi: 'Hoa kiểm thử ' + tag, name_en: 'UI flowers ' + tag,

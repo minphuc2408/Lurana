@@ -1,5 +1,6 @@
 import type { ProductApiDto, ProductVariant } from '@/features/shop';
 import type { ApiOrderStatus, OrderDetail } from '@/features/orders';
+import type { AdminProductCounts, AdminZoneCounts } from '../../../shared/admin-list-schemas';
 
 export interface AdminOrderRow {
   id: number; order_number: string; status_code: ApiOrderStatus; payment_method: 'COD'; payment_status: 'UNPAID' | 'PAID';
@@ -29,3 +30,5 @@ export interface ZoneForm { province_name: string; ward_name: string; fee: strin
 
 export type AdminOrderCounts = Record<ApiOrderStatus, number>;
 export interface AdminOrdersResult { items: AdminOrderRow[]; total: number; counts_by_status: AdminOrderCounts; }
+export interface AdminProductsResult { items: AdminProduct[]; total: number; counts: AdminProductCounts; limit: number; offset: number; }
+export interface AdminZonesResult { items: DeliveryZone[]; total: number; counts: AdminZoneCounts; limit: number; offset: number; provinces: import('../../../shared/delivery-areas').AdministrativeProvince[]; }

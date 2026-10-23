@@ -299,5 +299,22 @@
   "Imported {{products}} products and {{variants}} SKUs.": "Imported {{products}} products and {{variants}} SKUs.",
   "Ready to import {{products}} products and {{variants}} SKUs.": "Ready to import {{products}} products and {{variants}} SKUs.",
   "Existing slugs and SKUs are rejected. Any error cancels the entire import. No images are imported.": "Existing slugs and SKUs are rejected. Any error cancels the entire import. No images are imported.",
-  "Import products": "Import products"
+  "Import products": "Import products",
+  "Sequence number": "Sequence number",
+  "Delete SKU": "Delete SKU",
+  "Delete delivery zone": "Delete delivery zone",
+  "Deleting…": "Deleting…",
+  "Delete this SKU permanently? Saved order details will be kept. The final size and SKUs in open orders cannot be deleted.": "Delete this SKU permanently? Saved order details will be kept. The final size and SKUs in open orders cannot be deleted.",
+  "Delete this delivery zone permanently? It will no longer be available at checkout. Existing orders keep their delivery details.": "Delete this delivery zone permanently? It will no longer be available at checkout. Existing orders keep their delivery details.",
+  "The final size or a SKU used by an open order cannot be deleted. Disable it instead.": "The final size or a SKU used by an open order cannot be deleted. Disable it instead.",
+  "Upload delivery zone file": "Upload delivery zone file",
+  "Import new delivery zones from Excel. Existing areas are not overwritten.": "Import new delivery zones from Excel. Existing areas are not overwritten.",
+  "Fill DeliveryZones using names from Areas. One zone per row, up to 50 rows and 1 MB. Fees are integer VND.": "Fill DeliveryZones using names from Areas. One zone per row, up to 50 rows and 1 MB. Fees are integer VND.",
+  "Importing delivery zones…": "Importing delivery zones…",
+  "Import result uncertain. Close this dialog and refresh delivery zones before trying again.": "Import result uncertain. Close this dialog and refresh delivery zones before trying again.",
+  "Imported {{count}} delivery zones.": "Imported {{count}} delivery zones.",
+  "Ready to import {{count}} delivery zones.": "Ready to import {{count}} delivery zones.",
+  "Existing or repeated areas are rejected. Any error cancels the entire import.": "Existing or repeated areas are rejected. Any error cancels the entire import.",
+  "Import delivery zones": "Import delivery zones",
+  "Unsaved changes": "Unsaved changes"
 }
