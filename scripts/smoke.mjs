@@ -1,3 +1,4 @@
+import { ORDER_STATUSES } from '../shared/constants.ts';
 import assert from 'node:assert/strict';
 import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -867,10 +868,11 @@ async function orderSmoke() {
       const literal = (await admin('/orders?q=' + encodeURIComponent('%_\\'))).payload.data;
       assert.equal(literal.total, 1);
       assert.deepEqual(literal.items.map(row => row.order_number), [searchable.order_number]);
+      assert.equal(Object.values(literal.counts_by_status).reduce((sum, count) => sum + count, 0), literal.total);
       const phone = (await admin('/orders?q=0900000000&limit=50')).payload.data;
       assert.ok(phone.total > 0);
       const empty = (await admin('/orders?q=' + encodeURIComponent("' OR 1=1 --"))).payload.data;
-      assert.deepEqual(empty, { items: [], total: 0 });
+      assert.deepEqual(empty, { items: [], total: 0, counts_by_status: Object.fromEntries(ORDER_STATUSES.map(status => [status, 0])) });
       await admin(`/orders/${firstOrder.order_number}/note`, 'PATCH', { admin_note: null });
       assert.equal((await adminDetail(firstOrder.order_number)).admin_note, null);
     });

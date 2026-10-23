@@ -1,12 +1,11 @@
 import { Outlet } from "react-router";
 import { LanguageSwitcher } from "@/shared/i18n";
-import { ThemeSwitcher } from './components/ThemeSwitcher';
-import { useTheme } from '@/shared/theme/theme-store';
+import { useFieldFocus } from '@/shared/hooks/useFieldFocus';
 
 export function AuthLayout() {
-  const { theme, setTheme } = useTheme();
-  return <div className="relative">
-    <div data-header-preferences className="absolute right-4 top-4 z-20 flex items-center gap-2 sm:right-6 sm:top-6"><ThemeSwitcher theme={theme} onThemeChange={setTheme} /><LanguageSwitcher appearance="storefront" /></div>
+  useFieldFocus({ documentScope: true });
+  return <div data-admin-auth className="relative">
+    <div data-header-preferences className="absolute right-5 top-5 z-20 flex items-center gap-2 sm:right-8 sm:top-8"><LanguageSwitcher appearance="storefront" /></div>
     <Outlet />
   </div>;
 }

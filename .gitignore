@@ -257,6 +257,10 @@
 !/src/features/admin/hooks/useAdminDeliveryZones.ts
 !/src/features/admin/hooks/useAdminApiDashboard.ts
 !/src/features/admin/components/AdminApiOrdersView.tsx
+!/src/features/admin/components/AdminOrderDetailsDialog.tsx
+!/src/features/admin/components/AdminOrdersPopup.tsx
+!/src/features/admin/components/AdminOrdersTable.tsx
+!/src/features/admin/components/AdminOrderData.tsx
 !/src/features/admin/components/AdminApiState.tsx
 !/src/features/admin/components/AdminApiProductsView.tsx
 !/src/features/admin/components/AdminProductForm.tsx
@@ -626,3 +630,19 @@
 
 # Reviewed local regression for keyboard, responsive checkout and readable forms.
 !/scripts/check-ui-refinements.mjs
+
+# Reviewed memory-only admin search, filters and inventory expansion.
+!/src/features/admin/hooks/useAdminPresentation.ts
+
+# Reviewed admin pagination and custom date picker using installed primitives.
+!/src/features/admin/components/AdminPagination.tsx
+!/src/features/admin/components/AdminDatePicker.tsx
+
+# Reviewed product Excel import contracts, Worker parser and admin controls.
+!/shared/product-import.ts
+!/worker/services/product-workbook.ts
+!/worker/services/product-import.ts
+!/src/features/admin/hooks/useAdminProductImport.ts
+!/src/features/admin/components/AdminProductImport.tsx
+!/tests/product-import.test.mjs
+!/scripts/check-ui-product-import.mjs

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { themes, themeTokens, themeSwatches, normalizeTheme, readTheme, saveTheme, themeStorageKey } from '../src/shared/theme/themes.ts';
+import { themes, themeTokens, themeSwatches, normalizeTheme, readTheme, saveTheme, themeStorageKey, defaultThemeId, monochromeScale, monochromePinkScale } from '../src/shared/theme/themes.ts';
 
 function contrast(a, b) {
   const luminance = hex => {
@@ -12,11 +12,13 @@ function contrast(a, b) {
   const values = [luminance(a),luminance(b)].sort((x,y)=>y-x);
   return (values[0]+0.05)/(values[1]+0.05);
 }
-test('twenty-one unique light themes use the approved reference Original palette and remove all overrides on return', () => {
-  assert.equal(themes.length,21);
-  assert.equal(new Set(themes.map(theme=>theme.id)).size,21);
+test('twenty-two unique light themes retain Green Mist and default to the approved Mono palette', () => {
+  assert.equal(themes.length,22);
+  assert.equal(new Set(themes.map(theme=>theme.id)).size,22);
   const original = themes[0];
   assert.equal(original.id,'original');
+  assert.equal(original.name,'Green Mist');
+  assert.equal(defaultThemeId,'monochrome');
   assert.deepEqual([original.background,original.secondary,original.softSurface,original.accent,original.foreground],['#F8FBFA','#F1F7F5','#EDF4F6','#527E75','#344B49']);
   const css = readFileSync(new URL('../src/styles/brand.css',import.meta.url),'utf8');
   for(const [name,token] of Object.entries({background:'cream',secondary:'surface',softSurface:'blush',accent:'rose',foreground:'ink'})) {
@@ -30,7 +32,7 @@ test('twenty-one unique light themes use the approved reference Original palette
   }
 });
 test('all sixteen existing palettes and semantic colors retain their pre-extension snapshot', () => {
-  const snapshot = themes.slice(0,16).map(theme=>({theme,tokens:themeTokens(theme)}));
+  const snapshot = themes.slice(0,16).map(theme=>({theme:theme.id==='original'?{...theme,name:'Original'}:theme,tokens:themeTokens(theme)}));
   assert.equal(createHash('sha256').update(JSON.stringify(snapshot)).digest('hex'),'c324ebe23eb0fa2e84577ea77472b3e2eae387a5ac736c014220009b82b6fb31');
   for(const theme of themes.slice(0,16)) assert.deepEqual(themeSwatches(theme),[theme.background,theme.secondary,theme.softSurface,theme.accent,theme.foreground]);
 });
@@ -42,8 +44,8 @@ test('creative themes preserve all six approved colors and supply readable secon
     'ocean-confetti': ['#F8FBFA','#E9F5F3','#147A81','#F18EAD','#F3CF70','#27464B'],
     'folk-bloom': ['#FBF9F3','#F3E6D7','#A64740','#8EA7D2','#96B06A','#4B3736'],
   };
-  assert.deepEqual(themes.slice(16).map(theme=>theme.id),Object.keys(approved));
-  for(const theme of themes.slice(16)) {
+  assert.deepEqual(themes.slice(16,21).map(theme=>theme.id),Object.keys(approved));
+  for(const theme of themes.slice(16,21)) {
     assert.deepEqual(themeSwatches(theme),approved[theme.id]);
     const tokens=themeTokens(theme);
     assert.equal(tokens['--lunara-accent-secondary'],approved[theme.id][3]);
@@ -55,7 +57,7 @@ test('creative themes preserve all six approved colors and supply readable secon
   }
 });
 test('creative hierarchy keeps large surfaces neutral, actions primary and decorative accents local', () => {
-  for(const theme of themes.slice(16)) {
+  for(const theme of themes.slice(16,21)) {
     const tokens=themeTokens(theme);
     const secondary=tokens['--lunara-accent-secondary-strong'];
     const tertiary=tokens['--lunara-accent-tertiary-strong'];
@@ -82,7 +84,7 @@ test('creative hierarchy keeps large surfaces neutral, actions primary and decor
   }
 });
 test('every new theme supplies readable text/CTA/focus/control tokens on its actual light surfaces', () => {
-  for(const theme of themes.slice(1)) {
+  for(const theme of themes.slice(1).filter(theme=>theme.id!=='monochrome')) {
     const tokens=themeTokens(theme);
     assert.equal(tokens['--lunara-rose'],theme.accent,'Preserve base accent');
     assert.equal(tokens['--lunara-footer-background'],theme.secondary,'New footers stay light');
@@ -100,13 +102,31 @@ test('every new theme supplies readable text/CTA/focus/control tokens on its act
   }
 });
 test('preferences accept only exact registered IDs, recover from invalid/blocked storage and preserve other keys', () => {
-  for(const invalid of [undefined,null,'','dark','Sage Green','sage-green ','__proto__',{},1]) assert.equal(normalizeTheme(invalid),'original');
-  assert.equal(readTheme(),'original');
-  assert.equal(readTheme({getItem(){throw new Error('blocked');}}),'original');
+  for(const invalid of [undefined,null,'','dark','Sage Green','sage-green ','__proto__',{},1]) assert.equal(normalizeTheme(invalid),defaultThemeId);
+  assert.equal(readTheme(),defaultThemeId);
+  assert.equal(readTheme({getItem(){throw new Error('blocked');}}),defaultThemeId);
   const values=new Map([['lunara_language','vi'],['lunara.cart.v1','untouched']]);
   const storage={getItem:key=>values.get(key),setItem:(key,value)=>values.set(key,value)};
   for(const theme of themes) {saveTheme(theme.id,storage);assert.equal(readTheme(storage),theme.id);}
-  assert.equal(values.get(themeStorageKey),'folk-bloom');
+  assert.equal(values.get(themeStorageKey),'monochrome');
   assert.equal(values.get('lunara_language'),'vi');assert.equal(values.get('lunara.cart.v1'),'untouched');
   assert.doesNotThrow(()=>saveTheme('sea-glass',{setItem(){throw new Error('quota');}}));
+});
+
+// Mono has an explicit role map, unlike the interpolated pastel/creative palettes.
+test('Mono preserves exact approved steps and readable admin actions and focus', () => {
+  assert.deepEqual(Object.values(monochromeScale), ['#FFFFFF','#F2F2F2','#DBDBDB','#C4C4C4','#ADADAD','#969696','#808080','#696969','#525252','#3B3B3B','#1B1B1B','#0D0D0D']);
+  assert.deepEqual(Object.values(monochromePinkScale), ['#FBEAF0','#F4C3D5','#EC9CBA','#E5769F','#DE4F83']);
+  const tokens=themeTokens(themes.find(theme=>theme.id==='monochrome'));
+  for(const token of ['--lunara-admin-panel','--lunara-sidebar']) assert.equal(tokens[token],'#FFFFFF');
+  assert.equal(tokens['--lunara-admin-background'],'#F2F2F2');
+  assert.equal(tokens['--lunara-admin-primary'],'#DE4F83');
+  assert.equal(tokens['--lunara-admin-primary-hover'],'#E5769F');
+  assert.equal(tokens['--lunara-admin-primary-foreground'],'#1B1B1B');
+  for(const background of ['#FFFFFF','#F2F2F2','#FBEAF0']) {
+    assert.ok(contrast('#1B1B1B',background)>=4.5);
+    assert.ok(contrast('#525252',background)>=4.5);
+    assert.ok(contrast('#3B3B3B',background)>=3);
+  }
+  for(const background of ['#DE4F83','#E5769F']) assert.ok(contrast('#1B1B1B',background)>=4.5);
 });

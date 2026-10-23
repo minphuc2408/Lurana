@@ -1,11 +1,12 @@
 import type { AdministrativeProvince } from '../../../shared/delivery-areas';
 import { z } from 'zod';
+import { PRODUCT_IMPORT_MAX_BYTES, type ProductImportFile, type ProductImportResult } from '../../../shared/product-import';
 import { ADMIN_UNAUTHORIZED_EVENT } from '@/features/auth';
 import { ApiError, apiRequest } from '@/shared/api/client';
 import { adminOrdersQuerySchema, adminOrderStatusSchema, adminOrderNoteSchema } from '../../../shared/admin-order-schemas';
 import { adminProductCreateSchema, adminProductPatchSchema, adminVariantPatchSchema, adminDeliveryZoneSchema } from '../../../shared/admin-catalog-schemas';
 import type { ApiOrderStatus } from '@/features/orders';
-import type { AdminOrderDetail, AdminOrderRow, AdminProduct, AdminSummary, AdminVariant, DeliveryZone } from './admin-api.types';
+import type { AdminOrderDetail, AdminOrdersResult, AdminProduct, AdminSummary, AdminVariant, DeliveryZone } from './admin-api.types';
 import { adminImageUploadRequestSchema, adminImageUploadTicketSchema } from '../../../shared/admin-upload-schemas';
 
 function validated<T>(schema: z.ZodType<T>, value: unknown): T {
@@ -23,7 +24,7 @@ async function adminRequest<T>(path: string, options?: RequestInit): Promise<T> 
 export async function getAdminOrders(query: Record<string, string> = {}, signal?: AbortSignal) {
   const input = validated(adminOrdersQuerySchema, query);
   const params = new URLSearchParams(Object.entries(input).map(([key, value]) => [key, String(value)]));
-  return adminRequest<{ items: AdminOrderRow[]; total: number }>(`/orders?${params}`, { signal });
+  return adminRequest<AdminOrdersResult>(`/orders?${params}`, { signal });
 }
 export const getAdminOrder = (number: string, signal?: AbortSignal) => adminRequest<AdminOrderDetail>(`/orders/${encodeURIComponent(number)}`, { signal });
 export const changeOrderStatus = (number: string, status: ApiOrderStatus, note: string, restock?: boolean) => adminRequest(`/orders/${encodeURIComponent(number)}/status`, {
@@ -41,6 +42,26 @@ export async function requestImageUploadTicket(file: { type: string; size: numbe
   return result.data;
 }
 export const getAdminProducts = (signal?: AbortSignal) => adminRequest<{ items: AdminProduct[] }>('/products', { signal });
+export const getProductImportTemplate = () => adminRequest<ProductImportFile>('/products/import-template');
+export const importProductFile = (file: ProductImportFile, validateOnly: boolean) => adminRequest<ProductImportResult>('/products/import', {
+  method: 'POST', body: JSON.stringify({ ...file, validate_only: validateOnly }),
+});
+export async function readProductImportFile(file: File): Promise<ProductImportFile> {
+  if (!/\.xlsx$/i.test(file.name) || file.name.length > 200 || file.size === 0 || file.size > PRODUCT_IMPORT_MAX_BYTES) {
+    throw new ApiError('INVALID_WORKBOOK', 'Choose an .xlsx file up to 1 MB.');
+  }
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += 8192) binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
+  return { file_name: file.name, content_base64: btoa(binary) };
+}
+export function downloadProductTemplate(file: ProductImportFile) {
+  const blob = new Blob([Uint8Array.from(atob(file.content_base64), char => char.charCodeAt(0))], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url; link.download = file.file_name; link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 export const createAdminProduct = (body: unknown) => adminRequest<{ id: number }>('/products', { method: 'POST', body: JSON.stringify(validated(adminProductCreateSchema, body)) });
 export const patchAdminProduct = (id: number, body: unknown) => adminRequest<{ id: number }>(`/products/${id}`, { method: 'PATCH', body: JSON.stringify(validated(adminProductPatchSchema, body)) });
 export const patchAdminVariant = (id: number, body: unknown) => adminRequest<AdminVariant>(`/variants/${id}`, { method: 'PATCH', body: JSON.stringify(validated(adminVariantPatchSchema, body)) });

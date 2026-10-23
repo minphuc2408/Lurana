@@ -91,7 +91,6 @@ export async function listAdminOrders(db: D1Database, query: unknown) {
   const window = orderDateWindow(input.placed_from ?? defaults.from, input.placed_to ?? defaults.to);
   const filters: string[] = [window.sql];
   const values: (string | number)[] = [...window.values];
-  if (input.status) { filters.push('status_code = ?'); values.push(input.status); }
   if (input.date) { filters.push('delivery_date = ?'); values.push(input.date); }
   if (input.q) {
     const pattern = `%${input.q.replace(/[\\%_]/g, '\\$&')}%`;
@@ -99,14 +98,22 @@ export async function listAdminOrders(db: D1Database, query: unknown) {
       OR recipient_phone LIKE ? ESCAPE '\\' OR sender_name LIKE ? ESCAPE '\\' OR recipient_name LIKE ? ESCAPE '\\')`);
     values.push(pattern, pattern, pattern, pattern, pattern);
   }
-  const where = filters.length ? ` WHERE ${filters.join(' AND ')}` : '';
+  const where = ` WHERE ${filters.join(' AND ')}`;
+  const statusFilter = input.status ? ' AND status_code = ?' : '';
   const [listResult, countResult] = await db.batch([
-    db.prepare(`SELECT ${listColumns} FROM orders${where} ORDER BY placed_at DESC, id DESC LIMIT ? OFFSET ?`)
-      .bind(...values, input.limit, input.offset),
-    db.prepare(`SELECT COUNT(*) AS total FROM orders${where}`).bind(...values),
+    db.prepare(`SELECT ${listColumns} FROM orders${where}${statusFilter} ORDER BY placed_at DESC, id DESC LIMIT ? OFFSET ?`)
+      .bind(...values, ...(input.status ? [input.status] : []), input.limit, input.offset),
+    db.prepare(`SELECT status_code, COUNT(*) AS count FROM orders${where} GROUP BY status_code`).bind(...values),
   ]);
+  // Tabs share the same search/date scope; selecting a tab does not erase sibling counts.
+  const countsByStatus = Object.fromEntries(ORDER_STATUSES.map(status => [status, 0]));
+  for (const row of countResult.results as unknown as { status_code: string; count: number }[]) {
+    if (Object.hasOwn(countsByStatus, row.status_code)) countsByStatus[row.status_code] = Number(row.count);
+  }
   return { items: (listResult.results as unknown as AdminOrderRow[]).map(row => ({ ...row, placed_at: toIso(row.placed_at) })),
-    total: Number((countResult.results as unknown as { total: number }[])[0]?.total ?? 0) };
+    total: input.status ? countsByStatus[input.status] : Object.values(countsByStatus).reduce((sum, count) => sum + count, 0),
+    counts_by_status: countsByStatus };
+
 }
 
 /** An authorized projection independent of public lookup; no secrets or idempotency keys are selected. */

@@ -145,6 +145,27 @@ test('admin order APIs use isolated real D1: summary, bound filters, private det
       assert.equal((await getAdminOrder(db, orders[2])).stock_released, true);
     });
 
+    await t.test('status tabs retain sibling counts within the same search/date window and paginate only the selected status', async () => {
+      const counted = observedDb(db);
+      const pending = await listAdminOrders(counted.db, { status: 'PENDING', limit: '1', offset: '1' });
+      assert.equal(counted.queries.length, 2);
+      assert.equal(pending.total, 2);
+      assert.equal(pending.items.length, 1);
+      assert.equal(pending.items[0].status_code, 'PENDING');
+      assert.deepEqual(pending.counts_by_status, { PENDING: 2, CONFIRMED: 0, PREPARING: 0, IN_TRANSIT: 0, DELIVERED: 1, CANCELLED: 1 });
+      const delivered = await listAdminOrders(db, { status: 'DELIVERED', limit: '1', offset: '1' });
+      assert.equal(delivered.total, 1);
+      assert.equal(delivered.items.length, 0);
+      assert.deepEqual(delivered.counts_by_status, pending.counts_by_status);
+      const searched = await listAdminOrders(db, { status: 'PENDING', q: 'Normal demo' });
+      assert.equal(searched.total, 0);
+      assert.equal(searched.counts_by_status.DELIVERED, 1);
+      assert.equal(Object.values(searched.counts_by_status).reduce((sum, count) => sum + count, 0), 1);
+      const outsideDates = await listAdminOrders(db, { placed_from: '2026-10-01', placed_to: '2026-10-02' });
+      assert.equal(outsideDates.total, 0);
+      assert.ok(Object.values(outsideDates.counts_by_status).every(count => count === 0));
+    });
+
     await t.test('route DTOs reject pagination errors and map invalid transition to HTTP 409', async () => {
       const routes = new Hono();
       routes.onError(handleError);

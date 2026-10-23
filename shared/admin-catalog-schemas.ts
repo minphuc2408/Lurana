@@ -46,7 +46,7 @@ const variantCreate = z.object({
     ctx.addIssue({ code: 'custom', path: ['compare_at_price'], message: 'Giá so sánh phải lớn hơn hoặc bằng giá bán.' });
   }
 });
-export const adminProductCreateSchema = z.object({
+export const adminProductDataSchema = z.object({
   category_id: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
   slug: z.string().trim().max(200).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Đường dẫn sản phẩm không hợp lệ.')
     .refine(value => value !== 'by-variants', 'Đường dẫn sản phẩm đã được dành riêng.'),
@@ -57,8 +57,6 @@ export const adminProductCreateSchema = z.object({
   badge_code: badge.optional(),
   is_featured: z.boolean().optional().default(false),
   status: status.optional().default('ACTIVE'),
-  image: adminProductImageSchema.optional(),
-  images: adminProductImagesSchema.optional(),
   variants: z.array(variantCreate).min(1).max(5).superRefine((variants, ctx) => {
     const sizes = new Set<string>();
     const skus = new Set<string>();
@@ -69,6 +67,10 @@ export const adminProductCreateSchema = z.object({
       skus.add(variant.sku);
     });
   }),
+});
+export const adminProductCreateSchema = adminProductDataSchema.extend({
+  image: adminProductImageSchema.optional(),
+  images: adminProductImagesSchema.optional(),
 }).refine(value => Boolean(value.image) !== Boolean(value.images), { message: 'Cần gửi image hoặc images.', path: ['images'] });
 export const adminProductPatchSchema = z.object({
   name_vi: name.optional(),

@@ -7,12 +7,13 @@ Reference dành cho developer tra công nghệ, dependency và build/types. Phi�
 | Tầng | Công nghệ / quyết định |
 | --- | --- |
 | Frontend | React/React DOM 18.3.1, React Router 7.18.4, TypeScript 5.7.3, Vite 6.4.4; giữ stack đã pin |
-| Styling | Tailwind 4.1.12, React plugin 4.7.0; semantic brand tokens và 21 light themes theo [DESIGN_SYSTEM](ui-ux/DESIGN_SYSTEM.md) |
+| Styling | Tailwind 4.1.12, React plugin 4.7.0; semantic brand tokens và 22 light themes theo [DESIGN_SYSTEM](ui-ux/DESIGN_SYSTEM.md) |
 | Backend | Hono 4.13.13, Cloudflare Workers; @cloudflare/vite-plugin 1.63.2, Wrangler 4.150.0 |
 | Validation | Zod 4.6.7; schemas chung ở root `shared/`, frontend khởi tạo jitless trước schema dưới CSP |
 | Database | D1/SQLite, binding `DB`; canonical migrations và quyết định lưu trữ tại [DATABASE_DESIGN](reference/DATABASE_DESIGN.md) |
 | i18n/UI | i18next/react-i18next; Radix wrappers, Lucide, `cn`; layout/typography/a11y tại design owner |
 | Media | Signed direct Cloudinary upload; D1 lưu URL/public ID, browser truyền ảnh trực tiếp; [CLOUDINARY](operations/CLOUDINARY.md) |
+| Excel admin (24/10/2026) | `read-excel-file`9.3.12 / `write-excel-file`4.1.1 universal ở Worker, `fflate`0.8.3 giới hạn ZIP trước parse; contract ở [API Excel](reference/API_CONTRACT.md#nhập-sản-phẩm-excel) |
 | Auth/bot | Admin secret + HS256 cookie; Turnstile Siteverify và Worker RateLimit bindings; contract ở [API](reference/API_CONTRACT.md), policy tại [BOT_PROTECTION](operations/BOT_PROTECTION.md) |
 | Local navigation | CodeGraph 1.5.0; index và cấu hình trợ lý local, không phải security scanner |
 | Verification | Node tests, architecture/typecheck/build, smoke và Edge headless trên Windows; cách chạy ở [LOCAL_DEVELOPMENT](LOCAL_DEVELOPMENT.md) |

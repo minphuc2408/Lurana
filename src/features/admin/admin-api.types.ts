@@ -26,3 +26,6 @@ export interface ProductForm {
   variants: { size_code: 'S' | 'M' | 'L'; sku: string; price: string; stock_quantity: string; low_stock_threshold: string }[];
 }
 export interface ZoneForm { province_name: string; ward_name: string; fee: string; free_from_amount: string; eta_minutes: string; is_active: boolean; }
+
+export type AdminOrderCounts = Record<ApiOrderStatus, number>;
+export interface AdminOrdersResult { items: AdminOrderRow[]; total: number; counts_by_status: AdminOrderCounts; }

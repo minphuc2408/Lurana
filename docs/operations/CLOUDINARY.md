@@ -81,6 +81,8 @@ Tham khảo chính thức: [credentials](https://cloudinary.com/documentation/ho
 
 ## Gallery nhiều ảnh
 
+Trên `/admin/stock`, nút **Tải ảnh / Upload images** nằm ngay trước **Sửa sản phẩm** ở mỗi sản phẩm, mở trực tiếp tab gallery và focus chọn file. Dùng cùng luồng signed upload bên dưới; vẫn phải **Lưu sản phẩm** để ghi liên kết. Sản phẩm nhập từ [Excel](../reference/API_CONTRACT.md#nhập-sản-phẩm-excel) có thể chưa có ảnh; thêm ảnh qua nút này sau khi nhập, không đặt URL/asset giả trong file Excel.
+
 Form tạo/sửa có tối đa 8 ảnh, chọn nhiều file hoặc thêm URL trong phần tùy chọn. Mỗi file dùng ticket ký riêng; upload tuần tự, mỗi ảnh ≤5 MiB và JPEG/PNG/WebP. Kết quả được kiểm secure_url/public_id theo ticket trước khi thêm vào draft. Nếu một upload lỗi, giữ các ảnh trước đã thành công và dừng; người dùng có thể lưu phần đã có hoặc chọn lại file, không tự upload lại.
 
 Chọn cover bằng nút sao, đổi thứ tự bằng lên/xuống và gỡ ảnh bằng thùng rác; nếu gỡ cover thì ảnh còn lại đầu tiên làm cover. Chỉ bấm Lưu sản phẩm mới ghi gallery vào D1. Cancel/gỡ không xóa file provider; owner dọn file chưa liên kết thủ công sau khi kiểm tham chiếu.

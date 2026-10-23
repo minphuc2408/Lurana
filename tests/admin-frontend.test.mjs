@@ -1,6 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { allowedAdminTransitions, buildProductSlug, buildVariantPatch, rebaseVariantDraft, variantDraft } from '../src/features/admin/admin-api.adapters.ts';
+import { formatVietnamDate } from '../src/shared/lib/format.ts';
+
+test('compact admin dates keep Vietnam time and full calendar dates without changing the storefront format', () => {
+  for (const locale of ['en', 'vi']) {
+    assert.equal(formatVietnamDate('2026-10-22', locale, { compact: true }), '22/10/2026');
+    const timestamp = formatVietnamDate('2026-10-21T23:15:00Z', locale, { compact: true });
+    assert.ok(timestamp.includes('22/10/2026'));
+    assert.ok(timestamp.includes('06:15'));
+    assert.notEqual(formatVietnamDate('2026-10-22', locale), '22/10/2026');
+  }
+  assert.equal(formatVietnamDate('invalid', 'vi', { compact: true }), 'invalid');
+});
 
 test('automatic product slugs normalize Vietnamese, punctuation and long or non-Latin names', () => {
   const id = '00000000-0000-4000-8000-000000000001';

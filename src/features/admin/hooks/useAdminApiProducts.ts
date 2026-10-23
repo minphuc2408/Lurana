@@ -7,6 +7,7 @@ import { buildProductSlug, buildVariantPatch, inputInteger, rebaseVariantDraft, 
 import { createAdminProduct, getAdminProducts, patchAdminProduct, patchAdminVariant, requestImageUploadTicket } from '../admin-api.service';
 import { uploadProductImage, validateProductImage } from '../product-image.service';
 import type { AdminProduct, AdminVariant, ProductForm, VariantDraft } from '../admin-api.types';
+import { useAdminProductImport } from './useAdminProductImport';
 
 const emptyProduct = (categoryId = ''): ProductForm => ({ name_en: '', name_vi: '', category_id: categoryId, image_url: '', images: [], status: 'ACTIVE', is_featured: false,
   variants: (['S', 'M', 'L'] as const).map(size_code => ({ size_code, sku: '', price: '', stock_quantity: '0', low_stock_threshold: '5' })) });
@@ -25,6 +26,7 @@ export function useAdminApiProducts() {
   const [reconciledIds, setReconciledIds] = useState<number[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<AdminProduct | null>(null);
+  const [initialSection, setInitialSection] = useState('general');
   const [form, setForm] = useState<ProductForm>(emptyProduct());
   const [formError, setFormError] = useState<unknown>(null);
   const [formPending, setFormPending] = useState(false);
@@ -137,10 +139,11 @@ export function useAdminApiProducts() {
     }
     finally { saving.current.delete(variant.id); setSavingIds(current => current.filter(id => id !== variant.id)); }
   };
-  const openCreate = () => { if (saving.current.size > 0 || imageController.current) return; productSlug.current = null; setImageError(null); setImageUploaded(false); setEditing(null); setForm(emptyProduct(String(catalog.categories[0]?.id ?? ''))); setFormError(null); setDialogOpen(true); };
-  const openEdit = (product: AdminProduct) => {
+  const productImport = useAdminProductImport(async () => { await load(undefined, true); catalog.reload(); });
+  const openCreate = () => { if (saving.current.size > 0 || imageController.current) return; setInitialSection('general'); productSlug.current = null; setImageError(null); setImageUploaded(false); setEditing(null); setForm(emptyProduct(String(catalog.categories[0]?.id ?? ''))); setFormError(null); setDialogOpen(true); };
+  const openEdit = (product: AdminProduct, section = 'general') => {
     if (saving.current.size > 0 || imageController.current) return;
-    setImageError(null); setImageUploaded(false);
+    setInitialSection(section); setImageError(null); setImageUploaded(false);
     setEditing(product); setForm({ ...emptyProduct(String(product.category_id)), name_en: product.name_en, name_vi: product.name_vi,
       image_url: '', images: product.images.map(({ url, alt_vi, alt_en, cloudinary_public_id, is_primary }) => ({ url, alt_vi, alt_en, cloudinary_public_id, is_primary })), status: product.status, is_featured: product.is_featured });
     setFormError(null); setDialogOpen(true);
@@ -149,7 +152,7 @@ export function useAdminApiProducts() {
     event.preventDefault();
     if (formInFlight.current || imageController.current) return;
     const images = form.image_url.trim() ? [...form.images, { url: form.image_url.trim(), is_primary: form.images.length === 0 }] : form.images;
-    if (!images.length) { setFormError(new ApiError('IMAGE_REQUIRED', 'Upload a product image before saving.')); return; }
+    if (!images.length && (!editing || editing.images.length > 0)) { setFormError(new ApiError('IMAGE_REQUIRED', 'Upload a product image before saving.')); return; }
     if (images.length > MAX_PRODUCT_IMAGES) { setFormError(new ApiError('IMAGE_LIMIT', 'Too many images.')); return; }
     formInFlight.current = true; setFormPending(true); setFormError(null);
     generation.current++;
@@ -171,6 +174,6 @@ export function useAdminApiProducts() {
   return { products: filtered, loading, error, reload: () => void load(), search, setSearch, drafts, updateDraft, saveVariant,
     savingIds, variantErrors, savedIds, uncertainIds, reconciledIds, recheckVariant, dialogOpen, setDialogOpen, editing, form, setForm, formError, formPending, openCreate, openEdit, saveProduct,
     imagePending, imageError, imageUploaded, selectImages, addImageUrl, primaryImage, removeImage, moveImage,
-    categories: catalog.categories, categoriesLoading: catalog.loading, categoriesError: catalog.error, retryCategories: catalog.reload };
+    initialSection, productImport, categories: catalog.categories, categoriesLoading: catalog.loading, categoriesError: catalog.error, retryCategories: catalog.reload };
 }
 export type AdminApiProductsModel = ReturnType<typeof useAdminApiProducts>;
