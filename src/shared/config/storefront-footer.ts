@@ -6,7 +6,7 @@ export const customerCareLinks: FooterLink[] = [
   { label: 'About Us', href: '/about' },
   { label: 'Contact Us', href: storefrontContactPath },
   { label: 'Shipping Policy' },
-  { label: 'Frequently Asked Questions' },
+  { label: 'Frequently Asked Questions', href: '/#faq' },
   { label: 'Payment Methods' },
   { label: 'Privacy Policy' },
   { label: 'Refund Policy' },

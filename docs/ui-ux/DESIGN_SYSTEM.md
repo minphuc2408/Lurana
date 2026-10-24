@@ -13,12 +13,13 @@ Reference dành cho người làm UI và QA, sở hữu hierarchy, semantic role
 
 | Vùng / vai trò | Token và cách dùng |
 | --- | --- |
-| Nền Featured | `--lunara-cream`; không suy màu từ tên alias |
-| Đầu trang Shop | `--lunara-shop-intro`; Monochrome trắng0 như danh sách sản phẩm; separator chỉ rộng theo khung nội dung bên dưới |
+| Nền Featured | `--lunara-featured-background`; Mono hồng25, theme khác fallback cream |
+| Đầu trang Shop | `--lunara-shop-intro`; Mono hồng25 riêng phần tiêu đề/mô tả, danh sách vẫn trắng0; separator chỉ rộng theo khung nội dung bên dưới |
 | Hero toàn viewport | `--lunara-hero-backdrop`, `--lunara-hero-overlay`, `--lunara-hero-foreground`; ảnh JPEG full bleed, lớp phủ giữ chữ rõ |
 | Hero CTA | `--lunara-hero-button-background`, `--lunara-hero-button-foreground`, `--lunara-hero-button-hover` |
 | Search navbar | Cùng `--lunara-header-background` trắng0 với cả hai hàng nav trong Monochrome |
-| Story Home/menu con, card | `--lunara-card-surface`; Monochrome Home xám50, card tại Shop trắng0 |
+| Story Home | `--lunara-story-background`; Mono hồng25, theme khác fallback card-surface |
+| Menu con, card | `--lunara-card-surface`; Mono Home xám50, card tại Shop trắng0 |
 | Nền header/navbar trên và dưới | `--lunara-header-background`; Monochrome trắng bậc0 (`monochromeScale[0]` = `#FFFFFF`), gồm menu mobile; theme khác giữ fallback cream/Home card-surface |
 | Chữ header/navbar | `--lunara-header-ink/body`, `--lunara-nav-ink/active`; Monochrome thường xám900, tab active và chữ hover/focus-visible cùng underline hồng400 |
 | Icon/search storefront | `--lunara-icon-foreground/hover`: nét xám900→950; ô search giữ một kính lúp bên trái ở mọi viewport, không có nút submit bên phải; Enter vẫn tìm |
@@ -43,7 +44,7 @@ Monochrome có trắng **0 (`#FFFFFF`) ở đầu `monochromeScale`**, sau đó 
 ### Quy tắc màu Monochrome
 
 - Owner làm rõ: hoàn tác việc giảm toàn bộ màu ngoài Footer. Chữ chính/nét icon về **900 (`#1B1B1B`)**, hover **950 (`#0D0D0D`)**, chữ phụ **700 (`#525252`)**; viền/placeholder 200, control border 600, focus 800. Accent hồng về 400, các ngoại lệ cụ thể ở dưới.
-- **Footer giữ xám100 (`#DBDBDB`)**; Featured/Story Home/nền chung vẫn50, dịch vụ/Journey trắng0. Theo owner21/10, search dùng trực tiếp `--lunara-header-background`; `--lunara-page-background` alias cùng biến này cho About, Shop và tra đơn. CSS scope theo route đồng bộ wrapper/breadcrumb, intro Shop, card và khung giờ About; không kéo màu trắng sang Home/checkout/admin. Tra đơn liền nền từ panel tới Footer, ô nhập vẫn xám50 để dễ nhận biết. Separator Shop giữ trong gutter20/32px.
+- **Owner24/10:** Featured, Story Home, Footer và intro Shop (tiêu đề/mô tả) dùng hồng25 (`#FFF5F8`), mỗi vùng có semantic role riêng. Nền chung vẫn xám50, dịch vụ/Journey trắng0. Search dùng trực tiếp `--lunara-header-background`; `--lunara-page-background` alias cùng biến này cho About, catalog Shop và tra đơn. CSS scope đồng bộ wrapper/breadcrumb, card và khung giờ About; intro Shop giữ role riêng. Tra đơn trắng0 đến sát Footer, ô nhập vẫn xám50. Separator Shop giữ trong gutter20/32px.
 - Footer giữ heading/icon 900, chữ phụ/link 700, viền 200, hover 950, focus 800. Hero giữ chữ/nền CTA trắng, chữ CTA 900, overlay 950 ở 65%. Admin dùng mapping sáng riêng theo [quyết định Mono](#áp-dụng-mono-cho-admin); màu nằm trong theme layer.
 
 | Vùng Home — Monochrome | Background / token |
@@ -53,10 +54,10 @@ Monochrome có trắng **0 (`#FFFFFF`) ở đầu `monochromeScale`**, sau đó 
 | Hero | Ảnh full bleed + `#0D0D0D` 65% — hero-overlay |
 | Dải bốn dịch vụ | `#FFFFFF` — services-background |
 | Vòng tròn icon dịch vụ | `#FBEAF0` → hover `#F4C3D5` — service-icon-background/hover |
-| Featured | `#F2F2F2` — cream |
+| Featured | `#FFF5F8` — featured-background, hồng25 |
 | Journey / ba bước | `#FFFFFF` — journey-surface |
-| Story | `#F2F2F2` — card-surface |
-| Footer | `#DBDBDB` — footer-background |
+| Story | `#FFF5F8` — story-background, hồng25 |
+| Footer | `#FFF5F8` — footer-background, hồng25 |
 | Nền chung | `#F2F2F2` — cream |
 
 Radio bộ lọc Mono giữ native input/keyboard: vòng viền control-border600 trên trắng0, selected viền/chấm `--lunara-filter-selected` hồng400 và khoảng trắng inset3px; hover viền ink900, Tab giữ focus800, forced-colors trả native appearance. Không dùng trắng làm dấu chọn.
@@ -65,7 +66,7 @@ Mapping nằm trong nhánh Monochrome của `themeTokens()`; đổi Journey khô
 
 ### Điểm nhấn hồng Home
 
-- `monochromePinkScale` trong `themes.ts`: 50/100/200/300/400 = **`#FBEAF0` / `#F4C3D5` / `#EC9CBA` / `#E5769F` / `#DE4F83`**, xuất CSS `--lunara-pink-*`. Giữ nguyên dải xám.
+- `monochromePinkScale` trong `themes.ts`: **25/50/100/200/300/400** = **`#FFF5F8` / `#FBEAF0` / `#F4C3D5` / `#EC9CBA` / `#E5769F` / `#DE4F83`**, xuất CSS `--lunara-pink-*`. Bậc25 mới nhạt nhất theo owner24/10; năm bậc cũ và dải xám giữ nguyên. Featured/Story dùng role nền riêng, không đổi cream/card-surface toàn cục hoặc mapping21 theme khác.
 - `--lunara-editorial-label` dùng hồng **400**: ba nhãn Home và About us/The Lunarra space/Visit the shop. Journey icon/số bước cũng 400; vòng tròn đúng **50** theo owner. Dịch vụ Home và ba About values dùng service roles: nét 400, vòng tròn 50; hover dịch vụ nền 100.
 - Số màu owner gọi **1/2/3/4/5** tương ứng bước50/100/200/300/400. Header badge giỏ/yêu thích, tab active/underline, EN/VI active và theme trigger đang mở dùng **5** theo quyết định mới; đã bỏ nút search trùng kính lúp. Giỏ nổi nền1/chữ và icon900; không coi các cặp màu owner chốt là bằng chứng contrast AA. MapPin địa chỉ About khi có dữ liệu dùng editorial-label400, miễn quy tắc icon trung tính qua `data-theme-icon`.
 - Journey theo ảnh: Flower2, CardNotePen (notepad/pen Lucide), HandHeart; icon 32px, vòng tròn 90px desktop/80px mobile. Giữ heading/copy EN/VI; Journey/Story không border/divider, nền từng vùng theo bảng trên.
@@ -104,7 +105,7 @@ Theo owner ngày 20/10, field trong form tra đơn/checkout không viền ở tr
 
 ## Bố cục storefront và component reuse
 
-Home có Hero → dải dịch vụ → Featured → Journey → Story; behavior/variant/search/scroll ở [ARCHITECTURE](../ARCHITECTURE.md#catalog-và-cuộn-trang). Owner 20/10 thay Hero: bỏ kicker/copy cũ, dùng “Fresh Blooms, Delivered Daily”, mô tả handcrafted/seasonal và “Shop now” → `/shop`, có bản VI trong `landing.json`. Dải dịch vụ giữ copy EN/VI, mỗi mục xếp dọc: vòng tròn nền nhẹ 64px chứa icon → heading → mô tả; desktop bốn cột, mobile hai cột, không viền. Featured bỏ viền trên section/divider dưới heading; Journey thay nét minh họa cũ bằng ba icon trong vòng tròn theo [điểm nhấn hồng](#điểm-nhấn-hồng-home). Source: `Benefits.tsx`, `FeaturedCollection.tsx`.
+Home có Hero → dải dịch vụ → Featured → Journey → Story → [FAQ](#faq-home); behavior/variant/search/scroll ở [ARCHITECTURE](../ARCHITECTURE.md#catalog-và-cuộn-trang). Owner 20/10 thay Hero: bỏ kicker/copy cũ, dùng “Fresh Blooms, Delivered Daily”, mô tả handcrafted/seasonal và “Shop now” → `/shop`, có bản VI trong `landing.json`. Dải dịch vụ giữ copy EN/VI, mỗi mục xếp dọc: vòng tròn nền nhẹ 64px chứa icon → heading → mô tả; desktop bốn cột, mobile hai cột, không viền. Featured bỏ viền trên section/divider dưới heading; Journey thay nét minh họa cũ bằng ba icon trong vòng tròn theo [điểm nhấn hồng](#điểm-nhấn-hồng-home). Source: `Benefits.tsx`, `FeaturedCollection.tsx`.
 
 Hero nằm ngoài content container, ảnh full bleed, copy căn giữa hai chiều; min-height bằng `100svh - --lunara-storefront-header-height`, tự nở khi viewport quá thấp để không cắt chữ. Dải dịch vụ ở dưới fold. Các phần còn lại giữ khung Home 1240–1600px, Header 1440–1600px và gutter 20/32px; grid sản phẩm hai/bốn cột tại 1024px. Hero/Story dùng JPEG local responsive đã có; Hero thêm overlay semantic, không sửa file ảnh. [ATTRIBUTIONS](../../ATTRIBUTIONS.md) giữ provenance.
 
@@ -127,6 +128,14 @@ Footer sáng bốn cột desktop, mobile thương hiệu/liên hệ toàn hàng 
 
 Primitives giữ tại `src/shared/ui/`: Button, Input, Dialog, Dropdown, Combobox. Dùng `cn`, ImageWithFallback, Lucide, formatter chung và feature ProductCard/ProductGrid/FilterBar. Không phục hồi toàn bộ wrapper đã bỏ hoặc tạo StatusBadge chung khi chưa có nhu cầu. `color-classes.ts` giữ class Tailwind literal cho màu fixture; không dựng `bg-[${color}]` lúc runtime.
 
+### FAQ Home
+
+- **Behavior24/10:** `HomeFAQ` sau Story/trước Footer; VI “Một chút giải đáp”, EN “A Few Things You May Wonder”. Từ1024px chia5/7 cột intro/list, nhỏ hơn xếp dọc; kế thừa nền/font/tokens hiện có. Nhãn nhỏ dùng role body để đạt AA, không đổi accent/theme khác.
+- **Content:** `home-faq.ts` giữ8ID theo thứ tự guest/gifting/lịch/khu vực/thiệp/ẩn tên/thanh toán/tra đơn; câu hỏi/trả lời ở `landing.json` EN/VI, giữ English fallback. Copy đối chiếu [Checkout](../features/CHECKOUT_UI.md) và [Tracking](../features/ORDER_TRACKING.md): một thiệp/đơn, COD; bank chưa khả dụng, tra đơn cần mã + SĐT người đặt/nhận + xác minh. Không công bố phí/thời gian/chính sách mới.
+- **Interaction:** Radix Accordion đã cài, `single/collapsible`, mặc định đóng hết; h3/button +/−, aria-controls/labelledby, hidden panel, Enter/Space/Arrow/Home/End. ID ổn định giữ câu mở qua locale/theme; không tự cuộn khi disclosure đổi.
+- **Motion:** dùng `faqReveal` từ hệ Home cho intro/list, không stagger8hàng. CSS `home-faq.css` chỉ scope FAQ, height/opacity220ms; Reduce Motion bỏ animation. Không thêm provider/dependency/API/CMS/JSON-LD hoặc CTA quảng cáo.
+- **Anchor:** chỉ link FAQ footer đổi sang `/#faq`; section `id=faq`, `tabIndex=-1`. Giữ `useRouteScroll`; scroll-margin dùng header height đo thực tế +24px để native hash sau load không che heading. Các footer notice khác giữ nguyên.
+
 ### Tim và hành động sản phẩm
 
 - `ProductCard` mọi appearance và detail dùng tim không nền/viền nút/khối vuông, vùng bấm 44px; hiện cả mobile. Monochrome: nét tim chưa chọn và tim đã chọn đều hồng **400 (`#DE4F83`)**, kể cả hover; `aria-pressed` và fill phân biệt trạng thái. Wishlist vẫn memory-only.
@@ -143,7 +152,7 @@ Primitives giữ tại `src/shared/ui/`: Button, Input, Dialog, Dropdown, Combob
 
 ### Thông báo tính năng chung
 
-- `src/shared/components/FeatureUnavailableDialog.tsx` là khung chung cho footer/FAQ/hotline, tài khoản header và thông báo chuyển khoản/điều khoản checkout. Theo mẫu chuyển khoản owner chọn: góc 2px, không border, nội dung căn giữa, nút Đóng đầy chiều rộng; chỉ body/title thay theo ngữ cảnh EN/VI.
+- `src/shared/components/FeatureUnavailableDialog.tsx` là khung chung cho footer chưa có đích/hotline, tài khoản header và thông báo chuyển khoản/điều khoản checkout. FAQ đã có [section Home](#faq-home), không mở notice. Theo mẫu chuyển khoản owner chọn: góc 2px, không border, nội dung căn giữa, nút Đóng đầy chiều rộng; chỉ body/title thay theo ngữ cảnh EN/VI.
 - `FeatureUnavailable` giữ nội dung dùng lại cho dialog hoặc trang chờ chức năng, dùng `LunarraMark.tsx` rộng 48px từ lựa chọn trước. Yêu cầu mới thay favicon chỉ áp dụng logo Header; notice giữ SVG/theme tokens hiện có. Heading mặc định “Sắp ra mắt / Coming soon”; DialogTitle/Description hiện trực tiếp, không lặp bản ẩn.
 - Dùng Radix Dialog cho focus trap, Escape/backdrop/X/nút Đóng; caller giữ trigger/focus restoration và state nghiệp vụ. Đóng thông báo chuyển khoản vẫn trả COD qua model checkout, không tự bật bank transfer. Không dựng dialog riêng cho thông báo cùng loại.
 
@@ -152,7 +161,7 @@ Primitives giữ tại `src/shared/ui/`: Button, Input, Dialog, Dropdown, Combob
 - **Owner22/10:** Mono riêng admin/login; sidebar/header/panel trắng0, nền50, chữ900/phụ700, nav hồng50, CTA400→300/chữ900. Header64px, breadcrumb và tên trang cùng body14px/400; bỏ H1/mô tả lặp. Input/button không border hoặc ring khi click; keyboard vẫn outline800/2px. Giữ typography locale và theme/storage storefront.
 - **Workspace:** toolbar/tab và pager nằm ngoài `.admin-records` cuộn; footer luôn hiện, chuyển trang về đầu. Mọi collection có pager, kể cả variants/gallery/items/timeline. Kho giữ accordion; main pager5 sản phẩm, zone10, nay lấy trang từ server. Chọn số dòng/trang và số trang điều khiển chung limit/offset; child variants/gallery vẫn phân trang local. Orders10/dashboard5 từ server; tab status dùng [metadata API](../reference/API_CONTRACT.md), đổi filter/size về trang1, reconcile trang cuối sau mutation.
 - **Popup ngang (owner24/10):** chi tiết đơn và danh sách Xem tất cả từ dashboard rộng80vw/cao85dvh chia Tổng quan/Sản phẩm/Ghi chú/Lịch sử, rail tổng/thao tác cố định; mobile mở rail bằng tab Thao tác. Product1080×640 chia Thông tin/Ảnh/Kích thước, mỗi cỡ một trang; zone900×500. Kích thước clamp viewport, header/tab/footer cố định; nội dung dài/màn thấp chỉ cuộn trong vùng con. Validation mở trường lỗi đầu tiên, không mất draft/gallery khi đổi phần.
-- **Dòng kho/phí24/10:** STT số ở đầu, sau đó icon xóa/sửa; header cột Trạng thái/Status. Size/SKU căn giữa, bỏ giá lặp dưới SKU. SKU mở sửa mới nhập được; check lưu/X hủy, draft chưa lưu có nhãn. Xóa mở xác nhận; giữ state/error/recheck. Phí mobile xếp action/switch → địa chỉ → phí/ngưỡng → ETA; Excel hai màn giữ kiểm file → xem trước → xác nhận.
+- **Dòng kho/phí24/10:** Hai cột đầu tách riêng **STT / No.** chỉ có số và **Thao tác / Actions** chứa icon xóa/sửa. Size/SKU căn giữa, bỏ giá lặp dưới SKU. SKU mở sửa mới nhập được; check lưu/X hủy, draft chưa lưu có nhãn. Xóa mở xác nhận; giữ state/error/recheck. Phí mobile có nhãn STT/Thao tác riêng, cùng hàng với switch → địa chỉ → phí/ngưỡng → ETA; Excel hai màn giữ kiểm file → xem trước → xác nhận.
 - **Lịch:** DayPicker8 + Radix Popover đã cài, custom Mono và portal, tháng/năm, chọn ngày/Today/Clear và keyboard; EN/VI, thứ Hai đầu tuần, Today theo giờ Việt Nam. Không input date native hoặc dependency mới.
 - **Source:** `AdminLayout`, views API, `AdminOrderData`, `AdminProductForm`; `AdminPagination`/`AdminDatePicker` và `useAdminPresentation` dùng chung. `brand.css` chỉ scope admin/portal; giữ auth, API ghi, delta/recheck và Save gallery. [Entity](../reference/FRONTEND_ENTITIES.md) sở hữu vòng đời draft; [lịch sử](../archive/VERIFICATION_HISTORY.md#kiểm-chứng-local) giữ bằng chứng.
 
@@ -162,13 +171,14 @@ Owner21/10 yêu cầu để trống ba địa chỉ minh họa. `storeLocations`
 
 ## Motion storefront
 
-- Dùng `motion@12.23.24`, `LazyMotion/domMax`, `MotionConfig reducedMotion=user`. Nhịp ở `src/shared/lib/motion.ts`: ease `[0.16,1,0.3,1]`, feedback 160ms, navigation/layout 280ms, ảnh Hero 950ms.
-- Hero: ảnh mở crop 14%, scale 1.06→1; title/body/CTA hiện theo nhịp 120ms, opacity/blur/dịch 24px trong 720ms. Nội dung mặc định vẫn hiện; `useHeroMotion` cleanup khi unmount/đổi preference.
-- Browser local báo `prefers-reduced-motion:reduce`; bản trước return sớm nên Hero hoàn toàn tĩnh. Bản mới giữ fade 600ms/stagger 60ms trong reduced mode, tắt blur/dịch/zoom; gạch chân vẫn fade khi hover/focus. Không cưỡng ép tắt preference của thiết bị.
-- ProductCard FLIP, badge/tim/check giữ phản hồi hiện có; không chờ animation khi đi cart/checkout/admin. Xem browser Monochrome EN/VI ở 1440px, 390px, 320px và hai motion modes; phạm vi không thay regression toàn theme/thiết bị vật lý.
+- Entrance mới chỉ thuộc Home `/`; giữ `LazyMotion/domMax` và `MotionConfig` trong MainLayout. `landing/landing-motion.ts` dùng ease `[0.16,1,0.3,1]` chung: text600ms, section450ms, card500ms, Story image750ms, Hero image850ms; stagger65–100ms, delay tối đa300ms. Feedback160ms/navigation-layout280ms dùng chung giữ nguyên.
+- Hero hiện ảnh đầy đủ, scale1.035→1; heading/body/CTA fade + y18→0, cách100ms. Copy không chờ ảnh; listener load/observer/controls được dọn khi unmount. Bỏ crop/blur, không parallax hay intro che nội dung.
+- Services y12/stagger65ms; Featured heading y14 và card y18/stagger75ms; Journey y14/stagger90ms; Story copy y16/stagger80ms, ảnh scale1.025/stagger90ms. Observer theo từng item, chạy một lần mỗi mount; key sản phẩm đánh thức observer khi tải muộn, cart/locale/theme không replay. Không đổi DOM layout/keys.
+- Nội dung mặc định hiển thị, thiếu observer vẫn đọc được. Reduce Motion hiển thị trực tiếp; `useLandingReducedMotion` theo dõi đổi preference đang mở (hook Motion12 chỉ snapshot lúc mount). Cleanup `complete()` trước `stop()` rồi xóa inline opacity/transform: `stop()` đơn lẻ có thể ghi lại giá trị dở dang ở frame kế tiếp. Giữ native scroll/focus.
+- Featured riêng bỏ FLIP để entrance sở hữu transform; hover ảnh1.025/350ms chỉ cho chuột fine/hover, overlay fade có focus bàn phím. Giữ feedback tim/giỏ và appearance default/recommendation. Source: `useHeroMotion`, `useLandingReveal`, `ProductCard`; bằng chứng/phạm vi ở [lịch sử kiểm chứng](../archive/VERIFICATION_HISTORY.md#kiểm-chứng-local).
 
 ## Kiểm chứng thiết kế
 
-- Suite đầy đủ/smoke/toàn theme vẫn tạm dừng theo owner. Lượt admin gọn21/10:15 test admin-frontend/i18n (gồm ngày gọn/giờ Việt Nam), typecheck/architecture/build và browser đủ font cache local; phạm vi/giới hạn ở [Status](../PROJECT_STATUS.md#code-và-kiểm-chứng-local), evidence lịch sử ở archive. Khi nối lại kiểm toàn theme, cập nhật assertions default/count/controls, DOM indicator và responsive theo contract hiện hành. Kết quả21theme cũ không nghiệm thu thay đổi mới.
+- Các runner toàn theme/storefront cũ vẫn tạm dừng theo owner; motion Home có runner riêng24/10. Suite runtime225test đã chạy lại theo yêu cầu motion; phạm vi/giới hạn ở [Status](../PROJECT_STATUS.md#code-và-kiểm-chứng-local), evidence lịch sử ở archive. Khi nối lại runner toàn theme cũ, cập nhật assertions default/count/controls, DOM indicator và responsive theo contract hiện hành. Kết quả21theme cũ không nghiệm thu thay đổi mới.
 - So target/current/result với cùng ảnh/copy/content, kiểm computed styles ở trạng thái tương tác. Kết quả mock/local không chứng minh provider hoặc thiết bị thật; record ngày/scope ở [PROJECT_STATUS](../PROJECT_STATUS.md), evidence cũ ở [archive](../archive/VERIFICATION_HISTORY.md).
 - Lệnh runner/prerequisite và giới hạn cache local thuộc [LOCAL_DEVELOPMENT](../LOCAL_DEVELOPMENT.md#kiểm-theme-và-font), không copy lại log hoặc danh sách theme tại đây.

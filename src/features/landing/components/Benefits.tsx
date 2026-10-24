@@ -1,5 +1,7 @@
 import { useLocale } from "@/shared/i18n";
 import { Truck, Flower2, Banknote, Heart, HandHeart, createLucideIcon } from "lucide-react";
+import { useLandingReveal } from '../hooks/useLandingReveal';
+import { journeyReveal, serviceReveal } from '../landing-motion';
 
 // Adapt the existing Lucide notepad and pen geometry to the owner's top-bound card reference.
 const CardNotePen = createLucideIcon('CardNotePen', [
@@ -24,9 +26,10 @@ const journey = [
 ];
 export function Benefits({ variant = 'services' }: { variant?: 'services' | 'journey' }) {
   const { t } = useLocale("landing");
-  if (variant === 'journey') return <section data-home-journey aria-labelledby="journey-title" className="bg-lunara-journey py-16 sm:py-20">
+  const motionRef = useLandingReveal(variant === 'journey' ? journeyReveal : serviceReveal);
+  if (variant === 'journey') return <section ref={motionRef} data-home-journey aria-labelledby="journey-title" className="bg-lunara-journey py-16 sm:py-20">
     <div className="mx-auto max-w-[var(--lunara-content-max-width)] px-5 sm:px-8">
-    <div className="mx-auto mb-10 max-w-xl text-center sm:mb-12">
+    <div data-journey-heading className="mx-auto mb-10 max-w-xl text-center sm:mb-12">
       <p className="mb-2 text-[11px] font-medium tracking-[0.16em] text-lunara-editorial-label uppercase">{t('The gifting journey')}</p>
       <h2 id="journey-title" className="font-display text-2xl leading-snug tracking-tight text-lunara-ink sm:text-3xl">{t('Just 3 steps to send a little love')}</h2>
     </div>
@@ -42,7 +45,7 @@ export function Benefits({ variant = 'services' }: { variant?: 'services' | 'jou
     </ol>
     </div>
   </section>;
-  return <section data-home-services aria-label={t('The Lunara Experience')} className="bg-lunara-services">
+  return <section ref={motionRef} data-home-services aria-label={t('The Lunara Experience')} className="bg-lunara-services">
     <div className="mx-auto grid max-w-[var(--lunara-content-max-width)] grid-cols-2 gap-x-6 gap-y-10 px-5 py-12 sm:gap-x-8 sm:px-8 sm:py-16 lg:grid-cols-4 lg:gap-x-12">
       {benefits.map(({ icon: Icon, title, detail }) => <div key={title} data-service-item className="group flex min-w-0 flex-col items-center text-center">
         <div data-service-icon className="mb-5 flex size-16 shrink-0 items-center justify-center rounded-full bg-lunara-service-icon transition-colors group-hover:bg-lunara-service-icon-hover">

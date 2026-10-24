@@ -48,6 +48,14 @@
 !/src/shared/lib/turnstile.ts
 !/src/shared/lib/motion.ts
 !/src/features/landing/hooks/useHeroMotion.ts
+!/src/features/landing/hooks/useLandingReveal.ts
+!/src/features/landing/hooks/useLandingReducedMotion.ts
+!/src/features/landing/landing-motion.ts
+!/src/features/landing/home-faq.ts
+!/src/features/landing/components/HomeFAQ.tsx
+!/src/features/landing/components/home-faq.css
+!/scripts/check-ui-home-faq.mjs
+!/scripts/check-ui-landing-motion.mjs
 !/src/shared/hooks/useTurnstile.ts
 !/src/shared/components/TurnstileChallenge.tsx
 !/tests/bot-protection.test.mjs

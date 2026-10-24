@@ -31,7 +31,7 @@ export function Hero() {
         <h1 id="home-hero-title" className="max-w-4xl whitespace-pre-line font-display text-[clamp(2.5rem,6vw,5.5rem)] leading-[1.06] font-normal tracking-tight text-lunara-hero-foreground">{t('Fresh Blooms, Delivered Daily')}</h1>
         <p className="mt-6 max-w-xl text-base leading-7 text-lunara-hero-foreground sm:text-lg sm:leading-8">{t('Handcrafted bouquets made with love and the finest seasonal flowers')}</p>
         <div className="mt-9"><Link to="/shop" data-hero-shop className="group inline-flex min-h-12 items-center justify-center gap-3 rounded-[2px] bg-lunara-hero-button px-9 py-4 text-sm font-medium text-lunara-hero-button-foreground transition-colors hover:bg-lunara-hero-button-hover focus-visible:outline-lunara-hero-foreground">
-          {t('Shop now')}<ArrowRight size={17} aria-hidden="true" className="transition-transform duration-300 motion-safe:group-hover:translate-x-1 motion-safe:group-focus-visible:translate-x-1 motion-reduce:transition-none" />
+          {t('Shop now')}<ArrowRight size={17} aria-hidden="true" className="transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] motion-safe:[@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-x-1 motion-safe:group-focus-visible:translate-x-1 motion-reduce:transition-none" />
         </Link></div>
       </div>
   </section>;

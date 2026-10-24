@@ -2,6 +2,7 @@ import { FeaturedCollection } from "./FeaturedCollection";
 import { Benefits } from "./Benefits";
 import { Hero } from "./Hero";
 import { OurStory } from "./OurStory";
+import { HomeFAQ } from "./HomeFAQ";
 import type { HomeModel } from "../hooks/useHome";
 
 export function HomeView(model: HomeModel) {
@@ -11,5 +12,6 @@ export function HomeView(model: HomeModel) {
     <FeaturedCollection {...model} />
     <Benefits variant="journey" />
     <OurStory />
+    <HomeFAQ />
   </main>;
 }

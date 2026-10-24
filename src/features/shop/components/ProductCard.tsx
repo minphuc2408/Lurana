@@ -24,7 +24,8 @@ export function ProductCard({ appearance = 'default', product, added, onAdd, sel
   const { t, language } = useLocale("shop");
   const wishlist = useWishlist();
   const reducedMotion = useReducedMotion();
-  const layoutMotion = reducedMotion === false ? 'position' as const : false;
+  // Home owns the featured entrance; do not layer FLIP onto that same transform.
+  const layoutMotion = appearance !== 'featured' && reducedMotion === false ? 'position' as const : false;
   const layoutTransition = { layout: { duration: motionTimings.layout, ease: motionEase } };
   const favorite = wishlist.items.some(item => item.id === product.id);
   const favoriteButton = <m.button type="button" data-product-favorite={product.id} whileTap={reducedMotion === false ? { scale: 0.92 } : undefined} aria-pressed={favorite} aria-label={t(favorite ? 'Remove {{name}} from favorites' : 'Add {{name}} to favorites', { name: getLocalizedName(product, language) })} onClick={() => wishlist.toggle(product)} className="absolute top-2 right-2 z-10 inline-flex size-11 items-center justify-center rounded-full border-0 bg-transparent text-lunara-product-favorite shadow-none transition-colors hover:text-lunara-product-favorite-hover aria-pressed:text-lunara-product-favorite-active aria-pressed:hover:text-lunara-product-favorite-active"><m.span className="inline-flex" initial={false} animate={{ scale: favorite && reducedMotion === false ? [1, 1.14, 1] : 1 }}><Heart data-theme-icon size={22} strokeWidth={1.75} fill={favorite ? 'currentColor' : 'none'} aria-hidden="true" /></m.span></m.button>;
@@ -36,7 +37,7 @@ export function ProductCard({ appearance = 'default', product, added, onAdd, sel
   if (appearance === 'featured' || appearance === 'recommendation') return <m.article layout={layoutMotion} initial={false} transition={layoutTransition} data-product-id={product.id} data-product-appearance={appearance} className="group relative flex h-full min-w-0 flex-col">
     {favoriteButton}
     <Link to={detailPath} data-product-image-link aria-label={t('View {{name}}', { name: getLocalizedName(product, language) })} className="group/image relative mb-3 block aspect-[4/5] overflow-hidden rounded-[2px] bg-lunara-blush sm:mb-4">
-      <ImageWithFallback src={product.image} alt={getLocalizedName(product, language)} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 motion-safe:group-hover/image:scale-[1.02] motion-reduce:transition-none" />
+      <ImageWithFallback src={product.image} alt={getLocalizedName(product, language)} loading="lazy" className={cn('h-full w-full object-cover transition-transform motion-reduce:transition-none', appearance === 'featured' ? 'duration-350 ease-[cubic-bezier(0.16,1,0.3,1)] motion-safe:[@media(hover:hover)_and_(pointer:fine)]:group-hover/image:scale-[1.025]' : 'duration-500 motion-safe:group-hover/image:scale-[1.02]')} />
       <span data-product-detail-overlay aria-hidden="true" className="pointer-events-none absolute inset-0 flex items-end bg-lunara-ink/10 p-3 opacity-0 transition-opacity duration-300 group-hover/image:opacity-100 group-focus-visible/image:opacity-100 motion-reduce:transition-none">
         <span className="w-full rounded-[2px] border-0 bg-lunara-card-surface py-2 text-center text-xs font-medium text-lunara-ink shadow-xs">{t('View details')} →</span>
       </span>

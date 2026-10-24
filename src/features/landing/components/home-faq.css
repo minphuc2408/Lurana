@@ -1,0 +1,22 @@
+/* Disclosure motion stays local to Home; no palette or shared component overrides. */
+[data-home-faq] [data-faq-panel] {
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-home-faq] [data-faq-panel][data-state='open'] {
+    animation: lunarra-faq-open 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  [data-home-faq] [data-faq-panel][data-state='closed'] {
+    animation: lunarra-faq-close 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
+@keyframes lunarra-faq-open {
+  from { height: 0; opacity: 0; }
+  to { height: var(--radix-accordion-content-height); opacity: 1; }
+}
+@keyframes lunarra-faq-close {
+  from { height: var(--radix-accordion-content-height); opacity: 1; }
+  to { height: 0; opacity: 0; }
+}

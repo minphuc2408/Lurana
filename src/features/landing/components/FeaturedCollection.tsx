@@ -4,12 +4,16 @@ import { ProductGrid } from '@/features/shop';
 import { Link } from "react-router";
 import { ArrowRight } from "lucide-react";
 import type { HomeModel } from "../hooks/useHome";
+import { useLandingReveal } from '../hooks/useLandingReveal';
+import { collectionReveal } from '../landing-motion';
 export function FeaturedCollection(model: HomeModel) {
   const { t } = useLocale("landing");
-  return <section id="featured" aria-labelledby="featured-title" className="bg-lunara-featured-background">
+  const contentKey = model.loading || model.error ? 'pending' : model.featuredProducts.slice(0, 4).map(product => product.id).join(',');
+  const motionRef = useLandingReveal(collectionReveal, contentKey);
+  return <section ref={motionRef} id="featured" aria-labelledby="featured-title" className="bg-lunara-featured-background">
     <div className="mx-auto max-w-[var(--lunara-content-max-width)] space-y-8 px-5 py-12 sm:space-y-10 sm:px-8 sm:py-16">
     <div className="flex flex-wrap items-end justify-between gap-x-5 gap-y-2 pb-3">
-      <div className="min-w-0">
+      <div data-featured-heading className="min-w-0">
         <p className="mb-1 text-[11px] font-medium tracking-[0.16em] text-lunara-editorial-label uppercase">{t('Todays selection')}</p>
         <h2 id="featured-title" className="font-display text-2xl leading-tight tracking-tight text-lunara-ink sm:text-3xl">{t('Featured products')}</h2>
       </div>
