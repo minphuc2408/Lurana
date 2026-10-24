@@ -301,6 +301,7 @@
   "Existing slugs and SKUs are rejected. Any error cancels the entire import. No images are imported.": "Slug/SKU đã tồn tại sẽ bị từ chối. Nếu có lỗi, toàn bộ file sẽ không được nhập. File không bao gồm ảnh.",
   "Import products": "Nhập sản phẩm",
   "Sequence number": "STT",
+  "No.": "STT",
   "Delete SKU": "Xóa SKU",
   "Delete delivery zone": "Xóa phí giao hàng",
   "Deleting…": "Đang xóa…",

@@ -301,6 +301,7 @@
   "Existing slugs and SKUs are rejected. Any error cancels the entire import. No images are imported.": "Existing slugs and SKUs are rejected. Any error cancels the entire import. No images are imported.",
   "Import products": "Import products",
   "Sequence number": "Sequence number",
+  "No.": "No.",
   "Delete SKU": "Delete SKU",
   "Delete delivery zone": "Delete delivery zone",
   "Deleting…": "Deleting…",

@@ -150,8 +150,8 @@ try {
     await evaluate(`localStorage.setItem('lunara_language',${JSON.stringify(language)})`); await send('Page.reload');
     await waitFor(`document.querySelector('[data-variant-id="1"]')`);
     await check('document.querySelectorAll("[data-product-id]").length===5', tag + ' stock requests one page');
-    await check(`document.querySelector('[data-variant-id="1"]').children[0].querySelector('span[aria-label]').textContent==='1' && document.querySelector('[data-variant-id="1"]').children[0].querySelector('button').dataset.testid==='variant-delete-1'`, tag + ' number/delete/edit first');
-    await check('document.querySelector(\'[data-variant-id="1"]\').children[1].querySelectorAll("p").length===2 && getComputedStyle(document.querySelector(\'[data-variant-id="1"]\').children[1]).textAlign==="center"', tag + ' size centered and duplicate price removed');
+    await check(`(() => { const row=document.querySelector('[data-variant-id="1"]'), headers=row.closest('table').querySelectorAll('th');return headers[0].textContent===${JSON.stringify(language === 'vi' ? 'STT' : 'No.')} && headers[1].textContent===${JSON.stringify(language === 'vi' ? 'Thao tác' : 'Actions')} && row.children[0].querySelector('span[aria-label]').textContent==='1' && !row.children[0].querySelector('button') && row.children[1].querySelector('button').dataset.testid==='variant-delete-1';})()`, tag + ' separate number and action columns');
+    await check('document.querySelector(\'[data-variant-id="1"]\').children[2].querySelectorAll("p").length===2 && getComputedStyle(document.querySelector(\'[data-variant-id="1"]\').children[2]).textAlign==="center"', tag + ' size centered and duplicate price removed');
     await check('document.documentElement.scrollWidth<=innerWidth', tag + ' stock fits viewport');
     if (language === 'en' && width === 1440) {
       await click('[data-testid=variant-edit-1]'); await input('[data-variant-id="1"] [name=price]', '123456');
@@ -172,7 +172,7 @@ try {
     await screenshot(tag + '-stock');
     await navigate('/admin/delivery-zones');
     await check('document.querySelectorAll("[data-zone-id]").length===10', tag + ' zone requests one page');
-    await check('document.querySelector("[data-zone-id]").children[0].querySelectorAll("button").length===2 && document.querySelector("[data-zone-id]").children[0].querySelector("span[aria-label]").textContent==="1"', tag + ' zone number and icon actions');
+    await check(`(() => { const row=document.querySelector('[data-zone-id]'), headers=row.closest('table').querySelectorAll('th');return headers[0].textContent===${JSON.stringify(language === 'vi' ? 'STT' : 'No.')} && headers[1].textContent===${JSON.stringify(language === 'vi' ? 'Thao tác' : 'Actions')} && row.children[0].querySelector('span[aria-label]').textContent==='1' && !row.children[0].querySelector('button') && row.children[1].querySelectorAll('button').length===2;})()`, tag + ' zone separate number and action columns');
     await check('document.documentElement.scrollWidth<=innerWidth', tag + ' zones fit viewport');
     if (language === 'en' && width === 1440) {
       await selectSize(zonePager, 5);
