@@ -116,14 +116,14 @@ test('preferences accept only exact registered IDs, recover from invalid/blocked
 // Mono has an explicit role map, unlike the interpolated pastel/creative palettes.
 test('Mono preserves exact approved steps and readable admin actions and focus', () => {
   assert.deepEqual(Object.values(monochromeScale), ['#FFFFFF','#F2F2F2','#DBDBDB','#C4C4C4','#ADADAD','#969696','#808080','#696969','#525252','#3B3B3B','#1B1B1B','#0D0D0D']);
-  assert.deepEqual(Object.values(monochromePinkScale), ['#FBEAF0','#F4C3D5','#EC9CBA','#E5769F','#DE4F83']);
+  assert.deepEqual(Object.values(monochromePinkScale), ['#FFF5F8','#FBEAF0','#F4C3D5','#EC9CBA','#E5769F','#DE4F83']);
   const tokens=themeTokens(themes.find(theme=>theme.id==='monochrome'));
   for(const token of ['--lunara-admin-panel','--lunara-sidebar']) assert.equal(tokens[token],'#FFFFFF');
   assert.equal(tokens['--lunara-admin-background'],'#F2F2F2');
   assert.equal(tokens['--lunara-admin-primary'],'#DE4F83');
   assert.equal(tokens['--lunara-admin-primary-hover'],'#E5769F');
   assert.equal(tokens['--lunara-admin-primary-foreground'],'#1B1B1B');
-  for(const background of ['#FFFFFF','#F2F2F2','#FBEAF0']) {
+  for(const background of ['#FFFFFF','#F2F2F2','#FFF5F8','#FBEAF0']) {
     assert.ok(contrast('#1B1B1B',background)>=4.5);
     assert.ok(contrast('#525252',background)>=4.5);
     assert.ok(contrast('#3B3B3B',background)>=3);

@@ -8,6 +8,7 @@ export const monochromeScale = {
 
 /** Owner-approved local pink accents for the default Monochrome storefront. */
 export const monochromePinkScale = {
+  25: '#FFF5F8',
   50: '#FBEAF0', 100: '#F4C3D5', 200: '#EC9CBA', 300: '#E5769F', 400: '#DE4F83',
 } as const;
 
@@ -93,7 +94,8 @@ export function themeTokens(theme: Theme): Record<string, string> {
       '--lunara-header-background': white,
       '--lunara-page-background': 'var(--lunara-header-background)',
       '--lunara-filter-selected': pink[400],
-      '--lunara-shop-intro': gray[50],
+      '--lunara-shop-intro': pink[25],
+      '--lunara-featured-background': pink[25], '--lunara-story-background': pink[25],
       '--lunara-floating-cart-background': pink[50], '--lunara-floating-cart-foreground': gray[900],
       '--lunara-header-count-background': pink[400], '--lunara-header-count-foreground': white,
       '--lunara-preference-surface': white, '--lunara-preference-border': gray[100],
@@ -134,7 +136,7 @@ export function themeTokens(theme: Theme): Record<string, string> {
       '--lunara-utility-ink': gray[900], '--lunara-utility-focus': gray[800], '--lunara-utility-border': gray[200],
       '--lunara-editorial-ink': gray[900], '--lunara-editorial-body': gray[700],
       '--lunara-editorial-border': gray[200], '--lunara-editorial-blush': gray[200], '--lunara-editorial-surface': secondarySurface,
-      '--lunara-footer-background': gray[100], '--lunara-footer-foreground': gray[900],
+      '--lunara-footer-background': pink[25], '--lunara-footer-foreground': gray[900],
       '--lunara-footer-muted': gray[700], '--lunara-footer-copyright': gray[700],
       '--lunara-footer-link': gray[700], '--lunara-footer-heading': gray[900],
       '--lunara-footer-border': gray[200], '--lunara-footer-hover': gray[950],

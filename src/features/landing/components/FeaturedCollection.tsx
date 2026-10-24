@@ -6,7 +6,7 @@ import { ArrowRight } from "lucide-react";
 import type { HomeModel } from "../hooks/useHome";
 export function FeaturedCollection(model: HomeModel) {
   const { t } = useLocale("landing");
-  return <section id="featured" aria-labelledby="featured-title" className="bg-lunara-cream">
+  return <section id="featured" aria-labelledby="featured-title" className="bg-lunara-featured-background">
     <div className="mx-auto max-w-[var(--lunara-content-max-width)] space-y-8 px-5 py-12 sm:space-y-10 sm:px-8 sm:py-16">
     <div className="flex flex-wrap items-end justify-between gap-x-5 gap-y-2 pb-3">
       <div className="min-w-0">

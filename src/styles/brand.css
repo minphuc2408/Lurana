@@ -59,6 +59,8 @@
   --lunara-surface: #F1F7F5;
   --lunara-blush: #EDF4F6;
   --lunara-card-surface: #FFFFFF;
+  --lunara-featured-background: var(--lunara-cream);
+  --lunara-story-background: var(--lunara-card-surface);
   --lunara-shop-intro: var(--lunara-cream);
   --lunara-floating-cart-background: var(--lunara-ink);
   --lunara-floating-cart-foreground: #FFFFFF;
@@ -199,6 +201,8 @@ html[lang='vi'] {
   --color-lunara-cream: var(--lunara-cream);
   --color-lunara-surface: var(--lunara-surface);
   --color-lunara-card-surface: var(--lunara-card-surface);
+  --color-lunara-featured-background: var(--lunara-featured-background);
+  --color-lunara-story-background: var(--lunara-story-background);
   --color-lunara-shop-intro: var(--lunara-shop-intro);
   --color-lunara-floating-cart: var(--lunara-floating-cart-background);
   --color-lunara-on-floating-cart: var(--lunara-floating-cart-foreground);
@@ -340,7 +344,6 @@ html[data-lunara-theme='monochrome'] [data-d1-storefront]:has(
 ) {
   background-color: var(--lunara-page-background);
   --lunara-card-surface: var(--lunara-page-background);
-  --lunara-shop-intro: var(--lunara-page-background);
   --lunara-editorial-surface: var(--lunara-page-background);
   --lunara-lookup-panel: var(--lunara-page-background);
 }
